@@ -42,3 +42,16 @@ At C0007, the existing JSONL file contained only the C0006 record even though th
 - Every response must end with **continue**.
 - Branch history was verified at 73 commits before C0010's two audit-file commits. Expected count after both commits: 75.
 - Latest branch head will be verified after the ledger commit.
+
+| 11 | PIXEL-03-C0011 | Preview response contract | Added strict rendered/partial/rejected response schema with echoed request/session/revision identity, bounded surface lists and stable omission/failure codes; added four response regression tests and documented the response contract. CI pending; NOVA-02 issue #30 remains unanswered. |
+
+## C0011 handover
+
+- Completion count: 11/100 (11%); 89 remaining.
+- Added `theme-studio/schema/preview-render-response.schema.json`.
+- Expanded `theme-studio/tests/test_preview_contract.py` with four cases covering successful rendering, partial rendering, rejection and unknown/apply fields.
+- Updated the preview contract and README to identify the response schema.
+- Response semantics: `rendered` requires one or more rendered surfaces and no omissions; `partial` requires rendered and omitted surfaces with reason codes; `rejected` requires a stable failure code and no rendered surfaces.
+- CI has not yet run for C0011; authored tests are not reported as CI-passed.
+- NOVA-02 issue [#30](https://github.com/otta-komban/TuskerOS/issues/30) remained open with zero comments at verification. Desktop adapter implementation remains gated.
+- Historical JSONL integrity gap remains: C0001-C0005 records are unavailable and were not fabricated.
