@@ -1,5 +1,5 @@
 # TuskerOS Interface Contracts
-**Owner:** NEXUS-07 · **Status:** Draft v0.1 · **Compatibility:** provisional until cross-agent approval
+**Owner:** NEXUS-07 · **Status:** Draft v0.2 · **Compatibility:** provisional until cross-agent approval
 
 ## 1. Contract principles
 - Every externally consumed interface is typed, documented, versioned, and testable.
@@ -97,11 +97,28 @@ Provisional JSON Schema Draft 2020-12 documents and valid example fixtures live 
 - `tool-result.schema.json`
 - `event-envelope.schema.json`
 - `health-status.schema.json`
+- `tool-descriptor.schema.json`
 
-The test harness is `system-integration/tests/test_contracts.py` and the test-only dependency is `system-integration/requirements-test.txt`. Run from repository root with `python -m pip install -r system-integration/requirements-test.txt` followed by `python -m unittest discover -s system-integration/tests -v`. Fixtures and tests are provisional and do not imply cross-agent approval. Test execution is pending; no passing result is claimed.
+The test harness is `system-integration/tests/test_contracts.py` and the test-only dependency is `system-integration/requirements-test.txt`. Run from repository root with `python -m pip install -r system-integration/requirements-test.txt` followed by `python -m unittest discover -s system-integration/tests -v`. Fixtures and tests are provisional and do not imply cross-agent approval. CI automation exists in `.github/workflows/system-integration-contracts.yml`; no passing run is claimed until GitHub reports a result.
 
 ## 11. Candidate NEXUS service identifiers
 See `system-integration/SERVICE_IDENTIFIERS.md`. Candidate system-bus name `org.tuskeros.SystemTools1`, object path `/org/tuskeros/SystemTools1`, and interface `org.tuskeros.SystemTools1.Manager` are not frozen. The project must confirm control of the reverse-DNS namespace and obtain ATLAS-01/AEGIS-06 review before packaging or implementation. No Polkit action IDs or privileged methods are assigned by NEXUS.
 
 ## 12. TUSKER-04 lifecycle review reconciliation
-TUSKER-04 reviewed v0.1 and requested task/step/correlation identifiers, trusted transport identity, mandatory authorization preflight for mutations, explicit cancellation semantics, evidence references and idempotency scope. These are incorporated into the provisional schemas. TUSKER-04 remains authoritative for Task/Plan/Step/TaskEvent state; NEXUS owns the tool catalogue and provider operation lifecycle. Every task lifecycle/progress/cancel/verification event must preserve the relevant task_id, step_id, request_id, operation_id and correlation_id in its typed payload. Exact authorization principal/decision fields remain AEGIS-06-owned. See Issue #5 comment 6531017768 and NEXUS acknowledgement 6531070583.
+TUSKER-04 reviewed the invocation/result/descriptor drafts and accepts the core mapping in principle, subject to the adapter rules below. TUSKER-04 remains authoritative for Task/Plan/Step/TaskEvent state; NEXUS owns the tool catalogue, tool schemas, capability metadata, provider operation lifecycle and postcondition evidence.
+
+### Core-to-NEXUS adapter requirements
+1. **Opaque task identifiers:** Core UUID task/step IDs are valid values within NEXUS's 1–128 character string bounds. Preserve them byte-for-byte as opaque identifiers; consumers MUST NOT parse UUID-specific semantics.
+2. **Deadline negotiation:** the invocation schema caps `deadline_ms` at 300000 ms. Before dispatch, Core MUST validate the requested timeout against the selected descriptor's `timeout_ms` bounds and the invocation schema cap. Reject or clamp an over-limit request according to Core's user-visible timeout policy; never silently extend a requested deadline. If no timeout is supplied, use the descriptor default. The catalogue/adapter MUST enforce `minimum <= default <= maximum`, and the effective deadline MUST NOT exceed either the descriptor maximum or 300000 ms.
+3. **Canonical operation identifiers:** resolve Core's registered operation to the descriptor's canonical `name`; validate against the descriptor's dotted identifier pattern before dispatch. Do not substitute an arbitrary command string or infer a provider operation from free-form text.
+4. **Typed result preservation:** NEXUS `result` intentionally accepts any JSON value (object, array, string, number, boolean or null). Core adapters MUST preserve the exact JSON type and value; no object-only coercion or lossy wrapping.
+5. **Approval stop condition:** `needs_approval` is a provider/broker outcome, not a substitute for Core's mandatory AEGIS preflight. No provider executor call may occur after AEGIS returns DENY or REQUIRE_APPROVAL. An approval-required result must return to the orchestration/approval flow without executing the protected operation.
+6. **No blind retry:** `unknown_outcome` after a possible side effect requires a separate read/verification operation before retry. Idempotency metadata does not waive reconciliation where the outcome is unknown.
+7. **Correlation preservation:** preserve `request_id`, `operation_id`, `task_id`, `step_id` and `correlation_id` across progress, cancellation and verification messages wherever those identifiers exist.
+
+This is a compatibility note, not a freeze or implementation sign-off. TUSKER-04's review is recorded in Issue #5 comment 6531355859. AEGIS-06 must still define the authoritative principal/decision context and policy semantics; ATLAS-01 must still review activation/packaging and namespace assumptions.
+
+## 13. Cross-agent review record
+- TUSKER-04: provisional core mapping accepted in principle; adapter constraints captured above. Approval of a frozen 1.0 contract is not granted. See Issue #5 comment 6531355859.
+- AEGIS-06: review pending; principal, authorization, broker and audit contract remains owner-controlled.
+- ATLAS-01: review pending; system service activation, packaging and reverse-DNS ownership remain open.
