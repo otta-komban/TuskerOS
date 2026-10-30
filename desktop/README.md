@@ -67,6 +67,22 @@ node --check desktop/panel-template/contents/layout.js
 
 The panel-template validator checks the layout-template service metadata, required native launcher/task-manager widgets, bottom-panel intent and absence of selected destructive panel operations. These are static checks only: they do not establish that the installed Plasma build accepts the metadata or widget IDs. Automated static CI is implemented; Fedora/Plasma runtime validation remains pending.
 
+## Desktop settings recovery
+
+Check the user settings file without printing its values:
+
+```sh
+python -m desktop.tools.settings_recovery check
+```
+
+Restore schema-v1 defaults only with explicit confirmation:
+
+```sh
+python -m desktop.tools.settings_recovery reset --yes
+```
+
+Use `--config /path/to/desktop.json` to target a specific file. The command defaults to the XDG user config location, reports validation errors without echoing file contents, and refuses symlink destinations. Reset replaces the file; back it up first if its current values may be needed. See [the settings contract](config/README.md).
+
 ## Initial source references
 
 - [Plasma QML API](https://develop.kde.org/docs/plasma/widget/plasma-qml-api/)
