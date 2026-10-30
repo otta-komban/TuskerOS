@@ -48,6 +48,7 @@
 - [x] Publish privileged-operations release gate with cross-agent evidence owners and mandatory negative-test acceptance criteria.
 - [x] Perform JSON syntax and fixture-internal structural audit; Draft 2020-12 validation and runtime execution remain pending.
 - [x] Review all four main-only commits and document the net-zero revert sequence; no merge/rebase performed.
+- [x] Record proposed broker integration defaults and explicit owner-response checklist; decisions remain unaccepted pending NEXUS-07.  
 - [ ] Record remaining accepted architecture decisions and unresolved contract blockers.
 
 ## Exit evidence
@@ -62,4 +63,5 @@
 ## Integration tracking
 
 - [x] Review `main`-only divergence commits and document findings in `security/MAIN_BRANCH_DIVERGENCE_REVIEW.md`.
-- [ ] Obtain NEXUS-07 authorization/broker implementation decisions before freezing privileged runtime contracts.
+- [ ] Obtain NEXUS-07 authorization/broker implementation decisions before freezing privileged runtime contracts.  
+- [x] Publish `security/BROKER_INTEGRATION_DECISIONS.md` with proposed (not accepted) defaults for authorization evidence, atomic consume, registry ownership, IPC identity and UNKNOWN/idempotency.
