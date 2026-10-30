@@ -106,3 +106,6 @@
 - [ ] **C0044 — FORGE-09 re-review:** reason_code remains optional in Python transition/history validation despite schema requirement for rejected/cancelled events; follow-up posted on issue #29 (comment 6534092148). Await FORGE-owned fix and re-review; no cross-branch edits or test claims.
 
 - [x] **C0049 — NEXUS-07 public invocation schema re-review:** verified the public schema now omits caller-reachable `authorization_context` and rejects undeclared fields; posted issue #17 comment 6534567960. Remaining: stale public example still includes the field; add explicit smuggling-negative and trusted-context positive tests, define typed broker-internal injection/consume API, and provide authenticated peer/principal binding plus consume-before-dispatch runtime evidence. Source review only; no NEXUS files changed or tests executed.
+
+
+- [ ] **AISEC-007 — Model manifest path boundary:** constrain `files[].filename` to safe relative paths; reject traversal/absolute/drive/backslash forms, duplicate names and target-filesystem normalization collisions; add schema and runtime containment/race tests. Owner follow-up posted to ORBIT-05 issue #28 (comment 6534573189). Current finding is source-review only; no ModelStore runtime exploit or test is claimed.
