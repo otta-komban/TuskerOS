@@ -175,3 +175,17 @@ C0026 schema-registry regression coverage: the v0.2.0 candidate test suite now r
 - Positive: each of the 15 defined `event_type`/`result_status` pairs validates under audit-event v0.2.0.
 - Negative: each event type rejects a deliberately inconsistent result status.
 - The schema candidate defines the pair mapping; producer/runtime acceptance remains pending.
+
+
+## Audit lifecycle event coverage — AUD-SCHEMA-031–036 (proposed; not executed)
+
+| ID | Scenario | Expected result |
+|---|---|---|
+| AUD-SCHEMA-031 | Approval request is presented to an authenticated approver | Distinct correlated presentation event is schema-valid |
+| AUD-SCHEMA-032 | Approver dismisses a request without approving | Distinct dismissal/terminal-denial event; no authorization grant |
+| AUD-SCHEMA-033 | Approved request is invalidated or revoked before consume | Distinct invalidation/revocation event; consume is rejected |
+| AUD-SCHEMA-034 | Authorization consume succeeds or is rejected | Distinct consume-accepted/consume-rejected event with request and consumption correlation |
+| AUD-SCHEMA-035 | Consume response is lost and authority is queried | Reconciliation outcome is distinguishable from consume and execution result |
+| AUD-SCHEMA-036 | Candidate schema receives an unsupported lifecycle event type | Reject until owner-approved event name and semantics are added |
+
+These cases are proposed from SEC-SCHEMA-006. They are not implemented or executed. Do not count them as passing schema or producer tests.
