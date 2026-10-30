@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 18
-- **Latest completion:** `AEGIS-06-C0018`
+- **Verified completion count:** 19
+- **Latest completion:** `AEGIS-06-C0019`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `daaa4c6cfb854340833185e029e86cab0d6c2732`
+- **Latest log commit:** `c93f8fc9e81ddcb40bcb55dc3af7e7b51649cb9f`
 
 ## Completion index
 
@@ -195,6 +195,7 @@
 
 
 | AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger with the 18 unique JSONL completion records and verified passing branch-head schema CI | `logs/AEGIS-06.jsonl`, `logs/AEGIS-06-ledger.md` |
+| AEGIS-06-C0019 | Audit schema versioning proposal | Proposed required trusted registry_version in a separately versioned audit-event 0.2.0 envelope; owner acceptance remains pending | `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`; `security/PHASE1_CHECKLIST.md` |
 
 ## C0018 — Completion ledger reconciliation
 
@@ -226,3 +227,16 @@
 - **Result:** JSONL now contains 18 sequential records with unique IDs C0001–C0018; ledger count and latest completion updated to match.
 - **CI evidence:** The record reports workflow run 41126895122 succeeded with 32 passing tests on Python 3.12. This is schema validation evidence only, not producer, broker or privileged runtime evidence.
 - **Remaining blockers:** SEC-SCHEMA-001 runtime-owner acceptance, SEC-SCHEMA-003 audit registry-version schema decision, NEXUS-07 transport/atomic-consume implementation, and audit producer/persistence tests.
+
+
+## C0019 — Audit event registry-version schema proposal
+
+- **Completion:** 19 / 100
+- **Timestamp:** 2026-10-30T20:56:40.143Z
+- **Deliverable:** `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`.
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Proposal:** Add a required, non-empty `registry_version` sourced from the trusted immutable operation-registry snapshot in a separately versioned audit-event 0.2.0 draft. Preserve 0.1.0; do not silently default or reinterpret old events.
+- **Validation plan:** Positive 0.2.0 event with both policy and registry versions; negative missing/null/empty/overlength registry version, mixed-version payloads, and existing UUID/date-time/digest/unknown-field cases.
+- **Status:** Proposal only. The 0.1.0 audit schema remains unchanged; no producer migration, persistence, or runtime enforcement is claimed.
+- **Blocker:** NEXUS-07/TUSKER-04 must accept the trusted registry-version source and producer migration before a 0.2.0 schema and producer tests are implemented.
+- **Proposal commit:** `79e83d4b596a2b979036ee2528e55463b4ba39d5`; **checklist commit:** `d776bec5d485d7fee79bbff93bfd79b318b4c2f5`; **JSONL commit:** `c93f8fc9e81ddcb40bcb55dc3af7e7b51649cb9f`.
