@@ -1,7 +1,7 @@
 # TuskerOS Security Contracts
 
 **Owner:** AEGIS-06  
-**Contract version:** 0.1.0-draft  
+**Contract version:** 0.1.0-draft (schema set and policy spec published)  
 **Status:** Proposed for cross-agent review; not yet an implementation guarantee
 
 ## 1. Normative language
@@ -30,7 +30,7 @@ A caller submits a typed proposal, never an arbitrary shell command.
 | idempotency_key | string | Required for mutating operations |
 | requested_at | timestamp | Informational only; never trusted for freshness |
 
-The transport adapter MUST derive principal and authenticated origin from trusted OS/session context. It MUST ignore any principal or origin asserted by untrusted payload fields.
+The transport adapter MUST derive principal and authenticated origin from trusted OS/session context and pass them separately from the proposal. The proposal schema rejects extra fields, including principal and origin. Every registered action, including read-only actions, MUST pass through policy evaluation; registered low-risk reads may be automatically allowed within explicit scope.
 
 ## 4. Policy decision
 
@@ -44,7 +44,7 @@ Policy evaluation returns one of DENY, REQUIRE_APPROVAL, or ALLOW.
 | reason_code | string | Stable machine-readable reason |
 | risk_class | enum | R0–R5, assigned by policy |
 | policy_version | string | Exact policy revision |
-| action_digest | string | Digest of canonical action, arguments and resources |
+| action_digest | string | SHA-256 digest over RFC 8785 JCS canonicalized action, arguments, resolved resources, principal binding, schema and policy/registry version |\n| principal_binding | string | SHA-256 binding to authenticated principal/session context |
 | evaluated_at | timestamp | Trusted service time |
 | expires_at | timestamp/null | Short expiry for ALLOW authorization |
 | approval_request_id | UUID/null | Required for REQUIRE_APPROVAL |
@@ -124,6 +124,6 @@ Retries MUST re-enter policy evaluation; they MUST NOT reuse stale approval or a
 - FORGE-09: extension identity, capability manifest, sandbox profile and revocation.
 - ATLAS-01: OS users/groups, Polkit actions, systemd and SELinux packaging.
 
-## 11. Compatibility gate
+## 11. Machine-readable artifacts\n\nDraft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, and audit-event.schema.json. The deterministic evaluation and canonicalization rules are in security/POLICY_ENGINE_SPEC.md. Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately.\n\n## 12. Compatibility gate
 
 No agent should implement a privileged integration based on this draft alone without confirming field names, identity provenance, canonicalization, expiry semantics, and error behavior with AEGIS-06. Contract changes require version increment and test updates.
