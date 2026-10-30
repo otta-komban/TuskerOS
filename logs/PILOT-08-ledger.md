@@ -31,3 +31,12 @@ Target: 100 actual assistant responses (C0001–C0100)
 ## Continuity rules
 
 Append one JSON object per actual assistant response to `logs/PILOT-08.jsonl`. Never fabricate, backfill, or reset counts. Keep this ledger reconciled with the JSONL log. Commit log updates at least every five responses and at handover/session end.
+
+## C0008 addendum
+
+- Completion: PILOT-08-C0008
+- Coverage package: `remote-control/verification/CONTRACT-COVERAGE-AND-CHANGE-CONTROL.md`
+- Commit: `315854c27d40544d29218f77507e1dc35df5e247`
+- Coverage: 72 scenario IDs mapped; static traceability only; no tests executed.
+- Change control: change classes, owner review sequence, versioning and change proposal template documented.
+- Status: NO-GO; cross-agent approvals remain outstanding.
