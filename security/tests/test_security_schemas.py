@@ -536,7 +536,7 @@ def test_policy_decision_require_approval_requires_request_and_has_no_grant():
         approval_request_id="123e4567-e89b-12d3-a456-426614174022",
         authorization_ref=None,
     )
-    assert list(policy_validator().iter_errors(decision))
+    assert list(policy_validator().iter_errors(decision)) == []
 
 
 def test_policy_decision_require_approval_rejects_missing_request_id():
@@ -568,7 +568,7 @@ def test_policy_decision_deny_has_no_expiry_approval_or_authorization():
         approval_request_id=None,
         authorization_ref=None,
     )
-    assert list(policy_validator().iter_errors(decision))
+    assert list(policy_validator().iter_errors(decision)) == []
 
 
 @pytest.mark.parametrize(
