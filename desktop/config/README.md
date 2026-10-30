@@ -49,3 +49,14 @@ Schema v1 is an initial desktop-owned contract, not yet a cross-agent integratio
 
 
 Regression coverage includes malformed root values, unsupported schema versions, and dangling symlinks; dangling links are checked before missing-file handling so they cannot silently appear absent.
+
+
+## Machine-readable schema
+
+`settings.schema.json` publishes the same schema-v1 shape as a JSON Schema Draft 2020-12 artifact for editor completion and external tooling. The runtime Python validator remains authoritative for application loading and persistence; the JSON Schema does not replace it. Partial objects are valid by design, omitted values use runtime defaults, and unknown keys are rejected. The standard-library regression tests compare the schema's defaults, keys, version and enum constraints with `DEFAULT_SETTINGS`.
+
+Run the consistency tests with:
+
+```sh
+python -m unittest desktop.tests.test_settings_schema -v
+```
