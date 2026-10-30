@@ -14,7 +14,7 @@
 - User data and configuration must not be stored in disposable image/build paths.
 - Core OS updates and recovery must remain possible when network access, Tusker runtime, model registry or extension ecosystem is unavailable.
 
-## 2. Package layers
+## 2. Base installation profiles and hardware tiers\n\nThe product hardware tiers are 4 GB low-end, 8 GB standard and 16 GB+ powerful systems. These are capability-planning tiers, not performance certifications. Keep the base desktop lean; local model runtimes, developer toolchains and remote-control remain optional. See [HARDWARE-COMPATIBILITY.md](HARDWARE-COMPATIBILITY.md) for the required hardware matrix, test classes and support-claim rules.\n\nBase package profiles:\n- **Minimal desktop:** Fedora core, KDE Plasma/Wayland, network/storage/firmware/audio essentials and diagnostics; no model runtime or developer SDK.\n- **Recommended desktop:** minimal desktop plus curated common desktop applications and utilities.\n- **Optional bundles:** AI runtime, developer tools, remote control and additional applications, each independently installable/disableable/removable.\n\n## 3. Package layers
 
 Package composition is separated into logical layers. The exact RPM list is deferred until NOVA-02 and NEXUS-07 confirm dependencies and the image POC validates package names in Fedora 44.
 
@@ -36,7 +36,7 @@ Package layer requirements:
 - Package removal must not remove essential boot, login, networking, recovery, or security components.
 - Tusker package removal/disable must not remove shared system dependencies still required by KDE or Fedora.
 
-## 3. Package and repository policy
+## 4. Package and repository policy
 
 - Fedora official repositories are the default source.
 - No third-party repository is enabled by default until an ADR records its maintainer, signing key trust, package scope, update policy, licensing and failure/disable procedure.
@@ -47,7 +47,7 @@ Package layer requirements:
 - Separate runtime package dependencies from build-only dependencies; do not include compilers/toolchains in the final base unless justified.
 - Produce an SBOM and package/license inventory for release artifacts where tooling permits.
 
-## 4. Filesystem and state boundaries
+## 5. Filesystem and state boundaries
 
 Provisional mutable Fedora layout:
 - /usr: vendor/system packages and read-only-by-convention files managed by RPM.
@@ -61,7 +61,7 @@ Provisional mutable Fedora layout:
 
 If bootc is selected later, re-evaluate the contract for read-only deployment content, /etc merge/rollback, /var persistence and system service update semantics before implementation. Do not silently apply mutable-DNF assumptions to an image-based deployment.
 
-## 5. systemd service conventions
+## 6. systemd service conventions
 
 Proposed requirements for all Tusker-owned system services:
 - Separate service accounts; no shared root-owned daemon account unless a reviewed exception exists.
@@ -76,7 +76,7 @@ Proposed requirements for all Tusker-owned system services:
 
 No actual service unit or service account name is defined here; the owning agent must supply exact identifiers.
 
-## 6. D-Bus and desktop-session boundaries
+## 7. D-Bus and desktop-session boundaries
 
 - NOVA-02 owns Plasma shell, desktop UI and user-session integration.
 - NEXUS-07 owns system capability discovery and typed system service APIs.
@@ -86,7 +86,7 @@ No actual service unit or service account name is defined here; the owning agent
 - D-Bus service activation must not create an implicit requirement for Tusker to start during login.
 - Do not expose privileged methods directly over a session bus without AEGIS-06 authorization and identity review.
 
-## 7. Polkit and privileged operations
+## 8. Polkit and privileged operations
 
 - AEGIS-06 owns the policy model, action identifiers, authorization decisions, approval semantics and audit requirements.
 - ATLAS-01 packages the approved policy/service files and validates Fedora integration after receiving the contract.
@@ -96,7 +96,7 @@ No actual service unit or service account name is defined here; the owning agent
 - Destructive install, disk, network, firmware and system settings changes require explicit, scoped authorization appropriate to the action.
 - Never encode an allow-all default rule to simplify development.
 
-## 8. Logging, diagnostics and recovery
+## 9. Logging, diagnostics and recovery
 
 - System services log to journald with useful unit names and structured metadata where practical.
 - Secrets, access tokens, model prompts, private file contents and personal data must not be written to routine system logs.
@@ -105,7 +105,7 @@ No actual service unit or service account name is defined here; the owning agent
 - Recovery/installer must not select destructive storage targets by enumeration order; PHOENIX-10 and NEXUS-07 own the exact identity contract.
 - Package/update failures must leave the prior bootable OS or a documented recovery path; the exact mechanism depends on the update model decision.
 
-## 9. Cross-agent questions
+## 10. Cross-agent questions
 
 ### NOVA-02
 - Confirm KDE Plasma version/session package requirements for Fedora 44.
@@ -128,7 +128,7 @@ No actual service unit or service account name is defined here; the owning agent
 - Confirm Secure Boot, UEFI, partition and first-boot requirements.
 - Confirm image metadata, signing, checksums, SBOM and release-channel expectations.
 
-## 10. Review status
+## 11. Review status
 
 - [ ] NOVA-02 reviewed and confirmed.
 - [ ] NEXUS-07 reviewed and confirmed.
