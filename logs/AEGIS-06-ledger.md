@@ -7,16 +7,17 @@
 
 ## Current state
 
-- **Verified completion count:** 1
-- **Latest completion:** `AEGIS-06-C0001`
+- **Verified completion count:** 2
+- **Latest completion:** `AEGIS-06-C0002`
 - **Current phase:** P0 discovery / P1 architecture — in progress
-- **Latest log commit:** `3abf98c724e0bc6c98af3ea5c55a90db6fca901a`
+- **Latest log commit:** `72ae5166fb8143b2fc1e8f21f77a76d6c7f3bfe7`
 
 ## Completion index
 
 | ID | Category | Summary | Evidence |
 |---|---|---|---|
 | AEGIS-06-C0001 | Design | Repository intake; initial threat model, security architecture and Phase 1 checklist | `security/THREAT_MODEL.md`, `security/SECURITY_ARCHITECTURE.md`, `security/PHASE1_CHECKLIST.md` |
+| AEGIS-06-C0002 | Architecture | Drafted security contracts, test matrix and cross-agent review issues | `security/SECURITY_CONTRACTS.md`, `security/SECURITY_TEST_MATRIX.md` |
 
 ## Operating rules
 
