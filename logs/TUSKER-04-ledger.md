@@ -31,6 +31,13 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 Current verified response count: 15  
 Current completion sequence: TUSKER-04-C0015  
-JSONL audit: 15 physical lines, 14 unique completion IDs; C0009 is duplicated and both append-only records are preserved.  
+JSONL audit: 15 physical lines, 15 unique completion IDs; the duplicate C0009 replay was removed, retaining the original full canonical record.  
 C0011 has exactly one canonical ledger row; duplicate Markdown ledger rows from the previous update were consolidated.  
 Branch: 04-tusker-core. Ahead/behind figures are refreshed after this ledger commit.
+
+
+## C0015 log integrity repair
+
+- Removed the second C0009 replay because it duplicated an already-recorded assistant response; retained the first, fuller canonical C0009 record unchanged.
+- Active JSONL integrity: 15 physical records; 15 unique completion IDs; sequences 1–15 contiguous.
+- This log hygiene correction does not change the completion count or engineering status.
