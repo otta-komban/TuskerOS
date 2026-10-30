@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from desktop.config.settings import DEFAULT_SETTINGS, load_settings, save_settings, validate_settings
@@ -79,6 +80,29 @@ class SettingsTests(unittest.TestCase):
         self.path.symlink_to(target)
         with self.assertRaises(ValueError):
             save_settings(self.path, {})
+
+    def test_save_fsyncs_file_and_parent_directory(self) -> None:
+        original_fsync = os.fsync
+        with patch("desktop.config.settings.os.fsync", wraps=original_fsync) as fsync:
+            save_settings(self.path, {"panel": {"icon_size": 64}})
+        self.assertEqual(fsync.call_count, 2)
+
+    def test_save_closes_temporary_file_when_file_fsync_fails(self) -> None:
+        descriptors: list[int] = []
+
+        def fail_fsync(descriptor: int) -> None:
+            descriptors.append(descriptor)
+            raise OSError("simulated file sync failure")
+
+        with patch("desktop.config.settings.os.fsync", side_effect=fail_fsync):
+            with self.assertRaisesRegex(OSError, "simulated file sync failure"):
+                save_settings(self.path, {"panel": {"icon_size": 64}})
+
+        self.assertEqual(len(descriptors), 1)
+        with self.assertRaises(OSError):
+            os.fstat(descriptors[0])
+        self.assertFalse(self.path.exists())
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.*")), [])
 
     def test_duplicate_top_level_json_keys_fall_back_to_defaults(self) -> None:
         self.path.parent.mkdir(parents=True)
