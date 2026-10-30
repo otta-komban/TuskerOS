@@ -80,3 +80,28 @@ Reviewed owner-authored drafts:
 - `system-integration/contracts/tool-invocation.schema.json`, `tool-result.schema.json`, `tool-descriptor.schema.json`, and `system-integration/INTERFACE_CONTRACTS.md` (NEXUS-07, provisional draft v0.2).
 
 This is a design reconciliation only. No transport adapter, policy client, broker consume call, executor, integration test, or CI pass is claimed.
+
+
+## 7. AEGIS-06 approval and consume semantics — owner-confirmed
+
+AEGIS-06 answered the approval-handoff and typed-outcome questions in issue #16 (comment [6533203333](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6533203333)). The following are now confirmed semantic requirements; they do not define a transport or wire schema:
+
+1. Initial policy evaluation that requires approval returns `REQUIRE_APPROVAL`, a non-null `approval_request_id`, and null `authorization_ref`. This state is non-authorizing.
+2. An authenticated eligible approver may transition the request from `PENDING` to `APPROVED`. AEGIS then re-evaluates the exact proposal against current principal/session, operation, canonical arguments/resources, policy and registry versions, preconditions, expiry and relevant security posture.
+3. If all bindings remain valid, AEGIS issues a fresh `ALLOW` with a new opaque `authorization_ref` and short expiry. If a material binding changed, the request is `INVALIDATED` and no ALLOW is issued.
+4. The broker MUST NOT consume `approval_request_id`; it is a correlation/lookup identifier, not a bearer capability. It consumes only the fresh `authorization_ref`. Issuing the fresh reference invalidates any earlier unconsumed reference for that request; consumed references are never reissued and terminal approval requests are not reopened.
+5. The consume result taxonomy is: `CONSUMED` (unique `consumption_id` plus narrow grant), `NOT_APPROVED`, `DENIED`, `EXPIRED`, `REVOKED`, `INVALIDATED`, `ALREADY_CONSUMED`, `BINDING_MISMATCH`, `CALLER_UNAUTHORIZED`, `AUTHORITY_UNAVAILABLE`, `IDENTITY_UNAVAILABLE`, `CLOCK_UNCERTAIN`, `AUDIT_UNAVAILABLE`, and `CONSUME_OUTCOME_UNKNOWN`.
+6. Every outcome except `CONSUMED` returns no grant and permits zero new handler calls. `ALREADY_CONSUMED` and `CONSUME_OUTCOME_UNKNOWN` require reconciliation, never blind retry.
+7. Required pre-dispatch audit evidence and one-time consume state must be durably committed before the authority returns `CONSUMED`/grant. If required audit cannot be committed, return `AUDIT_UNAVAILABLE`, do not commit consumption, and issue no grant. The broker must also persist dispatch intent and required dispatch-start audit before invoking a handler. A disconnect after possible dispatch remains UNKNOWN and is reconciled using the same consumption/execution identity and operation idempotency key.
+
+### Updated Core handling
+
+| Owner outcome | Core adapter behavior | New handler calls |
+|---|---|---:|
+| Fresh ALLOW after approved request | Validate exact original proposal and current trusted bindings; pass only the new opaque authorization reference to the approved NEXUS/broker boundary | Still blocked until broker consume succeeds |
+| NOT_APPROVED / DENIED / EXPIRED / REVOKED / INVALIDATED / BINDING_MISMATCH / CALLER_UNAUTHORIZED / IDENTITY_UNAVAILABLE / CLOCK_UNCERTAIN / AUTHORITY_UNAVAILABLE / AUDIT_UNAVAILABLE | Fail closed; retain safe typed outcome; do not dispatch | 0 |
+| ALREADY_CONSUMED | Reconcile the original consumption/execution; never replay the reference | 0 new calls |
+| CONSUME_OUTCOME_UNKNOWN | Query/reconcile by the original consumption/execution identity and idempotency key; do not infer unused | 0 new calls until resolved |
+| CONSUMED | Continue only with the narrow grant and the broker's persisted dispatch-intent/audit gate | At most the single authorized execution |
+
+**Still open:** NEXUS-07 must publish the strict authorization context, trusted peer injection, atomic consume request/response, typed transport errors, durable consumption/execution identity, and restart-safe reconciliation contract. No runtime implementation or executable conformance test is claimed.
