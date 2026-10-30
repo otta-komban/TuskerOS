@@ -3,12 +3,13 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0001
+- Current recorded completion: C0002
 - Current phase: P0/P1 intake and architecture foundation
 
 | Completion | Phase | Category | Summary | Evidence | Status |
 |---|---|---|---|---|---|
 | FORGE-09-C0001 | P0/P1 | design | Located and reviewed the master execution blueprint; verified branch existence and inspected LICENSE; drafted initial ecosystem architecture, extension contract, manifest schema, metadata-only example and validator. | `docs/DEVELOPER_ECOSYSTEM_ARCHITECTURE.md`; `docs/EXTENSION_CONTRACT.md`; `sdk/`; `logs/FORGE-09.jsonl` | partial |
+| FORGE-09-C0002 | P2 | implementation | Added marketplace catalog contract and fixture, developer bundle schema and Python bundle proposal, lifecycle/governance docs; performed eight in-memory validator behavior checks. | `marketplace/`; `bundles/`; `docs/MARKETPLACE_AND_BUNDLES.md` | partial |
 
 ## Phase checklist
 
@@ -33,9 +34,9 @@
 ### P2 — Foundation
 - [x] Add initial SDK schema and validator skeleton.
 - [ ] Add automated positive/negative validator tests (added; execution pending).
-- [ ] Add marketplace catalog fixtures and package metadata model.
+- [x] Add marketplace catalog fixture and package metadata schema (initial proposal).
 - [ ] Add dependency graph resolver and install-plan preview.
-- [ ] Add bundle manifest schema and catalog skeleton.
+- [x] Add developer bundle manifest schema and initial Python bundle proposal.
 
 ### P3 — Working MVP
 - [ ] Implement safe package transaction adapter and explicit preview/approval flow.
@@ -68,3 +69,13 @@
 - Branch inspection confirmed `LICENSE` is present. `README.md` and the expected `coordination/` registry, master spec, architecture, contracts, ownership, communication, decisions, progress, test strategy, release plan and handover files were not found on this branch at intake. The planning blueprint is available in the Project Library.
 - Manifest and permission vocabulary are provisional. The sample is metadata-only and is not represented as a runnable sandboxed extension.
 - Automated unittest coverage was added in `sdk/tests/test_validate_manifest.py`; tests have not yet been executed. A checkout attempt failed because this execution environment could not resolve github.com, so test execution remains pending. The sample remains metadata-only and is not a live runtime extension. Cross-agent contract review is tracked in https://github.com/otta-komban/TuskerOS/issues/7.
+
+
+### Session 2 — marketplace and bundle foundation
+- [x] Define marketplace catalog metadata separately from trust decisions.
+- [x] Add a catalog fixture with pending/unverified trust state.
+- [x] Define declarative developer bundle schema and initial Python profile.
+- [x] Document install lifecycle, review governance, and package ownership safeguards.
+- [x] Run eight in-memory positive/negative checks against a local reconstruction of the validator rules; this is not equivalent to executing the committed unittest suite.
+- [ ] Execute committed tests in a working repository checkout.
+- [ ] Validate Fedora package availability with ATLAS-01 before declaring Python bundle release-ready.
