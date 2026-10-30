@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/package-transaction-audit-event.schema.json",
+  "title": "TuskerOS Package Transaction Audit Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transaction_id", "timestamp", "actor", "event", "plan_digest", "snapshot_digest", "outcome", "details"],
+  "properties": {
+    "transaction_id": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "actor": {"type": "string", "minLength": 1},
+    "event": {"type": "string", "minLength": 1},
+    "plan_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "snapshot_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "outcome": {"type": "string", "minLength": 1},
+    "details": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "package_count": {"type": "integer", "minimum": 0},
+        "reason_code": {"type": "string", "maxLength": 128},
+        "error_code": {"type": "string", "maxLength": 128},
+        "rollback_status": {"enum": ["not_required", "rolled_back", "rollback_failed", "partial"]},
+        "duration_ms": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
