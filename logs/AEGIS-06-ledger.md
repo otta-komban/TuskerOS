@@ -7,12 +7,15 @@
 
 ## Current state
 
-- **Verified completion count:** 31
-- **Latest completion:** `AEGIS-06-C0031`
+- **Verified completion count:** 32
+- **Latest completion:** `AEGIS-06-C0032`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `d9907a79c64c50a1cbebcbf7d8b6eba4760e8cfb`
+- **Latest log commit:** `bfaa9b8498c8637e88aa0ce8a66964246105a50d`
 
 ## Completion index
+
+| AEGIS-06-C0032 | Cross-agent security code review | Found Python transaction validator accepts rejected/cancelled transitions and persisted history without `reason_code`, while the matching JSON Schema requires it; requested fix and tests | FORGE-09 source review; issue #29 comment 6533829371 |
+
 
 | AEGIS-06-C0027 | Integration security review | Reviewed FORGE-09 package transaction approval/rollback boundary and supplied AEGIS security decisions | Issue #29 comment 6533750815 |
 | AEGIS-06-C0028 | Security schema regression coverage | Added 13 negative registry-unavailable lifecycle cases; CI passed 67 tests | Actions run 41130628432; test commit `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8` |
