@@ -18,7 +18,9 @@
     "policy_version",
     "action_digest",
     "result_status",
-    "correlation_id"
+    "correlation_id",
+    "task_id",
+    "step_id"
   ],
   "properties": {
     "schema_version": {
