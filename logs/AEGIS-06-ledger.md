@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 37
-- **Latest completion:** `AEGIS-06-C0037`
+- **Verified completion count:** 38
+- **Latest completion:** `AEGIS-06-C0038`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `f1c0cf02d5a0c2600d035d6ba4f0382e5fe8a1eb`
+- **Latest log commit:** `8ae5f14da242e0f9e4e924d47ba9b27ca8b86a71`
 
 ## Completion index
 
@@ -434,3 +434,19 @@
 - **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
 
 **Index integrity:** Removed 17 duplicate index rows for C0008–C0024, retaining the first detailed entry for each. The completion index now has one row per ID C0001–C0037.
+
+| AEGIS-06-C0038 | remote-device-security-contract | Issued AEGIS owner decisions for PILOT-08 DEC-AEG-001..008; defined device-bound sessions, local-only approval, revocation, transport, policy and audit requirements; extended candidate remote audit bindings and passed 124 schema tests | security/REMOTE_DEVICE_SECURITY_CONTRACT.md; issue #13 comment 6534005612; audit-event v0.2.0 schema and regression tests; CI run 41132519531 |
+
+## C0038 — Remote device and session security contract
+
+- **Completion:** 38 / 100
+- **Timestamp:** 2026-10-30T21:39:20.556Z
+- **Owner decisions:** Published `security/REMOTE_DEVICE_SECURITY_CONTRACT.md` and answered PILOT-08 issue #13 (comment 6534005612) with explicit ACCEPT for DEC-AEG-001..007 and DEFER/DISABLED FOR MVP for DEC-AEG-008.
+- **Device identity/pairing:** Per-device Ed25519 key pair held in OS-protected secure storage; 256-bit one-time pairing challenge, 5-minute expiry, maximum 5 proof attempts, local owner confirmation and transcript fingerprint.
+- **Sessions/transport:** Device-key-bound HTTP Message Signatures (RFC 9421) with RFC 9530 body digest, 8-hour absolute/15-minute idle lifetime, 60-second signature lifetime, 2-minute nonce replay cache, TLS 1.2 minimum, loopback default and explicit private-network opt-in.
+- **Authorization:** Every remote read and mutation passes AEGIS policy; trusted principal/origin/device/session are adapter-derived; ALLOW max 30 seconds and revalidated at broker consume; remote approvals disabled for MVP.
+- **Revocation/audit:** Durable revocation blocks new requests, closes active WSS within 1 second, and preserves UNKNOWN/reconciliation semantics for dispatched operations. Candidate audit-event v0.2.0 requires `device_binding` and `session_binding` digests when `origin=remote`; active v0.1.0 unchanged.
+- **Regression tests:** Added 13 positive/negative remote audit-binding cases. GitHub Actions run 41132519531, job 124326757848, passed **124 tests in 4.79s**.
+- **Commits:** Contract `9fbb284fefc2afa2144b691b49aeb551ba55ec68`; schema `4b034f0a88a4c0ed5c8a49f8a244314b1aa3f524`; tests `accc6649558f737d157ff5591712ad37f2385bd8`; JSONL `8ae5f14da242e0f9e4e924d47ba9b27ca8b86a71`.
+- **Branch status:** Before log append, `06-security-gatekeeper` was 237 commits ahead and 0 behind `main`; no merge/rebase performed.
+- **Blockers:** PILOT-08 transport/pairing/session runtime; TUSKER-04 trusted context and task adapter; NEXUS-07 atomic broker consume; NOVA-02 local confirmation/revocation UI; ATLAS-01 OS secure storage/service hardening. Candidate audit v0.2.0 remains a draft; no remote runtime, durable audit producer or broker integration was tested.
