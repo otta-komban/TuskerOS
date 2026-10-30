@@ -31,9 +31,11 @@
 - [x] Draft cancellation, compensation, quarantine and recovery semantics.
 - [x] Publish draft JSON Schema 2020-12 envelopes for action proposal, policy decision, approval request, audit event and operation registration.  
 - [x] Publish language-neutral policy conformance vectors; execution remains pending.
+- [x] Publish authorization lifecycle and broker conformance vectors; execution remains pending.
 - [x] Publish deterministic risk classification, fail-closed evaluation and canonical digest specification.
 - [x] Obtain TUSKER-04 acceptance of proposal/decision field semantics and RFC 8785 + SHA-256 binding as the integration baseline; transport remains open.
-- [ ] Agree tool registration and execution contracts with NEXUS-07.  
+- [ ] Agree tool registration and execution contracts with NEXUS-07.
+- [x] Expand security test matrix for atomic approval consumption, replay, concurrency and unknown broker outcomes.  
 - [ ] Confirm operation registry schema, ownership, versioning and review process with NEXUS-07.
 - [ ] Agree remote principal/session and approval binding with PILOT-08.
 - [ ] Agree extension capability and sandbox manifest with FORGE-09.
