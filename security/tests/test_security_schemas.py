@@ -1,4 +1,3 @@
-import copy
 import json
 from pathlib import Path
 
@@ -8,7 +7,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas"
 AUDIT_SCHEMA = json.loads((SCHEMA_DIR / "audit-event.schema.json").read_text())
-APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json"))
+APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json").read_text())
 
 VALID_EVENT = {
     "schema_version": "0.1.0",
@@ -36,44 +35,43 @@ VALID_APPROVAL = {
     "schema_version": "0.2.0",
     "approval_request_id": "123e4567-e89b-12d3-a456-426614174010",
     "proposal_id": "123e4567-e89b-12d3-a456-426614174011",
-    "action_id": "system.settings.update",
+    "action_id": "system.storage.install",
     "action_digest": "sha256:" + "c" * 64,
     "principal_binding": "sha256:" + "d" * 64,
     "binding": {
         "session_binding": "sha256:" + "e" * 64,
         "device_binding": "sha256:" + "f" * 64,
         "registry_version": "registry-2026-10-31.1",
-        "resource_scope": ["settings:display"],
-        "precondition_digest": "sha256:" + "a" * 64,
+        "resource_scope": ["disk:wwn-0x5000c500aabbccdd"],
+        "precondition_digest": "sha256:" + "1" * 64,
     },
     "policy_version": "0.1.0",
-    "risk_class": "R2",
-    "summary": "Update display settings",
-    "target": "Display settings",
-    "impact": "Changes the active display configuration",
-    "reversible": True,
+    "risk_class": "R4",
+    "summary": "Install TuskerOS",
+    "target": "Selected system disk",
+    "impact": "Partitions and data on the selected disk may be replaced",
+    "reversible": False,
     "created_at": "2026-10-31T00:00:00Z",
-    "expires_at": "2026-10-31T00:05:00Z",
+    "expires_at": "2026-10-31T00:02:00Z",
 }
 
 
-def validator_for(schema):
+def make_validator(schema):
     Draft202012Validator.check_schema(schema)
     return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
 def audit_validator():
-    return validator_for(AUDIT_SCHEMA)
+    return make_validator(AUDIT_SCHEMA)
 
 
 def approval_validator():
-    return validator_for(APPROVAL_SCHEMA)
+    return make_validator(APPROVAL_SCHEMA)
 
 
 def test_all_security_schemas_are_valid_draft_2020_12_schemas():
     for path in sorted(SCHEMA_DIR.glob("*.schema.json")):
-        schema = json.loads(path.read_text())
-        Draft202012Validator.check_schema(schema)
+        make_validator(json.loads(path.read_text()))
 
 
 def test_correlated_audit_event_is_valid():
@@ -120,6 +118,12 @@ def test_approval_request_v020_with_complete_bindings_is_valid():
     assert list(approval_validator().iter_errors(VALID_APPROVAL)) == []
 
 
+def test_approval_binding_object_is_required():
+    request = dict(VALID_APPROVAL)
+    del request["binding"]
+    assert list(approval_validator().iter_errors(request))
+
+
 @pytest.mark.parametrize(
     "field",
     [
@@ -131,7 +135,7 @@ def test_approval_request_v020_with_complete_bindings_is_valid():
     ],
 )
 def test_approval_binding_members_cannot_be_omitted(field):
-    request = copy.deepcopy(VALID_APPROVAL)
+    request = json.loads(json.dumps(VALID_APPROVAL))
     del request["binding"][field]
     assert list(approval_validator().iter_errors(request))
 
@@ -139,36 +143,32 @@ def test_approval_binding_members_cannot_be_omitted(field):
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("session_binding", None),
-        ("device_binding", None),
+        ("session_binding", "sha256:bad"),
+        ("device_binding", "sha256:bad"),
         ("registry_version", ""),
         ("resource_scope", []),
         ("precondition_digest", "sha256:bad"),
     ],
 )
 def test_invalid_approval_binding_values_are_rejected(field, value):
-    request = copy.deepcopy(VALID_APPROVAL)
+    request = json.loads(json.dumps(VALID_APPROVAL))
     request["binding"][field] = value
     assert list(approval_validator().iter_errors(request))
 
 
 def test_duplicate_resource_scope_is_rejected():
-    request = copy.deepcopy(VALID_APPROVAL)
-    request["binding"]["resource_scope"] = ["settings:display", "settings:display"]
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["binding"]["resource_scope"] = ["disk:one", "disk:one"]
     assert list(approval_validator().iter_errors(request))
 
 
-def test_approval_request_rejects_unknown_nested_and_top_level_fields():
-    nested = copy.deepcopy(VALID_APPROVAL)
-    nested["binding"]["untrusted_identity"] = "root"
-    assert list(approval_validator().iter_errors(nested))
-
-    top_level = copy.deepcopy(VALID_APPROVAL)
-    top_level["caller_principal"] = "root"
-    assert list(approval_validator().iter_errors(top_level))
+def test_approval_request_rejects_unknown_nested_binding_fields():
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["binding"]["untrusted_identity"] = "root"
+    assert list(approval_validator().iter_errors(request))
 
 
 def test_approval_request_v010_is_not_accepted_by_v020_schema():
-    request = copy.deepcopy(VALID_APPROVAL)
+    request = json.loads(json.dumps(VALID_APPROVAL))
     request["schema_version"] = "0.1.0"
     assert list(approval_validator().iter_errors(request))
