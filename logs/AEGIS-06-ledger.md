@@ -166,6 +166,7 @@
 - **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0015.
 
 | AEGIS-06-C0014 | Schema validation CI | Added Draft 2020-12 validation and audit-event positive/negative tests; CI passed 17 tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
+| AEGIS-06-C0015 | Approval-binding lifecycle crosswalk | Reconciled lifecycle binding requirements with the concurrent 0.2.0 draft and documented trust, compatibility and consume-time review criteria | `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md` |
 | AEGIS-06-C0016 | Approval handoff contract | Defined fresh post-approval ALLOW + opaque authorization reference, typed consume outcomes and conformance cases; answered TUSKER-04's AEGIS-owned questions | security/AUTHORIZATION_LIFECYCLE.md; security/BROKER_CONTRACT.md; security/AUTHORIZATION_TEST_VECTORS.json; security/SECURITY_TEST_MATRIX.md |
 
 ## C0016 — Approval handoff and typed consume outcomes
@@ -206,7 +207,6 @@
 - **Branch-head CI:** Run [41126895122](https://github.com/otta-komban/TuskerOS/actions/runs/41126895122) succeeded; 32 tests passed in 0.51s.
 - **Reason:** Concurrent branch updates briefly left the readable ledger one completion behind the machine log; the ledger now includes this reconciliation.
 
-| AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger with the verified JSONL history after concurrent branch updates | logs/AEGIS-06.jsonl; logs/AEGIS-06-ledger.md |
 
 ## C0018 — Progress ledger reconciliation
 
@@ -218,7 +218,6 @@
 - **Open blockers:** SEC-SCHEMA-001 runtime-owner acceptance; SEC-SCHEMA-003 audit `registry_version` decision; NEXUS-07 transport/atomic-consume implementation; audit producer/persistence tests.
 
 
-| AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger against the sequential JSONL record and current CI evidence | logs/AEGIS-06.jsonl; logs/AEGIS-06-ledger.md |
 
 ## C0018 — Progress ledger reconciliation
 
