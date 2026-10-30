@@ -12,8 +12,8 @@
 - Last recorded completion: **NOVA-02-C0001**
 - Current phase: **P0 — Discovery and requirements / P1 — Architecture and contracts**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
-- Implementation status: **No runnable desktop implementation yet**
-- Tests passed: **None claimed**
+- Implementation status: **Minimal Plasma 6 applet foundation committed; runtime validation pending**
+- Tests passed: **None claimed; no Plasma 6 test environment available in this session**
 
 ## Completion history
 
