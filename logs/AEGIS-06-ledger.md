@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 8
-- **Latest completion:** `AEGIS-06-C0008`
-- **Current phase:** P1 architecture / verification design — cross-agent contract closure in progress
-- **Latest log commit:** `4c060bc405daa528da731483ecf0744ef23f3247`
+- **Verified completion count:** 9
+- **Latest completion:** `AEGIS-06-C0009`
+- **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
+- **Latest log commit:** `5cc1ff689139e08aa317e0067b8c46680b7b4771`
 
 ## Completion index
 
