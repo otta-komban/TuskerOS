@@ -197,6 +197,8 @@ def build_audit_event(
             raise TransactionContractError(f"audit detail {key} must be a string or integer")
         if isinstance(value, str) and len(value) > 128:
             raise TransactionContractError(f"audit detail {key} is too long")
+        if isinstance(value, int) and value < 0:
+            raise TransactionContractError(f"audit detail {key} cannot be negative")
     return {
         "transaction_id": _text(transaction_id, "transaction_id"),
         "timestamp": _text(timestamp, "timestamp"),
