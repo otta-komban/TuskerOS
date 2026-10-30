@@ -79,3 +79,27 @@ Release versions are strict semantic versions. Compatibility bounds accept numer
 The resolver expects dependency IDs and version constraints from separately validated manifests. It supports exact semantic versions and comma-conjoined comparisons (`>=`, `>`, `<=`, `<`, `=`), intersects constraints from multiple parents, and fails closed when no candidate satisfies them. It still does not fetch artifacts, verify trust/signatures, authorize permissions or install packages. Security policy and cryptographic trust remain external requirements. See `marketplace/tools/RESOLUTION.md`.
 
 Tests: `sdk/tests/test_dependency_plan.py`, `marketplace/tests/test_catalog_resolver.py` and `marketplace/tests/test_package_ownership.py`.
+
+
+## Package transaction preview and authorization boundary
+
+`marketplace/tools/transaction_contract.py` now specifies the non-executing
+adapter boundary. A preview binds the exact package actions and versions to a
+deterministic digest of the installed-state snapshot. An external authorization
+service must issue and cryptographically verify a short-lived approval token;
+the local helper only checks its declared scope, expiry and digest claims and
+labels the result `claims_valid_unverified`. A fresh installed-state snapshot
+must match the preview immediately before any future execution. Changed state
+invalidates the preview and requires a new review/approval cycle.
+
+Rollback reporting is a data contract, not a rollback implementation. Audit
+events use a strict allow-list and are described by
+`marketplace/schemas/package-transaction-audit-event.schema.json`; a future
+adapter must provide append-only durable storage, access control, retention
+and tamper-evidence. Approval tokens, credentials and arbitrary exception
+text must never be written to audit details.
+
+No package manager is invoked by this contract. Transaction execution,
+cryptographic token verification, policy authorization, audit persistence and
+rollback remain external integration work requiring AEGIS-06 and PHOENIX-10
+agreement. A prepared preview is not executable authorization.
