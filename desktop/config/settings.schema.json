@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TuskerOS Desktop Settings",
+  "description": "Schema v1 for user-scoped desktop presentation preferences. Partial objects are accepted and omitted values use application defaults.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "description": "Settings schema version."
+    },
+    "panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "edge": { "type": "string", "enum": ["bottom", "top", "left", "right"], "default": "bottom" },
+        "icon_size": { "type": "integer", "enum": [24, 32, 40, 48, 56, 64, 72, 80, 88, 96], "default": 48 },
+        "auto_hide": { "type": "boolean", "default": false }
+      }
+    },
+    "assistant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "show_task_progress": { "type": "boolean", "default": true }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reduced_motion": { "type": "boolean", "default": false },
+        "high_contrast": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}
