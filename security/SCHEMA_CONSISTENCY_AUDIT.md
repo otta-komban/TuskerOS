@@ -108,3 +108,14 @@ The candidate requires `registry_version`, `executor_id`, and `reason_code`; the
 **Status:** Identified in C0024. No schema or producer change made. This is an unresolved design decision, not an accepted change to the v0.2.0 proposal. NEXUS-07 must define runtime registry failure/evidence behavior; TUSKER-04 must confirm event timing and correlation.
 
 **Required conformance cases (not yet executable):** request-created event before registry resolution; registry unavailable/corrupt denial with explicit non-fabricated state; successful ALLOW/CONSUMED event with concrete registry version; reject any successful/dispatch event with null or absent registry version; preserve correlated registry evidence across decision and execution.
+
+
+## SEC-SCHEMA-005 — Candidate registry-resolution semantics (C0025)
+
+The separate audit-event v0.2.0 candidate now requires `registry_status` and `registry_version` together. A trusted registry authority must supply the status; callers cannot assert it.
+
+- `resolved` requires a concrete non-empty immutable `registry_version`.
+- `unavailable` requires explicit null `registry_version` and is restricted to a request-received event (`requested`/`accepted`, null reason) or a fail-closed registry denial (`policy_denied`/`denied`, `POLICY_REGISTRY_UNAVAILABLE`).
+- Authorization, consume, dispatch and execution events cannot validate with unavailable registry status.
+
+Added Draft 2020-12 tests for both allowed unavailable-registry records and rejection of resolved/null, unavailable/versioned, unavailable/authorized and wrong-reason cases. The active v0.1.0 schema remains unchanged. This is an AEGIS-proposed schema rule; NEXUS-07/TUSKER-04 acceptance and producer integration remain open.
