@@ -78,7 +78,7 @@ def validate_report(report: Any, expected_manifest_digest: str | None = None) ->
             ids.add(check_id)
 
         status = check.get("status")
-        if status not in STATUSES:
+        if not isinstance(status, str) or status not in STATUSES:
             errors.append(f"{prefix}.status: unsupported value")
         else:
             counts[status] += 1
@@ -124,7 +124,8 @@ def validate_report(report: Any, expected_manifest_digest: str | None = None) ->
         derived = "incomplete"
     else:
         derived = "passed"
-    if report.get("overall_status") not in OVERALL or report.get("overall_status") != derived:
+    overall_status = report.get("overall_status")
+    if not isinstance(overall_status, str) or overall_status not in OVERALL or overall_status != derived:
         errors.append(f"overall_status: expected {derived}")
 
     return errors
