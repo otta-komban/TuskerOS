@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 6
+Current verified count: 7
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -15,3 +15,4 @@ Current verified count: 6
 | 6 | ATLAS-01-C0006 | P1 | implementation | partial | `image/kiwi/config.xml`, `os/FEDORA-44-KDE-PACKAGE-CANDIDATES.md`, refreshed `os/BASE-SYSTEM-CONTRACTS.md`; XML well-formedness checks passed; no KIWI build or DNF resolution; commit `620c4df0c3dfdc055e9193fedb50d480e932a25d` |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
+| 7 | ATLAS-01-C0007 | P1 | implementation | partial | Resolver rejects cross-repository ambiguity and incomplete manifest metadata; added focused unit tests (not executed); commits `757e09c`, `9c26ba5`, `2b92e9b` |
