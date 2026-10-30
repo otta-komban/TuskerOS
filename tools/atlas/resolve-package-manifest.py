@@ -56,6 +56,10 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
             raise RuntimeError(f"Invalid layer/package row: {row!r}")
         if row.get("required", "").strip().lower() not in {"true", "false"}:
             raise RuntimeError(f"required must be true or false: {row!r}")
+        if not (row.get("owner") or "").strip():
+            raise RuntimeError(f"owner must be non-empty: {row!r}")
+        if not (row.get("rationale") or "").strip():
+            raise RuntimeError(f"rationale must be non-empty: {row!r}")
         key = (layer, package)
         if key in seen:
             raise RuntimeError(f"Duplicate package in layer: {layer}/{package}")
@@ -63,6 +67,29 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
         row["package"] = package
         row["layer"] = layer
     return rows
+
+
+def parse_query_matches(output: str) -> tuple[str, str]:
+    """Return one unambiguous NEVRA/repository pair from DNF5 query output."""
+    matches = {line.strip() for line in output.splitlines() if line.strip()}
+    if not matches:
+        raise RuntimeError("no available match")
+    parsed: set[tuple[str, str]] = set()
+    for match in matches:
+        fields = match.split("\t")
+        if len(fields) != 2 or not all(field.strip() for field in fields):
+            raise RuntimeError(f"unexpected DNF5 query output row: {match!r}")
+        parsed.add((fields[0].strip(), fields[1].strip()))
+    nevras = {nevra for nevra, _repo in parsed}
+    repositories = {repo for _nevra, repo in parsed}
+    if len(nevras) != 1:
+        raise RuntimeError(f"ambiguous NEVRA results: {', '.join(sorted(nevras))}")
+    if len(repositories) != 1:
+        raise RuntimeError(
+            f"ambiguous repository results for {next(iter(nevras))}: "
+            f"{', '.join(sorted(repositories))}"
+        )
+    return next(iter(parsed))
 
 
 def main() -> int:
@@ -90,27 +117,20 @@ def main() -> int:
             "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
             "--latest-limit=1", "--qf", QUERY_FORMAT, row["package"]
         ])
-        matches = sorted({line.strip() for line in output.splitlines() if line.strip()})
-        if not matches:
-            failures.append(f"{row['layer']}/{row['package']}: no available match")
+        try:
+            nevra, repo_id = parse_query_matches(output)
+        except RuntimeError as exc:
+            failures.append(f"{row['layer']}/{row['package']}: {exc}")
             continue
-        nevras = {match.split("\t", 1)[0] for match in matches}
-        if len(nevras) != 1:
-            failures.append(
-                f"{row['layer']}/{row['package']}: ambiguous NEVRA results: {', '.join(sorted(nevras))}"
-            )
-            continue
-        for match in matches:
-            nevra, repo_id = match.split("\t", 1)
-            resolved.append({
-                "layer": row["layer"],
-                "package": row["package"],
-                "owner": row["owner"],
-                "required": row["required"].strip().lower() == "true",
-                "rationale": row["rationale"],
-                "nevra": nevra,
-                "repository_id": repo_id,
-            })
+        resolved.append({
+            "layer": row["layer"],
+            "package": row["package"],
+            "owner": row["owner"].strip(),
+            "required": row["required"].strip().lower() == "true",
+            "rationale": row["rationale"].strip(),
+            "nevra": nevra,
+            "repository_id": repo_id,
+        })
 
     if failures:
         raise RuntimeError("Package resolution failed:\n- " + "\n- ".join(failures))
