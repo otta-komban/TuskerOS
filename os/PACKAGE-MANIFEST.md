@@ -48,4 +48,4 @@ Run the focused standard-library test suite with:
 python3 -m unittest discover -s tools/atlas -p 'test_*.py' -v
 ```
 
-The tests cover empty/malformed query output, duplicate rows, multiple NEVRAs, same-NEVRA results from multiple repositories, and required manifest ownership/rationale fields. These tests do not replace a Fedora 44 DNF5 repository-resolution run.
+The tests cover empty/malformed query output, duplicate rows, multiple NEVRAs, same-NEVRA results from multiple repositories, strict CSV shape and ownership/rationale validation, mocked resolver CLI success/failure paths, and atomic output replacement/failure preservation. The CI suite currently contains 18 tests. The resolver writes to a temporary file in the destination directory, flushes it, then atomically replaces the prior output; a failed write/replace leaves an existing output intact. These tests do not replace a Fedora 44 DNF5 repository-resolution run.
