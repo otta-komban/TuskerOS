@@ -152,19 +152,18 @@
 
 
 
-## C0015 — Approval-binding lifecycle crosswalk and concurrent-change reconciliation
+## C0017 — Approval-binding lifecycle crosswalk and concurrent-change reconciliation
 
-- **Completion:** 15 / 100
-- **Timestamp:** 2026-10-30T20:52:00.570Z
+- **Completion:** 17 / 100
+- **Timestamp:** 2026-10-30T20:53:29.909Z
 - **Deliverable:** `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md` (historical design rationale; supersession note added).
-- **Concurrent branch state:** A separate C0013 published `approval-request.schema.json` v0.2.0 with typed session/device, registry-version, resource-scope and precondition-digest bindings. C0014 added automated Draft 2020-12 and audit-envelope checks; GitHub Actions run 41126223487 reports 17 passed.
-- **Reconciliation:** The original local proposal record was renumbered from duplicate C0013 to C0015. The design note now explicitly says the v0.2.0 schema supersedes its earlier "no schema change" statement. No claim is made that C0015 authored the v0.2.0 schema or C0014 tests.
+- **Concurrent branch state:** C0013 published approval-request schema v0.2.0 with typed session/device, registry-version, resource-scope and precondition-digest bindings. C0015 added automated Draft 2020-12/audit-envelope validation; CI run 41126223487 reports 17 passed. C0016 defined the fresh ALLOW + opaque authorization_ref handoff and typed consume outcomes.
+- **Reconciliation:** This design-analysis completion is C0017. The historical proposal was not a second schema change; it is explicitly marked superseded by the current v0.2.0 draft. C0013/C0015/C0016 remain separate completion records.
 - **Review value:** Retains lifecycle mapping, trusted server-side binding-reference alternative, consume-time revalidation, atomic one-time consumption, durable consumption ID, lost-response reconciliation and closure evidence.
-- **Current contract status:** v0.2.0 remains a draft pending runtime-owner compatibility/migration acceptance. The schema/envelope CI tests do not prove producer integration, trusted identity derivation, broker enforcement or privileged runtime behavior.
-- **Cross-agent blocker:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. Runtime/API transport, peer identity, atomic consume and UNKNOWN/idempotency reconciliation remain open.
-- **Commits:** Historical proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; supersession note `d007d8220977fb848a1d7de1b4a4df26ffd07880`; JSONL `c3d6ae64ace2c60e43fab1a36fe0e83de127205d`.
-- **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0015.
-
+- **Current contract status:** v0.2.0 remains draft pending runtime-owner compatibility/migration acceptance. Schema and fixture CI do not prove producer integration, trusted identity derivation, broker enforcement or privileged runtime behavior.
+- **Cross-agent blocker:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. Runtime/API transport, peer identity, durable atomic consume and UNKNOWN/idempotency reconciliation remain open.
+- **Commits:** Historical proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; supersession note `d007d8220977fb848a1d7de1b4a4df26ffd07880`; JSONL reconciliation `9a5785663842d2e21a501861e0efabfe13b699ba`.
+- **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0017.
 
 | AEGIS-06-C0015 | Schema validation CI | Added Draft 2020-12 validation and audit-event positive/negative tests; CI passed 17 tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
 | AEGIS-06-C0016 | Approval handoff contract | Defined fresh post-approval ALLOW + opaque authorization reference, typed consume outcomes and conformance cases; answered TUSKER-04's AEGIS-owned questions | security/AUTHORIZATION_LIFECYCLE.md; security/BROKER_CONTRACT.md; security/AUTHORIZATION_TEST_VECTORS.json; security/SECURITY_TEST_MATRIX.md |
