@@ -266,4 +266,18 @@ Cancellation response reports request acceptance, observed task state, active st
 
 ## 8. Contract status
 
+### Cross-agent reconciliation snapshot (2026-10-31)
+
+- **NEXUS-07:** accepted Core ownership of Task/Plan/Step/TaskEvent and agreed to carry task/step/correlation identifiers, authorization-context reference, explicit cancellation request/operation state, evidence references and idempotency scope in its provisional tool contracts. Caller component fields remain descriptive, not authenticated identity. Exact AEGIS principal/decision shape remains external.
+- **AEGIS-06:** confirmed the ten security integration invariants as its cross-agent baseline. Draft policy uses RFC 8785 JCS plus SHA-256 for action/resource/principal/policy binding; all registered operations, including reads, pass policy evaluation; DENY and REQUIRE_APPROVAL produce zero executor calls. Authorization transport/signing/one-time broker consumption still requires NEXUS coordination.
+- **ORBIT-05:** published `tusker-ai/docs/PROVIDER-CONTRACT.md` on `05-ai-runtime`. Its proposal defines separate model-catalog and inference-provider ports, bounded typed messages, ordered stream events with one terminal event, cooperative cancellation and provider error taxonomy. ORBIT explicitly leaves tool execution and authorization to Core/AEGIS. Cross-agent approval remains pending.
+- **NOVA-02:** published `desktop/contracts/task-events-v0.1.md`. Core remains authoritative for task state/events; desktop deduplicates event IDs, tracks per-task sequence, requests snapshots on gaps/reconnect, and treats dismiss as presentation-only. Approval UI does not authorize. No backend integration exists yet.
+- **ATLAS-01:** base contract confirms Tusker services optional, removable and not boot/login dependencies; use session bus for per-user desktop integration and system bus for system capability APIs, subject to owner security review. No explicit Core transport/service/persistence decision was found in the inspected proposal; implementation stack remains open.
+- **PILOT-08:** remote adapter proposal aligns with Core ownership; remote requests use same task lifecycle, remote approval remains policy-gated, and remote clients do not directly invoke tools. No explicit owner acknowledgement of Core's issue #14 response was found in the comments inspected.
+
+### Provisional Core schema artifacts
+
+Draft JSON Schema 2020-12 artifacts are in `tusker-core/schemas/`: `task.schema.json`, `plan.schema.json`, `task-event.schema.json`, `task-result.schema.json`, and `cancellation.schema.json`. They are Core-owned working drafts, not frozen cross-agent APIs. The `schemas.tuskeros.invalid` IDs are placeholders, not claimed project-controlled namespace identifiers. Fixtures, validator tests, transport bindings and migrations are not yet implemented.
+
+
 This document is a Core-owned integration proposal. It is not a shared contract approval. Do not implement against unresolved field names as if frozen. Update version and contract tests after owners acknowledge the exact schemas.
