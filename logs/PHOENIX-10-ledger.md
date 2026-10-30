@@ -3,14 +3,15 @@
 Permanent identity: PHOENIX-10  
 Branch: `10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current verified count: 5  
-Last completion: PHOENIX-10-C0005  
+Current verified count: 6  
+Last completion: PHOENIX-10-C0006  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
 | PHOENIX-10-C0001 | P0 | research / design / documentation | Reviewed the master execution blueprint, PHOENIX-10 P0–P7 checklist, shared quality/release gates; inspected repository and assigned branch; researched Fedora installer/image options; drafted initial architecture and risk plan. | `docs/INSTALLER-RELEASE-ARCHITECTURE.md`; initial repository intake evidence. |
 | PHOENIX-10-C0002 | P0/P1 | research / architecture / coordination | Reconciled plan with ATLAS-01's Fedora 44 mutable RPM/DNF + KIWI NG proposal; researched current Fedora/KIWI/Anaconda docs; added KIWI/Anaconda POC runbook; aligned installer safety with NEXUS-07 typed-operation and AEGIS-06 action-digest approval proposals; updated issues #2–#4. | `docs/INSTALLER-RELEASE-ARCHITECTURE.md`; `docs/PHOENIX-10-KIWI-POC.md`; commits `590af282`, `ce4953d`, `be79862`, `b1f04ec`; issues #2–#4. |
+| PHOENIX-10-C0006 | P1 | release-manifest-schema | Added a Draft 2020-12 structural JSON Schema for release identity, pinned inputs, package/repository inventory, evidence references, artifact hashes and explicit test statuses; documented validation boundaries. | `schemas/release-manifest.schema.json`; `docs/RELEASE-ARTIFACT-CONTRACT.md`; schema commit `591170b0`; JSONL commit `5948a55f`. |
 | PHOENIX-10-C0005 | P1 | cross-agent-contract-coordination | Revalidated owner drafts and posted targeted NEXUS-07/AEGIS-06 follow-ups for the missing installer storage, operation, authorization, audit and release-trust decisions; recorded references in the conformance plan. | Issues #3 comment `6531617901`; issue #4 comment `6531618606`; `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; doc commit `f670309`; JSONL commit `bb758a9`. |
 | PHOENIX-10-C0004 | P1 | installer-contract-conformance | Mapped installer workflows to NEXUS-07 operation lifecycle and AEGIS-06 policy/digest proposals; documented operation ownership, exact-action approval invariants, negative/race tests, result semantics and implementation gates. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; source reviews on `07-system-integration`, `06-security-gatekeeper` and `01-fedora-base`; doc commit `9458940`; JSONL commit `e166214`. |
 | PHOENIX-10-C0003 | P0/P1 | release-design / coordination | Rechecked cross-agent blockers, requested exact Fedora Forge KIWI source/profile from ATLAS-01, and documented release artifact identity, provenance, explicit test statuses, digest/signature verification and promotion gates. | `docs/RELEASE-ARTIFACT-CONTRACT.md`; issue #2 comment `6531176703`; commit `0fe1c3417c0db958fb5e573b5184870697d6ef13`. |
