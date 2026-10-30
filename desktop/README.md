@@ -84,3 +84,21 @@ This is an architecture baseline, not a working shell implementation. The reposi
 An opt-in Plasma layout template is available at `desktop/panel-template/`. It adds a bottom floating panel with the built-in Kickoff launcher and Icons-only Task Manager. It does not replace the user's current panel or impose a pinned-app list. See [the template README](panel-template/README.md) for manual developer installation and limitations.
 
 The template is a Plasma desktop-scripting artifact, not a standalone dock process. JavaScript syntax and static structure checks do not prove runtime compatibility on the pinned Fedora/Plasma image.
+
+## Dock template installation and recovery
+
+The optional native dock template can be installed for the current user without sudo:
+
+```sh
+python desktop/tools/install_panel_template.py
+```
+
+The installer uses `$XDG_DATA_HOME` (or `~/.local/share`), refuses existing or symlink destinations, stages the copy before publishing it, and writes an ownership marker. It never overwrites existing user data. To remove only its own marked installation:
+
+```sh
+python desktop/tools/install_panel_template.py --remove
+```
+
+There is no force-overwrite option. Inspect an existing destination manually. Installing the template only makes it available to Plasma; the user explicitly selects it from Add Panel if supported. Existing panels and their configuration are not modified. See [the dock template README](panel-template/README.md).
+
+Installer unit tests cover installation, no-overwrite, symlink refusal, marked removal and refusal to remove unmanaged directories. Static tests do not validate Plasma runtime compatibility.
