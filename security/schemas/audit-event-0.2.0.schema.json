@@ -23,7 +23,8 @@
     "step_id",
     "registry_version",
     "executor_id",
-    "reason_code"
+    "reason_code",
+    "registry_status"
   ],
   "properties": {
     "schema_version": {
@@ -155,33 +156,97 @@
       "maxLength": 128
     },
     "registry_version": {
-      "type": "string",
+      "type": [
+        "string",
+        "null"
+      ],
       "minLength": 1,
       "maxLength": 128
+    },
+    "registry_status": {
+      "enum": [
+        "resolved",
+        "unavailable"
+      ]
     }
   },
   "allOf": [
     {
       "if": {
         "properties": {
-          "result_status": {
-            "enum": [
-              "denied",
-              "failure"
-            ]
+          "registry_status": {
+            "const": "resolved"
           }
         },
         "required": [
-          "result_status"
+          "registry_status"
         ]
       },
       "then": {
         "properties": {
-          "reason_code": {
+          "registry_version": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 128
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "registry_status": {
+            "const": "unavailable"
+          }
+        },
+        "required": [
+          "registry_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "registry_version": {
+            "type": "null"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "event_type": {
+                "const": "requested"
+              },
+              "result_status": {
+                "const": "accepted"
+              },
+              "reason_code": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "event_type",
+              "result_status",
+              "reason_code"
+            ]
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "policy_denied"
+              },
+              "result_status": {
+                "const": "denied"
+              },
+              "reason_code": {
+                "const": "POLICY_REGISTRY_UNAVAILABLE"
+              }
+            },
+            "required": [
+              "event_type",
+              "result_status",
+              "reason_code"
+            ]
+          }
+        ]
       }
     }
   ]
