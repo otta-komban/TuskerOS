@@ -6,7 +6,8 @@
 | 2 | NEXUS-07-C0002 | 2026-10-31 | Cross-agent review / schemas | Accepted ATLAS base-system constraints; proposed provisional D-Bus identifiers; added four JSON Schemas, fixtures and unittest harness; incorporated TUSKER-04 task lifecycle/cancellation/correlation review; published v0.2 schemas; requested focused TUSKER-04/AEGIS-06/ATLAS-01 review. | `SERVICE_IDENTIFIERS.md`; `contracts/*.schema.json`; `contracts/examples/*.json`; `tests/test_contracts.py`; Issue #5 comments 6531027798, 6531070583, 6531102446. | Namespace ownership and ATLAS/AEGIS/TUSKER final approvals pending; tests not run. |
 | 3 | NEXUS-07-C0003 | 2026-10-31 | Tool catalogue contract | Added provisional tool descriptor schema/example and fixture/negative tests; documented metadata enforcement and ownership boundaries. | `TOOL_CATALOGUE.md`; `contracts/tool-descriptor.schema.json`; `contracts/examples/tool-descriptor.valid.json`; test update; commits `cae9ff8`, `812c162`, `96dbc01`, `c82012e`, `0f5fe1d`. | TUSKER-04/AEGIS-06/ATLAS-01 review and namespace confirmation pending; tests not executed. |
 
-**Verified completion count:** 3 actual assistant responses recorded.  
-**Next ID:** `NEXUS-07-C0004`  
+**Verified completion count:** 4 actual assistant responses recorded.  
+**Next ID:** `NEXUS-07-C0005`  
 **Branch:** `07-system-integration`  
-**Latest work:** Provisional tool descriptor/catalogue contract added with fixture and negative test; owner approvals and test execution pending.
+**Latest work:** Tool descriptor semantic invariants are covered by tests and CI automation has been added; CI result and owner approvals pending.
+| 4 | NEXUS-07-C0004 | 2026-10-31 | Contract validation automation | Added cross-field descriptor semantic tests and GitHub Actions workflow to run contract tests for branch pushes/PRs; updated Phase 1 checklist. | `tests/test_contracts.py`; `.github/workflows/system-integration-contracts.yml`; `PHASE1_CHECKLIST.md`; commits `0974f64`, `8e7315f`, `b2bfba2`. | CI result not yet observed; AEGIS/TUSKER/ATLAS reviews and namespace confirmation pending. |
