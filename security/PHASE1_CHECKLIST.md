@@ -56,3 +56,8 @@
 - [ ] Policy, approval, broker and audit contracts versioned.
 - [ ] Fedora mechanism compatibility evidence captured.
 - [ ] P1 design review complete; no implementation claim until tests exist.
+
+## Integration tracking
+
+- [x] Review `main`-only divergence commits and document findings in `security/MAIN_BRANCH_DIVERGENCE_REVIEW.md`.
+- [ ] Obtain NEXUS-07 authorization/broker implementation decisions before freezing privileged runtime contracts.
