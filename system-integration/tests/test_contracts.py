@@ -16,6 +16,16 @@ class ContractSchemaTests(unittest.TestCase):
         Draft202012Validator.check_schema(schema)
         Draft202012Validator(schema, format_checker=FormatChecker()).validate(fixture)
 
+    def test_tool_descriptor_example(self):
+        self.validate_fixture("tool-descriptor.schema.json", "tool-descriptor.valid.json")
+
+    def test_tool_descriptor_rejects_inverted_timeout_bounds(self):
+        schema = json.loads((SCHEMAS / "tool-descriptor.schema.json").read_text(encoding="utf-8"))
+        invalid = json.loads((EXAMPLES / "tool-descriptor.valid.json").read_text(encoding="utf-8"))
+        invalid["timeout_ms"] = {"default": 5000, "minimum": 10000, "maximum": 2000}
+        with self.assertRaises(ValidationError):
+            Draft202012Validator(schema, format_checker=FormatChecker()).validate(invalid)
+
     def test_tool_invocation_example(self):
         self.validate_fixture("tool-invocation.schema.json", "tool-invocation.valid.json")
 
