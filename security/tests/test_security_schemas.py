@@ -232,6 +232,7 @@ def test_audit_event_v020_candidate_rejects_invalid_minimum_values(field, value)
 @pytest.mark.parametrize("status", ["denied", "failure"])
 def test_audit_event_v020_candidate_requires_reason_for_denial_and_failure(status):
     event = valid_audit_v020_event()
+    event["event_type"] = "policy_denied" if status == "denied" else "failed"
     event["result_status"] = status
     event["reason_code"] = None
     assert list(audit_v020_validator().iter_errors(event))
