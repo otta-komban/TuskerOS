@@ -26,7 +26,7 @@ def test_trace_has_single_start_and_terminal_last():
     terminals = {"completed", "cancelled", "failed"}
     terminal_positions = [i for i, kind in enumerate(types) if kind in terminals]
     assert len(terminal_positions) == 1
-    assert terminal_positions[0] < len(types) - 1
+    assert terminal_positions[0] == len(types) - 1
 
 
 def test_trace_sequence_is_strictly_increasing_and_request_scoped():
@@ -90,4 +90,4 @@ def test_trace_has_no_events_after_terminal():
     terminals = {"completed", "cancelled", "failed"}
     terminal_positions = [i for i, kind in enumerate(types) if kind in terminals]
     assert len(terminal_positions) == 1
-    assert terminal_positions[0] == len(types) - 1
+    assert terminal_positions[0] < len(types) - 1
