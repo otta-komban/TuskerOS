@@ -39,7 +39,8 @@
     "created_at_utc": {
       "type": "string",
       "format": "date-time",
-      "description": "UTC RFC 3339 timestamp; producers must use the Z suffix."
+      "description": "RFC 3339 date-time with an explicit UTC Z suffix. Validators must enable date-time format assertion.",
+      "pattern": "Z$"
     },
     "source": {
       "$ref": "#/$defs/source"
@@ -54,13 +55,15 @@
       "type": "array",
       "items": {
         "$ref": "#/$defs/repository"
-      }
+      },
+      "minItems": 1
     },
     "packages": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/package"
-      }
+      },
+      "minItems": 1
     },
     "sbom": {
       "$ref": "#/$defs/evidenceReference"
@@ -97,7 +100,7 @@
         },
         "commit": {
           "type": "string",
-          "pattern": "^[0-9a-f]{40,64}$"
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
         }
       }
     },
@@ -118,7 +121,7 @@
         },
         "commit": {
           "type": "string",
-          "pattern": "^[0-9a-f]{40,64}$"
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
         }
       }
     },
@@ -298,7 +301,8 @@
               "bios"
             ]
           },
-          "uniqueItems": true
+          "uniqueItems": true,
+          "minItems": 1
         },
         "size_bytes": {
           "type": "integer",
