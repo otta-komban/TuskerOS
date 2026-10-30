@@ -83,3 +83,6 @@ them, acquire locks, execute package operations, or prove that a package
 manager committed/rolled back. Only the trusted adapter may emit these events
 after the corresponding external action has succeeded. State schema:
 `marketplace/schemas/package-transaction-state.schema.json`.
+
+
+Lifecycle records now validate lowercase SHA-256 plan/snapshot digests, terminal-flag consistency, history structure and event/evidence shape. Evidence fields are allow-listed per transition to prevent arbitrary strings (including secret-like payloads) from being copied into the lifecycle history. This remains structural validation, not authentication or proof of adapter behavior.
