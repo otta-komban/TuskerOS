@@ -25,8 +25,10 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 | TUSKER-04-C0013 | 2026-10-31T02:08:44+05:30 | nexus-adapter-compatibility | Published a concrete Core-to-NEXUS adapter profile for identifier/correlation mapping, descriptor timeout negotiation, arbitrary-JSON result fidelity, authorization stop conditions, cancellation and unknown-outcome reconciliation, with a future conformance matrix. | partial | [NEXUS adapter profile](../tusker-core/NEXUS-ADAPTER-PROFILE.md); [NEXUS interface contract](https://github.com/otta-komban/TuskerOS/blob/07-system-integration/system-integration/INTERFACE_CONTRACTS.md) |
 
-Current verified response count: 13  
-Current completion sequence: TUSKER-04-C0013  
-JSONL audit: 14 physical lines, 13 unique completion IDs; C0009 is duplicated and both append-only records are preserved.  
+| TUSKER-04-C0014 | 2026-10-31T02:19:56+05:30 | mutation-idempotency-compatibility | Aligned Core idempotency-key length bounds with NEXUS, added schema boundary tests and documented a descriptor-aware fail-closed mutation admission rule requiring durable idempotency support. | partial | [Plan schema](../tusker-core/schemas/plan.schema.json); [NEXUS adapter profile](../tusker-core/NEXUS-ADAPTER-PROFILE.md) |
+
+Current verified response count: 14  
+Current completion sequence: TUSKER-04-C0014  
+JSONL audit: 15 physical lines, 14 unique completion IDs; C0009 is duplicated and both append-only records are preserved.  
 C0011 has exactly one canonical ledger row; duplicate Markdown ledger rows from the previous update were consolidated.  
 Branch: 04-tusker-core. Ahead/behind figures are refreshed after this ledger commit.
