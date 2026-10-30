@@ -111,3 +111,36 @@ This section supersedes the historical counter snapshot in the earlier "Verified
 - Security evidence protocol: authored; test harness/stack not selected.
 - Owner approvals: AEGIS-06 and NOVA-02 absent; TUSKER-04 draft REVISE/DEFER only.
 - Implementation status: **NO-GO**.
+
+
+
+## C0013 addendum
+
+- Completion: `PILOT-08-C0013` — 2026-10-31T02:20:00+05:30
+- Security assurance case: `remote-control/verification/SECURITY-ASSURANCE-CASE.md`.
+- Document commit: `b9b6ffcddc28c7320a86df21d1f7b9e8300fd92f`.
+- JSONL completion record commit: `140a496f74f77e748395418745918f28a6a8559f`.
+- Structured top-level claim G0 and subclaims G1–G8 covering identity/pairing, sessions/revocation, authorization, Core mutation safety, data/event isolation, transport/deployment, local user control and audit/evidence integrity.
+- Mapped claims to existing protocol scenarios, abuse cases, cross-cutting security tests, decision IDs, owners and required evidence; recorded assumptions, defeaters and minimum evidence package.
+- All claims remain unproven. Tests run: 0. Runtime features: 0. OpenAPI validation: not run. Implementation status: **NO-GO**.
+- Rechecked issues #1, #13, #14 and #15; no new owner-authored comments. AEGIS-06 and NOVA-02 sign-offs absent; TUSKER-04 remains draft REVISE/DEFER only.
+
+
+## Current verified counters — C0013
+
+This section supersedes the historical counter snapshot above.
+
+- Actual assistant responses recorded: **13**
+- Last sequence: **13**
+- Last completion ID: **PILOT-08-C0013**
+- JSONL entries: **13**, last record `PILOT-08-C0013`
+- Ledger addenda present through: **C0013**
+- Branch commit count: **to be verified at final checkpoint**
+- Tests run: **0**
+- Runtime features implemented: **0**
+- OpenAPI validation: **not run**
+- Protocol acceptance scenarios specified: **72**, not executed.
+- Security abuse cases: **20** mapped; cross-cutting tests: **10** specified, none executed.
+- Assurance claims G0–G8: **unproven**.
+- Owner approvals: AEGIS-06 and NOVA-02 absent; TUSKER-04 draft REVISE/DEFER only.
+- Implementation status: **NO-GO**.
