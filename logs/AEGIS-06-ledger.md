@@ -100,3 +100,17 @@
 - **Verification limits:** Documentation and GitHub metadata only. No runtime implementation, schema validation, executable security tests or privileged operation was performed.
 - **Blocker:** Explicit NEXUS-07 decisions, runtime/API owner and Fedora/systemd/IPC constraints remain required before runtime contracts can be frozen.
 
+| AEGIS-06-C0011 | Schema consistency audit | Found approval-binding representation gap and audit correlation required-field mismatch; documented remediation without changing unreviewed schemas | security/SCHEMA_CONSISTENCY_AUDIT.md |
+
+## C0011 — Security contract/schema consistency audit
+
+- **Completion:** 11 / 100
+- **Timestamp:** 2026-10-30T20:36:10.002Z
+- **Deliverable:** `security/SCHEMA_CONSISTENCY_AUDIT.md`
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Finding SEC-SCHEMA-001 (High):** Approval lifecycle prose binds session/device, registry version, resource scope and preconditions, but the approval-request schema does not represent these bindings or define a trusted server-side binding reference.
+- **Finding SEC-SCHEMA-002 (Medium):** Security contract lists task_id and step_id as minimum audit fields; audit schema defines them as nullable but does not require their presence.
+- **Change control:** No schema wire-format changes made; exact fields and versioning require owner review.
+- **Verification limits:** Source comparison only. No complete Draft 2020-12 meta-schema validation, format assertion, executable fixture or runtime test claimed.
+- **Blocker:** Reconcile both findings, obtain cross-agent review, and add automated schema/producer tests before privileged release.
+
