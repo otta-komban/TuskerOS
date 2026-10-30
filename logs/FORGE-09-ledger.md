@@ -9,7 +9,7 @@
 | Completion | Phase | Category | Summary | Evidence | Status |
 |---|---|---|---|---|---|
 | FORGE-09-C0001 | P0/P1 | design | Located and reviewed the master execution blueprint; verified branch existence and inspected LICENSE; drafted initial ecosystem architecture, extension contract, manifest schema, metadata-only example and validator. | `docs/DEVELOPER_ECOSYSTEM_ARCHITECTURE.md`; `docs/EXTENSION_CONTRACT.md`; `sdk/`; `logs/FORGE-09.jsonl` | partial |
-| FORGE-09-C0002 | P2 | implementation | Added marketplace catalog contract and fixture, developer bundle schema and Python bundle proposal, lifecycle/governance docs; performed eight in-memory validator behavior checks. | `marketplace/`; `bundles/`; `docs/MARKETPLACE_AND_BUNDLES.md` | partial |
+| FORGE-09-C0002 | P2 | implementation | Added marketplace catalog contract and fixture, developer bundle schema and Python bundle proposal, lifecycle/governance docs, deterministic dependency planner and tests; performed 15 in-memory behavior checks. | `marketplace/`; `bundles/`; `sdk/tools/dependency_plan.py`; `sdk/tests/test_dependency_plan.py`; `docs/MARKETPLACE_AND_BUNDLES.md` | partial |
 
 ## Phase checklist
 
@@ -35,7 +35,7 @@
 - [x] Add initial SDK schema and validator skeleton.
 - [ ] Add automated positive/negative validator tests (added; execution pending).
 - [x] Add marketplace catalog fixture and package metadata schema (initial proposal).
-- [ ] Add dependency graph resolver and install-plan preview.
+- [x] Add deterministic topological ordering for an already-resolved dependency graph; version selection and install-plan preview remain pending.
 - [x] Add developer bundle manifest schema and initial Python bundle proposal.
 
 ### P3 — Working MVP
@@ -79,3 +79,8 @@
 - [x] Run eight in-memory positive/negative checks against a local reconstruction of the validator rules; this is not equivalent to executing the committed unittest suite.
 - [ ] Execute committed tests in a working repository checkout.
 - [ ] Validate Fedora package availability with ATLAS-01 before declaring Python bundle release-ready.
+
+- [x] Add deterministic dependency ordering helper with missing-node, duplicate-edge and cycle rejection.
+- [x] Add dependency planner test cases (committed; execution of repository suite pending).
+- [ ] Implement catalog version selection and semantic version-range resolution; current planner only orders an already-resolved graph.
+- [ ] Execute committed tests in a working repository checkout.
