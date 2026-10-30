@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 28
-- **Latest completion:** `AEGIS-06-C0028`
+- **Verified completion count:** 29
+- **Latest completion:** `AEGIS-06-C0029`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `843591a971d7ee105d5da78d5a21f193d279f7f3`
+- **Latest log commit:** `81023a6bcea9399bd86ef89edfc0112b2c51df95`
 
 ## Completion index
 
