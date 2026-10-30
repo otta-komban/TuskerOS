@@ -26,7 +26,7 @@ Capability booleans are descriptive, not permission grants. An unsupported optio
 
 ## Response and failure semantics
 
-The adapter returns a typed result at the transport layer:
+The adapter returns a JSON document conforming to `schema/preview-render-response.schema.json`. The response echoes protocol version, request ID, session ID and revision. Status-specific requirements are enforced by schema: `rendered` requires at least one rendered surface and no omissions; `partial` requires both rendered and omitted surfaces with a stable omission reason per surface; `rejected` requires a stable failure code and reports no rendered surfaces. Unknown fields, including apply-like claims, are rejected. The adapter returns a typed result at the transport layer:
 
 - `rendered`: preview rendered in an isolated, non-active preview target; includes request ID, session ID, revision and the exact rendered surface list.
 - `partial`: only explicitly accepted surfaces rendered; each omitted surface has a stable reason code.
