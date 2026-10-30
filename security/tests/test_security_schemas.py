@@ -312,3 +312,32 @@ def test_audit_event_v020_candidate_requires_registry_status():
     event = valid_audit_v020_event()
     del event["registry_status"]
     assert list(audit_v020_validator().iter_errors(event))
+
+@pytest.mark.parametrize(
+    "event_type,result_status,reason_code",
+    [
+        ("authorized", "success", None),
+        ("started", "pending", None),
+        ("succeeded", "success", None),
+        ("failed", "failure", "EXECUTION_FAILED"),
+        ("cancellation_requested", "pending", None),
+        ("cancelled", "cancelled", None),
+        ("outcome_unknown", "unknown", None),
+        ("compensation_started", "pending", None),
+        ("compensation_verified", "success", None),
+        ("compensation_failed", "failure", "COMPENSATION_FAILED"),
+        ("approval_granted", "success", None),
+        ("approval_denied", "denied", "APPROVAL_DENIED"),
+        ("approval_expired", "denied", "APPROVAL_EXPIRED"),
+    ],
+)
+def test_audit_event_v020_candidate_rejects_all_post_request_events_without_registry(
+    event_type, result_status, reason_code
+):
+    event = valid_audit_v020_event()
+    event["registry_status"] = "unavailable"
+    event["registry_version"] = None
+    event["event_type"] = event_type
+    event["result_status"] = result_status
+    event["reason_code"] = reason_code
+    assert list(audit_v020_validator().iter_errors(event))
