@@ -153,3 +153,16 @@ Canonical typed outcomes are defined in `security/AUTHORIZATION_LIFECYCLE.md`. T
 | AUD-SCHEMA-025 | Denial/failure producer emits no stable reason_code | Producer rejects event |
 
 These are proposed cases for the separately versioned audit-event v0.2.0 contract. They are not implemented or executed; the current v0.1.0 schema still permits omission.
+
+
+## Audit-event v0.2.0 registry-resolution cases (candidate; schema tests)
+
+| ID | Scenario | Expected result |
+|---|---|---|
+| AUD-SCHEMA-026 | Request received before registry resolution | Accept `requested`/`accepted`, `registry_status=unavailable`, explicit null version and reason |
+| AUD-SCHEMA-027 | Registry missing/corrupt/unverifiable | Accept only `policy_denied`/`denied` with `POLICY_REGISTRY_UNAVAILABLE`, null version; no grant |
+| AUD-SCHEMA-028 | Registry status resolved | Require concrete non-empty immutable registry_version |
+| AUD-SCHEMA-029 | Authorization/dispatch event with unavailable registry | Reject; zero authorization/handler dispatch |
+| AUD-SCHEMA-030 | Unavailable registry paired with unrelated denial reason | Reject; use the dedicated stable reason code |
+
+These candidate cases are exercised by the v0.2.0 schema test suite. They do not establish runtime producer behavior or trusted provenance.
