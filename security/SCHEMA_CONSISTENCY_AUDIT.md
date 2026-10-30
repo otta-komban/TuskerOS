@@ -130,3 +130,19 @@ The v0.2.0 candidate was refined with required `registry_status` (`resolved`/`un
 - GitHub Actions run 41128922282 succeeded: **54 passed in 0.60s**, Python 3.12.
 
 This validates the candidate schema and JSON fixtures only. Trusted registry provenance, producer behavior, durable audit storage and runtime fail-closed behavior remain untested and owner-dependent.
+
+
+## Finding SEC-SCHEMA-006 — candidate audit schema omits required authorization lifecycle event types
+
+**Severity:** Medium — audit completeness / lifecycle traceability gap  
+**Evidence:** `security/AUTHORIZATION_LIFECYCLE.md` § Required audit events requires records for request-created, presented, approved/denied/dismissed, expired, invalidated, revoked, consume-accepted/rejected, and reconciliation outcomes. The candidate `security/schemas/audit-event-0.2.0.schema.json` currently enumerates `requested`, `authorized`, `started`, `succeeded`, `failed`, `cancellation_requested`, `cancelled`, `outcome_unknown`, compensation events, `approval_granted`, `approval_denied`, `approval_expired`, and `policy_denied`; it has no explicit event types for presentation, dismissal, invalidation, revocation, consume acceptance/rejection, or reconciliation.
+
+**Risk:** Producers cannot emit several normative lifecycle events using the candidate schema without overloading unrelated event types or losing the distinction between approval state transitions, authorization consumption and reconciliation. This weakens audit reconstruction and incident review.
+
+**Required owner decision:** NEXUS-07/TUSKER-04 must agree stable event names and result-status mappings for the missing lifecycle transitions, including whether reconciliation is one event with a typed outcome or distinct success/failure events. Preserve existing names where they already represent the same semantic transition (for example `approval_granted`, `approval_denied`, and `approval_expired`) rather than creating duplicates.
+
+**Proposed additions for owner review (not applied):** explicit presentation, approval dismissal, approval invalidation, approval revocation, authorization-consume accepted/rejected, and reconciliation outcome event types. Define which trusted producer emits each event, required correlation/consumption IDs, and permitted result/reason values before updating the candidate schema.
+
+**Required validation:** positive and negative schema fixtures for each lifecycle event; producer tests proving each transition emits exactly one correlated event; replay/concurrency and lost-consume-response tests proving consume and reconciliation records cannot be confused with dispatch or terminal execution results.
+
+**Status:** Identified in C0026. No candidate or active schema change made pending producer-owner agreement. Active audit-event v0.1.0 remains unchanged; candidate v0.2.0 is not approved for producer migration or runtime conformance.
