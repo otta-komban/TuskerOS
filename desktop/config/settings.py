@@ -90,10 +90,11 @@ def validate_settings(value: Any) -> list[str]:
 def load_settings(path: Path) -> tuple[dict[str, Any], list[str]]:
     """Load preferences; missing or invalid files safely fall back to defaults."""
     path = Path(path)
-    if not path.exists():
-        return _merge(DEFAULT_SETTINGS, {}), []
+    # Check symlinks before exists(): dangling symlinks report exists() == False.
     if path.is_symlink():
         return _merge(DEFAULT_SETTINGS, {}), ["settings file must not be a symlink"]
+    if not path.exists():
+        return _merge(DEFAULT_SETTINGS, {}), []
     try:
         if path.stat().st_size > MAX_SETTINGS_BYTES:
             raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
