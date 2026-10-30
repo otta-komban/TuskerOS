@@ -1,7 +1,7 @@
 # AEGIS-06 Security Policy Test Matrix
 
 **Status:** Test specification only. No test has been executed by this document.  
-**Contract:** security/SECURITY_CONTRACTS.md v0.1.0-draft
+**Contract:** security/SECURITY_CONTRACTS.md v0.1.0-draft  \n**Machine-readable fixtures:** `security/POLICY_TEST_VECTORS.json`  \n**Operation registry schema:** `security/schemas/operation-registration.schema.json`
 
 ## Test conventions
 
@@ -9,7 +9,7 @@
 - Assert both policy decision and executor invocation count.
 - For every denial case, assert executor/broker invocation count is exactly zero.
 - Capture correlated audit events and assert secrets are absent.
-- Mark tests PASS only after an executable test runs and evidence is recorded.
+- Validate all schemas with a Draft 2020-12 validator configured for format assertion.\n- Map every `POLICY_TEST_VECTORS.json` case to an executable test.\n- Mark tests PASS only after an executable test runs and evidence is recorded.
 
 ## Policy decision tests
 
