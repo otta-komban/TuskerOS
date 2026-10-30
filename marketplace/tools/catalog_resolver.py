@@ -223,16 +223,17 @@ def resolve_catalog_plan(
     across all parents before selecting each dependency release.
     """
     root_ids = sorted(set(roots))
-    order = resolve_install_order(root_ids, dependencies)
+    normalized_dependencies = {package_id: list(children) for package_id, children in dependencies.items()}
+    order = resolve_install_order(root_ids, normalized_dependencies)
     candidate_list = list(candidates)
     incoming: dict[str, list[str]] = {package_id: [] for package_id in order}
     if dependency_constraints is not None:
         for parent, child_constraints in dependency_constraints.items():
-            if parent not in dependencies:
+            if parent not in normalized_dependencies:
                 raise CatalogResolutionError(f"constraints supplied for unknown parent: {parent}")
             if not isinstance(child_constraints, Mapping):
                 raise CatalogResolutionError(f"dependency constraints for {parent} must be a mapping")
-            declared = set(dependencies[parent])
+            declared = set(normalized_dependencies[parent])
             if set(child_constraints) != declared:
                 raise CatalogResolutionError(
                     f"dependency constraints for {parent} must match declared dependency edges"
@@ -240,7 +241,7 @@ def resolve_catalog_plan(
             for child, constraint in child_constraints.items():
                 parse_dependency_constraint(constraint)
                 incoming.setdefault(child, []).append(constraint)
-        for parent, children in dependencies.items():
+        for parent, children in normalized_dependencies.items():
             if parent in order and parent not in dependency_constraints and list(children):
                 raise CatalogResolutionError(f"missing dependency constraints for {parent}")
     selected: dict[str, Mapping[str, Any]] = {}
