@@ -18,7 +18,7 @@ Target: 100 actual assistant responses (C0001–C0100)
 - Actual assistant responses recorded: 5
 - Last sequence: 5
 - Last completion ID: PILOT-08-C0005
-- Branch commits created during intake through C0005: 24 (verified from the branch commit history at C0005)
+- Branch commits created during intake through C0005: 26 (including the commit that records this final reconciled counter)
 - Tests run: 0
 - Implemented runtime features: 0
 - Verification scenarios specified: 72 (PAIR 10, SESS 14, AUTH 10, TASK 16, EVT 12, NET 10; remote approval scenarios remain conditional and are not counted)
