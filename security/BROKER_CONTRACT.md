@@ -53,3 +53,17 @@ For a mutating operation, persist a durable execution record keyed by operation 
 - Audit: unavailable required audit path blocks sensitive operations; audit contains no secret material.
 
 This contract is draft until NEXUS-07 confirms transport, identity and implementation constraints. No privileged execution is authorized by this document alone.
+
+
+## Approval handoff adapter outcomes (AEGIS-06 C0013)
+
+The broker accepts only the fresh opaque `authorization_ref` returned with a post-approval `ALLOW`. It MUST NOT accept `approval_request_id` as a consume credential. The approval request ID is retained only for correlation and reconciliation.
+
+The authorization adapter's typed outcomes and mandatory zero-grant behavior are defined in `security/AUTHORIZATION_LIFECYCLE.md` ("Canonical consume outcomes"). In particular:
+- `CONSUMED` returns a unique consumption ID and narrow grant only after the authority has durably committed the one-time state transition and required pre-dispatch audit evidence.
+- `ALREADY_CONSUMED` never triggers a second dispatch; reconcile the existing consumption/execution.
+- `CONSUME_OUTCOME_UNKNOWN` never authorizes dispatch or blind retry; reconcile using the request correlation, consumption ID when known, and operation idempotency key.
+- `AUDIT_UNAVAILABLE`, identity/time/authority failures and every mismatch return no grant and cause zero handler calls.
+- Broker dispatch follows its own durable dispatch-intent record and required dispatch-start audit. A failure before that boundary is zero handler calls; a disconnect after possible dispatch is `UNKNOWN`.
+
+The fresh-ALLOW handoff and typed outcomes are AEGIS-owned semantic clarifications. NEXUS-07 must still confirm the transport/API shape, durable transaction primitive, authenticated peer injection and runtime implementation before this draft can be frozen.
