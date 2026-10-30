@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1.0-draft",
+  "task_id": "123e4567-e89b-42d3-a456-426614174000",
+  "final_state": "completed",
+  "summary": "Disk usage information retrieved.",
+  "completed_steps": [
+    "123e4567-e89b-42d3-a456-426614174011"
+  ],
+  "failed_steps": [],
+  "skipped_steps": [],
+  "verification": [
+    {
+      "status": "verified",
+      "evidence_ref": "observation://disk-usage/1"
+    }
+  ],
+  "evidence_refs": [
+    "observation://disk-usage/1"
+  ],
+  "limitations": []
+}
