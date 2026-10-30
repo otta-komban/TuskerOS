@@ -119,9 +119,12 @@ def parse_query_matches(output: str, expected_package: str | None = None) -> tup
         if len(fields) != 2 or not all(field.strip() for field in fields):
             raise RuntimeError(f"unexpected DNF5 query output row: {match!r}")
         nevra, repository = (field.strip() for field in fields)
-        if expected_package is not None and not nevra.startswith(f"{expected_package}-"):
+        if expected_package is not None and not re.fullmatch(
+            re.escape(expected_package) + r"-(?:\\d+|\\(none\\)):.+\\.(?:x86_64|noarch)", nevra
+        ):
             raise RuntimeError(
-                f"DNF5 returned package outside requested name {expected_package!r}: {nevra!r}"
+                f"DNF5 returned package outside requested name or malformed NEVRA "
+                f"for {expected_package!r}: {nevra!r}"
             )
         if not nevra.endswith((".x86_64", ".noarch")):
             raise RuntimeError(f"DNF5 returned unsupported architecture in NEVRA: {nevra!r}")
