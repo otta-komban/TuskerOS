@@ -28,6 +28,32 @@ class ContractSchemaTests(unittest.TestCase):
         if idem["supported"] and idem["scope"] == "none":
             raise ValueError("supported idempotency must declare a non-none scope")
 
+    def validate_result_lifecycle_semantics(self, result):
+        """Draft NEXUS adapter invariants; not yet an approved cross-agent contract."""
+        status = result["status"]
+        operation_state = result["cancellation"]["operation_state"]
+        postcondition = result["postcondition"]["state"]
+        if status == "succeeded":
+            if operation_state != "completed" or postcondition not in ("verified", "not_applicable"):
+                raise ValueError("succeeded requires completed operation and verified/not_applicable postcondition")
+        elif status == "needs_approval":
+            if result["side_effects"]:
+                raise ValueError("needs_approval must not report provider side effects")
+            if result["error"] is None or result["error"]["code"] != "APPROVAL_REQUIRED":
+                raise ValueError("needs_approval requires APPROVAL_REQUIRED error")
+        elif status == "rejected":
+            if result["side_effects"]:
+                raise ValueError("rejected must not report protected side effects")
+        elif status == "unknown_outcome":
+            if operation_state != "unknown" or postcondition != "unknown":
+                raise ValueError("unknown_outcome requires unknown operation and postcondition states")
+        elif status == "cancelled":
+            if operation_state != "stopped":
+                raise ValueError("cancelled requires confirmed stopped operation")
+        elif status == "running":
+            if operation_state != "running":
+                raise ValueError("running requires running operation state")
+
     def test_tool_descriptor_example(self):
         self.validate_fixture("tool-descriptor.schema.json", "tool-descriptor.valid.json")
         descriptor = json.loads((EXAMPLES / "tool-descriptor.valid.json").read_text(encoding="utf-8"))
@@ -57,6 +83,8 @@ class ContractSchemaTests(unittest.TestCase):
 
     def test_tool_result_example(self):
         self.validate_fixture("tool-result.schema.json", "tool-result.valid.json")
+        result = json.loads((EXAMPLES / "tool-result.valid.json").read_text(encoding="utf-8"))
+        self.validate_result_lifecycle_semantics(result)
 
     def test_tool_result_preserves_all_json_value_types(self):
         schema = json.loads((SCHEMAS / "tool-result.schema.json").read_text(encoding="utf-8"))
@@ -67,6 +95,31 @@ class ContractSchemaTests(unittest.TestCase):
                 candidate = copy.deepcopy(fixture)
                 candidate["result"] = value
                 validator.validate(candidate)
+
+    def test_result_lifecycle_rejects_success_without_verified_postcondition(self):
+        result = json.loads((EXAMPLES / "tool-result.valid.json").read_text(encoding="utf-8"))
+        result["postcondition"]["state"] = "unknown"
+        with self.assertRaises(ValueError):
+            self.validate_result_lifecycle_semantics(result)
+
+    def test_result_lifecycle_rejects_approval_after_side_effect(self):
+        result = json.loads((EXAMPLES / "tool-result.valid.json").read_text(encoding="utf-8"))
+        result.update(status="needs_approval", error={"code": "APPROVAL_REQUIRED", "message": "approval required", "retryable": False})
+        result["side_effects"] = ["mutation attempted"]
+        with self.assertRaises(ValueError):
+            self.validate_result_lifecycle_semantics(result)
+
+    def test_result_lifecycle_requires_reconciliation_state_for_unknown(self):
+        result = json.loads((EXAMPLES / "tool-result.valid.json").read_text(encoding="utf-8"))
+        result.update(status="unknown_outcome")
+        with self.assertRaises(ValueError):
+            self.validate_result_lifecycle_semantics(result)
+
+    def test_result_lifecycle_requires_confirmed_stop_for_cancelled(self):
+        result = json.loads((EXAMPLES / "tool-result.valid.json").read_text(encoding="utf-8"))
+        result.update(status="cancelled")
+        with self.assertRaises(ValueError):
+            self.validate_result_lifecycle_semantics(result)
 
     def test_event_envelope_example(self):
         self.validate_fixture("event-envelope.schema.json", "event-envelope.valid.json")
