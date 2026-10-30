@@ -87,6 +87,16 @@ def validate_settings(value: Any) -> list[str]:
     return errors
 
 
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Reject ambiguous JSON objects instead of silently keeping the last key."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("settings JSON contains a duplicate object key")
+        result[key] = value
+    return result
+
+
 def load_settings(path: Path) -> tuple[dict[str, Any], list[str]]:
     """Load preferences; missing or invalid files safely fall back to defaults."""
     path = Path(path)
@@ -98,7 +108,10 @@ def load_settings(path: Path) -> tuple[dict[str, Any], list[str]]:
     try:
         if path.stat().st_size > MAX_SETTINGS_BYTES:
             raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_reject_duplicate_keys,
+        )
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         return _merge(DEFAULT_SETTINGS, {}), [f"cannot load settings: {exc}"]
     errors = validate_settings(raw)
