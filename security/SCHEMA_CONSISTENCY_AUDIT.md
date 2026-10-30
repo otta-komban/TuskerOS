@@ -59,3 +59,19 @@ Two actionable schema/prose coverage gaps were found. SEC-SCHEMA-002 has now bee
 - Added isolated test dependencies in `security/requirements-test.txt` and GitHub Actions workflow `.github/workflows/security-contracts.yml`.
 - Workflow run [41126223487](https://github.com/otta-komban/TuskerOS/actions/runs/41126223487) was queued when this update was written. No test pass is claimed until the run completes.
 - This validates schemas and sample event envelopes only; it does not test a real audit producer, persistence integrity, or privileged runtime behavior.
+
+
+## C0013 update — SEC-SCHEMA-001 draft remediation
+
+The approval-request schema has been advanced to draft version `0.2.0` and now requires a `binding` object containing:
+
+- `session_binding` and `device_binding`: SHA-256 bindings, not raw session/device identifiers or proof of identity;
+- `registry_version`: the exact operation-registry revision;
+- `resource_scope`: a non-empty set of unique canonical resource identifiers;
+- `precondition_digest`: SHA-256 digest of the relevant precondition snapshot.
+
+The top-level `action_digest` remains required and is still the integrity binding for the complete canonical action. The explicit fields make the critical approval context inspectable and independently re-checkable; they do not replace RFC 8785 canonicalization, trusted identity derivation, broker-side comparison, or atomic one-time consumption.
+
+**Compatibility:** This is a draft wire-format version change from `0.1.0` to `0.2.0`, not a claim that any runtime producer/consumer has migrated. Existing 0.1.0 messages must not be silently treated as 0.2.0. Runtime owners must confirm the binding source, canonical resource representation, and migration strategy before contract freeze.
+
+**Validation limits:** JSON structure and schema text were reviewed; no Draft 2020-12 meta-schema/format validator, producer fixture, UI presentation test, or runtime enforcement test is claimed. Schema constraints cannot prove that the hashes correspond to trusted values or that resource identifiers are canonical/sorted; those are semantic enforcement requirements.
