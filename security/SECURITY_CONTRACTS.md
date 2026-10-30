@@ -127,6 +127,8 @@ Retries MUST re-enter policy evaluation; they MUST NOT reuse stale approval or a
 
 ## 11. Machine-readable artifacts
 
-Draft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, and audit-event.schema.json. The deterministic evaluation and canonicalization rules are in security/POLICY_ENGINE_SPEC.md. Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately.\n\n## 12. Compatibility gate
+Draft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, and audit-event.schema.json. The deterministic evaluation and canonicalization rules are in security/POLICY_ENGINE_SPEC.md. Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately.
+
+## 12. Compatibility gate
 
 No agent should implement a privileged integration based on this draft alone without confirming field names, identity provenance, canonicalization, expiry semantics, and error behavior with AEGIS-06. Contract changes require version increment and test updates.
