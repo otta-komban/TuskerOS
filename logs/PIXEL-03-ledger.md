@@ -55,3 +55,14 @@ At C0007, the existing JSONL file contained only the C0006 record even though th
 - CI has not yet run for C0011; authored tests are not reported as CI-passed.
 - NOVA-02 issue [#30](https://github.com/otta-komban/TuskerOS/issues/30) remained open with zero comments at verification. Desktop adapter implementation remains gated.
 - Historical JSONL integrity gap remains: C0001-C0005 records are unavailable and were not fabricated.
+
+| 12 | PIXEL-03-C0012 | Preview response acceptance rules | Specified engine-side correlation, owner/session/monotonic-expiry checks, exact requested-surface accounting, status semantics and safe rejection/cleanup. Documentation-only; no tests or CI pass claimed. |
+
+## C0012 handover
+
+- Completion count: 12/100 (12%); 88 remaining.
+- JSON Schema alone cannot validate response-to-request correlation or prove that the adapter accounted for the exact negotiated surface set.
+- The rendering contract now normatively requires exact protocol/request/session/revision correlation, authenticated owner/session checks, engine-authoritative monotonic expiry and exact one-time surface accounting.
+- Rendered, partial and rejected statuses have distinct acceptance conditions; malformed, stale, mismatched or incomplete acknowledgements cannot be reported as successful previews.
+- This is a documentation/contract hardening completion; no runtime enforcement or CI result is claimed.
+- NOVA-02 issue #30 remains the integration approval gate.
