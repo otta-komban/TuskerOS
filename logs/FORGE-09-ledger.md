@@ -3,7 +3,7 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0011
+- Current recorded completion: C0012
 - Current phase: P3 — Package lifecycle and developer tooling
 
 | Completion | Phase | Category | Summary | Evidence | Status |
@@ -19,6 +19,7 @@
 | FORGE-09-C0009 | P3 | security-hardening | Enforced SHA-256 digest shape, terminal consistency, continuous history, required historical evidence and valid stale-state digest; 19 lifecycle tests committed, execution pending. | `marketplace/tools/transaction_state.py`; `marketplace/tests/test_transaction_state.py`; issue #29 | partial |
 | FORGE-09-C0010 | P3 | architecture-contract | Defined the trusted package transaction adapter boundary, partner ownership, execution/recovery sequence, failure handling, idempotency and 12 conformance requirements; no executor implemented. | `docs/PACKAGE_TRANSACTION_ADAPTER_CONTRACT.md`; issue #29 | partial |
 | FORGE-09-C0011 | P3 | schema-hardening | Constrained lifecycle schema to eleven exact transition edges, event-specific required evidence, closed evidence fields and state-dependent history/terminal requirements; JSON syntax checked, semantic validation pending. | `marketplace/schemas/package-transaction-state.schema.json`; lifecycle docs | partial |
+| FORGE-09-C0012 | P3 | test-contract | Added five valid and four fail-closed lifecycle conformance vectors plus a unittest runner; updated lifecycle docs. Tests committed, execution pending. | `marketplace/tests/fixtures/transaction-state-vectors.json`; `marketplace/tests/test_transaction_state_vectors.py` | partial |
 
 ## Phase checklist
 
@@ -96,3 +97,5 @@
 - C0010 adds the draft package adapter contract. AEGIS-06 must define authenticated approval/policy; PHOENIX-10 must define package-manager transaction, lock and recovery guarantees. The document is not an implementation and adds no executor. Partner review remains open in issue #29.
 
 - C0011 tightens the JSON Schema representation of lifecycle transitions. It lists the eleven legal source/event pairs and requires event-specific evidence. JSON syntax was checked, but no JSON Schema implementation or Python tests were run. The Python validator still performs whole-history continuity checks; neither layer authenticates evidence or proves package execution.
+
+- C0012 adds reusable lifecycle vectors for normal and adversarial paths. They exercise the Python structural validator but do not authenticate external evidence or execute package operations. The new tests are committed but unexecuted; working-checkout verification remains pending.
