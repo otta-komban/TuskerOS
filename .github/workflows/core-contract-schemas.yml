@@ -1,0 +1,29 @@
+name: Core contract schemas
+
+on:
+  push:
+    branches: [04-tusker-core]
+    paths:
+      - "tusker-core/schemas/**"
+      - "tusker-core/tests/**"
+      - "tusker-core/requirements-dev.txt"
+      - ".github/workflows/core-contract-schemas.yml"
+  pull_request:
+    paths:
+      - "tusker-core/schemas/**"
+      - "tusker-core/tests/**"
+      - "tusker-core/requirements-dev.txt"
+      - ".github/workflows/core-contract-schemas.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install development validator
+        run: python -m pip install -r tusker-core/requirements-dev.txt
+      - name: Validate Core schemas and fixtures
+        run: python -m unittest discover -s tusker-core/tests -v
