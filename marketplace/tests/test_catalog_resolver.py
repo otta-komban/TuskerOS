@@ -107,6 +107,50 @@ class CatalogResolverTests(unittest.TestCase):
                 {"org.tuskeros.apps.missing": []}, "0.5.0", "1.2.0"
             )
 
+    def test_dependency_constraint_selects_matching_release(self):
+        app = self.candidate("1.0.0")
+        app["package"]["id"] = "org.tuskeros.apps.demo"
+        old = self.candidate("1.5.0")
+        old["package"]["id"] = "org.tuskeros.libs.core"
+        new = self.candidate("2.4.0")
+        new["package"]["id"] = "org.tuskeros.libs.core"
+        plan = resolve_catalog_plan(
+            ["org.tuskeros.apps.demo"], [app, old, new],
+            {"org.tuskeros.apps.demo": ["org.tuskeros.libs.core"],
+             "org.tuskeros.libs.core": []},
+            "0.5.0", "1.2.0",
+            dependency_constraints={"org.tuskeros.apps.demo": {
+                "org.tuskeros.libs.core": ">=1.0.0,<2.0.0"
+            }},
+        )
+        self.assertEqual(plan["releases"]["org.tuskeros.libs.core"]["release"]["version"], "1.5.0")
+
+    def test_conflicting_dependency_constraints_fail_closed(self):
+        app = self.candidate("1.0.0")
+        app["package"]["id"] = "org.tuskeros.apps.demo"
+        lib = self.candidate("1.8.0")
+        lib["package"]["id"] = "org.tuskeros.libs.core"
+        with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [app, lib],
+                {"org.tuskeros.apps.demo": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []},
+                "0.5.0", "1.2.0",
+                dependency_constraints={"org.tuskeros.apps.demo": {
+                    "org.tuskeros.libs.core": ">=2.0.0,<2.0.0"
+                }},
+            )
+
+    def test_missing_dependency_constraint_fails_closed(self):
+        with self.assertRaisesRegex(CatalogResolutionError, "match declared dependency edges"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [],
+                {"org.tuskeros.apps.demo": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []},
+                "0.5.0", "1.2.0",
+                dependency_constraints={"org.tuskeros.apps.demo": {}},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
