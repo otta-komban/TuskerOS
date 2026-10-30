@@ -118,3 +118,8 @@ The fake-provider suite is a prerequisite for real-provider testing. Real-provid
 The JSON Schema at `tusker-ai/schemas/inference-event.schema.json` defines the common request ID, monotonic sequence field, RFC 3339 timestamp and typed payload for each event kind. The accompanying synthetic trace at `tusker-ai/tests/fixtures/inference-events-valid.json` demonstrates a successful started → text_delta → usage → completed stream. It is a contract fixture, not a provider observation.
 
 The schema validates individual event shape; trace-level rules (single start, exactly one terminal event, terminal-last ordering, stable request ID and increasing sequence) are separate assertions in `tusker-ai/tests/test_inference_event_schema.py`. Adapters must still enforce stream ordering at runtime. A valid JSON event is untrusted model/provider data and is never permission to execute a tool. Run with the isolated test requirements in `tusker-ai/requirements-test.txt`; execution status is recorded only after an actual test run.
+
+
+## 10. Automated contract validation
+
+The GitHub Actions workflow `.github/workflows/tusker-ai-contracts.yml` installs only `tusker-ai/requirements-test.txt` and runs the schema/fixture tests on relevant pushes and pull requests targeting `main`. This job validates JSON Schema structure, synthetic manifest/event fixtures, negative cases and the event trace invariants. It does not test a live inference provider, hardware compatibility, model quality, or license approval. A workflow run must complete successfully before this gate can be marked passed.
