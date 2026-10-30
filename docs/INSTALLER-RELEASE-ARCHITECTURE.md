@@ -15,10 +15,10 @@ The blueprint's phase gates apply unchanged: P0 discovery, P1 architecture/contr
 ### Verified repository baseline (2026-10-31)
 
 - Repository: `otta-komban/TuskerOS`; public; default branch `main`.
-- `main` and `10-installer-recovery` currently contain only `LICENSE` (Apache-2.0).
+- At intake, `main` and `10-installer-recovery` contained only `LICENSE` (Apache-2.0). The PHOENIX-10 branch now contains the architecture and completion records described in this work log.
 - The assigned branch already exists at commit `8c463dcec409fc9354b2adcb9b51a722d7c97fe5` (initial commit); it is unprotected.
 - No README, source tree, build scripts, CI workflows, coordination files, issues or pull requests were present at intake.
-- No Fedora version, image format, package manifest, release key, artifact registry or test hardware is yet selected.
+- At initial intake no Fedora version, image format, package manifest, release key, artifact registry or test hardware was selected. ATLAS-01 has since proposed Fedora 44, mutable RPM/DNF, KIWI NG, x86_64 UEFI ISO and QCOW2 as provisional POC targets; none is production-approved.
 - The Project Markdown blueprint is the planning source; its proposed coordination files have not yet been committed to this repository.
 
 Do not assume an absent contract, image or upstream agent deliverable exists. Keep integration decisions provisional until owners confirm them.
@@ -29,35 +29,47 @@ Research checked on 2026-10-31 against upstream documentation:
 
 | Technology | Relevant capability | PHOENIX-10 assessment |
 |---|---|---|
-| Fedora bootc / bootable container images | Image-defined OS; transactional staged updates; retained deployment and rollback on OSTree backend | Strong candidate for immutable/image-based TuskerOS if ATLAS-01 selects bootc and confirms package/service compatibility |
-| Anaconda + Kickstart | Fedora installer, storage/user configuration, scripted installs; current docs include bootc Kickstart support | Preferred installation front end for a bootc image; retain interactive install path and use Kickstart for repeatable VM/CI installs |
-| osbuild Image Builder | Fedora package; builds disk images; upstream documents bootc ISO construction | Candidate image assembly/build tool; validate target Fedora release, ISO recipe maturity and CI resource needs before committing |
-| Lorax / livemedia-creator | Existing Fedora installer-media composition ecosystem | Fallback/alternative if chosen image architecture is traditional package-based rather than bootc; do not mix build systems without an explicit decision |
-| rpm-ostree / OSTree | Deployment-based updates/rollback underpinning Atomic/bootc systems | Relevant to bootc architecture; do not assume it is the selected update API until ATLAS-01 decides |
-| Traditional Anaconda package installation | Mature Fedora install path with Kickstart and broad storage support | Viable fallback if ATLAS-01 chooses mutable RPM/DNF image rather than bootc |
+| KIWI NG | Fedora-supported image composition; declarative package/repository descriptions; live ISO and OEM/virtual-disk outputs | Leading POC candidate for the mutable Fedora 44 desktop image pipeline; production selection depends on Fedora 44 KDE/Wayland ISO and QCOW2 boot tests |
+| Anaconda Live installer | Fedora live-install workflow, storage/user setup and guided/manual partitioning | Candidate installation engine inside the live ISO; verify Fedora 44 KDE integration and WebUI readiness; retain supported fallback |
+| Fedora Image Builder / osbuild | Fedora-native blueprint and image composition with multiple image types | Retained alternative; ATLAS-01 identified Fedora 44 package-customization limitations in workstation-live-installer vs generic-qcow2 |
+| Lorax / livemedia-creator | Fedora installer-media composition with Kickstart and Anaconda | Fallback if KIWI cannot produce a reliable Fedora 44 KDE live installer ISO |
+| Fedora bootc / rpm-ostree | Image-based OS deployment, staged update and rollback model | Future option only; not the first MVP update model unless ATLAS-01 and PHOENIX-10 approve persistence, migration and recovery semantics |
+| Traditional RPM/DNF | Mutable Fedora package-managed OS and familiar RPM transaction model | Provisional first-MVP update model; PHOENIX-10 must not claim bootc-style atomic rollback |
 
-### Provisional recommendation (ADR-PHX-001; pending owner agreement)
+### Provisional recommendation (ADR-PHX-001; reconciled with ATLAS-01 on 2026-10-31)
 
-1. Ask ATLAS-01 to select and own the base OS architecture and Fedora release.
-2. If ATLAS-01 selects bootc, prefer a bootable container image built with the supported osbuild Image Builder path, installed through Anaconda's bootc Kickstart integration. Use Anaconda/Kickstart to retain familiar disk selection, encryption and user-setup affordances.
-3. If ATLAS-01 selects a traditional mutable Fedora system, use Anaconda/Kickstart with the base image pipeline selected by ATLAS-01; keep PHOENIX-10's install safety, verification and recovery contracts independent of the underlying rootfs model.
-4. Do not create a custom installer UI before a stock Anaconda path is proven in a disposable UEFI VM.
-5. Do not promise rollback of user data or arbitrary mutable state merely because the OS deployment can roll back. OS deployment rollback and user-data restore are separate systems and tests.
+ATLAS-01 has supplied a research-backed proposal in `01-fedora-base`:
 
-**Important bootc caveats:** bootc rollback changes the boot entry ordering and is queued for the next boot; it can discard a staged update. Changes to `/etc` do not automatically carry over when switching to a previous deployment. Update orchestration must prevent an automatic update timer from immediately undoing an intentional rollback. Preserve and test host/user state separately.
+- Fedora 44 is the provisional stable development baseline.
+- Fedora 45 has a GO decision but was not yet GA on the date of that proposal; do not pin release artifacts to it before GA and post-GA validation.
+- Keep the first MVP on conventional mutable Fedora RPM/DNF unless the master plan explicitly requires image-based updates.
+- KIWI NG is the leading image-composition candidate because one declarative description may produce both a custom live/install ISO and a virtual disk image.
+- Initial artifact POC targets are x86_64 UEFI hybrid ISO and x86_64 UEFI QCOW2. aarch64 is deferred until CI and hardware/VM validation.
+- Secure Boot must be tested independently; UEFI boot success is not proof of Secure Boot support.
+
+**PHOENIX-10 position:** accept these as the POC baseline, not as frozen production decisions. The POC must build from a version-controlled package source, boot both artifacts in QEMU/KVM with UEFI firmware, verify KDE Plasma/Wayland and core hardware services, and capture logs, checksums and resolved RPM NEVRAs. See `docs/PHOENIX-10-KIWI-POC.md`.
+
+**Installer distinction:** KIWI image composition and Anaconda installation are separate concerns. A KIWI live ISO can be used as the environment that launches Anaconda; a KIWI OEM `installiso` is a different direct-image deployment flow and must not be represented as the Anaconda installer. The POC must explicitly verify the chosen live ISO launches a supported Anaconda installer, including storage UI and destructive-operation safeguards. Fedora's Anaconda WebUI is available in Fedora 44 packages, but its suitability for TuskerOS KDE, partitioning, keyboard and locale workflows must be tested; keep the existing supported installer path as a fallback until validated.
+
+**Bootc remains deferred.** It offers attractive deployment-based updates and rollback, but changes filesystem, configuration and recovery semantics. Revisit only after a separate ADR evaluates `/etc` migration/rollback, `/var` persistence, drivers, offline updates, installer and recovery. Do not conflate an image builder with an OS update model.
+
+**Build pipeline:** prefer Fedora's maintained KIWI descriptions and build wrapper as the initial reference rather than inventing a Fedora boot pipeline from scratch. Fork/adapt only the minimum required, retain upstream provenance and pin the release branch/repository metadata for repeatable builds.
 
 ### Primary research sources
 
-- Anaconda documentation: https://anaconda-installer.readthedocs.io/en/latest/
-- Anaconda Kickstart guide: https://anaconda-installer.readthedocs.io/en/latest/user-guide/kickstart.html
-- Anaconda rescue mode guide: https://anaconda-installer.readthedocs.io/en/latest/user-guide/rescue-mode.html
-- Fedora bootc ISO construction with Image Builder: https://osbuild.org/docs/developer-guide/projects/image-builder/advanced/bootc/isos/
-- Image Builder installation and Fedora availability: https://osbuild.org/docs/developer-guide/projects/image-builder/installation/
-- bootc upgrade/staging/rollback semantics: https://bootc.dev/bootc/bootc-upgrades.7.html
-- bootc rollback details and `/etc` caveat: https://bootc.dev/bootc/man/bootc-rollback.8.html
-- Fedora Magazine: Anaconda bootc Kickstart introduction (2025-12-31): https://fedoramagazine.org/introducing-the-new-bootc-kickstart-command-in-anaconda/
+- Fedora image-building guidance and Fedora's KIWI workflow: https://fedoraproject.org/wiki/Building_a_Fedora
+- Fedora-maintained KIWI descriptions: https://pagure.io/fedora-kiwi-descriptions
+- KIWI NG 11.1.6 documentation and supported build-host list: https://osinside.github.io/kiwi/
+- KIWI image-description schema: https://osinside.github.io/kiwi/image_description/elements.html
+- KIWI image types and output metadata: https://osinside.github.io/kiwi/image_types_and_results.html
+- Fedora 44 KIWI live-ISO host dependencies: https://packages.fedoraproject.org/pkgs/kiwi/kiwi-systemdeps-iso-media/
+- Fedora 44 KIWI live-image dracut module: https://packages.fedoraproject.org/pkgs/kiwi/dracut-kiwi-live/
+- Fedora 44 Anaconda live-install package: https://packages.fedoraproject.org/pkgs/anaconda/anaconda-live/
+- Fedora 44 Anaconda WebUI package: https://packages.fedoraproject.org/pkgs/anaconda-webui/anaconda-webui/
+- Fedora Anaconda WebUI for Spins status and known caveats: https://fedoraproject.org/wiki/Changes/AnacondaWebUIforFedoraSpins
+- Fedora 44 KDE edition and official verification instructions: https://fedoraproject.org/kde/download/
 
-This is an initial evidence-based shortlist, not a completed compatibility test. Version-specific support must be rechecked against the Fedora release ATLAS-01 chooses.
+This is an evidence-backed POC direction, not a completed compatibility test or production tool lock.
 
 ## 3. System architecture
 
@@ -70,13 +82,13 @@ Reviewed source + pinned build inputs
 Fedora base/image definition (ATLAS-01 owns)
         |
         v
-Image composition (osbuild/Image Builder or agreed alternative)
+Image composition (KIWI NG POC; retain osbuild/Lorax alternatives)
         |
         +--> package/dependency manifest + SBOM
         +--> build metadata + provenance attestation
         |
         v
-Installer media (Anaconda + reviewed Kickstart/profile)
+Live/install media (KIWI NG) -> Anaconda Live installer (only after KDE/storage UX validation)
         |
         v
 Automated VM install / boot / smoke / recovery tests
@@ -134,7 +146,7 @@ First-boot setup is idempotent and resumable. It should:
 
 ### 3.4 Updates and rollback
 
-For a bootc/OSTree-style base:
+For the provisional mutable RPM/DNF MVP:
 - fetch metadata and image by immutable digest, validate trust policy, architecture, channel and minimum version;
 - stage/download without changing the running deployment;
 - verify disk space, image signature/provenance and compatibility before activation;
@@ -189,7 +201,7 @@ All cross-agent changes are coordinated by GitHub Issues and reviewed PRs. PHOEN
 
 | Risk | Impact | Mitigation / evidence required |
 |---|---|---|
-| Base image strategy undecided | Installer/update architecture could be invalidated | Gate implementation on ATLAS-01 ADR; keep adapter boundaries |
+| KIWI/Anaconda integration not proven for Tusker KDE | Installer media may boot but fail to install or have incomplete partitioning UX | Use Fedora-maintained KIWI descriptions as reference; validate live ISO, Anaconda launch, storage UI and fallback path in POC |\n| Mutable RPM/DNF update cannot promise atomic rollback | Failed update may require repair/reinstall and user-data restore | Define signed package transactions, backups and recovery; do not advertise bootc-style rollback |\n| Base image strategy not frozen | Installer/update architecture could be invalidated | Treat Fedora 44 + KIWI + RPM/DNF as provisional POC only; require owner-reviewed ADR before release lock |
 | Fedora release/tool support drift | Broken build/install at release time | Pin supported Fedora version and toolchain; revalidate on each release |
 | Disk selection ambiguity/race | Irrecoverable user data loss | Stable device identity, revalidation, explicit summary/confirmation, destructive VM tests |
 | Dual-boot/firmware diversity | Boot failure or data loss | Defer dual boot until UEFI/GPT/Secure Boot matrix passes |
@@ -228,7 +240,7 @@ All cross-agent changes are coordinated by GitHub Issues and reviewed PRs. PHOEN
 - [ ] P0.5 Record compatibility matrix, assumptions, risk register and reviewed requirements.
 
 ### P1 — Architecture and contracts
-- [ ] P1.1 Agree base image architecture, Fedora version and installer substrate with ATLAS-01.
+- [ ] P1.1 Approve Fedora 44 + mutable RPM/DNF + KIWI/Anaconda direction after POC and owner review.
 - [ ] P1.2 Define installer state machine, storage contract and destructive-operation authorization.
 - [ ] P1.3 Define partition, filesystem, encryption, bootloader and Secure Boot profiles.
 - [ ] P1.4 Define first-boot state schema, idempotency and resumability.
@@ -312,3 +324,16 @@ P1 is complete only when dependent owners accept the image, packaging, trust, ha
 3. Verify selected Fedora release support for osbuild Image Builder, Anaconda bootc Kickstart, Secure Boot and bootc update/rollback.
 4. Create the owned installer/update/recovery skeleton only after the architecture boundary is agreed.
 5. Establish a disposable UEFI VM test profile before destructive installer implementation.
+
+## 10. Cross-agent architecture update — 2026-10-31
+
+ATLAS-01 response is recorded on GitHub issue #2. Its files `os/BUILD-TOOL-EVALUATION.md` and `os/BASE-SYSTEM-CONTRACTS.md` on `01-fedora-base` are provisional source contracts. Key implications for PHOENIX-10:
+
+- The first MVP should use mutable RPM/DNF unless the master plan requires image-based updates.
+- KIWI NG is the leading POC candidate; Fedora 44 package availability for KIWI's live ISO dependencies is visible in Fedora's package catalog.
+- Fedora-maintained KIWI descriptions should be used as the reference implementation and minimally adapted.
+- The image POC is not complete until both the live/install ISO and QCOW2 boot from the same package source.
+- Secure Boot, Anaconda UI and physical hardware support remain unverified.
+- NEXUS-07 and AEGIS-06 contracts remain outstanding; no destructive installation implementation is authorized by this proposal alone.
+
+The exact build/boot procedure and pass/fail evidence template are maintained in `docs/PHOENIX-10-KIWI-POC.md`.
