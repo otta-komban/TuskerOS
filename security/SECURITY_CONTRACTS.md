@@ -23,8 +23,8 @@ A caller submits a typed proposal, never an arbitrary shell command.
 | proposal_id | UUID | Required unique proposal identity |
 | task_id | UUID/string | Required orchestration correlation |
 | step_id | UUID/string | Required step correlation |
-| principal | structured identity | Supplied by trusted local identity adapter, not caller body |
-| origin | enum | local, remote, extension, system |
+| principal | out-of-band authenticated context | Derived by trusted transport adapter; never accepted from proposal body |
+| origin | out-of-band authenticated context | local, remote, extension, system; never accepted from proposal body |
 | arguments | object | Operation-specific strict schema; reject unknown fields |
 | resources | array | Explicit resource identifiers/scopes |
 | idempotency_key | string | Required for mutating operations |
@@ -44,7 +44,8 @@ Policy evaluation returns one of DENY, REQUIRE_APPROVAL, or ALLOW.
 | reason_code | string | Stable machine-readable reason |
 | risk_class | enum | R0–R5, assigned by policy |
 | policy_version | string | Exact policy revision |
-| action_digest | string | SHA-256 digest over RFC 8785 JCS canonicalized action, arguments, resolved resources, principal binding, schema and policy/registry version |\n| principal_binding | string | SHA-256 binding to authenticated principal/session context |
+| action_digest | string | SHA-256 digest over RFC 8785 JCS canonicalized action, arguments, resolved resources, principal binding, schema and policy/registry version |
+| principal_binding | string | SHA-256 binding to authenticated principal/session context |
 | evaluated_at | timestamp | Trusted service time |
 | expires_at | timestamp/null | Short expiry for ALLOW authorization |
 | approval_request_id | UUID/null | Required for REQUIRE_APPROVAL |
@@ -83,7 +84,7 @@ The broker MUST NOT accept shell strings, arbitrary executable paths, arbitrary 
 
 ## 7. Audit event
 
-Minimum fields: event_id, timestamp_utc, event_type, principal, origin, task_id, step_id, proposal_id, decision_id, operation_id, risk_class, policy_version, action_digest, approval_request_id (if any), executor_id, result_status, reason_code, correlation_id.
+Minimum fields: event_id, timestamp_utc, event_type, principal_binding, origin, task_id, step_id, proposal_id, decision_id, operation_id, risk_class, policy_version, action_digest, approval_request_id (if any), executor_id, result_status, reason_code, correlation_id.
 
 Audit records MUST redact credentials, tokens, private keys, secret environment values, and unnecessary file contents. Audit writes MUST be access-controlled and integrity-protected. High-risk operations MUST fail closed if a required pre-execution audit record cannot be durably written. Event states MUST distinguish requested, authorized, started, succeeded, failed, cancellation_requested, cancelled, outcome_unknown, compensation_started, compensation_verified, and compensation_failed.
 
@@ -124,6 +125,8 @@ Retries MUST re-enter policy evaluation; they MUST NOT reuse stale approval or a
 - FORGE-09: extension identity, capability manifest, sandbox profile and revocation.
 - ATLAS-01: OS users/groups, Polkit actions, systemd and SELinux packaging.
 
-## 11. Machine-readable artifacts\n\nDraft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, and audit-event.schema.json. The deterministic evaluation and canonicalization rules are in security/POLICY_ENGINE_SPEC.md. Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately.\n\n## 12. Compatibility gate
+## 11. Machine-readable artifacts
+
+Draft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, and audit-event.schema.json. The deterministic evaluation and canonicalization rules are in security/POLICY_ENGINE_SPEC.md. Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately.\n\n## 12. Compatibility gate
 
 No agent should implement a privileged integration based on this draft alone without confirming field names, identity provenance, canonicalization, expiry semantics, and error behavior with AEGIS-06. Contract changes require version increment and test updates.
