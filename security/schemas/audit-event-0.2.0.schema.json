@@ -248,6 +248,29 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "result_status": {
+            "enum": [
+              "denied",
+              "failure"
+            ]
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
     }
   ]
 }
