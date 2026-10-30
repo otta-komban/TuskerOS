@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 12
-- **Latest completion:** `AEGIS-06-C0012`
+- **Verified completion count:** 13
+- **Latest completion:** `AEGIS-06-C0013`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `a38a8ff64ccebe77e59600b71f7efa1ba7998e18`
+- **Latest log commit:** `c8512c053d775f304d40e753c620601317d996c5`
 
 ## Completion index
 
@@ -133,3 +133,18 @@
 - **Verification limits:** Draft artifact structural check only; no runtime implementation, privileged operation or executable security test was performed.
 
 - **Checklist verification commit:** `3ddc59598ee2beefe346a5d9ddc86ba464b62209` confirms SEC-SCHEMA-002 is checked complete; SEC-SCHEMA-001 remains open.
+
+
+| AEGIS-06-C0013 | Schema contract remediation | Published approval-request schema v0.2.0 with explicit session/device, registry-version, resource-scope and precondition-digest bindings | security/schemas/approval-request.schema.json; security/SCHEMA_CONSISTENCY_AUDIT.md |
+
+## C0013 — Approval binding schema remediation
+
+- **Completion:** 13 / 100
+- **Timestamp:** 2026-10-30T20:50:16.460Z
+- **Schema:** `security/schemas/approval-request.schema.json` advanced from draft `0.1.0` to `0.2.0`; the required `binding` object carries SHA-256 session/device bindings, registry version, unique non-empty canonical resource identifiers, and a precondition digest.
+- **Integrity:** Existing top-level `action_digest` remains mandatory. Explicit binding fields aid inspection/revalidation but do not replace canonical action digesting or trusted broker-side comparison.
+- **Compatibility:** This is a versioned draft wire-format change. A 0.1.0 request must not be silently accepted as 0.2.0. Runtime owner migration/compatibility acceptance is pending.
+- **Audit/checklist:** `security/SCHEMA_CONSISTENCY_AUDIT.md` records the remediation and limits; `security/PHASE1_CHECKLIST.md` tracks pending owner review, producer/UI fixtures and Draft 2020-12 validation.
+- **Commits:** Schema `d50473c5e9aa33b6f9955b4e67224391e5249204`; audit `98f1176c46017f3f83e404030f60d2d8e817854e`; checklist `ccfe4d9b9643d85e06f54b1ed9c95df50ae3f2d0`; JSONL `c8512c053d775f304d40e753c620601317d996c5`.
+- **Blocker:** NEXUS-07 has not supplied runtime/API constraints or accepted the proposed binding/migration representation. Schema shape does not prove trusted identity, canonical resource ordering, semantic digest correctness or atomic consume behavior.
+- **Verification limits:** No Draft 2020-12 meta-schema/format validator, producer/UI fixture, runtime enforcement test or privileged operation was run.
