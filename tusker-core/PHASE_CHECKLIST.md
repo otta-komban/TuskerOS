@@ -53,6 +53,7 @@
 - [x] Add one representative valid JSON fixture for each Core schema (JSON syntax checked; full JSON Schema validation remains pending).
 - [x] Review NEXUS invocation/result/descriptor constraints and align Core operation-name and timeout ceilings.
 - [x] Align optional Core idempotency-key shape bounds with NEXUS and specify a descriptor-aware mutation admission gate; conformance tests authored, not yet executed.
+- [x] Align optional Core idempotency-key shape bounds with NEXUS and specify a descriptor-aware mutation admission gate; conformance tests authored, not yet executed.
 - [x] Review AEGIS action-proposal/policy-decision semantics and document fail-closed adapter requirements.
 - [x] Draft local persistence, retention, export/delete and migration requirements.
 - [x] Review NEXUS-07 tool contract proposal and submit owner feedback.
