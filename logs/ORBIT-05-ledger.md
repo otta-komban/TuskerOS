@@ -7,21 +7,21 @@ Machine-readable log: logs/ORBIT-05.jsonl
 
 ## Current state
 
-- Verified assistant responses recorded: 9
+- Verified assistant responses recorded: 10
 - Target: 100 actual assistant responses
-- Current phase: P1 provider lifecycle/conformance, machine-readable event contract, automated contract CI, benchmark methodology, model governance and security review
+- Current phase: P1 provider lifecycle/conformance, passing schema/trace CI, benchmark methodology, model governance and security review
 - Starting branch commit: 8c463dcec409fc9354b2adcb9b51a722d7c97fe5
-- Latest relevant commits: provider contract 9581ee87599db9d2890ef0456e46f96c04e54677; cross-agent alignment ca1cdd31f6d7fc0b186f8c7bf70d0d4ec7b24a27; Fedora integration 364aeb448eaa0eb15c47b6166ec44570342d5ffa; latest successful contract test commit 22682dec101e6ec239a985555ce9e1cc542037a8; C0009 log/ledger commits pending.
+- Latest relevant commits: provider contract 9581ee87599db9d2890ef0456e46f96c04e54677; cross-agent alignment ca1cdd31f6d7fc0b186f8c7bf70d0d4ec7b24a27; Fedora integration 364aeb448eaa0eb15c47b6166ec44570342d5ffa; latest successful contract test run 41117411271 on af3bd90ee30f060e588d96a13427c7e77db1a3f1; latest C0010 log commit 48373d7ba601742a814be11284d0ad11024c9d28.
 - Benchmarks performed: 0 (protocol proposal published; no measurements)
-- Model manifest schema: proposed 0.1.0; synthetic valid fixture and Draft 2020-12 positive/negative test harness committed; tests not yet executed
+- Model manifest schema: proposed 0.1.0; synthetic valid fixture and Draft 2020-12 positive/negative test harness committed; expanded required-field, nested-field, URI and timestamp rejection tests pass in CI run 41117411271
 - Model catalog admission policy: proposal published; no model approved
-- Provider lifecycle/conformance: 8 lifecycle states and 24 test scenarios specified; language-neutral inference event schema and synthetic trace fixture committed; schema/fixture test harness executed successfully in GitHub Actions run 41116139411; adapter implementation and provider conformance not executed
+- Provider lifecycle/conformance: 8 lifecycle states and 24 test scenarios specified; language-neutral inference event schema and synthetic trace fixture committed; schema/fixture test harness executed successfully in GitHub Actions runs 41116139411 and 41117411271; adapter implementation and provider conformance not executed
 - Hardware recommendation method: proposal published; no measured fit recommendations
 - Runtime/model defaults selected: none
 - Repository intake: initial branch contained LICENSE only; ORBIT-05 documentation and logs have been added.
 - Planning source: Project Library TuskerOS_Ten_Agent_Execution_Blueprint.md, including agent registry, shared phase/dependency rules, quality/release gates and ORBIT-05 P0–P7 plan.
 - Platform context: ATLAS-01 proposes Fedora 44/x86_64 as the initial development baseline; this is provisional pending its build/image POC and architecture decision.
-- Open blockers: provider contract awaits TUSKER-04/NEXUS-07 review; ATLAS-01 package/service review and AEGIS-06 security review are open; exact-version license audits and benchmark hardware remain outstanding; schema/fixture CI run 41116139411 passed after C0009 fixes; provider and security reviews, Fedora packaging, exact-version license audits and benchmark host remain outstanding.
+- Open blockers: provider contract awaits TUSKER-04/NEXUS-07 review; ATLAS-01 package/service review and AEGIS-06 security review are open; exact-version license audits and benchmark hardware remain outstanding; schema/fixture CI run 41117411271 passed after expanded C0010 tests; issues #20, #22, #26 and #28 remain open with zero comments; provider and security reviews, Fedora packaging, exact-version license audits and benchmark host remain outstanding.
 
 ## Completion history
 
@@ -44,3 +44,5 @@ Machine-readable log: logs/ORBIT-05.jsonl
 - Record only tests actually run and benchmarks actually measured.
 - Update this ledger and JSONL together; commit at least every five responses and at handover.
 - PRs target main and include agent ID, phase/task, paths, tests, risks and completion IDs.
+
+| ORBIT-05-C0010 | Model governance / schema validation / CI | Expanded model-manifest negative coverage for missing required top-level fields, nested required fields, invalid timestamp/URI formats and negative hardware requirements; GitHub Actions passed. | `tusker-ai/tests/test_model_manifest_schema.py`; run [41117411271](https://github.com/otta-komban/TuskerOS/actions/runs/41117411271) passed on `af3bd90ee30f060e588d96a13427c7e77db1a3f1`; `tusker-ai/docs/CHECKLIST.md` updated; log commit `48373d7ba601742a814be11284d0ad11024c9d28`. No runtime/provider/benchmark work claimed. |
