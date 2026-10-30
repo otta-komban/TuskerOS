@@ -30,3 +30,6 @@ The caller chooses the user config path (recommended: `$XDG_CONFIG_HOME/tuskeros
 Run `python -m unittest discover -s desktop/tests -v`. The CI workflow runs this suite on every desktop-related branch push and pull request. The tests cover defaults, partial merges, strict keys/types, malformed and oversized files, atomic round-trip persistence, file permissions and symlink refusal.
 
 Schema v1 is an initial desktop-owned contract, not yet a cross-agent integration contract. Future additions require a schema version/migration decision and tests. Do not persist transient task state or security/approval decisions here.
+
+
+Regression coverage includes malformed root values, unsupported schema versions, and dangling symlinks; dangling links are checked before missing-file handling so they cannot silently appear absent.
