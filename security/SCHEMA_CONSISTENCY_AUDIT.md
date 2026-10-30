@@ -135,3 +135,12 @@ This proposal narrows the field-shape question but does not resolve ownership or
 - Reviewed the branch's approval-request 0.2.0 draft and aligned `security/APPROVAL_BINDING_SCHEMA_PROPOSAL.md` to its actual nested `binding` shape: separate session/device digests, registry version, canonical resource identifiers and precondition digest.
 - Documented trust-source, canonicalization, digest coverage, fail-closed and 0.1.0-to-0.2.0 migration requirements. Runtime-owner acceptance and producer/UI/broker tests remain pending.
 - Identified SEC-SCHEMA-003: lifecycle requires registry version in audit evidence, but audit-event schema has no such property. No audit wire-format change made.
+
+
+## C0015 update — approval-binding schema regression coverage
+
+Added approval-request v0.2.0 fixtures to `security/tests/test_security_schemas.py`. The fixtures verify one complete valid request, rejection when any required binding member is omitted, malformed session/device/precondition digests, empty or duplicate resource identifiers, and rejection of a 0.1.0 payload by the 0.2.0 schema.
+
+**CI evidence:** GitHub Actions run 41126585567 completed successfully on the test commit; Python 3.12 executed `python -m pytest -q security/tests` and reported **32 passed in 0.37s**. This validates schema structure and envelope fixtures only; it does not test trusted identity derivation, resource canonicalization semantics, UI presentation, approval consumption, audit persistence or broker enforcement.
+
+**SEC-SCHEMA-003 remains open:** the lifecycle requires registry version in audit evidence, but audit-event schema 0.1.0 does not contain `registry_version`. Keep this as a separately versioned audit contract change pending producer-owner review.
