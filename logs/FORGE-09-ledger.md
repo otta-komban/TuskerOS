@@ -3,7 +3,7 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0005
+- Current recorded completion: C0006
 - Current phase: P2 — SDK and marketplace foundation
 
 | Completion | Phase | Category | Summary | Evidence | Status |
@@ -13,6 +13,7 @@
 | FORGE-09-C0003 | P2 | implementation | Added fail-closed catalog metadata validator and eight unittest cases; documents the boundary between structural validation and trust/authorization. | `marketplace/tools/validate_catalog_entry.py`; `marketplace/tests/test_validate_catalog_entry.py`; `marketplace/tools/README.md` | partial |
 | FORGE-09-C0004 | P2 | implementation | Added semantic release parsing/precedence, compatibility range checks, compatible candidate selection, prerelease opt-in, ambiguity rejection and dependency-order preview; tests committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `marketplace/tools/RESOLUTION.md` | partial |
 | FORGE-09-C0005 | P2 | implementation | Enforced exact/comparison dependency version constraints, intersected shared dependency requirements across parents, rejected missing/malformed edge constraints and updated the manifest schema/docs; 15 resolver test methods committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `sdk/schemas/extension-manifest.schema.json`; `marketplace/tools/RESOLUTION.md` | partial |
+| FORGE-09-C0006 | P3 | implementation | Added installed package ownership schema and fail-closed dry-run removal planning; protects shared packages and transitive dependencies, preserves user/system ownership, and adds nine tests (execution pending). | `marketplace/tools/package_ownership.py`; `marketplace/tests/test_package_ownership.py`; `marketplace/schemas/installed-package-state.schema.json` | partial |
 
 ## Phase checklist
 
@@ -44,7 +45,7 @@
 - [ ] Validate Fedora package availability with ATLAS-01.
 
 ### P3 — Working MVP
-- [ ] Implement safe package transaction adapter and explicit preview/approval flow.
+- [x] Implement pure dry-run package ownership/removal planner with shared-owner and dependency protection.\n- [ ] Implement safe package transaction adapter and explicit preview/approval flow.
 - [ ] Build/test AI Python Developer bundle.
 - [ ] Integrate sandboxed extension host and install sample package.
 - [ ] Verify uninstall and cleanup.
@@ -76,5 +77,7 @@
 - Cross-agent review issue #7 currently has only the FORGE-09 update and no replies from AEGIS-06, NEXUS-07 or PIXEL-03. ATLAS-01 request #24 has no replies yet.
 - The sample extension and catalog fixture are metadata-only. Catalog validation and resolution do not make an entry trusted or installable.
 - C0002's 15 checks were in-memory reconstructions, not execution of committed tests. C0003's eight validator tests and C0004's resolver tests are committed but not run. A local checkout previously failed because this environment could not resolve github.com.
-- C0002, C0003, C0004 and C0005 remain partial; do not describe the marketplace or bundle system as production-ready.
+- C0002, C0003, C0004, C0005 and C0006 remain partial; do not describe the marketplace or bundle system as production-ready.
 - C0005 resolver limits: callers must construct the edge-constraint mapping from validated manifests and preserve package identity binding. Constraint syntax is intentionally limited to exact semantic versions and comma-conjoined comparisons. Trust, signature verification, revocation, fetch, permission authorization and installation remain external.
+
+- C0006 ownership model requires the installer adapter to attribute the bundle/extension owner to every package acquired for that owner, including dependencies. Removal output is advisory dry-run data only; an executor must refresh installed state, obtain authorization and revalidate before applying a package transaction.
