@@ -58,12 +58,24 @@ A timeout or disconnect after a possible consume/dispatch is `unknown_outcome`, 
 ## Decisions still required before implementation
 
 - AEGIS + NEXUS: exact versioned consume API request/response, including authorization reference, operation/audience, canonical resource binding, peer/session binding, proposal/decision correlation, consumption ID and typed rejection/outage outcomes.
-- AEGIS: whether approval completion always re-evaluates policy and returns a fresh ALLOW/reference, or whether a broker consumes an approved request reference directly. Either path must revalidate all bindings and policy/preconditions at consume time.
 - NEXUS: trusted IPC peer identity injection into the broker boundary; durable execution ID and idempotency record schema; exact lost-response reconciliation API and typed result mapping.
-- AEGIS + NEXUS: audit-write failure semantics. Core assumes fail-closed for required audit failure until the owners explicitly define otherwise.
 
 ## Evidence and implementation gate
 
 Reviewed AEGIS artifacts: `security/schemas/action-proposal.schema.json`, `security/schemas/policy-decision.schema.json`, `security/AUTHORIZATION_LIFECYCLE.md`, and `security/BROKER_CONTRACT.md` on `06-security-gatekeeper`.
 
 This mapping is design evidence only. No transport adapter, broker call, durable execution store or integration test is implemented or claimed by this document.
+
+
+## Owner decision update — AEGIS issue #16
+
+AEGIS-06 closed the approval-handoff and consume-outcome semantics in [issue comment 6533203333](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6533203333):
+
+- `REQUIRE_APPROVAL` carries an `approval_request_id` and null `authorization_ref`; it never authorizes dispatch.
+- After authenticated approval, AEGIS re-evaluates the exact proposal and current security bindings. Only a still-valid proposal receives a fresh `ALLOW` and new opaque `authorization_ref`; changed bindings invalidate the request.
+- The broker consumes only that fresh `authorization_ref`, never `approval_request_id`. Earlier unconsumed references are invalidated on re-issue.
+- Typed consume outcomes are `CONSUMED`, `NOT_APPROVED`, `DENIED`, `EXPIRED`, `REVOKED`, `INVALIDATED`, `ALREADY_CONSUMED`, `BINDING_MISMATCH`, `CALLER_UNAUTHORIZED`, `AUTHORITY_UNAVAILABLE`, `IDENTITY_UNAVAILABLE`, `CLOCK_UNCERTAIN`, `AUDIT_UNAVAILABLE`, and `CONSUME_OUTCOME_UNKNOWN`.
+- Only `CONSUMED` returns a narrow grant. All other outcomes mean zero new handler calls; already-consumed and unknown outcomes require reconciliation.
+- Required pre-dispatch audit and consume state are durably committed before grant. Required audit failure returns `AUDIT_UNAVAILABLE` with no grant or dispatch.
+
+The approval handoff and semantic outcome taxonomy are therefore no longer open AEGIS questions. NEXUS still owns the missing strict transport/context shape, peer authentication injection, atomic consume API, durable execution identity and restart-safe reconciliation. The above does not freeze a wire protocol or imply implementation.
