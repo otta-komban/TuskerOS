@@ -7,9 +7,9 @@ Machine-readable log: logs/ORBIT-05.jsonl
 
 ## Current state
 
-- Verified assistant responses recorded: 10
+- Verified assistant responses recorded: 11
 - Target: 100 actual assistant responses
-- Current phase: P1 provider lifecycle/conformance, passing schema/trace CI, benchmark methodology, model governance and security review
+- Current phase: P1 provider lifecycle/conformance, passing schema/trace CI, model-store transaction/recovery design, benchmark methodology, model governance and security review
 - Starting branch commit: 8c463dcec409fc9354b2adcb9b51a722d7c97fe5
 - Latest relevant commits: provider contract 9581ee87599db9d2890ef0456e46f96c04e54677; cross-agent alignment ca1cdd31f6d7fc0b186f8c7bf70d0d4ec7b24a27; Fedora integration 364aeb448eaa0eb15c47b6166ec44570342d5ffa; latest successful contract test run 41117411271 on af3bd90ee30f060e588d96a13427c7e77db1a3f1; latest C0010 log commit 48373d7ba601742a814be11284d0ad11024c9d28.
 - Benchmarks performed: 0 (protocol proposal published; no measurements)
@@ -46,3 +46,5 @@ Machine-readable log: logs/ORBIT-05.jsonl
 - PRs target main and include agent ID, phase/task, paths, tests, risks and completion IDs.
 
 | ORBIT-05-C0010 | Model governance / schema validation / CI | Expanded model-manifest negative coverage for missing required top-level fields, nested required fields, invalid timestamp/URI formats and negative hardware requirements; GitHub Actions passed. | `tusker-ai/tests/test_model_manifest_schema.py`; run [41117411271](https://github.com/otta-komban/TuskerOS/actions/runs/41117411271) passed on `af3bd90ee30f060e588d96a13427c7e77db1a3f1`; `tusker-ai/docs/CHECKLIST.md` updated; log commit `48373d7ba601742a814be11284d0ad11024c9d28`. No runtime/provider/benchmark work claimed. |
+
+| ORBIT-05-C0011 | Model Store transaction design / recovery | Published a language-neutral transaction contract for bounded safe staging, archive path/link rejection, exact manifest/digest verification, atomic activation, rollback, cancellation and startup crash reconciliation; linked it from the checklist. | `tusker-ai/docs/MODEL-STORE-TRANSACTIONS.md` commit `e20e2ad40d04ad6a6d039aebf4804563e34b5e18`; 16 future transaction scenarios MS-001–MS-016 defined; checklist commit `7d0859cc3f33e2162cd9d86507bb175739ecd867`; log commit `4ac25bcf4eef239936f1496e706eeb67a808e7da`. Design only; no transaction implementation or tests claimed. |
