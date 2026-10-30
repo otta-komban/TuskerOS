@@ -9,7 +9,7 @@
 
 - **Verified completion count:** 44
 - **Latest completion:** `AEGIS-06-C0044`
-- **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
+- **Current phase:** P1 security integration review — remote-device contract defined; runtime owner dependencies remain open
 - **Latest log commit:** `ebf0462d35ed245fd19ff37b242ebb5f88d8ef8e`
 
 ## Completion index
@@ -468,23 +468,19 @@
 - **Timestamp:** 2026-10-30T21:40:30Z
 - **Engineering tasks completed:** 0; administrative reconciliation only.
 
+
+| AEGIS-06-C0043 | completion-accounting-reconciliation | Re-verified 42 unique sequential records, detected ledger lag and recorded this administrative response; zero engineering tasks | logs/AEGIS-06.jsonl; branch metadata |
+
 ## C0042 — Separate response, task and commit accounting
 - **Completion:** 42 / 100
 - **Timestamp:** 2026-10-30T21:41:16.867Z
 - **Engineering tasks completed:** 36 cumulative; this response completed zero new engineering tasks.
-- **Accounting:** JSONL has 43 actual response records with unique sequential IDs. This response is AEGIS-06-C0042. Task count excludes administrative reconciliation responses; commit count is branch commits ahead of main and is never inferred from response count.
-- **Latest JSONL commit:** `c72dba40c83d6c6c5304ebb83423bfc8a0c3a913`.
-- **Verification:** JSONL re-fetched and sequence-checked immediately before this ledger update.
+- **Accounting:** JSONL contains 44 actual response records with unique sequential IDs C0001–C0044. This response is C0042. Engineering-task count excludes administrative reconciliations and is separate from the branch commit count.
+- **Latest JSONL update before this ledger correction:** `c72dba40c83d6c6c5304ebb83423bfc8a0c3a913`.
 
-## C0043 — Response-based completion accounting
+## C0043 — Concurrent ledger lag reconciliation
 - **Completion:** 43 / 100
-- **Timestamp:** 2026-10-30T21:42:00Z
+- **Timestamp:** 2026-10-30T21:43:00.000Z
 - **Engineering tasks completed:** 0; administrative reconciliation only.
-- **Accounting:** Verified C0001-C0042 were sequential before appending this response as C0043. The Markdown ledger lagged the JSONL at that point.
-
-## C0044 — Concurrent response sequence verification
-- **Completion:** 44 / 100
-- **Timestamp:** 2026-10-30T21:43:00Z
-- **Engineering tasks completed:** 0; administrative reconciliation only. Cumulative engineering-task count remains 36, separate from response and commit counts.
-- **Accounting:** Verified 43 unique sequential response records, corrected the C0042 self-reference and recorded this distinct response as C0044.
-- **Rule:** One entire assistant response to one user query equals one response completion; tasks, tests, tool calls and commits are separate counters.
+- **Accounting:** A concurrent response appended C0043 after the previous ledger write. Re-fetched the JSONL, verified all 44 records are unique and sequential, and brought this ledger current.
+- **Rule:** One entire assistant response to one user query equals one completion. Engineering tasks, tests, tool calls and commits are counted separately.
