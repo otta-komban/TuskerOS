@@ -226,27 +226,6 @@
 | AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger with the 18 unique JSONL completion records and verified passing branch-head schema CI | `logs/AEGIS-06.jsonl`, `logs/AEGIS-06-ledger.md` |
 | AEGIS-06-C0019 | Audit schema versioning proposal | Proposed required trusted registry_version in a separately versioned audit-event 0.2.0 envelope; owner acceptance remains pending | `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`; `security/PHASE1_CHECKLIST.md` |
 
-## C0018 — Completion ledger reconciliation
-
-- **Completion:** 18 / 100
-- **Timestamp:** 2026-10-30T20:55:25.491Z
-- **JSONL:** 18 records with unique sequential IDs C0001–C0018.
-- **Latest JSONL commit:** `daaa4c6cfb854340833185e029e86cab0d6c2732`.
-- **Branch-head CI:** Run [41126895122](https://github.com/otta-komban/TuskerOS/actions/runs/41126895122) succeeded; 32 tests passed in 0.51s.
-- **Reason:** Concurrent branch updates briefly left the readable ledger one completion behind the machine log; the ledger now includes this reconciliation.
-
-
-## C0018 — Progress ledger reconciliation
-
-- **Completion:** 18 / 100
-- **Timestamp:** 2026-10-30T20:55:25.491Z
-- **Action:** Updated the readable ledger to reflect the latest verified completion record and preserved the existing completion history.
-- **Verification at record time:** JSONL contained 17 unique sequential records through C0017; GitHub Actions run 41126895122 succeeded with 32 tests on Python 3.12.
-- **Current reconciliation note:** This JSONL now contains 18 unique sequential records through C0018; this ledger entry brings the readable count into alignment.
-- **Open blockers:** SEC-SCHEMA-001 runtime-owner acceptance; SEC-SCHEMA-003 audit `registry_version` decision; NEXUS-07 transport/atomic-consume implementation; audit producer/persistence tests.
-
-
-
 ## C0018 — Progress ledger reconciliation
 
 - **Completion:** 18 / 100
@@ -355,23 +334,6 @@
 ## C0027 — FORGE-09 package transaction security review
 
 - **Completion:** 27 / 100
-- **Timestamp:** 2026-10-30T21:23:56.051Z
-- **Decision:** Package transaction approval must bind transaction ID, canonical package/action/version/source plan, installed-state snapshot digest, principal/session/device, operation, policy/registry versions and expiry. Consume only a fresh opaque authorization reference; independently authenticate broker IPC peer; durably audit before dispatch; separately authorize compensation/rollback.
-- **Coordination:** Posted AEGIS decision to issue #29, comment 6533750815.
-- **Blockers:** NEXUS-07 transport/identity/consume API and PHOENIX-10 package locking/execution/read-back/recovery guarantees. No package execution or rollback implementation claimed.
-
-## C0028 — Registry-unavailable lifecycle regression coverage
-
-- **Completion:** 28 / 100
-- **Timestamp:** 2026-10-30T21:24:00.000Z
-- **Tests:** Added 13 parametrized negative cases for all post-request lifecycle event classes when registry status is unavailable. GitHub Actions run 41130628432 passed **67 tests in 0.58s** (job 124320290914).
-- **Commits:** tests `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8`; divergence review `245199912928623bfce0fda96a1d57fd81530af6`; test matrix `5687436de2a0819c3b0e297959f368932d901159`; checklist `17f774bc8375b38fabb177f857399264894f3c3b`; JSONL `843591a971d7ee105d5da78d5a21f193d279f7f3`.
-- **Limits:** Candidate v0.2.0 only; active v0.1.0 unchanged. No trusted registry producer, audit persistence, broker IPC or privileged runtime tested.
-
-
-## C0027 — FORGE-09 package transaction security review
-
-- **Completion:** 27 / 100
 - **Decision:** Package operations must bind the exact transaction, canonical package/action/version/source plan, installed-state snapshot digest, principal/session/device, operation, policy/registry versions, expiry and one-time consume. Broker peer identity must be independently authenticated; durable pre-dispatch audit is required; rollback/compensation is separately authorized; post-dispatch disconnect is UNKNOWN and requires read-back reconciliation.
 - **Coordination:** AEGIS decision posted on issue #29 (comment 6533750815).
 - **Blockers:** NEXUS-07 broker transport/peer identity/consume API and PHOENIX-10 package-manager locking, execution, read-back and recovery guarantees. No package execution or rollback implementation claimed.
@@ -415,3 +377,24 @@
 - **Coordination:** Issue #17 still lacks a NEXUS-07-authored response on transport binding, trusted identity, atomic consume and execution outcomes.
 - **Limits:** No executable broker, peer verification, atomic consume, durable audit persistence or privileged provider integration found or tested.
 - **Commits:** review `b6a5bbd33914d355986a76c726c1951044ba6a3a`; JSONL `d9907a79c64c50a1cbebcbf7d8b6eba4760e8cfb`.
+
+## C0032 — FORGE-09 transaction validator/schema mismatch review
+
+- **Completion:** 32 / 100
+- **Finding:** Python transition validation can omit or empty `reason_code` for rejected/cancelled transitions and persisted history although the JSON Schema requires it.
+- **Evidence:** Inspected FORGE-09 `marketplace/tools/transaction_state.py` and `marketplace/schemas/package-transaction-state.schema.json`; posted issue #29 comment 6533829371.
+- **Verification:** Source inspection only; no FORGE files changed and no FORGE test execution claimed.
+- **Blocker:** FORGE-09 must align runtime validation with schema and add regression tests; package execution still depends on broker/installer integration.
+
+## C0033 — Installer destructive-operation and release-trust security decision
+
+- **Completion:** 33 / 100
+- **Timestamp:** 2026-10-30T21:29:46.589Z
+- **Coordination:** Posted AEGIS decision to PHOENIX-10 issue #4 (comment 6533817824).
+- **Approval binding:** R4 disk/partition operations bind the complete typed partition plan, canonical stable disk/resource identity, trusted principal/session/device, policy/registry versions and precondition snapshot digest using RFC 8785 JCS + SHA-256. Changed inputs invalidate approval; fresh ALLOW and short-lived opaque authorization_ref are required.
+- **Enforcement:** Broker independently authenticates peer and atomically consumes authorization exactly once. Required consume/dispatch audit is durable before dispatch. Ambiguous target, stale precondition or policy/identity/clock/registry/audit outage fails closed; post-dispatch disconnect is UNKNOWN and reconciled, never blindly retried.
+- **Release trust proposal:** Canonical manifest binds hashes/sizes, version/sequence, architecture, source/build metadata, SBOM and provenance. Proposed detached OpenPGP signature, offline root/delegated release keys, signed rotation/revocation metadata and anti-rollback; ATLAS-01 must confirm Fedora verifier/package support.
+- **Ownership:** AEGIS policy/action/Polkit/audit semantics; NEXUS broker transport/peer identity/atomic consume; ATLAS Fedora packaging/service hardening; PHOENIX installer and release signing/verification integration.
+- **Verification:** Workflow run 41130846710, job 124321040365, passed 97 schema tests in 2.08s on Python 3.12. No installer, release-signing, broker, audit-persistence or privileged runtime integration tested.
+- **Blockers:** NEXUS-07 runtime API/transport and atomic consume; ATLAS-01 verifier package confirmation; PHOENIX-10 installer/storage preflight and release trust implementation/testing.
+- **JSONL update commit:** `35868247af47d537d30176273220f168db6c5254`; ledger update commit pending.
