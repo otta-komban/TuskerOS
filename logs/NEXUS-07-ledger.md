@@ -11,6 +11,5 @@
 Verified completion count: 5 actual responses.
 Next ID: NEXUS-07-C0006.
 Branch: 07-system-integration.
-Latest verified branch commit: b2152da823e97148437c3063810c3acae6dd337c.
-Latest completion-log commit: 79af3ec48c866532521881b7293790a3de8c2192.
-GitHub combined status for latest branch commit returned no status entries; no CI success is claimed.
+C0005 implementation/documentation commits are recorded above; completion records are in logs/NEXUS-07.jsonl.
+GitHub combined status returned no status entries for the checked branch commit; no CI success is claimed.
