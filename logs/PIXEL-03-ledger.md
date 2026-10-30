@@ -16,10 +16,7 @@ The JSONL file is the append-only machine-readable record. Counts must be reconc
 
 ## Latest handover snapshot
 
-- Latest recorded implementation commit: `a914a5e786eed5c9f58223ef65a6075864d61009` (test path/regex correction).
-- Completion log update commit: `b0c8dbcb4a0cdbf095e03f65ba646e019ec10bee`.
-- Branch remains `03-theme-studio`; no pull request opened.
-- Remaining blockers: NOVA-02 and FORGE-09 contract review; selected Fedora/KDE/Qt target; executable test environment and visual test fixtures.
+- Historical snapshot from the initial architecture response; see latest snapshot below.
 
 
 ## Latest handover snapshot
@@ -27,5 +24,8 @@ The JSONL file is the append-only machine-readable record. Counts must be reconc
 - Latest implementation commit: `f39e079ddfa1165179a0389b1fcea72aa1cb7f88` (CI workflow creation).
 - Latest architecture update: `ba6259ac7ffb99bfba7205cf959373dffba39375`.
 - Latest completion log update: `412dc8b05031cee8e942884cb1ecc0c4dd29982a`.
-- CI: [run 41110842071](https://github.com/otta-komban/TuskerOS/actions/runs/41110842071) completed with failure; cause not yet established.
-- Next action: retrieve job logs and fix the actual failure before claiming tests pass.
+- CI run 41110842071 failed; cause remains unknown because job-log retrieval timed out.
+- Follow-up CI run [41111109001](https://github.com/otta-komban/TuskerOS/actions/runs/41111109001) was in progress at handover.
+- Next action: retrieve the follow-up result and diagnose any failing test before claiming tests pass.
+
+- Latest ledger commit: `da9d5d1f045652af302d1e63e0a3e9179881e162`.
