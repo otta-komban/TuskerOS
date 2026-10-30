@@ -17,8 +17,8 @@
 - [x] Draft common typed tool invocation and result envelopes.
 - [x] Draft error taxonomy and operation metadata requirements.
 - [x] Draft D-Bus naming, method, event and health conventions.
-- [ ] Agree exact schema serialization and tool lifecycle with TUSKER-04.
-- [ ] Agree caller identity, authorization, approval, privilege and audit contract with AEGIS-06.
+- [x] Receive TUSKER-04 provisional lifecycle review and incorporate task/step/correlation IDs, cancellation semantics, evidence refs and idempotency scope.\n- [ ] Obtain focused TUSKER-04 approval of revised schemas.
+- [ ] Agree caller identity, authorization, approval, privilege and audit contract with AEGIS-06; TUSKER-04 confirms this ownership split.
 - [ ] Agree OS service activation, packaging and supported API choices with ATLAS-01.
 - [ ] Agree desktop telemetry/status contract with NOVA-02.
 - [ ] Agree remote-origin identity propagation with PILOT-08.
@@ -70,3 +70,5 @@
 - [x] Record no-Tusker-boot/login dependency and optional/off-by-default AI/remote constraints.
 - [x] Publish candidate NEXUS read-only system-bus identifiers for review; reverse-DNS ownership and AEGIS approval remain open.
 - [x] Reply to Issue #5 with the proposal and explicit review requests.
+
+- [x] Record TUSKER-04 review and ownership split in Issue #5; exact AEGIS identity/decision schema remains pending.
