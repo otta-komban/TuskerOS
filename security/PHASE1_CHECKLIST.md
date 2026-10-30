@@ -29,13 +29,13 @@
 - [x] Evaluate initial roles for Polkit, bubblewrap, Podman, systemd hardening and SELinux.
 - [x] Draft audit event and failure semantics.
 - [x] Draft cancellation, compensation, quarantine and recovery semantics.
-- [ ] Agree typed action proposal and decision schemas with TUSKER-04.
+- [x] Publish draft JSON Schema 2020-12 envelopes for action proposal, policy decision, approval request and audit event.\n- [x] Publish deterministic risk classification, fail-closed evaluation and canonical digest specification.\n- [ ] Obtain TUSKER-04 acceptance of schema fields and canonicalization details.
 - [ ] Agree tool registration and execution contracts with NEXUS-07.
 - [ ] Agree remote principal/session and approval binding with PILOT-08.
 - [ ] Agree extension capability and sandbox manifest with FORGE-09.
 - [ ] Agree desktop approval UI trust boundary with NOVA-02.
 - [ ] Agree system service/Polkit/SELinux packaging with ATLAS-01.
-- [ ] Record accepted architecture decisions and unresolved contract blockers.
+- [x] Record TUSKER-04 review: ten integration invariants accepted as baseline; schema/canonicalization remain draft pending compatibility review.\n- [ ] Confirm authorization reference transport, token audience and one-time nonce semantics with NEXUS-07.\n- [ ] Record remaining accepted architecture decisions and unresolved contract blockers.
 
 ## Exit evidence
 
