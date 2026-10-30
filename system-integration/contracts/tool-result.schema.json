@@ -13,7 +13,12 @@
     "postcondition",
     "side_effects",
     "timing",
-    "error"
+    "error",
+    "task_id",
+    "step_id",
+    "correlation_id",
+    "cancellation",
+    "evidence_refs"
   ],
   "properties": {
     "schema_version": {
@@ -136,6 +141,55 @@
           }
         }
       ]
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "step_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "cancellation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_state",
+        "operation_state"
+      ],
+      "properties": {
+        "request_state": {
+          "enum": [
+            "not_requested",
+            "received",
+            "rejected",
+            "accepted"
+          ]
+        },
+        "operation_state": {
+          "enum": [
+            "running",
+            "stopped",
+            "completed",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
     }
   }
 }
