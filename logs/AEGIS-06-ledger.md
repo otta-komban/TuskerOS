@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 34
-- **Latest completion:** `AEGIS-06-C0034`
+- **Verified completion count:** 35
+- **Latest completion:** `AEGIS-06-C0035`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `0cc05be23a1e76d36b6084fd72fdf291e7b6a0d8`
+- **Latest log commit:** `1f06ab5d5fe09eef557d9cfb1dcdbc6a9f02abbb`
 
 ## Completion index
 
@@ -408,3 +408,17 @@
 - **Verification limits:** Documentation and coordination only. No tests, signing infrastructure, offline verifier, installer execution, broker runtime or privileged operation was implemented or tested.
 - **Commits:** Decision `b89a013e8f02119e1500629f9e2202ec3a1e1e7c`; reconciliation `3a7b5ddd5b1181b10e684d4f188f8456cdba78eb`; JSONL `0cc05be23a1e76d36b6084fd72fdf291e7b6a0d8`.
 - **Blockers:** Project release maintainers must choose the trust model and name key custodians; ATLAS-01 must confirm Fedora verifier packaging; PHOENIX-10 must implement offline verification. NEXUS-07 broker transport/identity/atomic consume and SEC-SCHEMA-006 audit lifecycle agreement remain open.
+
+
+| AEGIS-06-C0035 | Package transaction audit binding | Added candidate v0.2.0 transaction/snapshot correlation fields and positive/negative fixtures; CI passed 104 tests | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
+
+## C0035 — Package transaction audit binding
+
+- **Completion:** 35 / 100
+- **Timestamp:** 2026-10-30T21:32:40.087Z
+- **Candidate schema:** Added optional `transaction_id` and `snapshot_digest` as an all-or-none pair to audit-event v0.2.0. Snapshot digest must be `sha256:` plus 64 lowercase hex characters. Active audit-event v0.1.0 is unchanged.
+- **Tests:** Positive fixture accepts both fields; negative fixtures reject either missing counterpart and malformed/empty/null digests.
+- **CI:** GitHub Actions run 41131437944 completed successfully; Python 3.12 reported **104 passed in 3.63s** on commit `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`.
+- **Cross-agent:** Reviewed FORGE helper digest semantics and posted issue #29 comments 6533844297, 6533858174 and 6533873978. FORGE's sorted-key JSON digest is not the AEGIS RFC 8785 JCS action digest; AEGIS must recompute the latter independently.
+- **Commits:** Candidate schema `817cb91019778e380f6840354400e40616baf892`; tests `7d9d531324dac55f278a92c2e7bf93bd32613152`; docs `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`; JSONL `1f06ab5d5fe09eef557d9cfb1dcdbc6a9f02abbb`.
+- **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
