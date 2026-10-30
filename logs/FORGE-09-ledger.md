@@ -76,7 +76,8 @@
 - [x] Add a catalog fixture with pending/unverified trust state.
 - [x] Define declarative developer bundle schema and initial Python profile.
 - [x] Document install lifecycle, review governance, and package ownership safeguards.
-- [x] Run eight in-memory positive/negative checks against a local reconstruction of the validator rules; this is not equivalent to executing the committed unittest suite.
+- [x] Run 15 in-memory positive/negative behavior checks against local reconstructions of the manifest validator and dependency planner; this is not equivalent to executing committed unittest suites.
+- [x] Parse all six committed manifest/schema/fixture JSON files from the GitHub branch snapshot (6/6 valid JSON).
 - [ ] Execute committed tests in a working repository checkout.
 - [ ] Validate Fedora package availability with ATLAS-01 before declaring Python bundle release-ready.
 
