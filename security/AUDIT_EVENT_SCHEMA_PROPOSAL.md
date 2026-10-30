@@ -127,6 +127,6 @@ The first CI attempt after adding these rules failed two tests because the schem
 The active v0.1.0 schema remains unchanged. This is schema-level validation only; the trusted status source, producer event timing and migration still require NEXUS-07/TUSKER-04 acceptance. The candidate must not be treated as runtime conformance.
 
 
-## Event lifecycle/status consistency — C0026
+## Event lifecycle/status consistency — C0027
 
 The v0.2.0 candidate now constrains `event_type` to its corresponding `result_status` rather than accepting arbitrary cross-products of the two enums. The explicit pairs are: requested/accepted; authorized/success; started/pending; succeeded/success; failed/failure; cancellation_requested/accepted; cancelled/cancelled; outcome_unknown/unknown; compensation_started/pending; compensation_verified/success; compensation_failed/failure; approval_granted/accepted; approval_denied/denied; approval_expired/denied; and policy_denied/denied. Denial/failure reason-code requirements remain independently enforced. These are proposed producer semantics; runtime-owner acceptance is still required before the candidate is frozen.
