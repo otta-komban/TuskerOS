@@ -54,16 +54,18 @@ No shared contract is considered implemented until its owner has agreed to a ver
 
 ## Static validation and tests
 
-A dependency-free package validator checks the minimum Plasma 6 package metadata and QML entry-point declarations. It is not a substitute for `qmllint`, `kpackagetool6`, or a real Plasma Wayland session.
+Dependency-free validators check the applet package metadata/QML entry point and the optional dock template metadata/layout invariants. They do not replace `qmllint`, `kpackagetool6`, or a real Plasma Wayland session.
 
 From the repository root:
 
 ```sh
 python desktop/tools/validate_plasmoid.py desktop/plasmoid/package
+python desktop/tools/validate_panel_template.py desktop/panel-template
 python -m unittest discover -s desktop/tests -v
+node --check desktop/panel-template/contents/layout.js
 ```
 
-The unit tests cover valid metadata, malformed JSON, incorrect package structure, a non-Plasma-6 minimum version, and a missing `PlasmoidItem` root. Run these checks in the target development environment and retain the output in the completion log. CI integration remains pending.
+The panel-template validator checks the layout-template service metadata, required native launcher/task-manager widgets, bottom-panel intent and absence of selected destructive panel operations. These are static checks only: they do not establish that the installed Plasma build accepts the metadata or widget IDs. CI integration and runtime validation remain pending.
 
 ## Initial source references
 
@@ -81,4 +83,4 @@ This is an architecture baseline, not a working shell implementation. The reposi
 
 An opt-in Plasma layout template is available at `desktop/panel-template/`. It adds a bottom floating panel with the built-in Kickoff launcher and Icons-only Task Manager. It does not replace the user's current panel or impose a pinned-app list. See [the template README](panel-template/README.md) for manual developer installation and limitations.
 
-The template is a Plasma desktop-scripting artifact, not a standalone dock process. It remains subject to validation on the pinned Fedora/Plasma image; JavaScript syntax checking alone does not prove runtime compatibility.
+The template is a Plasma desktop-scripting artifact, not a standalone dock process. JavaScript syntax and static structure checks do not prove runtime compatibility on the pinned Fedora/Plasma image.
