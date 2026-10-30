@@ -104,3 +104,5 @@
 - [ ] Obtain NEXUS-07/TUSKER-04 agreement on candidate v0.2.0 package `transaction_id` + `snapshot_digest` correlation fields and producer ownership; confirm AEGIS action digest is recomputed independently with RFC 8785 JCS, not copied from FORGE `plan_digest`.
 
 - [ ] **C0044 — FORGE-09 re-review:** reason_code remains optional in Python transition/history validation despite schema requirement for rejected/cancelled events; follow-up posted on issue #29 (comment 6534092148). Await FORGE-owned fix and re-review; no cross-branch edits or test claims.
+
+- [x] **C0049 — NEXUS-07 public invocation schema re-review:** verified the public schema now omits caller-reachable `authorization_context` and rejects undeclared fields; posted issue #17 comment 6534567960. Remaining: stale public example still includes the field; add explicit smuggling-negative and trusted-context positive tests, define typed broker-internal injection/consume API, and provide authenticated peer/principal binding plus consume-before-dispatch runtime evidence. Source review only; no NEXUS files changed or tests executed.
