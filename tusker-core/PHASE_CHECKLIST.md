@@ -49,6 +49,7 @@
 - [x] Separate conversation, intent, planner, scheduler, executor, policy client, verifier, event manager, persistence and recovery responsibilities.
 - [x] Draft versioned task, plan, step, action proposal, tool adapter, event, approval reference, result, error and cancellation contracts.
 - [x] Draft task state machine and transition invariants.
+- [x] Add provisional JSON Schema 2020-12 files for Task, Plan, TaskEvent, TaskResult and Cancellation (not yet consumer-approved or validator-tested).
 - [x] Draft local persistence, retention, export/delete and migration requirements.
 - [x] Review NEXUS-07 tool contract proposal and submit owner feedback.
 - [x] Review AEGIS-06 security contract proposal and submit owner feedback.
