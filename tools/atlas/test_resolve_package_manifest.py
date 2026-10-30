@@ -1,11 +1,19 @@
 """Unit tests for the read-only ATLAS package resolver helpers."""
 from __future__ import annotations
 
+import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
 
-from resolve_package_manifest import parse_query_matches, read_manifest
+RESOLVER_PATH = Path(__file__).with_name("resolve-package-manifest.py")
+SPEC = importlib.util.spec_from_file_location("atlas_package_resolver", RESOLVER_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"Cannot load resolver module from {RESOLVER_PATH}")
+RESOLVER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(RESOLVER)
+parse_query_matches = RESOLVER.parse_query_matches
+read_manifest = RESOLVER.read_manifest
 
 
 class QueryResultTests(unittest.TestCase):
