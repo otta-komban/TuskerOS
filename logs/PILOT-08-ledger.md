@@ -15,7 +15,7 @@ Target: 100 actual assistant responses (C0001–C0100)
 - Actual assistant responses recorded: 2
 - Last sequence: 2
 - Last completion ID: PILOT-08-C0002
-- Documentation/research commits: architecture, logs, ledger, transport research and draft OpenAPI (7 commits including log reconciliations)
+- Branch commits created during intake and C0002: 9 (architecture, log/ledger initialization and reconciliation, research, API draft, and C0002 log updates)
 - Tests run: 0
 - Implemented runtime features: 0
 - P0: requirements/research draft complete; dependent-agent review and sign-off outstanding
