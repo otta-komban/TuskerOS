@@ -6,7 +6,7 @@
 
 ## Result
 
-Two actionable schema/prose coverage gaps were found. The existing schemas remain draft artifacts; this review does not claim full JSON Schema 2020-12 validation or implementation conformance.
+Two actionable schema/prose coverage gaps were found. SEC-SCHEMA-002 has now been reconciled in the draft schema; SEC-SCHEMA-001 remains open. The artifacts remain drafts; this review does not claim full JSON Schema 2020-12 validation or implementation conformance.
 
 ## Finding SEC-SCHEMA-001 — approval binding is not represented in the approval-request envelope
 
@@ -24,20 +24,28 @@ Two actionable schema/prose coverage gaps were found. The existing schemas remai
 
 **Risk:** A schema-valid event can omit task/step correlation entirely, weakening reconstruction of multi-step actions and incident timelines relative to the written contract.
 
-**Recommended resolution:** Either add `task_id` and `step_id` to `required` while retaining explicit nullability for events where correlation genuinely does not exist, or amend the normative contract to state precisely which event classes may omit them. Add schema and event-producer tests for both correlated and intentionally uncorrelated events.
+**Resolution in C0012:** Added `task_id` and `step_id` to the audit-event schema's top-level `required` array while preserving each property's `string`/`null` type. Every event must now carry both keys; an explicitly uncorrelated event uses `null`. This follows the existing minimum-field contract without inventing an event-class omission exception. Producer tests for correlated and null values remain required.
 
 ## Checks performed
 
 - Retrieved and compared the current security contract, lifecycle document, approval-request schema and audit-event schema from the assigned branch.
 - Confirmed both missing-field cases directly against the prose and schema declarations.
 - Kept findings scoped to draft contract completeness; no claim of complete meta-schema validation, format assertion, fixture validation, runtime behavior or executable tests.
-- No schema changed in this audit: proposed wire-format changes require explicit review because they may affect other agents' consumers.
+- C0011 made no schema changes. C0012 makes one narrowly scoped draft-schema correction: both nullable correlation properties are now required to be present.
+- Parsed the updated schema as JSON and checked that both keys occur in `required` and retain nullable types. This is a structural check only, not Draft 2020-12 meta-schema validation, format assertion or producer validation.
 
 ## Required follow-up
 
 1. AEGIS-06 to propose exact schema fields and versioning for SEC-SCHEMA-001.
 2. NEXUS-07 and TUSKER-04 to review the approval binding representation at their runtime/producer boundaries.
-3. AEGIS-06 to reconcile audit-event required fields for SEC-SCHEMA-002.
-4. Add positive and negative schema fixtures, then run Draft 2020-12 validation with format assertion enabled in CI.
+3. Add positive and negative audit-event schema/producer fixtures for present UUIDs and explicit `null` correlation, then run Draft 2020-12 validation with format assertion enabled in CI.
 
 **Release implication:** Keep privileged execution blocked until approval binding is fully represented and enforced, and the audit event contract is made consistent with its schema.
+
+
+## C0012 update — SEC-SCHEMA-002 reconciled
+
+- `task_id` and `step_id` are now members of the audit-event schema's top-level `required` array.
+- Both properties remain nullable; producers must represent unavailable correlation explicitly as `null` rather than omit the keys.
+- The schema `$id` and `schema_version` remain `0.1.0` because this is a draft contract correction, not a declared new published version. Runtime-owner compatibility review is still required before treating the draft as frozen.
+- SEC-SCHEMA-001 remains unresolved and continues to block privileged release.
