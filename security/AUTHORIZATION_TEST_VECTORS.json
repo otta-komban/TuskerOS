@@ -1,0 +1,176 @@
+{
+  "schema_version": "0.1.0",
+  "purpose": "Language-neutral authorization lifecycle and broker conformance fixtures; expected outcomes only, not executed test evidence.",
+  "execution_rule": "A rejected, denied, expired, invalidated, replayed or ambiguous authorization must produce zero privileged handler invocations.",
+  "cases": [
+    {
+      "id": "AUTH-001",
+      "state": "PENDING",
+      "event": "eligible_approver_approves_exact_request",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-002",
+      "state": "PENDING",
+      "event": "eligible_approver_denies",
+      "expected_state": "DENIED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-003",
+      "state": "PENDING",
+      "event": "expiry_reached",
+      "expected_state": "EXPIRED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-004",
+      "state": "APPROVED",
+      "event": "consume_with_exact_bindings",
+      "expected_state": "CONSUMED",
+      "grant_issued": true,
+      "handler_calls": 1
+    },
+    {
+      "id": "AUTH-005",
+      "state": "CONSUMED",
+      "event": "replay_same_authorization_ref",
+      "expected_state": "CONSUMED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-006",
+      "state": "APPROVED",
+      "event": "consume_wrong_principal",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-007",
+      "state": "APPROVED",
+      "event": "consume_wrong_session_or_device",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-008",
+      "state": "APPROVED",
+      "event": "consume_wrong_operation_id",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-009",
+      "state": "APPROVED",
+      "event": "consume_changed_resource_or_digest",
+      "expected_state": "INVALIDATED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-010",
+      "state": "APPROVED",
+      "event": "consume_after_policy_or_registry_version_change",
+      "expected_state": "INVALIDATED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-011",
+      "state": "APPROVED",
+      "event": "consume_after_revocation",
+      "expected_state": "REVOKED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-012",
+      "state": "APPROVED",
+      "event": "consume_after_expiry",
+      "expected_state": "EXPIRED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-013",
+      "state": "APPROVED",
+      "event": "two_concurrent_consumers",
+      "expected_state": "CONSUMED",
+      "successful_consumes": 1,
+      "grant_issued": true,
+      "handler_calls": 1
+    },
+    {
+      "id": "AUTH-014",
+      "state": "APPROVED",
+      "event": "authorization_store_unavailable",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-015",
+      "state": "APPROVED",
+      "event": "clock_or_identity_uncertain",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-016",
+      "state": "APPROVED",
+      "event": "consume_committed_response_lost",
+      "expected_state": "CONSUMED",
+      "reconciliation": "same_consumption_id_no_duplicate_dispatch",
+      "handler_calls": 1
+    },
+    {
+      "id": "BRK-001",
+      "state": "APPROVED",
+      "event": "untrusted_ipc_peer",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "BRK-002",
+      "state": "APPROVED",
+      "event": "unknown_broker_operation_id",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "BRK-003",
+      "state": "APPROVED",
+      "event": "argument_schema_or_broker_bound_violation",
+      "expected_state": "APPROVED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "BRK-004",
+      "state": "APPROVED",
+      "event": "precondition_changed_before_dispatch",
+      "expected_state": "INVALIDATED",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "BRK-005",
+      "state": "CONSUMED",
+      "event": "disconnect_after_dispatch_before_result",
+      "expected_state": "CONSUMED",
+      "result": "UNKNOWN",
+      "retry": "reconcile_before_retry"
+    }
+  ]
+}
