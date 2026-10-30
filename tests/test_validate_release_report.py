@@ -68,6 +68,14 @@ class ReleaseReportSemanticTests(unittest.TestCase):
         report["started_at_utc"] = "2026-10-30T10:00:00+01:00"
         self.assertTrue(any("ending in Z" in e for e in validate_report(report)))
 
+    def test_malformed_status_types_return_errors_not_exceptions(self):
+        report = valid_report()
+        report["checks"][0]["status"] = []
+        report["overall_status"] = []
+        errors = validate_report(report)
+        self.assertTrue(any("status: unsupported" in error for error in errors))
+        self.assertTrue(any("overall_status" in error for error in errors))
+
     def test_expected_manifest_digest_pin(self):
         self.assertEqual(validate_report(valid_report(), DIGEST), [])
         self.assertTrue(validate_report(valid_report(), "c" * 64))
