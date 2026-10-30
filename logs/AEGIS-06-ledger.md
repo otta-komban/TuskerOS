@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 21
-- **Latest completion:** `AEGIS-06-C0021`
+- **Verified completion count:** 24
+- **Latest completion:** `AEGIS-06-C0024`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `2091abc23bafdbb7b228b883d66727b5584b6bdc`
+- **Latest log commit:** `9307f8441842114edafade391a0b51db2de6102e`
 
 ## Completion index
 
@@ -267,6 +267,8 @@
 
 
 | AEGIS-06-C0022 | Audit schema consistency review | Identified missing required executor_id/reason_code keys; extended candidate audit-event v0.2.0 proposal and unexecuted test cases | security/SCHEMA_CONSISTENCY_AUDIT.md; security/AUDIT_EVENT_SCHEMA_PROPOSAL.md; security/SECURITY_TEST_MATRIX.md |
+| AEGIS-06-C0023 | Approval schema regression test hardening | Aligned audit review with approval-request v0.2.0, rejected caller-supplied principal fields and verified follow-up CI with 33 passing tests | `security/tests/test_security_schemas.py`; `security/SCHEMA_CONSISTENCY_AUDIT.md` |
+| AEGIS-06-C0024 | Audit schema edge-case review | Identified registry-unavailable audit-event ambiguity; documented required owner decision and fail-closed event semantics | `security/SCHEMA_CONSISTENCY_AUDIT.md`; `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md` |
 
 ## C0022 — Audit-event executor/reason field completeness
 
@@ -277,3 +279,25 @@
 - **Tests specified:** AUD-SCHEMA-019 through AUD-SCHEMA-025 cover concrete values, explicit nulls, missing keys, invalid types and denial/failure reason semantics. These are specifications only.
 - **Change boundary:** No active schema wire-format change or producer implementation. NEXUS-07/TUSKER-04 review and migration acceptance remain required.
 - **Cross-agent blocker:** NEXUS-07 issue #17 remains unanswered; broker transport, atomic consume and runtime integration remain blocked.
+
+
+## C0023 — Approval schema regression test hardening
+
+- **Completion:** 23 / 100
+- **Timestamp:** 2026-10-30T20:57:58Z
+- **Deliverables:** Updated `security/tests/test_security_schemas.py` and `security/SCHEMA_CONSISTENCY_AUDIT.md`.
+- **Hardening:** Removed redundant approval schema loading and added a negative case rejecting caller-supplied top-level `caller_principal`; trusted identity remains out-of-band.
+- **CI:** Run 41127219083 succeeded with 33 tests in 0.52s; run 41127556582 also succeeded on the follow-up commit.
+- **Scope:** No producer integration, trusted identity derivation, atomic consume, audit persistence or privileged runtime was exercised.
+- **Commits:** tests `5012ed263cd8764c115032e6be0c67df559bc366`; audit alignment `d97ad5f2b06dedc089d2c722b11feba1ab997df0`; CI evidence `bb096419ed356582bc57c16a4cc783f26e502fbe`; checklist `1247841c57e760a327eb7b1dd1b524eb06cca614`.
+
+## C0024 — Registry-unavailable audit event ambiguity
+
+- **Completion:** 24 / 100
+- **Timestamp:** 2026-10-30T21:05:23.260Z
+- **Finding:** SEC-SCHEMA-005 — lifecycle requires request-created/denial events even when the operation registry may be missing or unverifiable, while the proposed audit-event 0.2.0 requires a concrete non-empty registry version on every event.
+- **Resolution requested:** Define explicit pre-evaluation registry state and stable reason semantics without fabricating a version or suppressing the event. Successful ALLOW/CONSUMED/dispatch events must carry a concrete immutable registry version.
+- **Deliverables:** `security/SCHEMA_CONSISTENCY_AUDIT.md`, `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`, and `security/PHASE1_CHECKLIST.md`.
+- **CI:** Run 41128234774 succeeded; Python 3.12 schema suite reports 47 passed in 0.73s. This does not test runtime producers or broker enforcement.
+- **Scope:** No active schema wire-format change, audit producer, persistence or privileged runtime implementation.
+- **Commits:** audit finding `33de363a01d7fc9b63976ba741e0f1dac1c1a56a`; proposal qualification `01efa9e6c1b5b86e121f6131eb9f5d6916d171e6`; checklist `6304d19e6115e7ab7458228767618a7000c8603e`; JSONL `9307f8441842114edafade391a0b51db2de6102e`.
