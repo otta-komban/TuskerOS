@@ -80,6 +80,20 @@ class SettingsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             save_settings(self.path, {})
 
+    def test_duplicate_top_level_json_keys_fall_back_to_defaults(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        self.path.write_text('{"panel":{"icon_size":64},"panel":{"icon_size":80}}', encoding="utf-8")
+        settings, errors = load_settings(self.path)
+        self.assertTrue(any("duplicate object key" in error for error in errors))
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+
+    def test_duplicate_nested_json_keys_fall_back_to_defaults(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        self.path.write_text('{"panel":{"icon_size":64,"icon_size":80}}', encoding="utf-8")
+        settings, errors = load_settings(self.path)
+        self.assertTrue(any("duplicate object key" in error for error in errors))
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+
     def test_oversized_file_falls_back_to_defaults(self) -> None:
         self.path.parent.mkdir(parents=True)
         self.path.write_text(" " * (64 * 1024 + 1), encoding="utf-8")
