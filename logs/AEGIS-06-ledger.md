@@ -15,19 +15,13 @@
 ## Completion index
 
 | ID | Category | Summary | Evidence |
-|---|---|---|---|
 | AEGIS-06-C0001 | Design | Repository intake; initial threat model, security architecture and Phase 1 checklist | `security/THREAT_MODEL.md`, `security/SECURITY_ARCHITECTURE.md`, `security/PHASE1_CHECKLIST.md` |
 | AEGIS-06-C0002 | Architecture | Drafted security contracts, test matrix and cross-agent review issues | `security/SECURITY_CONTRACTS.md`, `security/SECURITY_TEST_MATRIX.md` |
 | AEGIS-06-C0003 | Architecture | Responded to TUSKER-04 review; published machine-readable schemas and deterministic policy specification | `security/schemas/*.schema.json`, `security/POLICY_ENGINE_SPEC.md` |
 | AEGIS-06-C0004 | Architecture | Added operation registration schema and policy conformance vectors; clarified fail-closed registry and validator requirements | `security/schemas/operation-registration.schema.json`, `security/POLICY_TEST_VECTORS.json` |
 | AEGIS-06-C0005 | Architecture | Specified approval lifecycle, registry governance and independent broker contract; resolved TUSKER-04 field semantics and recorded integration blockers | `security/AUTHORIZATION_LIFECYCLE.md`, `security/OPERATION_REGISTRY.md`, `security/BROKER_CONTRACT.md` |
 | AEGIS-06-C0006 | Verification design | Added machine-readable authorization/broker vectors and expanded test matrix; requested concrete NEXUS-07 decisions | `security/AUTHORIZATION_TEST_VECTORS.json`, `security/SECURITY_TEST_MATRIX.md` |
-
-
 | AEGIS-06-C0007 | Release security gate | Published privileged-operation release acceptance criteria, cross-agent evidence owners, mandatory negative tests and explicit release decision states | `security/PRIVILEGED_RELEASE_GATE.md` |
-
-| AEGIS-06-C0025 | audit-registry-resolution-semantics | Refined candidate audit-event v0.2.0 to represent resolved versus unavailable registry state without fabricated versions; restricted unavailable events to request receipt or fail-closed denial, retained denial/failure reason rules, and passed 54 schema tests. | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
-
 | AEGIS-06-C0008 | contract-artifact-audit | Audited the five draft JSON Schemas and both conformance fixture sets for JSON syntax and selected internal consistency; published the scope, results and explicit validation limitations. | security/CONTRACT_ARTIFACT_AUDIT.md; security/PHASE1_CHECKLIST.md |
 | AEGIS-06-C0009 | integration-audit | Inspected all four main-only commits and current cross-agent review threads; documented that the two temporary TUSKER-04 document additions were reverted with no net main changes, preserved branch isolation, and updated the Phase 1 checklist. | security/MAIN_BRANCH_DIVERGENCE_REVIEW.md; security/PHASE1_CHECKLIST.md |
 | AEGIS-06-C0010 | integration-decision-record | Published proposed broker integration defaults and owner acceptance checklist; NEXUS-07 decisions remain unaccepted. | security/BROKER_INTEGRATION_DECISIONS.md; security/PHASE1_CHECKLIST.md |
@@ -45,6 +39,7 @@
 | AEGIS-06-C0022 | audit-schema-consistency-review | Identified SEC-SCHEMA-004: executor_id and reason_code are nullable audit properties but not required despite being normative minimum fields. Extended the candidate audit-event v0.2.0 proposal and test matrix to cover required keys and explicit-null semantics; current v0.1.0 schema unchanged. | security/SCHEMA_CONSISTENCY_AUDIT.md; security/AUDIT_EVENT_SCHEMA_PROPOSAL.md |
 | AEGIS-06-C0023 | approval-schema-regression-test-hardening | Aligned the schema audit with the committed approval-request v0.2.0 binding shape, removed redundant test-schema loading, and added a negative test rejecting caller-supplied top-level identity fields; follow-up CI passed 33 tests. | security/SCHEMA_CONSISTENCY_AUDIT.md; security/tests/test_security_schemas.py |
 | AEGIS-06-C0024 | audit-schema-edge-case-review | Identified SEC-SCHEMA-005: the proposed non-null registry_version field does not define truthful request-created/denial audit events when the registry cannot be loaded; documented owner decisions and fail-closed event requirements. | security/AUTHORIZATION_LIFECYCLE.md; security/OPERATION_REGISTRY.md |
+| AEGIS-06-C0025 | audit-registry-resolution-semantics | Refined candidate audit-event v0.2.0 to represent resolved versus unavailable registry state without fabricated versions; restricted unavailable events to request receipt or fail-closed denial, retained denial/failure reason rules, and passed 54 schema tests. | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
 
 ## C0007 — Privileged operations release gate
 
