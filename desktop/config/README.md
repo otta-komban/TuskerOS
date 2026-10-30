@@ -27,7 +27,23 @@ The caller chooses the user config path (recommended: `$XDG_CONFIG_HOME/tuskeros
 
 ## Validation
 
-Run `python -m unittest discover -s desktop/tests -v`. The CI workflow runs this suite on every desktop-related branch push and pull request. The tests cover defaults, partial merges, strict keys/types, malformed and oversized files, atomic round-trip persistence, file permissions and symlink refusal.
+Run `python -m unittest discover -s desktop/tests -v`. The CI workflow runs this suite on every desktop-related branch push and pull request. The tests cover defaults, partial merges, strict keys/types, malformed and oversized files, atomic round-trip persistence, file permissions and symlink refusal. The recovery CLI has separate tests for safe status output, explicit reset confirmation, XDG path resolution and symlink refusal.
+
+## User recovery commands
+
+Run a privacy-conscious validation check (it reports status/errors but does not print settings values):
+
+```sh
+python -m desktop.tools.settings_recovery check
+```
+
+Restore schema-v1 defaults only after explicit confirmation:
+
+```sh
+python -m desktop.tools.settings_recovery reset --yes
+```
+
+Both commands accept `--config /path/to/desktop.json` for a non-default file. The default path is `$XDG_CONFIG_HOME/tuskeros/desktop.json`, or `~/.config/tuskeros/desktop.json` when `XDG_CONFIG_HOME` is unset or relative. Reset uses the existing atomic mode-0600 writer and refuses symlink destinations. It replaces the settings file; copy it first if you may need its current values.
 
 Schema v1 is an initial desktop-owned contract, not yet a cross-agent integration contract. Future additions require a schema version/migration decision and tests. Do not persist transient task state or security/approval decisions here.
 
