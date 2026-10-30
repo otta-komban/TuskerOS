@@ -81,10 +81,15 @@ Policy service unavailable, schema mismatch, clock uncertainty beyond configured
 - Cancellation and compensation are separately authorized operations.
 - Audit records contain correlation and decision references but no secret material.
 
-## 10. Conformance fixtures\n\n`security/POLICY_TEST_VECTORS.json` contains language-neutral positive and negative fixtures. These are expected outcomes, not executed test evidence. Implementations MUST map each vector to an automated test and assert zero executor calls for every DENY and REQUIRE_APPROVAL result. The schema validator MUST run with format assertion enabled.\n\n## 11. Open integration decisions
+## 10. Conformance fixtures
+
+`security/POLICY_TEST_VECTORS.json` contains language-neutral positive and negative fixtures. These are expected outcomes, not executed test evidence. Implementations MUST map each vector to an automated test and assert zero executor calls for every DENY and REQUIRE_APPROVAL result. The schema validator MUST run with format assertion enabled.
+
+## 11. Open integration decisions
 
 - Confirm JCS + SHA-256 implementation/library and Unicode normalization behavior with runtime owners.
 - Confirm how authenticated local IPC peer credentials and remote session/device claims reach the policy service.
 - Confirm authorization reference lookup vs signed token and one-time nonce storage with NEXUS-07.
 - Confirm whether the selected OS stack provides durable audit guarantees required for privileged execution.
-- Confirm schema packaging/version negotiation and generated typed bindings with TUSKER-04.\n- Confirm operation registry ownership, registration review and rollout procedure with NEXUS-07.
+- Confirm schema packaging/version negotiation and generated typed bindings with TUSKER-04.
+- Confirm operation registry ownership, registration review and rollout procedure with NEXUS-07.
