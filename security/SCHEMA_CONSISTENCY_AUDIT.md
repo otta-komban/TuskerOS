@@ -90,3 +90,21 @@ A separately versioned candidate, `security/schemas/audit-event-0.2.0.schema.jso
 The candidate requires `registry_version`, `executor_id`, and `reason_code`; the latter two retain explicit-null support for applicable event states. A conditional rule requires non-empty `reason_code` for `denied` and `failure` result statuses. The test suite adds candidate positive/negative envelope cases and cross-version rejection. CI has not yet been observed for this change.
 
 **Status:** Schema candidate and test code committed; owner approval, trusted producer provenance, audit event lifecycle, migration and persistence/integrity tests remain open. This is not producer or runtime conformance evidence.
+
+
+## Finding SEC-SCHEMA-005 — registry-version requirement is underspecified for pre-evaluation and registry-failure audit events
+
+**Severity:** Medium — audit completeness / fail-closed semantics ambiguity  
+**Evidence:** `security/AUTHORIZATION_LIFECYCLE.md` requires request-created, presented, approval, denial, expiry, invalidation, consume and reconciliation events, and says to include policy/registry version. `security/OPERATION_REGISTRY.md` requires deny-all when the registry is missing, corrupt, unverifiable, stale or unavailable. The candidate audit-event 0.2.0 proposal currently makes `registry_version` a required non-empty string for every event.
+
+**Gap:** The documents do not define how a producer records a request-created or denial event when no trustworthy registry snapshot/version can be loaded. Requiring a concrete version in that case risks either fabricating a value or suppressing the audit event; allowing null without an explicit semantic rule risks making a successful authorization indistinguishable from a pre-evaluation failure. The stable reason-code list also does not name a dedicated registry-unavailable code.
+
+**Required owner decision before freezing 0.2.0:**
+1. Confirm whether `registry_version` is required non-null only after a trusted snapshot is resolved, while pre-evaluation/registry-failure events carry an explicit null.
+2. If null is allowed, define a separate typed registry-resolution state (or another unambiguous discriminator) and stable reason code for missing/corrupt/unverifiable/unavailable registry.
+3. Require a concrete immutable `registry_version` on every ALLOW, CONSUMED, dispatch-start and terminal execution event; no grant or handler dispatch is possible without it.
+4. Specify which component owns the registry resolution evidence and how its value is correlated across decision, consume and audit records.
+
+**Status:** Identified in C0024. No schema or producer change made. This is an unresolved design decision, not an accepted change to the v0.2.0 proposal. NEXUS-07 must define runtime registry failure/evidence behavior; TUSKER-04 must confirm event timing and correlation.
+
+**Required conformance cases (not yet executable):** request-created event before registry resolution; registry unavailable/corrupt denial with explicit non-fabricated state; successful ALLOW/CONSUMED event with concrete registry version; reject any successful/dispatch event with null or absent registry version; preserve correlated registry evidence across decision and execution.
