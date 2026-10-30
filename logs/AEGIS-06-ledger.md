@@ -7,18 +7,18 @@
 
 ## Current state
 
-- **Verified completion count:** 29
-- **Latest completion:** `AEGIS-06-C0029`
+- **Verified completion count:** 31
+- **Latest completion:** `AEGIS-06-C0031`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `81023a6bcea9399bd86ef89edfc0112b2c51df95`
+- **Latest log commit:** `d9907a79c64c50a1cbebcbf7d8b6eba4760e8cfb`
 
 ## Completion index
-
-| AEGIS-06-C0026 | Security branch sync and verification | Rechecked main divergence, NEXUS-07 issue #17 and candidate audit-event v0.2.0 CI; preserved branch isolation and recorded outstanding runtime-owner blockers | Branch comparison; issue #17 comments; Actions run 41129041995 (54 passed) |
 
 | AEGIS-06-C0027 | Integration security review | Reviewed FORGE-09 package transaction approval/rollback boundary and supplied AEGIS security decisions | Issue #29 comment 6533750815 |
 | AEGIS-06-C0028 | Security schema regression coverage | Added 13 negative registry-unavailable lifecycle cases; CI passed 67 tests | Actions run 41130628432; test commit `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8` |
 | AEGIS-06-C0029 | Audit lifecycle schema coverage | Identified SEC-SCHEMA-006 and documented missing candidate audit lifecycle event types; requested NEXUS-07/TUSKER-04 decisions | `security/SCHEMA_CONSISTENCY_AUDIT.md`; issue #17 comment 6533766184 |
+| AEGIS-06-C0030 | Audit event lifecycle/status consistency | Constrained 15 declared event types to valid result statuses; added positive/negative coverage; CI passed 97 tests after correcting two fixtures | `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`; `security/tests/test_security_schemas.py`; Actions run 41130846710 |
+| AEGIS-06-C0031 | Upstream and runtime integration review | Verified 214 ahead / 0 behind and inspected NEXUS-07 authorization-boundary note; no executable broker/IPC implementation found | `security/MAIN_BRANCH_DIVERGENCE_REVIEW.md`; NEXUS branch tree; issue #17 |
 
 
 | ID | Category | Summary | Evidence |
@@ -402,3 +402,13 @@
 - **Verification limits:** Schema/meta-schema and JSON-envelope tests only. SEC-SCHEMA-006 separately identifies missing event types for presentation, dismissal, invalidation, revocation, consume and reconciliation. Candidate v0.2.0 remains unapproved; active v0.1.0 unchanged. No producer, audit persistence/integrity, broker IPC, authorization consume or privileged runtime tested.
 - **Commits:** schema `7fe3a970f8a1f42d94329d18a31830b632a287a3`; tests `e2e13a1ef7eef20c278c1823f3e1f437418d7b45`; fixture fix `7b66c802d038ca65e72d26514a50c3a3197bee98`; matrix ID reconciliation `9967daa3e0f7efa22e42d267fe38528bc219201f`; proposal `3b410b064c8706bfee30e0ff65dd71a5804b8337`; checklist `0aff1934b88379cbdc829d8f5dc3b75fe15525fb`; JSONL `82c14721593ded22459d983b5d08e45361d8f732`.
 - **Blocker:** NEXUS-07/TUSKER-04 must agree canonical lifecycle event names, result mappings, trusted producer ownership and migration before candidate promotion.
+
+## C0031 — Upstream and runtime integration review
+
+- **Completion:** 31 / 100
+- **Timestamp:** 2026-10-30T21:28:30.000Z
+- **Upstream:** GitHub comparison reported 214 commits ahead / 0 behind with `main` as merge base; no history rewrite or merge performed during this review.
+- **NEXUS-07:** Reviewed `system-integration/AUTHORIZATION_BOUNDARY.md` on `07-system-integration`. It specifies authenticated transport peer identity, AEGIS preflight for all registered actions, fail-closed decisions and UNKNOWN after uncertain dispatch, but does not implement the broker/IPC boundary.
+- **Coordination:** Issue #17 still lacks a NEXUS-07-authored response on transport binding, trusted identity, atomic consume and execution outcomes.
+- **Limits:** No executable broker, peer verification, atomic consume, durable audit persistence or privileged provider integration found or tested.
+- **Commits:** review `b6a5bbd33914d355986a76c726c1951044ba6a3a`; JSONL `d9907a79c64c50a1cbebcbf7d8b6eba4760e8cfb`.
