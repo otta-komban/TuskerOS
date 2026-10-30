@@ -19,7 +19,7 @@ Current verified count: 14
 | 10 | ATLAS-01-C0010 | P1 | validation | partial | Hardened CSV shape validation; added four malformed/duplicate manifest regression tests; commits `0a36c3d`, `87d529e`; CI execution pending |
 | 11 | ATLAS-01-C0011 | P1 | validation | partial | Fixed four CSV fixture newline bugs; GitHub Actions run `41116328126` compiled resolver/tests and passed the unittest step (13 test methods); audited DNF5 repo/repoquery command semantics; commit `1b5fa29`; Fedora DNF5 runtime resolution remains untested |
 | 12 | ATLAS-01-C0012 | P1 | implementation | partial | Atomic JSON output; mocked CLI and atomic-write coverage; CI run 41117170559 passed compilation and all 18 tests; commits ee0beae, 9a35b95, a7d8a99, 1463b9c; Fedora DNF5 runtime still pending |
-| 13 | ATLAS-01-C0013 | P1 | status | pending | Dashboard-format request acknowledged; log write was blocked, so this entry is not counted as recorded work |
+| 13 | ATLAS-01-C0013 | P1 | status | recorded | Adopted compact progress dashboard; record reconciled into JSONL during C0014; no code change |
 | 14 | ATLAS-01-C0014 | P1 | implementation | partial | DNF5 resolver now rejects package-name mismatches and unsupported architectures; two regression tests; docs updated; CI runs 41124667670 and 41124688115 queued at check; Fedora DNF5 runtime pending; commits ace17cd, 415f1a7, ba5395e, 61534cd |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
