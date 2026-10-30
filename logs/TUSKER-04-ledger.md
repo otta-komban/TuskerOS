@@ -27,8 +27,10 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 | TUSKER-04-C0014 | 2026-10-31T02:19:56+05:30 | mutation-idempotency-compatibility | Aligned Core idempotency-key length bounds with NEXUS, added schema boundary tests and documented a descriptor-aware fail-closed mutation admission rule requiring durable idempotency support. | partial | [Plan schema](../tusker-core/schemas/plan.schema.json); [NEXUS adapter profile](../tusker-core/NEXUS-ADAPTER-PROFILE.md) |
 
-Current verified response count: 14  
-Current completion sequence: TUSKER-04-C0014  
+| TUSKER-04-C0015 | 2026-10-31T02:23:30+05:30 | authorization-approval-semantic-closure | Incorporated AEGIS-confirmed fresh ALLOW after approval, authorization_ref-only broker consumption, typed fail-closed outcomes and audit/reconciliation rules into Core's authorization documents and checklist. | partial | [Authorization adapter](../tusker-core/AUTHORIZATION-ADAPTER.md); [AEGIS proposal mapping](../tusker-core/AEGIS-PROPOSAL-MAPPING.md); [acceptance matrix](../tusker-core/CROSS-LAYER-ACCEPTANCE.md); [AEGIS issue #16](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6533203333) |
+
+Current verified response count: 15  
+Current completion sequence: TUSKER-04-C0015  
 JSONL audit: 15 physical lines, 14 unique completion IDs; C0009 is duplicated and both append-only records are preserved.  
 C0011 has exactly one canonical ledger row; duplicate Markdown ledger rows from the previous update were consolidated.  
 Branch: 04-tusker-core. Ahead/behind figures are refreshed after this ledger commit.
