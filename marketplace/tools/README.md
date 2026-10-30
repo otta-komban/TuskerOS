@@ -99,3 +99,10 @@ The proposed language-neutral adapter sequence and failure/conformance requireme
 
 
 The transaction-state JSON Schema now constrains each history item to one of the eleven legal source/event pairs and requires the event-specific evidence keys with no additional properties. It also constrains empty history/terminal flags for prepared, active and terminal states. The Python lifecycle validator remains the authoritative continuity check across the full history and binds the final event to the current state; schema validation alone does not authenticate evidence or prove execution.
+
+
+## Lifecycle conformance vectors
+
+Data-driven transition vectors live in `marketplace/tests/fixtures/transaction-state-vectors.json`. They cover valid commit, successful rollback, stale-snapshot termination, cancellation and rejection paths, plus fail-closed cases for execution bypass, snapshot mismatch, unexpected evidence fields and transitions after terminal state. `marketplace/tests/test_transaction_state_vectors.py` runs those vectors against the pure Python validator with `unittest`.
+
+The vectors are structural test inputs only. Their approval/lock/result references are placeholders and do not represent authenticated approvals, real locks or package-manager outcomes. Test files are committed; execution must be performed in a working checkout before release.
