@@ -81,6 +81,9 @@ class ProfileComposerTests(unittest.TestCase):
     def test_unresolved_mixin_conflict_is_rejected(self):
         catalog = deepcopy(self.catalog)
         catalog["spacing-pack"]["tokens"] = {"colors": {"accent": "#00ff00"}}
+        profile = deepcopy(self.profile)
+        profile["mixin_winners"] = {}
+        self.store.save_profile("work", profile)
         with self.assertRaisesRegex(ProfileCompositionError, "explicit winner"):
             compose_profile(self.store, catalog, profile_id="work")
 
