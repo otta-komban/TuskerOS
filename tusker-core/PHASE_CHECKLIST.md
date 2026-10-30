@@ -60,11 +60,14 @@
 - [x] Submit PILOT-08 remote task lifecycle proposal.
 - [x] Open ORBIT-05 inference contract coordination issue.
 - [ ] Obtain explicit ORBIT-05 acknowledgement and contract.
+  - [x] Review published provider proposal and request exact normative request/event/error schemas and cancellation/disconnection semantics (issue #25; owner response pending).
 - [ ] Obtain explicit AEGIS-06 confirmation of identity/digest/decision fields.
 - [ ] Obtain explicit NEXUS-07 confirmation of invocation/result/cancellation fields.
 - [ ] Obtain explicit NOVA-02 confirmation of event/snapshot/control fields.
+  - [x] Compare event envelope against Core schema; add missing terminal cancellation event and require trusted origin metadata; request NOVA confirmation (issue #9; owner response pending).
 - [ ] Obtain explicit PILOT-08 confirmation of remote task/identity fields.
 - [ ] Obtain ATLAS-01 decision on IPC, packaging, service lifecycle and runtime paths.
+  - [x] Re-request concrete transport, peer identity, user-service lifecycle, XDG paths and SQLite/WAL recommendation (issue #27; owner response pending).
 - [ ] Record accepted shared decisions and exact contract versions.
 
 ## P2 — Foundation
