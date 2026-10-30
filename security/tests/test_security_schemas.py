@@ -396,3 +396,35 @@ def test_audit_event_v020_candidate_rejects_inconsistent_lifecycle_status_pair(e
     event["result_status"] = wrong_status
     event["reason_code"] = "AUDIT_TEST_REASON" if wrong_status in ("denied", "failure") else None
     assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v020_package_transaction_correlation_pair_is_valid():
+    event = valid_audit_v020_event()
+    event["transaction_id"] = "pkg-txn-2026-00042"
+    event["snapshot_digest"] = "sha256:" + "2" * 64
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+@pytest.mark.parametrize(
+    "field,other",
+    [("transaction_id", "snapshot_digest"), ("snapshot_digest", "transaction_id")],
+)
+def test_audit_event_v020_package_transaction_fields_must_be_paired(field, other):
+    event = valid_audit_v020_event()
+    event[field] = (
+        "pkg-txn-2026-00042"
+        if field == "transaction_id"
+        else "sha256:" + "2" * 64
+    )
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+@pytest.mark.parametrize(
+    "snapshot_digest",
+    ["sha256:bad", "sha256:" + "G" * 64, "", None],
+)
+def test_audit_event_v020_package_snapshot_digest_must_be_sha256(snapshot_digest):
+    event = valid_audit_v020_event()
+    event["transaction_id"] = "pkg-txn-2026-00042"
+    event["snapshot_digest"] = snapshot_digest
+    assert list(audit_v020_validator().iter_errors(event))
