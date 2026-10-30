@@ -63,28 +63,28 @@ Required audit failure before dispatch is a hard deny. Do not treat a queued in-
 
 ## 5. Release artifact signature and trust proposal
 
-**Proposed metadata model:** use The Update Framework (TUF) metadata roles for release trust (root, targets, snapshot and timestamp), with an in-toto/SLSA provenance attestation bound to each release target. This is a proposal for owner review, not a claim that signing infrastructure exists.
+**Reconciled recommendation:** TUF metadata is the preferred framework for the full update/release channel because its root, targets, snapshot and timestamp roles provide explicit delegation, freshness and rollback protections. An offline detached OpenPGP signature over a canonical release manifest is a simpler alternative for a minimal offline-only artifact channel, but it is not equivalent to TUF's repository freshness/rollback metadata. These are alternative trust-envelope designs, not two required signatures to stack by default. Project release maintainers must select and approve one canonical distribution contract before implementation.
 
-The release target metadata/attestation should bind:
+For the preferred TUF path, bind an in-toto/SLSA provenance attestation to each release target. For the OpenPGP alternative, sign the canonical manifest and bind the same provenance digest inside that manifest. In either case, the signed release statement should bind:
 
 - artifact digest and size;
 - TuskerOS release/version and target architecture/image type;
 - source commit and reviewed build-definition revision;
 - build workflow identity/run and builder provenance;
 - Fedora repository snapshot/identifiers, package NEVRAs and SBOM digest;
-- signing/metadata version and validity interval.
+- metadata/manifest sequence and validity interval.
 
-Trust and lifecycle requirements:
+Common trust and lifecycle requirements:
 
-1. Pin an initial trusted TUF root in the installer/recovery environment. Verify metadata signatures and target hashes before installation or update; never accept an unsigned manifest or a model/caller-provided checksum as trust evidence.
-2. Keep root authority offline and separated from routine CI. Proposed starting policy is threshold authorization by multiple independent root-key custodians; exact threshold, identities and hardware custody require release-owner approval.
-3. Delegate narrowly scoped target-signing authority to the release pipeline. CI must not hold root keys. Protect delegated keys with hardware-backed storage where supported, scope them to intended targets, rotate them on a documented schedule and revoke them through signed root/metadata updates.
-4. Use monotonically increasing metadata versions and expiry to detect rollback/freeze. Reject lower-version metadata, invalid signatures, expired metadata, digest mismatch and unknown trust roots.
-5. Embed the trusted root and required metadata chain in offline installation media so artifact verification does not require a cloud service. A missing/expired/invalid trust chain or uncertain clock fails closed for destructive installation; do not provide a user-facing bypass.
-6. Do not claim hardware-enforced anti-rollback on systems without protected monotonic state. Where supported, bind the minimum accepted release/security epoch to TPM-backed state; otherwise document the weaker local-state guarantee and ensure update metadata still rejects rollback against the locally trusted metadata state.
+1. Pin an initial trusted root in the installer/recovery environment. Verify signatures and target hashes before installation or update; never accept an unsigned manifest or a model/caller-provided checksum as trust evidence.
+2. Keep root authority offline and separated from routine CI. Use threshold authorization by multiple independent root-key custodians; exact threshold, identities and hardware custody require release-owner approval.
+3. Delegate narrowly scoped release-signing authority. CI must not hold root keys. Protect delegated keys with hardware-backed storage where supported, scope them to intended targets, rotate them on a documented schedule and revoke them through authenticated signed metadata.
+4. Use monotonically increasing metadata/manifest sequence values and expiry to detect rollback/freeze. TUF provides versioned root/targets/snapshot/timestamp metadata; an OpenPGP-only channel must separately define authenticated rotation/revocation and freshness metadata. Reject lower-version state, invalid signatures, expired metadata, digest mismatch and unknown trust roots.
+5. Embed the trusted root and required verification metadata in offline installation media so artifact verification does not require a cloud service. A missing/expired/invalid trust chain or uncertain clock fails closed for destructive installation; do not provide a user-facing bypass.
+6. Do not claim hardware-enforced anti-rollback on systems without protected monotonic state. Where supported, bind the minimum accepted release/security epoch to TPM-backed state; otherwise document the weaker local-state guarantee and ensure the update client still rejects rollback against locally trusted metadata.
 7. Publish root rotation, key compromise, revocation, recovery-media refresh and emergency trust-root recovery procedures before production releases.
 
-No private signing keys, seed material or credentials belong in Git, image build logs or the installer. No production key owner, HSM, root threshold or public-key distribution channel is selected by this proposal.
+No private signing keys, seed material or credentials belong in Git, image build logs or the installer. No production key owner, HSM, root threshold or public-key distribution channel is selected by this proposal. The earlier C0033 OpenPGP recommendation is retained as the simpler alternative; this C0034 reconciliation prefers TUF for a maintained update/release channel but does not select either on behalf of the project release maintainers.
 
 ## 6. Ownership and packaging boundary
 
