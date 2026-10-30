@@ -155,3 +155,8 @@ Only the checked items above have evidence in this commit. Remaining items are o
 ## 13. Schema hardening note
 
 Theme Pack v1 excludes SVG assets rather than attempting to sanitize a complex active-content format. V1 allows PNG, JPEG and WebP images, TTF/OTF/WOFF2 fonts, and OGG/WAV audio, all subject to runtime content sniffing, decoder isolation, size limits and digest verification. Asset-role references must resolve to declared asset IDs with matching kinds. Surface override IDs are restricted to the v1 allowlist in the JSON Schema. Path validation rejects absolute paths, backslashes, duplicate separators and dot-segment traversal; runtime canonical-path and symlink checks remain mandatory.
+
+
+## 14. Runtime asset inspection implementation note
+
+The initial Python reference inspector lives at `theme-studio/runtime/asset_inspector.py`. It validates declared kind/media-type compatibility, strict relative paths, canonical containment, symlink-free path components, regular-file status, per-kind and cumulative byte limits, file signatures, SHA-256 and unique asset IDs. It streams files rather than loading them whole. This is a reference validation layer, not yet wired into an installer or desktop activation path. The staged pack root must be private and non-writable; a production implementation should use directory-descriptor-relative traversal (openat-style) to eliminate parent-directory replacement races.
