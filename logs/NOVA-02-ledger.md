@@ -8,18 +8,20 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **2 / 100**
-- Last recorded completion: **NOVA-02-C0002**
-- Current phase: **P0 — Discovery and requirements / P1 — Architecture and contracts**
+- Actual assistant responses recorded: **3 / 100**
+- Last recorded completion: **NOVA-02-C0003**
+- Current phase: **P1 — Architecture and contracts / P2 — Foundation**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
 - Implementation status: **Minimal Plasma 6 applet foundation committed; runtime validation pending**
-- Tests passed: **None claimed; no Plasma 6 test environment available in this session**
+- Tests passed: **5 static validator unit tests passed in isolated Python execution; Plasma runtime validation remains pending**
 
 ## Completion history
 
 | Number | ID | Category | Summary | Evidence / commit |
 |---:|---|---|---|---|
 | 1 | NOVA-02-C0001 | Activation and repository intake | Reviewed blueprint, inspected repository/branch, reviewed KDE developer docs, drafted desktop architecture and P0-P7 checklist. | `desktop/README.md` 13a8c94; `desktop/PHASE-PLAN.md` 91d3562; completion log 19bf065; initial ledger 976922a. |
+| 2 | NOVA-02-C0002 | Desktop validation | Added static Plasma package validator, five unit tests and documented commands. | Validator `14cf0a8`; tests `96e017b`; README `2cf4d58`; log `dcf54dc`. |
+| 3 | NOVA-02-C0003 | Task-event contract | Translated TUSKER-04 draft into desktop consumer rules for sequence handling, snapshot recovery, controls and approvals. | `desktop/contracts/task-events-v0.1.md` `1304933`; completion log `0778a93`. |
 
 ## Open coordination requests
 
