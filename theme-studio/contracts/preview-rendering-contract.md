@@ -55,3 +55,16 @@ A response must echo request/session/revision identifiers. The engine discards s
 - Agree capability semantics and stable failure reason codes.
 
 Until those decisions are reviewed, this document and schemas are proposals only. No KDE integration or production adapter may claim conformance.
+
+## Engine-side response validation (normative)
+
+JSON Schema validates response shape, but it cannot prove that an acknowledgement belongs to the dispatched request or that it accounts for the exact requested surface set. Before accepting a response, the engine MUST:
+
+1. Validate the complete response against `schema/preview-render-response.schema.json`; reject unknown fields and invalid status-specific combinations.
+2. Compare `protocol_version`, `request_id`, `session_id` and `revision` byte-for-byte with the dispatched request. A mismatch is stale or misrouted and is discarded.
+3. Confirm the session still exists, belongs to the authenticated owner, and has not reached its engine-side monotonic expiry deadline. The response TTL is not authoritative and must not extend the session.
+4. Require the union of `rendered_surfaces` and omitted surface IDs to equal the request's negotiated surface set, with no duplicates and no overlap. An adapter cannot silently drop a requested surface or report an unrequested one.
+5. For `rendered`, require every negotiated surface to be rendered. For `partial`, require at least one rendered surface and at least one explicitly omitted surface. For `rejected`, require no rendered or omitted surfaces and a stable failure code.
+6. Treat the result as an adapter assertion, not independent proof that pixels appeared. Record diagnostics per omitted surface; never promote partial/rejected to rendered.
+
+A rejected, stale, mismatched, malformed, duplicate-surface or incomplete response must not be shown as a successful preview. The engine should cancel/expire the associated isolated target and release temporary resources. These checks belong in the engine/transport boundary, not in theme-pack content or the desktop adapter's untrusted payload.
