@@ -9,8 +9,9 @@
 | 5 | NEXUS-07-C0005 | TUSKER adapter rules and typed JSON result tests added. | Commits 4b42edb, 1b43b4b, 7758664; review 6531355859. | AEGIS/ATLAS reviews and test execution. |
 | 6 | NEXUS-07-C0006 | Added provider-side authorization boundary and fail-closed requirements; no AEGIS schema invented. | AUTHORIZATION_BOUNDARY.md; commit ca029a2; TUSKER review 6531355859. | AEGIS principal/decision/audit contract; ATLAS service/namespace review. |
 | 7 | NEXUS-07-C0007 | Added a draft layered integration verification plan with positive/negative cases, execution gates and evidence template. | INTEGRATION_VERIFICATION_PLAN.md; commit 23a697b. | Tests not executed; AEGIS/ATLAS decisions and TUSKER adapter freeze pending. |
+| 8 | NEXUS-07-C0008 | Added draft result lifecycle semantic checks and negative tests beyond JSON Schema shape validation. | `tests/test_contracts.py`; commit 35db514. | Tests not executed; TUSKER/AEGIS review required before invariants become normative. |
 
-Verified completion count: 7 actual assistant responses.
-Next ID: NEXUS-07-C0008.
+Verified completion count: 8 actual assistant responses.
+Next ID: NEXUS-07-C0009.
 Branch: 07-system-integration.
 No test pass or CI success is claimed.
