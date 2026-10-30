@@ -23,7 +23,7 @@
   "arguments": {},
   "deadline_ms": 5000,
   "cancellation_token": "opaque-optional-token",
-  "authorization_context": "opaque trusted broker context (exact AEGIS-06 schema pending)"
+  "authorization_context": {}
 }
 ```
 The caller component/instance fields are descriptive routing metadata only. They are not proof of identity. Authenticated caller identity must be derived from trusted IPC peer credentials and the AEGIS-06-approved principal/decision context. Caller-supplied JSON identity claims MUST NOT authorize an operation. For every mutating tool, policy preflight is mandatory before invocation; NEXUS rejects a missing, invalid or stale authorization context. The exact principal and decision schema belongs to AEGIS-06. Every invocation carries task_id, step_id and correlation_id; TUSKER-04 remains authoritative for task/plan/step state.
