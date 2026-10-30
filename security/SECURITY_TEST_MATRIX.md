@@ -170,7 +170,7 @@ These candidate cases are exercised by the v0.2.0 schema test suite. They do not
 C0026 schema-registry regression coverage: the v0.2.0 candidate test suite now rejects every post-request lifecycle event (authorization, execution, cancellation, UNKNOWN, compensation and approval outcomes) when registry status is unavailable. The 13 parametrized negative cases run as part of the schema suite; they do not test a live producer, broker, audit store or runtime.
 
 
-### AUD-SCHEMA-031 — event lifecycle/status consistency
+### AUD-SCHEMA-037 — event lifecycle/status consistency
 
 - Positive: each of the 15 defined `event_type`/`result_status` pairs validates under audit-event v0.2.0.
 - Negative: each event type rejects a deliberately inconsistent result status.
