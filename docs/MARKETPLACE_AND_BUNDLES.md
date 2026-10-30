@@ -103,3 +103,21 @@ No package manager is invoked by this contract. Transaction execution,
 cryptographic token verification, policy authorization, audit persistence and
 rollback remain external integration work requiring AEGIS-06 and PHOENIX-10
 agreement. A prepared preview is not executable authorization.
+
+
+## Transaction lifecycle state machine
+
+`marketplace/tools/transaction_state.py` formalizes legal adapter states:
+`prepared → approval_verified → revalidated → execution_started`, followed
+by `committed`, `rolled_back` or `rollback_failed`. Rejection,
+cancellation and stale-snapshot detection are terminal pre-execution outcomes.
+Execution cannot start directly from a prepared preview; the lifecycle
+validator requires approval-verification correlation fields, an exact
+revalidated snapshot digest and a package-manager lock reference before
+execution-started. Terminal records cannot advance.
+
+These checks validate transition structure only. The trusted adapter must
+perform actual cryptographic verification, acquire and enforce locks, execute
+the transaction and independently record real outcomes. The state machine is
+not an executor or source of authorization. The state record schema is
+`marketplace/schemas/package-transaction-state.schema.json`.
