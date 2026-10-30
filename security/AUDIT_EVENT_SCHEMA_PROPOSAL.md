@@ -125,3 +125,8 @@ The candidate now requires `registry_status` and `registry_version` as a pair:
 The first CI attempt after adding these rules failed two tests because the schema edit accidentally replaced (rather than preserved) the prior denial/failure non-empty reason-code condition. That failure was corrected by retaining all three independent conditional rules. GitHub Actions run 41128922282 then passed **54 tests in 0.60s** on Python 3.12.
 
 The active v0.1.0 schema remains unchanged. This is schema-level validation only; the trusted status source, producer event timing and migration still require NEXUS-07/TUSKER-04 acceptance. The candidate must not be treated as runtime conformance.
+
+
+## Event lifecycle/status consistency — C0026
+
+The v0.2.0 candidate now constrains `event_type` to its corresponding `result_status` rather than accepting arbitrary cross-products of the two enums. The explicit pairs are: requested/accepted; authorized/success; started/pending; succeeded/success; failed/failure; cancellation_requested/accepted; cancelled/cancelled; outcome_unknown/unknown; compensation_started/pending; compensation_verified/success; compensation_failed/failure; approval_granted/accepted; approval_denied/denied; approval_expired/denied; and policy_denied/denied. Denial/failure reason-code requirements remain independently enforced. These are proposed producer semantics; runtime-owner acceptance is still required before the candidate is frozen.
