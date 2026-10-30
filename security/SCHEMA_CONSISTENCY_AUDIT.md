@@ -158,3 +158,16 @@ The C0030 review of FORGE-09's transaction helper found two integration constrai
 The candidate audit-event v0.2.0 schema now allows `transaction_id` and `snapshot_digest` together or neither; the digest is `sha256:` + 64 lowercase hex. Tests cover the valid pair, each missing counterpart and malformed digest. `action_digest` remains the independently recomputed AEGIS canonical action binding.
 
 The extension is candidate-only. Active v0.1.0 is unchanged; no producer, audit persistence, token verification, broker or package-manager execution is implemented or validated.
+
+## C0044 — FORGE-09 transaction validator re-review
+
+The current `09-ecosystem` branch was re-fetched after the C0036 finding and the mismatch remains:
+
+- `marketplace/schemas/package-transaction-state.schema.json` requires a non-empty `reason_code` for legal `rejected` and `cancelled` history entries.
+- `marketplace/tools/transaction_state.py` permits `reason_code` in `EVIDENCE_KEYS` and rejects blank values when supplied, but it does not require the key for either newly created transitions or persisted history entries.
+- `marketplace/tests/test_transaction_state.py` still contains `transition_transaction(self.tx, "cancelled")` without reason evidence as an accepted setup path; no missing/blank reason negative cases are present in the fetched test module.
+
+This means the Python helper can accept/produce a state record rejected by the published JSON Schema. AEGIS re-posted the source-level finding to FORGE-09 issue #29 (comment 6534092148), requesting enforcement in both new-transition and history-validation paths plus direct and persisted-history regression tests.
+
+**Verification limit:** source inspection only. No FORGE code was modified and no FORGE tests were executed. The package execution security gate remains unchanged: approval authentication, exact snapshot revalidation, native locking, durable audit, broker consume and recovery guarantees are still required independently.
+
