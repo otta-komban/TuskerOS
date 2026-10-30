@@ -14,15 +14,19 @@
 {
   "schema_version": "1.0",
   "request_id": "uuid",
+  "task_id": "task-123",
+  "step_id": "step-2",
+  "correlation_id": "corr-123",
   "idempotency_key": "opaque-client-generated-key",
   "caller": {"component": "tusker-core", "instance_id": "opaque"},
   "tool": "system.info",
   "arguments": {},
   "deadline_ms": 5000,
-  "cancellation_token": "opaque-optional-token"
+  "cancellation_token": "opaque-optional-token",
+  "authorization_context": "opaque trusted broker context (exact AEGIS-06 schema pending)"
 }
 ```
-Caller identity is context supplied/validated by the trusted transport, not trusted merely because a caller placed a string in JSON. Authorization scope and authenticated principal must be established by AEGIS-06.
+The caller component/instance fields are descriptive routing metadata only. They are not proof of identity. Authenticated caller identity must be derived from trusted IPC peer credentials and the AEGIS-06-approved principal/decision context. Caller-supplied JSON identity claims MUST NOT authorize an operation. For every mutating tool, policy preflight is mandatory before invocation; NEXUS rejects a missing, invalid or stale authorization context. The exact principal and decision schema belongs to AEGIS-06. Every invocation carries task_id, step_id and correlation_id; TUSKER-04 remains authoritative for task/plan/step state.
 
 ## 3. Common tool result (proposal)
 ```json
@@ -30,15 +34,20 @@ Caller identity is context supplied/validated by the trusted transport, not trus
   "schema_version": "1.0",
   "request_id": "same-request-id",
   "operation_id": "stable-operation-id",
+  "task_id": "task-123",
+  "step_id": "step-2",
+  "correlation_id": "corr-123",
   "status": "succeeded",
   "result": {},
   "postcondition": {"state": "verified", "details": {}},
   "side_effects": [],
+  "cancellation": {"request_state": "not_requested", "operation_state": "completed"},
+  "evidence_refs": ["system-snapshot:op-123"],
   "timing": {"duration_ms": 12},
   "error": null
 }
 ```
-Allowed statuses: `succeeded`, `rejected`, `needs_approval`, `running`, `cancelled`, `failed`, `unknown_outcome`. Postcondition state: `verified`, `not_verified`, `not_applicable`, `unknown`.
+Allowed statuses: `succeeded`, `rejected`, `needs_approval`, `running`, `cancelled`, `failed`, `unknown_outcome`. Cancellation request state (`not_requested`, `received`, `rejected`, `accepted`) is distinct from operation state (`running`, `stopped`, `completed`, `unknown`); cancellation acceptance is not proof that execution stopped. A cancellation race may still complete a side effect. Results include task/step/correlation identifiers and evidence references. Postcondition state: `verified`, `not_verified`, `not_applicable`, `unknown`.
 
 ## 4. Error taxonomy
 Stable codes (initial proposal):
@@ -57,7 +66,7 @@ Stable codes (initial proposal):
 - `INTERNAL_ERROR`: unexpected failure; include a correlation ID, not sensitive internals.
 
 ## 5. Operation metadata (required for every tool)
-`name`, `version`, `description`, `input_schema`, `output_schema`, `risk` (`read_only`, `low`, `moderate`, `high`, `destructive`), `privilege` (`user` or `elevated`), `side_effects`, `preconditions`, `postconditions`, `timeout_ms`, `idempotent`, `cancellable`, `rollback` (`supported`, `best_effort`, `not_supported`), `required_capabilities`, `availability`.
+`name`, `version`, `description`, `input_schema`, `output_schema`, `risk` (`read_only`, `low`, `moderate`, `high`, `destructive`), `privilege` (`user` or `elevated`), `side_effects`, `preconditions`, `postconditions`, `timeout_ms`, `idempotent`, `idempotency_scope`, `cancellable`, `rollback` (`supported`, `best_effort`, `not_supported`), `required_capabilities`, `availability`.
 
 ## 6. D-Bus conventions (proposal; names not frozen)
 - Use reverse-DNS names under an agreed TuskerOS namespace; do not squat on org.freedesktop names.
@@ -93,3 +102,6 @@ The test harness is `system-integration/tests/test_contracts.py` and the test-on
 
 ## 11. Candidate NEXUS service identifiers
 See `system-integration/SERVICE_IDENTIFIERS.md`. Candidate system-bus name `org.tuskeros.SystemTools1`, object path `/org/tuskeros/SystemTools1`, and interface `org.tuskeros.SystemTools1.Manager` are not frozen. The project must confirm control of the reverse-DNS namespace and obtain ATLAS-01/AEGIS-06 review before packaging or implementation. No Polkit action IDs or privileged methods are assigned by NEXUS.
+
+## 12. TUSKER-04 lifecycle review reconciliation
+TUSKER-04 reviewed v0.1 and requested task/step/correlation identifiers, trusted transport identity, mandatory authorization preflight for mutations, explicit cancellation semantics, evidence references and idempotency scope. These are incorporated into the provisional schemas. TUSKER-04 remains authoritative for Task/Plan/Step/TaskEvent state; NEXUS owns the tool catalogue and provider operation lifecycle. Every task lifecycle/progress/cancel/verification event must preserve the relevant task_id, step_id, request_id, operation_id and correlation_id in its typed payload. Exact authorization principal/decision fields remain AEGIS-06-owned. See Issue #5 comment 6531017768 and NEXUS acknowledgement 6531070583.
