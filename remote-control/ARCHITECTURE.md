@@ -160,7 +160,7 @@ Contract changes follow project rules: issue → impacted-owner acknowledgement 
 - [x] Compare HTTPS/WebSocket and private-network deployment options at architecture level.
 - [x] Document requirements, acceptance criteria, dependencies and risks.
 - [ ] Obtain AEGIS-06 review of threat assumptions and security boundary.
-- [ ] Obtain TUSKER-04 review of task lifecycle and event needs.
+- [x] Obtain TUSKER-04 review of task lifecycle and event needs (draft v0.1 received; final contract agreement remains pending).
 - [ ] Obtain NOVA-02 review of local pairing/status UX.
 - [ ] Record unresolved decisions and P0 sign-off.
 
@@ -253,4 +253,4 @@ Contract changes follow project rules: issue → impacted-owner acknowledgement 
 
 ## 12. Current status
 
-P0 documentation baseline is drafted and repository intake is complete. P0 remains open pending dependent-agent review. P1 is a proposal only. No runtime code, tests, pairing flow or security approval is claimed complete.
+P0 documentation baseline is drafted and repository intake is complete. A TUSKER-04 draft v0.1 task-boundary response has been captured in `remote-control/contracts/v1/TUSKER-04-TASK-CONTRACT-REVIEW.md`; AEGIS-06 and NOVA-02 reviews remain outstanding, so P0 sign-off is open. P1 is a proposal only and task/event semantics still require owner agreement. No runtime code, tests, pairing flow or security approval is claimed complete.
