@@ -17,10 +17,10 @@ Target: 100 actual assistant responses (C0001–C0100)
 
 ## Verified counters
 
-- Actual assistant responses recorded: 8
-- Last sequence: 8
-- Last completion ID: PILOT-08-C0008
-- Branch commits created during intake through C0008: 37 (includes C0007 readiness document and final log/ledger reconciliation commits)
+- Actual assistant responses recorded: 11
+- Last sequence: 11
+- Last completion ID: PILOT-08-C0011
+- Branch commits through C0010 checkpoint: 44; C0011 matrix + JSONL commits added two commits before this ledger update; final ledger commit count is verified after commit.
 - Tests run: 0
 - Implemented runtime features: 0
 - Verification scenarios specified: 72 (PAIR 10, SESS 14, AUTH 10, TASK 16, EVT 12, NET 10; remote approval scenarios remain conditional and are not counted)
@@ -56,3 +56,26 @@ Append one JSON object per actual assistant response to `logs/PILOT-08.jsonl`. N
 - Expected branch commit count after this ledger update: 43 (one ledger commit).
 - Actual assistant responses: 9; tests run: 0; runtime features: 0; OpenAPI validation: not run; protocol scenarios specified: 72, not executed.
 - Status: **NO-GO**. Threat analysis is a review artifact, not security sign-off or implementation authorization.
+
+
+## C0010 addendum
+
+- Completion: `PILOT-08-C0010` — 2026-10-31T01:10:00+05:30
+- Category: progress reporting and continuity control.
+- Recorded the user's mandatory end-of-response dashboard/continue format in the JSONL log.
+- JSONL progress-record commit: `d3c145b311a186ae232d42bbe41e366c48e2b2a2`.
+- The C0010 JSONL entry existed at branch checkpoint; the Markdown ledger had not yet been synchronized. This addendum reconciles it.
+- No engineering implementation or tests claimed.
+
+## C0011 addendum
+
+- Completion: `PILOT-08-C0011` — 2026-10-31T01:15:41+05:30
+- Security matrix: `remote-control/verification/SECURITY-CONTROL-TO-TEST-MATRIX.md`.
+- Matrix commit: `6f9bfc75d5e24ad89670d00d78732016ff3d1ba0`.
+- JSONL completion-record commit: `55eae9351351bb24b00e3e4c48112581416ae885`.
+- Mapped all 20 abuse cases AB-01..AB-20 to concrete test IDs, setup/actions, expected outcomes, audit assertions, linked protocol scenarios/requirements, owners and sign-off evidence.
+- Added ten cross-cutting cases SCT-X01..SCT-X10 for pairing races, idempotency crash consistency, policy failures/staleness, snapshot/event races, restart/rollback, clock behavior, rate-limit evasion, proxy trust and emergency shutdown.
+- Explicitly requires zero Core dispatches and zero executor calls for DENY, REQUIRE_APPROVAL, stale/invalid/unavailable policy, revoked/expired sessions and global disable.
+- No executable tests, runtime features or OpenAPI validation claimed.
+- Owner review remains open: AEGIS-06 and NOVA-02 have no owner-authored sign-off; TUSKER-04 decisions remain draft REVISE/DEFER.
+- Status: **NO-GO**.
