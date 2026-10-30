@@ -186,7 +186,8 @@ class CatalogResolverTests(unittest.TestCase):
         with self.assertRaisesRegex(CatalogResolutionError, "invalid dependency version constraint"):
             resolve_catalog_plan(
                 ["org.tuskeros.apps.demo"], [],
-                {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0",
+                {"org.tuskeros.apps.demo": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []}, "0.5.0", "1.2.0",
                 dependency_constraints={"org.tuskeros.apps.demo": {
                     "org.tuskeros.libs.core": "latest"
                 }},
