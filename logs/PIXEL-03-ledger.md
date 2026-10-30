@@ -14,6 +14,6 @@
 - Outstanding: cross-process locking policy; profile import/export; preview/apply/rollback; NOVA-02 and FORGE-09 contract acknowledgement; KDE/Qt surface compatibility research.
 
 
-| 8 | PIXEL-03-C0008 | Isolated preview sessions | Added bounded owner-scoped volatile preview snapshots, monotonic TTL, expiry cleanup, cancellation and detached-copy isolation; CI run 41115396024 pending. |\n\n## Logging integrity note
+| 8 | PIXEL-03-C0008 | Isolated preview sessions | Added bounded owner-scoped volatile preview snapshots, monotonic TTL, expiry cleanup, cancellation and detached-copy isolation; CI [run 41115396024](https://github.com/otta-komban/TuskerOS/actions/runs/41115396024) passed; job log confirms 56 tests ran and `OK`. |\n\n## Logging integrity note
 
 At C0007, the existing JSONL file contained only the C0006 record even though the established ledger count was 6. C0001-C0005 JSONL records were not available in the branch file and have not been reconstructed or fabricated. C0007 is appended as sequence 7; recover the missing historical records from repository history/backups if a fully populated JSONL audit trail is required.
