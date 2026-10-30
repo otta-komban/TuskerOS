@@ -50,9 +50,9 @@ Any absent, denied, expired, mismatched, replayed, revoked or indeterminate auth
 |---|---|---|
 | NEXUS-07 | Exact strict `authorization_context` schema and trusted injection boundary | Core cannot safely serialize or validate broker authorization context |
 | NEXUS-07 + AEGIS-06 | Whether broker invokes atomic AEGIS consume immediately before handler dispatch, or Core calls consume first; exact request/response and typed errors | No privileged/mutating broker adapter implementation |
-| AEGIS-06 | Approval completion semantics: fresh ALLOW/reference versus direct consumption of approved request reference | Core cannot implement approval resume/handoff |
+| AEGIS-06 | Strict `authorization_context` schema, trusted peer injection, consume transport and durable execution reconciliation | Core cannot serialize or invoke the broker safely |
 | NEXUS-07 | Durable consumption/execution identifiers, concurrent replay behavior, lost-response reconciliation and mutation idempotency across restart | No retry/recovery implementation for uncertain mutations |
-| NEXUS-07 + AEGIS-06 | Typed outcomes for authority outage, invalid/replayed/already-consumed reference, expiry, revocation and required audit failure | Core maps only generic fail-closed errors; no detailed recovery policy |
+| NEXUS-07 + AEGIS-06 | NEXUS transport mapping for AEGIS typed outcomes, consumption identity and lost-response reconciliation | Core cannot implement detailed adapter/recovery mapping |
 | ORBIT-05 | Normative inference request/event/error schemas and disconnect/cancellation terminal semantics | No frozen inference adapter |
 | ATLAS-01 | Per-user IPC, peer identity, systemd --user lifecycle, XDG paths and SQLite/WAL recommendation | No service/persistence ADR |
 
@@ -62,7 +62,7 @@ Any absent, denied, expired, mismatched, replayed, revoked or indeterminate auth
 - [x] Record AEGIS owner-confirmed decision semantics and mutation idempotency.
 - [x] Define Core fail-closed dispatch invariants without inventing wire fields.
 - [ ] Obtain explicit NEXUS acceptance of Core mapping and exact authorization/broker contract.
-- [ ] Obtain AEGIS approval-handoff and typed consume outcome decisions.
+- [x] Obtain AEGIS approval-handoff and typed consume outcome decisions (issue #16 comment 6533203333).
 - [ ] Freeze versioned shared schemas after owner sign-off.
 - [ ] Implement transport adapter only after ATLAS IPC decision and NEXUS/AEGIS consume contract.
 - [ ] Add executable cross-boundary tests, including zero-dispatch denial, replay/concurrency and lost-response reconciliation.
@@ -71,3 +71,17 @@ Any absent, denied, expired, mismatched, replayed, revoked or indeterminate auth
 **Evidence:** NEXUS issue #5 review thread; AEGIS issue #16 review thread; Core `AUTHORIZATION-ADAPTER.md`; AEGIS `AUTHORIZATION_LIFECYCLE.md` and `BROKER_CONTRACT.md`; NEXUS `tool-invocation.schema.json`, `tool-result.schema.json` and `tool-descriptor.schema.json`.
 
 This is a Core review artifact, not an authorization grant, implementation approval or replacement for owner-controlled contracts.
+
+
+## 6. AEGIS approval/consume semantic closure
+
+AEGIS-06 confirmed the approval handoff and typed consume outcomes in [issue #16 comment 6533203333](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6533203333). Core acceptance rules are now:
+
+- Initial `REQUIRE_APPROVAL` has an `approval_request_id` and null `authorization_ref`; it causes zero executor calls.
+- After authenticated approval, AEGIS re-evaluates the exact proposal and current principal/session, operation, arguments/resources, policy/registry versions, preconditions, expiry and security posture.
+- Only a still-valid proposal receives a fresh ALLOW and new opaque authorization reference. Changed material bindings invalidate the approval request.
+- The broker consumes the fresh `authorization_ref`; `approval_request_id` is never a bearer capability. Earlier unconsumed references are invalidated on re-issue.
+- Consume outcomes are the AEGIS-defined typed set. Only `CONSUMED` returns a narrow grant; every other outcome returns no grant and permits zero new handler calls. Already-consumed and unknown outcomes require reconciliation.
+- Required pre-dispatch audit and consume state are durably committed before grant. Required audit failure is `AUDIT_UNAVAILABLE`, no grant and no dispatch.
+
+This closes the AEGIS semantic decision gate, not the integration gate. NEXUS still owes the strict authorization context and trusted peer injection, atomic consume transport, typed transport mapping, durable execution identity and restart-safe reconciliation. No runtime implementation or integration test is claimed.
