@@ -3,22 +3,22 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0002
-- Current phase: P0/P1 intake and architecture foundation
+- Current recorded completion: C0003
+- Current phase: P2 — SDK and marketplace foundation
 
 | Completion | Phase | Category | Summary | Evidence | Status |
 |---|---|---|---|---|---|
-| FORGE-09-C0001 | P0/P1 | design | Located and reviewed the master execution blueprint; verified branch existence and inspected LICENSE; drafted initial ecosystem architecture, extension contract, manifest schema, metadata-only example and validator. | `docs/DEVELOPER_ECOSYSTEM_ARCHITECTURE.md`; `docs/EXTENSION_CONTRACT.md`; `sdk/`; `logs/FORGE-09.jsonl` | partial |
-| FORGE-09-C0002 | P2 | implementation | Added marketplace catalog contract and fixture, developer bundle schema and Python bundle proposal, lifecycle/governance docs, deterministic dependency planner and tests; performed 15 in-memory behavior checks. | `marketplace/`; `bundles/`; `sdk/tools/dependency_plan.py`; `sdk/tests/test_dependency_plan.py`; `docs/MARKETPLACE_AND_BUNDLES.md` | partial |
+| FORGE-09-C0001 | P0/P1 | design/implementation | Initial ecosystem architecture, extension contract, manifest schema, metadata-only example and validator. | `docs/DEVELOPER_ECOSYSTEM_ARCHITECTURE.md`; `docs/EXTENSION_CONTRACT.md`; `sdk/` | partial |
+| FORGE-09-C0002 | P2 | implementation | Marketplace catalog contract and fixture, developer bundle schema and Python proposal, lifecycle docs, deterministic dependency planner and tests; 15 in-memory behavior checks. | `marketplace/`; `bundles/`; `sdk/tools/dependency_plan.py` | partial |
+| FORGE-09-C0003 | P2 | implementation | Added fail-closed catalog metadata validator and eight unittest cases; documents the boundary between structural validation and trust/authorization. | `marketplace/tools/validate_catalog_entry.py`; `marketplace/tests/test_validate_catalog_entry.py`; `marketplace/tools/README.md` | partial |
 
 ## Phase checklist
 
 ### P0 — Discovery and requirements
-- [x] Read master mission, ownership, phase gates and cross-agent dependency map.
-- [x] Review FORGE-09 P0/P1/P2/P3/P4/P5/P6/P7 requirements.
-- [ ] Confirm target developer personas and workflows with project stakeholders.
-- [ ] Inventory current Fedora package sources/toolchain policy with ATLAS-01.
-- [ ] Agree marketplace categories and metadata with PIXEL-03.
+- [x] Read master mission and initial phase/ownership blueprint.
+- [ ] Confirm developer personas and workflows with stakeholders.
+- [ ] Inventory Fedora package sources/toolchain policy with ATLAS-01.
+- [ ] Agree marketplace categories with PIXEL-03.
 - [ ] Record acceptance criteria and risk register.
 
 ### P1 — Architecture and contracts
@@ -29,19 +29,21 @@
 - [ ] Obtain NEXUS-07 typed extension API agreement.
 - [ ] Obtain PIXEL-03 theme/layout package boundary agreement.
 - [ ] Obtain ATLAS-01/PHOENIX-10 package/update integration agreement.
-- [ ] Record approved shared decisions and contract versioning.
 
 ### P2 — Foundation
-- [x] Add initial SDK schema and validator skeleton.
-- [ ] Add automated positive/negative validator tests (added; execution pending).
-- [x] Add marketplace catalog fixture and package metadata schema (initial proposal).
-- [x] Add deterministic topological ordering for an already-resolved dependency graph; version selection and install-plan preview remain pending.
-- [x] Add developer bundle manifest schema and initial Python bundle proposal.
+- [x] Add extension manifest schema and validator skeleton.
+- [x] Add marketplace catalog schema and metadata fixture.
+- [x] Add deterministic topological ordering for an already-resolved dependency graph.
+- [x] Add developer bundle schema and initial Python profile proposal.
+- [x] Add fail-closed catalog metadata validator and focused tests.
+- [ ] Execute committed Python unittest suites in a working repository checkout.
+- [ ] Implement version selection and semantic version-range resolution.
+- [ ] Validate Fedora package availability with ATLAS-01.
 
 ### P3 — Working MVP
 - [ ] Implement safe package transaction adapter and explicit preview/approval flow.
 - [ ] Build/test AI Python Developer bundle.
-- [ ] Integrate a sandboxed extension host and install the sample package.
+- [ ] Integrate sandboxed extension host and install sample package.
 - [ ] Verify uninstall and cleanup.
 
 ### P4 — Complete feature set
@@ -55,7 +57,7 @@
 - [ ] Add integration contract tests.
 
 ### P6 — Verification and hardening
-- [ ] Test dependency conflict, interrupted install, disk-full and rollback cases.
+- [ ] Test dependency conflict, interrupted install, disk-full and rollback.
 - [ ] Test malicious metadata, path traversal, symlink and archive-bomb cases.
 - [ ] Test signature/revocation and publisher compromise workflows.
 - [ ] Measure bundle resource impact on hardware tiers.
@@ -65,23 +67,10 @@
 - [ ] Publish compatibility matrix, known limitations and incident process.
 - [ ] Complete release report and successor handover.
 
-## Notes
-- Branch inspection confirmed `LICENSE` is present. `README.md` and the expected `coordination/` registry, master spec, architecture, contracts, ownership, communication, decisions, progress, test strategy, release plan and handover files were not found on this branch at intake. The planning blueprint is available in the Project Library.
-- Manifest and permission vocabulary are provisional. The sample is metadata-only and is not represented as a runnable sandboxed extension.
-- Automated unittest coverage was added in `sdk/tests/test_validate_manifest.py`; tests have not yet been executed. A checkout attempt failed because this execution environment could not resolve github.com, so test execution remains pending. The sample remains metadata-only and is not a live runtime extension. Cross-agent contract review is tracked in https://github.com/otta-komban/TuskerOS/issues/7.
+## Session notes
 
-
-### Session 2 — marketplace and bundle foundation
-- [x] Define marketplace catalog metadata separately from trust decisions.
-- [x] Add a catalog fixture with pending/unverified trust state.
-- [x] Define declarative developer bundle schema and initial Python profile.
-- [x] Document install lifecycle, review governance, and package ownership safeguards.
-- [x] Run 15 in-memory positive/negative behavior checks against local reconstructions of the manifest validator and dependency planner; this is not equivalent to executing committed unittest suites.
-- [x] Parse all six committed manifest/schema/fixture JSON files from the GitHub branch snapshot (6/6 valid JSON).
-- [ ] Execute committed tests in a working repository checkout.
-- [ ] Validate Fedora package availability with ATLAS-01 before declaring Python bundle release-ready.
-
-- [x] Add deterministic dependency ordering helper with missing-node, duplicate-edge and cycle rejection.
-- [x] Add dependency planner test cases (committed; execution of repository suite pending).
-- [ ] Implement catalog version selection and semantic version-range resolution; current planner only orders an already-resolved graph.
-- [ ] Execute committed tests in a working repository checkout.
+- Initial branch intake found LICENSE but not README or the expected coordination registry/specification files; planning context was supplied in the Project Library.
+- Cross-agent review issue #7 currently has only the FORGE-09 update and no replies from AEGIS-06, NEXUS-07 or PIXEL-03. ATLAS-01 request #24 has no replies yet.
+- The sample extension and catalog fixture are metadata-only. Catalog validation does not make an entry trusted or installable.
+- C0002's 15 checks were in-memory reconstructions, not execution of committed tests. C0003's eight unittest cases are committed but not run. A local checkout previously failed because this environment could not resolve github.com.
+- C0002 and C0003 are partial; do not describe the marketplace or bundle system as production-ready.
