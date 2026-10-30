@@ -14,6 +14,6 @@ Current verified count: 5
 
 | 4 | ATLAS-01-C0004 | P1 | implementation | partial | `tools/atlas/poc-preflight.sh` (`bash -n` passed); `image/kiwi/README.md`; commit `2bc4301ee4c078926ed45ede224225833eb37025` |
 
-Counts include only actual assistant responses. Never backfill or fabricate entries.
-
 | 5 | ATLAS-01-C0005 | P1 | implementation | partial | `os/PACKAGE-MANIFEST.md`, `os/package-manifest.csv`, `tools/atlas/resolve-package-manifest.py`, `os/DBUS-SERVICE-PACKAGING.md`; Python syntax and manifest parser smoke tests passed; resolver not run against Fedora repos; commit `e6d3588a14ab1075408c207c2a9528bc43bc327c` |
+
+Counts include only actual assistant responses. Never backfill or fabricate entries.
