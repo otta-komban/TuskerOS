@@ -56,7 +56,7 @@
           "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "started": {
       "allOf": [
@@ -82,7 +82,8 @@
             "model_id"
           ]
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "text_delta": {
       "allOf": [
@@ -102,7 +103,8 @@
             "delta"
           ]
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "tool_call_delta": {
       "allOf": [
@@ -136,7 +138,8 @@
             "is_final"
           ]
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "usage": {
       "allOf": [
@@ -164,7 +167,8 @@
             }
           }
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "resource": {
       "allOf": [
@@ -199,7 +203,8 @@
             "sample_source"
           ]
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "completed": {
       "allOf": [
@@ -222,7 +227,8 @@
             }
           }
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "cancelled": {
       "allOf": [
@@ -239,7 +245,8 @@
             }
           }
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     },
     "failed": {
       "allOf": [
@@ -264,7 +271,8 @@
             "retryable"
           ]
         }
-      ]
+      ],
+      "unevaluatedProperties": false
     }
   }
 }
