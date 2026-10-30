@@ -84,3 +84,6 @@
 - [x] Implement separate candidate `audit-event-0.2.0.schema.json` combining required trusted `registry_version`, required nullable `executor_id`/`reason_code`, and denial/failure reason-code condition; active v0.1.0 unchanged.
 - [x] Add Draft 2020-12 positive/negative envelope tests for candidate v0.2.0 and cross-version rejection; CI result pending.
 - [ ] Obtain NEXUS-07/TUSKER-04 acceptance of registry-version provenance, executor/reason lifecycle semantics and audit producer migration before promoting candidate v0.2.0.
+
+
+- [ ] Resolve SEC-SCHEMA-005: define truthful audit representation for request-created/registry-failure events when no trusted registry version exists; require concrete registry version for ALLOW/CONSUMED/dispatch.
