@@ -65,6 +65,6 @@
 - [ ] Complete release report and successor handover.
 
 ## Notes
-- Branch inspection confirmed `LICENSE` is present. `README.md` was not found at the branch root.
+- Branch inspection confirmed `LICENSE` is present. `README.md` and the expected `coordination/` registry, master spec, architecture, contracts, ownership, communication, decisions, progress, test strategy, release plan and handover files were not found on this branch at intake. The planning blueprint is available in the Project Library.
 - Manifest and permission vocabulary are provisional. The sample is metadata-only and is not represented as a runnable sandboxed extension.
-- Automated unittest coverage was added in `sdk/tests/test_validate_manifest.py`; tests have not yet been executed in a TuskerOS checkout. The sample remains metadata-only and is not a live runtime extension. Cross-agent contract review is tracked in https://github.com/otta-komban/TuskerOS/issues/7.
+- Automated unittest coverage was added in `sdk/tests/test_validate_manifest.py`; tests have not yet been executed. A checkout attempt failed because this execution environment could not resolve github.com, so test execution remains pending. The sample remains metadata-only and is not a live runtime extension. Cross-agent contract review is tracked in https://github.com/otta-komban/TuskerOS/issues/7.
