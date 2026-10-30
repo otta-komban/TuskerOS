@@ -266,6 +266,33 @@ Cancellation response reports request acceptance, observed task state, active st
 
 ## 8. Contract status
 
+### Adapter compatibility review (2026-10-31)
+
+
+
+**NEXUS-07 tool boundary:** Core consumes the NEXUS tool descriptor as the source of operation name, input/output schema references, bounded timeout, idempotency support/scope, cancellation guarantee, declared side effects, preconditions and postconditions. Descriptor risk/privilege metadata is descriptive policy input, never permission. Invocation uses request_id plus task_id, step_id and correlation_id; caller component/instance are descriptive only. The authorization_context is opaque trusted context and must be independently checked by NEXUS/broker. Core preserves arbitrary JSON result values, maps postcondition/cancellation/evidence fields, and reconciles unknown_outcome before retry. NEXUS invocation deadline_ms currently caps at 300000; Core must enforce the tighter of its local ceiling and descriptor/provider ceiling. Core operation IDs must match the NEXUS dotted tool-name pattern.
+
+
+
+**AEGIS-06 policy boundary:** Core submits the AEGIS-owned action proposal shape and supplies authenticated principal/origin as trusted transport context, not proposal fields. AEGIS evaluates all registered actions, including reads. Canonical binding uses RFC 8785 JCS plus SHA-256. Core accepts only a decision whose proposal, action digest, principal binding, policy version and expiry match the exact pending step; ALLOW also requires a non-empty opaque authorization_ref. DENY, REQUIRE_APPROVAL, missing/malformed decision, policy outage, expired authorization, binding mismatch or required audit failure produce zero executor calls. The AEGIS schema leaves idempotency_key optional structurally; Core's mutation invariant requires a non-empty key regardless, pending owner confirmation.
+
+
+
+**NOVA-02 event consumer:** NOVA's draft expects a unique event_id, monotonic per-task sequence, UTC occurred_at, authoritative state, safe origin/step/progress summaries and correlation_id. It deduplicates events and fetches an authorized snapshot on gaps/reconnect. Dismiss is UI-only; cancellation is not rollback; pause/resume is exposed only with explicit safe-checkpoint capability. The Core event schema is a producer draft and must be reconciled field-for-field with NOVA before transport implementation. In particular, schema_version and event type vocabulary are not yet agreed.
+
+
+
+**ORBIT-05 inference boundary:** ORBIT's provider proposal defines model-agnostic bounded typed messages, ordered inference events, exactly one terminal event, cooperative cancellation and provider health/capabilities. Tool-call deltas are untrusted proposals; ORBIT never executes tools or authorizes actions. Core owns planning, task state and all policy/execution routing. Provider disconnection before a terminal event is not successful completion.
+
+
+
+**ATLAS-01 platform boundary:** Tusker services remain optional and removable, never boot/login dependencies. Session bus is the provisional boundary for per-user desktop integration; system bus is for system-wide capability APIs owned by NEXUS/AEGIS, not a reason to expose Core's task engine as a privileged system service. Exact Core transport, service unit, runtime paths and persistence choice remain undecided; no Core service identity or D-Bus name is claimed.
+
+
+
+**Version and identifier compatibility:** Core's UUID task/step IDs are a stricter producer choice and fit the bounded opaque-string fields accepted by NEXUS/AEGIS. Consumers must treat IDs as opaque. Core's schema version 0.1.0-draft is not interchangeable with NEXUS 1.0, AEGIS 0.1.0 or NOVA draft v0.1; adapters must validate each component's own schema version and perform explicit mapping. No shared version has been approved.
+
+
 ### Cross-agent reconciliation snapshot (2026-10-31)
 
 - **NEXUS-07:** accepted Core ownership of Task/Plan/Step/TaskEvent and agreed to carry task/step/correlation identifiers, authorization-context reference, explicit cancellation request/operation state, evidence references and idempotency scope in its provisional tool contracts. Caller component fields remain descriptive, not authenticated identity. Exact AEGIS principal/decision shape remains external.
