@@ -72,3 +72,29 @@ These are required future tests, not tests executed in this completion. The curr
 4. Core implementation language, IPC, persistence and service lifecycle remain dependent on ATLAS-01.
 
 Until those decisions are recorded by the owners, this profile is a Core-side implementation guide only.
+
+## 7. Mutation idempotency admission gate
+
+The Core Plan schema permits `idempotency_key: null` for non-mutating steps, but any supplied key is constrained to NEXUS's 16–128 character invocation bounds. This is a shape-level compatibility rule; it cannot by itself determine whether an operation mutates state.
+
+At descriptor/catalogue admission and again immediately before dispatch:
+
+1. Determine mutation semantics from the trusted registered descriptor and AEGIS operation registry, never from model-supplied `risk_hint` or free-form arguments.
+2. For every mutating operation, require a non-null idempotency key of 16–128 characters.
+3. Require the descriptor to declare idempotency support with a non-`none` scope, and require the provider/broker path to durably persist and reconcile the key across restart.
+4. If a mutating operation has `supported: false`, `scope: none`, or cannot guarantee durable reconciliation, reject it from executable catalogue admission and dispatch zero calls. Do not downgrade it to best-effort or generate a fresh key on retry.
+5. For non-mutating operations, a null key is permitted. If a key is supplied, it still must satisfy the NEXUS bounds.
+
+This gate reconciles AEGIS-06's confirmed rule that mutation idempotency is mandatory with NEXUS's descriptor vocabulary, which permits operations that do not support idempotency. It is a Core admission policy, not a claim that NEXUS has implemented durable storage.
+
+### Additional conformance cases
+
+| Case | Input/condition | Required behavior |
+|---|---|---|
+| Key lower bound | supplied key has 15 characters | Reject plan schema before dispatch |
+| Key lower boundary | supplied key has 16 characters | Shape-valid; continue descriptor/policy validation |
+| Key upper boundary | supplied key has 128 characters | Shape-valid; continue descriptor/policy validation |
+| Key upper bound | supplied key has 129 characters | Reject plan schema before dispatch |
+| Mutation without key | descriptor/registry identifies a mutation and key is null | Reject before AEGIS/NEXUS executor dispatch |
+| Mutation without durable idempotency | mutation descriptor has unsupported idempotency or scope `none` | Reject catalogue admission; zero dispatch |
+| Read-only without key | trusted descriptor says read-only, key null | May proceed through normal AEGIS policy preflight |
