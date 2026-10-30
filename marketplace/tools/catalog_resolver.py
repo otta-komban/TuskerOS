@@ -127,6 +127,43 @@ def is_compatible(entry: Mapping[str, Any], tuskeros_version: str, api_version: 
         raise CatalogResolutionError("malformed compatibility metadata") from exc
 
 
+def parse_dependency_constraint(value: str) -> tuple[tuple[str, Version], ...]:
+    """Parse comma-conjoined exact/comparison constraints, e.g. >=1.2.0,<2.0.0."""
+    if not isinstance(value, str) or not value.strip():
+        raise CatalogResolutionError("dependency version constraint must be a non-empty string")
+    parsed = []
+    for raw in value.split(","):
+        match = re.fullmatch(r"(>=|<=|>|<|=)?\s*(.+)", raw.strip())
+        if not match:
+            raise CatalogResolutionError(f"invalid dependency version constraint: {value!r}")
+        operator, version_text = match.groups()
+        try:
+            version = parse_release_version(version_text.strip())
+        except CatalogResolutionError as exc:
+            raise CatalogResolutionError(f"invalid dependency version constraint: {value!r}") from exc
+        parsed.append((operator or "=", version))
+    return tuple(parsed)
+
+
+def satisfies_dependency_constraints(version: str | Version, constraints: Iterable[str]) -> bool:
+    """Return whether a release satisfies every supplied edge constraint."""
+    actual = parse_release_version(version) if isinstance(version, str) else version
+    for constraint in constraints:
+        for operator, expected in parse_dependency_constraint(constraint):
+            comparison = actual._compare(expected)
+            if operator == "=" and comparison != 0:
+                return False
+            if operator == ">" and comparison <= 0:
+                return False
+            if operator == ">=" and comparison < 0:
+                return False
+            if operator == "<" and comparison >= 0:
+                return False
+            if operator == "<=" and comparison > 0:
+                return False
+    return True
+
+
 def select_catalog_release(
     candidates: Iterable[Mapping[str, Any]],
     package_id: str,
@@ -134,6 +171,7 @@ def select_catalog_release(
     api_version: str,
     *,
     include_prerelease: bool = False,
+    version_constraints: Iterable[str] = (),
 ) -> Mapping[str, Any]:
     """Select the highest compatible release for one package ID.
 
@@ -155,7 +193,7 @@ def select_catalog_release(
         version = parse_release_version(candidate["release"]["version"])
         if version.prerelease and not include_prerelease:
             continue
-        if is_compatible(candidate, tuskeros_version, api_version):
+        if is_compatible(candidate, tuskeros_version, api_version) and satisfies_dependency_constraints(version, version_constraints):
             matching.append((version, candidate))
     if not matching:
         raise CatalogResolutionError(f"no compatible release found for {package_id}")
@@ -175,16 +213,36 @@ def resolve_catalog_plan(
     api_version: str,
     *,
     include_prerelease: bool = False,
+    dependency_constraints: Mapping[str, Mapping[str, str]] | None = None,
 ) -> dict[str, Any]:
-    """Select compatible releases for the dependency closure and order the plan.
+    """Select releases satisfying all declared incoming dependency-edge constraints.
 
-    Dependency IDs are supplied by a separately validated manifest resolver.
-    Version-range constraints on individual dependency edges are not evaluated
-    here and must be checked before calling this helper.
+    dependency_constraints maps parent package ID to dependency ID to a
+    comma-conjoined version constraint. When supplied, every graph edge must
+    have exactly one corresponding constraint. Constraints are intersected
+    across all parents before selecting each dependency release.
     """
     root_ids = sorted(set(roots))
     order = resolve_install_order(root_ids, dependencies)
     candidate_list = list(candidates)
+    incoming: dict[str, list[str]] = {package_id: [] for package_id in order}
+    if dependency_constraints is not None:
+        for parent, child_constraints in dependency_constraints.items():
+            if parent not in dependencies:
+                raise CatalogResolutionError(f"constraints supplied for unknown parent: {parent}")
+            if not isinstance(child_constraints, Mapping):
+                raise CatalogResolutionError(f"dependency constraints for {parent} must be a mapping")
+            declared = set(dependencies[parent])
+            if set(child_constraints) != declared:
+                raise CatalogResolutionError(
+                    f"dependency constraints for {parent} must match declared dependency edges"
+                )
+            for child, constraint in child_constraints.items():
+                parse_dependency_constraint(constraint)
+                incoming.setdefault(child, []).append(constraint)
+        for parent, children in dependencies.items():
+            if parent in order and parent not in dependency_constraints and list(children):
+                raise CatalogResolutionError(f"missing dependency constraints for {parent}")
     selected: dict[str, Mapping[str, Any]] = {}
     for package_id in order:
         selected[package_id] = select_catalog_release(
@@ -193,6 +251,7 @@ def resolve_catalog_plan(
             tuskeros_version,
             api_version,
             include_prerelease=include_prerelease,
+            version_constraints=incoming.get(package_id, ()),
         )
     return {"order": order, "releases": selected}
 
@@ -202,6 +261,8 @@ __all__ = [
     "Version",
     "parse_release_version",
     "parse_compat_version",
+    "parse_dependency_constraint",
+    "satisfies_dependency_constraints",
     "is_compatible",
     "select_catalog_release",
     "resolve_catalog_plan",
