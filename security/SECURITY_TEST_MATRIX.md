@@ -1,7 +1,9 @@
 # AEGIS-06 Security Policy Test Matrix
 
 **Status:** Test specification only. No test has been executed by this document.  
-**Contract:** security/SECURITY_CONTRACTS.md v0.1.0-draft  \n**Machine-readable fixtures:** `security/POLICY_TEST_VECTORS.json`  \n**Operation registry schema:** `security/schemas/operation-registration.schema.json`
+**Contract:** security/SECURITY_CONTRACTS.md v0.1.0-draft    
+**Machine-readable fixtures:** `security/POLICY_TEST_VECTORS.json`    
+**Operation registry schema:** `security/schemas/operation-registration.schema.json`
 
 ## Test conventions
 
@@ -9,7 +11,9 @@
 - Assert both policy decision and executor invocation count.
 - For every denial case, assert executor/broker invocation count is exactly zero.
 - Capture correlated audit events and assert secrets are absent.
-- Validate all schemas with a Draft 2020-12 validator configured for format assertion.\n- Map every `POLICY_TEST_VECTORS.json` case to an executable test.\n- Mark tests PASS only after an executable test runs and evidence is recorded.
+- Validate all schemas with a Draft 2020-12 validator configured for format assertion.  
+- Map every `POLICY_TEST_VECTORS.json` case to an executable test.  
+- Mark tests PASS only after an executable test runs and evidence is recorded.
 
 ## Policy decision tests
 
@@ -95,3 +99,27 @@
 ## Evidence template
 
 For each executed test, record: test ID, test code path, command, environment, timestamp, result, assertions, artifact/CI URL, commit SHA, and reviewer. Never mark an unexecuted case as passing.
+
+
+## Authorization lifecycle and atomic-consumption tests
+
+| ID | Scenario | Expected result | Handler calls |
+|---|---|---|---:|
+| AUTH-001 | Eligible approver approves exact pending request | APPROVED; no grant until consume | 0 |
+| AUTH-002 | Approver denies | DENIED terminal | 0 |
+| AUTH-003 | Pending request expires | EXPIRED terminal | 0 |
+| AUTH-004 | Exact valid authorization consumed | CONSUMED; one scoped grant | 1 |
+| AUTH-005 | Replay consumed reference | Reject replay | 0 |
+| AUTH-006 | Wrong principal or session/device | Reject binding | 0 |
+| AUTH-007 | Wrong operation or resource/digest | Reject and invalidate changed request | 0 |
+| AUTH-008 | Policy/registry version changed | Invalidate and re-evaluate | 0 |
+| AUTH-009 | Revoked or expired authorization | Reject | 0 |
+| AUTH-010 | Two concurrent consume attempts | Exactly one wins and dispatches | 1 total |
+| AUTH-011 | Authorization store, clock or identity unavailable | Fail closed | 0 |
+| AUTH-012 | Consume committed but response lost | Reconcile same consumption; no duplicate | At most 1 |
+| BRK-011 | Untrusted IPC peer or unknown operation ID | Reject before handler | 0 |
+| BRK-012 | Broker-side schema/bounds validation fails | Reject before handler | 0 |
+| BRK-013 | Precondition changes before dispatch | Invalidate/reject | 0 |
+| BRK-014 | Disconnect after dispatch before result | Return UNKNOWN; reconcile before retry | No blind retry |
+
+The machine-readable expected outcomes are in `security/AUTHORIZATION_TEST_VECTORS.json`. These remain specifications; no executable tests have been run.
