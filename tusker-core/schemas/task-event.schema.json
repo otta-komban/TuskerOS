@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tuskeros.invalid/core/task-event-0.1.0-draft.json",
+  "title": "Tusker Core Task Event (provisional)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "task_id",
+    "sequence",
+    "occurred_at",
+    "type",
+    "state",
+    "correlation_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0-draft"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "task.created",
+        "task.plan_ready",
+        "task.awaiting_approval",
+        "task.state_changed",
+        "step.started",
+        "step.progress",
+        "step.finished",
+        "task.verification_started",
+        "task.cancel_requested",
+        "task.finished",
+        "task.error",
+        "task.reconciled"
+      ]
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "planning",
+        "awaiting_approval",
+        "running",
+        "verifying",
+        "completed",
+        "failed",
+        "cancelled",
+        "partially_completed"
+      ]
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "local",
+            "remote",
+            "extension",
+            "system"
+          ]
+        },
+        "display_label": {
+          "type": "string",
+          "maxLength": 80
+        }
+      }
+    },
+    "step": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "progress": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "approval": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "result": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "correlation_id": {
+      "type": "string",
+      "maxLength": 128
+    }
+  }
+}
