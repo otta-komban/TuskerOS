@@ -94,3 +94,10 @@ This is the agent-specific execution checklist derived from the TuskerOS Ten-Age
 - [ ] Publish reproducible tests and runtime/model compatibility guidance.
 - [ ] Publish benchmark archive, known limitations and maintenance handover.
 - [ ] Obtain release sign-off based on actual evidence.
+
+
+### Contract validation automation
+
+- [x] Add isolated GitHub Actions job for model-manifest and inference-event schema/fixture tests.
+- [ ] Observe a successful CI run on this branch or a pull request before marking schema validation gate passed.
+- [ ] Execute the test suite locally or in CI and record the actual result; authored tests are not a pass.
