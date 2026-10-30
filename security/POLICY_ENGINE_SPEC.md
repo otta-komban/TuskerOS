@@ -12,7 +12,7 @@ Every action, including reads, MUST pass through the registered-operation gatewa
 
 ## 2. Operation registry
 
-Each operation registration MUST declare:
+Each operation registration MUST conform to `security/schemas/operation-registration.schema.json` and declare:
 - stable action_id and schema version;
 - strict argument schema and canonicalization version;
 - allowed principal classes and origins;
@@ -23,7 +23,7 @@ Each operation registration MUST declare:
 - preconditions and postcondition verifier;
 - broker implementation identifier (never a caller-selected executable).
 
-Registry changes are security-sensitive, reviewed, versioned, and audited. No wildcard operation registration is permitted for privileged actions.
+Registry changes are security-sensitive, reviewed, versioned, and audited. No wildcard operation registration is permitted for privileged actions. The initial registry MUST be empty until each operation has an owner, argument schema, risk rationale, broker implementation, preconditions and tests; an empty registry means all action IDs are denied.
 
 ## 3. Deterministic risk classification
 
@@ -43,7 +43,7 @@ Risk escalation predicates MUST be deterministic and testable. Unknown resource 
 ## 4. Evaluation algorithm
 
 1. Authenticate transport peer; derive principal and origin from trusted context.
-2. Validate proposal against the exact supported JSON Schema and operation-specific argument schema.
+2. Validate proposal against the exact supported JSON Schema and operation-specific argument schema. Validators MUST enable JSON Schema format assertion for UUID and date-time fields; annotation-only format handling is insufficient.
 3. Resolve action_id in the immutable registry snapshot; unknown action => DENY.
 4. Resolve resource identifiers to canonical objects; reject traversal, aliases escaping scope, symlinks where prohibited, and unresolved targets.
 5. Canonicalize the validated action, arguments, resolved resources, principal binding, operation schema version, and registry/policy version using RFC 8785 JSON Canonicalization Scheme (JCS); hash with SHA-256. Encode digest as sha256:<lowercase hex>.
@@ -51,7 +51,7 @@ Risk escalation predicates MUST be deterministic and testable. Unknown resource 
 7. Check principal capability, origin, resource scope, preconditions, rate/resource limits, revocation state, and current policy.
 8. Determine DENY / REQUIRE_APPROVAL / ALLOW. Any failed or indeterminate security check => DENY.
 9. Persist pre-execution audit event before returning an ALLOW for R2+ and before any privileged or destructive operation. If required durable audit fails, DENY.
-10. For approval, create an expiring request bound to digest, principal binding, session/device binding, policy/registry versions and preconditions. Approval UI returns only a decision; it does not mint authorization.
+10. For approval, create an expiring request bound to digest, principal binding, session/device binding, policy/registry versions and preconditions. The approval presentation is descriptive only; only the server-side approval state transition can authorize. Approval UI returns only a decision; it does not mint authorization.
 11. On user approval, re-authenticate principal/session, re-resolve resources, recheck preconditions and current policy, then atomically consume approval once and issue a short-lived authorization reference.
 12. Executor and broker verify authorization immediately before execution, including exact digest, principal, operation, resource scope, expiry, policy version and one-time state. Any mismatch => reject and audit.
 
@@ -81,10 +81,10 @@ Policy service unavailable, schema mismatch, clock uncertainty beyond configured
 - Cancellation and compensation are separately authorized operations.
 - Audit records contain correlation and decision references but no secret material.
 
-## 10. Open integration decisions
+## 10. Conformance fixtures\n\n`security/POLICY_TEST_VECTORS.json` contains language-neutral positive and negative fixtures. These are expected outcomes, not executed test evidence. Implementations MUST map each vector to an automated test and assert zero executor calls for every DENY and REQUIRE_APPROVAL result. The schema validator MUST run with format assertion enabled.\n\n## 11. Open integration decisions
 
 - Confirm JCS + SHA-256 implementation/library and Unicode normalization behavior with runtime owners.
 - Confirm how authenticated local IPC peer credentials and remote session/device claims reach the policy service.
 - Confirm authorization reference lookup vs signed token and one-time nonce storage with NEXUS-07.
 - Confirm whether the selected OS stack provides durable audit guarantees required for privileged execution.
-- Confirm schema packaging/version negotiation and generated typed bindings with TUSKER-04.
+- Confirm schema packaging/version negotiation and generated typed bindings with TUSKER-04.\n- Confirm operation registry ownership, registration review and rollout procedure with NEXUS-07.
