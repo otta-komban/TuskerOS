@@ -64,30 +64,30 @@ Do not combine multiple image systems prematurely. Choose one primary supported 
 ## 5. Phase 1 (P1) architecture plan
 
 ### P1.1 Base and image architecture
-- [ ] Compare image-builder, bootc, KIWI, Lorax/Kickstart and mkosi against a written decision matrix.
+- [x] Compare Image Builder/osbuild, bootc, KIWI NG, Lorax/livemedia-creator and mkosi against a written decision matrix (see os/BUILD-TOOL-EVALUATION.md).
 - [ ] Select the first supported Fedora release after verifying lifecycle and KDE/Wayland compatibility.
 - [ ] Define image variants and artifact targets (development VM first; installer/live media only in coordination with PHOENIX-10).
 - [ ] Define architecture support explicitly; begin with x86_64 unless build/test evidence supports additional architectures.
 - [ ] Record an architecture decision record with alternatives, trade-offs, evidence, and review date.
 
 ### P1.2 Package and layer contracts
-- [ ] Define package groups: core OS, KDE desktop, Tusker integration, diagnostics, optional developer tools, optional model/runtime.
-- [ ] Define package source policy, signature verification, third-party repository exception process, license inventory, and update cadence.
-- [ ] Define optional component install/disable/remove behavior without coupling the base to Tusker.
+- [x] Define logical package layers: base core, KDE desktop, Tusker integration, diagnostics, optional developer tools, optional model/runtime and remote control (see os/BASE-SYSTEM-CONTRACTS.md).
+- [x] Define provisional package source policy, RPM signature verification, third-party repository exception process, license inventory and update cadence (see os/BASE-SYSTEM-CONTRACTS.md).
+- [x] Define optional component install/disable/remove requirements without coupling the base to Tusker (see os/BASE-SYSTEM-CONTRACTS.md).
 - [ ] Define package naming/versioning and dependency ownership for other agents' components.
 - [ ] Coordinate image/package interfaces with PHOENIX-10 before installer/release implementation.
 
 ### P1.3 System integration contracts
-- [ ] Document systemd unit conventions, service users/groups, filesystem ownership, hardening defaults, dependencies, and failure behavior.
-- [ ] Document D-Bus, Polkit, logging/journald, configuration paths, user-session startup and environment conventions.
-- [ ] Require Tusker services to be independently disableable and non-blocking for desktop login.
+- [x] Document provisional systemd unit conventions, service account, filesystem ownership, hardening boundaries, dependencies and failure behavior (see os/BASE-SYSTEM-CONTRACTS.md).
+- [x] Document provisional D-Bus, Polkit, journald, filesystem and user-session boundaries (see os/BASE-SYSTEM-CONTRACTS.md).
+- [x] Define requirement that Tusker services are independently disableable and non-blocking for desktop login (see os/BASE-SYSTEM-CONTRACTS.md).
 - [ ] Coordinate KDE session assumptions with NOVA-02.
 - [ ] Coordinate hardware/system capability interfaces with NEXUS-07.
 - [ ] Coordinate privileged service boundaries with AEGIS-06.
 
 ### P1.4 Reproducibility, supply chain and release inputs
-- [ ] Define pinned build inputs and controlled update process; avoid unreviewed floating refs for release builds.
-- [ ] Define build metadata (source revision, Fedora release, package set, tool versions, timestamp policy).
+- [x] Define provisional pinned build-input and controlled-update policy; avoid unreviewed floating refs for release builds (see os/BUILD-TOOL-EVALUATION.md and os/BASE-SYSTEM-CONTRACTS.md).
+- [x] Define required build metadata fields: source revision, Fedora release, architecture, package NEVRAs, repository metadata, tool versions and checksums (see os/BUILD-TOOL-EVALUATION.md).
 - [ ] Define checksum/signature verification and SBOM/provenance outputs supported by chosen toolchain.
 - [ ] Define CI validation and image smoke-test boundaries.
 - [ ] Define clean rebuild and artifact comparison criteria; document known non-deterministic inputs.
@@ -132,6 +132,6 @@ Until these interfaces are agreed, use provisional examples only; do not publish
 6. Complete the P1 architecture ADR and package/service contracts.
 7. Only then start P2 build skeleton and manifests; no production image pipeline is claimed at this stage.
 
-## 9. Exit criteria
+## 9. Phase 1 research and coordination evidence\n\n- Build-tool comparison: [os/BUILD-TOOL-EVALUATION.md](BUILD-TOOL-EVALUATION.md).\n- Provisional package/system integration contracts: [os/BASE-SYSTEM-CONTRACTS.md](BASE-SYSTEM-CONTRACTS.md).\n- PHOENIX-10 image/update model response: [GitHub issue #2](https://github.com/otta-komban/TuskerOS/issues/2).\n- NEXUS-07 system interface review request: [GitHub issue #5](https://github.com/otta-komban/TuskerOS/issues/5).\n\nThe build-tool selection and update model remain provisional until the POC and cross-agent reviews are complete.\n\n## 10. Exit criteria
 
 P0 is complete when the branch/repository baseline, supported-release research, requirements, risks, ownership boundaries and acceptance criteria are documented. P1 is complete only when the architecture/tool decision, package/service contracts, reproducibility plan and dependent-agent interfaces have reviewable records. A document or plan is not a bootable image and is not a passed test.
