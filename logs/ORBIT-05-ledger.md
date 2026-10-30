@@ -7,13 +7,14 @@ Machine-readable log: logs/ORBIT-05.jsonl
 
 ## Current state
 
-- Verified assistant responses recorded: 4
+- Verified assistant responses recorded: 5
 - Target: 100 actual assistant responses
 - Current phase: P1 provider contracts, benchmark methodology, model governance and security review
 - Starting branch commit: 8c463dcec409fc9354b2adcb9b51a722d7c97fe5
 - Latest relevant commits: provider contract 9581ee87599db9d2890ef0456e46f96c04e54677; cross-agent alignment ca1cdd31f6d7fc0b186f8c7bf70d0d4ec7b24a27; Fedora integration 364aeb448eaa0eb15c47b6166ec44570342d5ffa; JSONL update aed8e6231453f1207e02d39e432561f197f6e8e9.
 - Benchmarks performed: 0 (protocol proposal published; no measurements)
-- Model manifest schema: proposed 0.1.0; JSON syntax parsed successfully; formal schema/fixture validation pending
+- Model manifest schema: proposed 0.1.0; synthetic valid fixture and Draft 2020-12 positive/negative test harness committed; tests not yet executed
+- Model catalog admission policy: proposal published; no model approved
 - Hardware recommendation method: proposal published; no measured fit recommendations
 - Runtime/model defaults selected: none
 - Repository intake: initial branch contained LICENSE only; ORBIT-05 documentation and logs have been added.
