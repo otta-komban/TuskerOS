@@ -151,16 +151,16 @@
 - **Verification limits:** No Draft 2020-12 meta-schema/format validator, producer/UI fixture, runtime enforcement test or privileged operation was run.
 
 
-## C0013 — Approval-binding schema remediation proposal
 
-- **Completion:** 13 / 100
-- **Timestamp:** 2026-10-30T20:49:55Z
-- **Deliverable:** `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md`
-- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
-- **Proposal:** Mapped lifecycle requirements to a proposed immutable nested binding object (session/device bindings, registry version, canonical resource scope and precondition digest), with a trusted server-side opaque-reference alternative only if the authority resolves it to durable immutable data.
-- **Consume requirements:** Revalidation of proposal/action, principal, session/device, operation, policy/registry, resources and preconditions; atomic one-time consume; durable consumption ID; reconciliation after lost response.
-- **Contract status:** Proposal only. `approval-request.schema.json` was not changed; v0.1.0 remains draft. A possible v0.2.0 requires explicit owner agreement and versioning review.
-- **Cross-agent status:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. TUSKER-04 issue #16 retains draft baseline acceptance and open transport/consume questions. No NOVA-02 or PILOT-08 owner decision was found in inspected issue comments.
-- **Blocker:** SEC-SCHEMA-001 remains OPEN / HIGH. Privileged release remains blocked pending exact binding representation, trusted transport/consume contract, producer/consumer review, schema validation and executed fixtures/tests.
-- **Verification limits:** Documentation and GitHub metadata review only. No Draft 2020-12 validator, fixture execution, producer tests, runtime implementation or privileged operation was performed.
-- **Commits:** Proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; checklist `9d2af9cc238cf0f304769444631260775e259bf7`; JSONL `6262e1ac251ad81c4fc3e7be8fc2f62c473f1113`.
+## C0015 — Approval-binding lifecycle crosswalk and concurrent-change reconciliation
+
+- **Completion:** 15 / 100
+- **Timestamp:** 2026-10-30T20:52:00.570Z
+- **Deliverable:** `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md` (historical design rationale; supersession note added).
+- **Concurrent branch state:** A separate C0013 published `approval-request.schema.json` v0.2.0 with typed session/device, registry-version, resource-scope and precondition-digest bindings. C0014 added automated Draft 2020-12 and audit-envelope checks; GitHub Actions run 41126223487 reports 17 passed.
+- **Reconciliation:** The original local proposal record was renumbered from duplicate C0013 to C0015. The design note now explicitly says the v0.2.0 schema supersedes its earlier "no schema change" statement. No claim is made that C0015 authored the v0.2.0 schema or C0014 tests.
+- **Review value:** Retains lifecycle mapping, trusted server-side binding-reference alternative, consume-time revalidation, atomic one-time consumption, durable consumption ID, lost-response reconciliation and closure evidence.
+- **Current contract status:** v0.2.0 remains a draft pending runtime-owner compatibility/migration acceptance. The schema/envelope CI tests do not prove producer integration, trusted identity derivation, broker enforcement or privileged runtime behavior.
+- **Cross-agent blocker:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. Runtime/API transport, peer identity, atomic consume and UNKNOWN/idempotency reconciliation remain open.
+- **Commits:** Historical proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; supersession note `d007d8220977fb848a1d7de1b4a4df26ffd07880`; JSONL `c3d6ae64ace2c60e43fab1a36fe0e83de127205d`.
+- **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0015.
