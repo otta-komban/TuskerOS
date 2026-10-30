@@ -428,3 +428,55 @@ def test_audit_event_v020_package_snapshot_digest_must_be_sha256(snapshot_digest
     event["transaction_id"] = "pkg-txn-2026-00042"
     event["snapshot_digest"] = snapshot_digest
     assert list(audit_v020_validator().iter_errors(event))
+
+def test_audit_event_v020_remote_origin_requires_device_and_session_bindings():
+    event = valid_audit_v020_event()
+    event["origin"] = "remote"
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v020_remote_origin_accepts_both_binding_digests():
+    event = valid_audit_v020_event()
+    event["origin"] = "remote"
+    event["device_binding"] = "sha256:" + "a" * 64
+    event["session_binding"] = "sha256:" + "b" * 64
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+@pytest.mark.parametrize("field", ["device_binding", "session_binding"])
+def test_audit_event_v020_remote_origin_requires_each_binding(field):
+    event = valid_audit_v020_event()
+    event["origin"] = "remote"
+    event["device_binding"] = "sha256:" + "a" * 64
+    event["session_binding"] = "sha256:" + "b" * 64
+    del event[field]
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        "sha256:" + "A" * 64,
+        "sha256:" + "g" * 64,
+        "sha256:" + "a" * 63,
+        None,
+        42,
+        {},
+    ],
+)
+@pytest.mark.parametrize("field", ["device_binding", "session_binding"])
+def test_audit_event_v020_remote_binding_digest_format_is_strict(field, value):
+    event = valid_audit_v020_event()
+    event["origin"] = "remote"
+    event["device_binding"] = "sha256:" + "a" * 64
+    event["session_binding"] = "sha256:" + "b" * 64
+    event[field] = value
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+@pytest.mark.parametrize("field", ["device_binding", "session_binding"])
+def test_audit_event_v020_non_remote_origin_rejects_remote_bindings(field):
+    event = valid_audit_v020_event()
+    event[field] = "sha256:" + "a" * 64
+    assert list(audit_v020_validator().iter_errors(event))
