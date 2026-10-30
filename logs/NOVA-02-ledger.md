@@ -8,8 +8,8 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **1 / 100**
-- Last recorded completion: **NOVA-02-C0001**
+- Actual assistant responses recorded: **2 / 100**
+- Last recorded completion: **NOVA-02-C0002**
 - Current phase: **P0 — Discovery and requirements / P1 — Architecture and contracts**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
 - Implementation status: **Minimal Plasma 6 applet foundation committed; runtime validation pending**
