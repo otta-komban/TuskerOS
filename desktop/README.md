@@ -102,3 +102,10 @@ python desktop/tools/install_panel_template.py --remove
 There is no force-overwrite option. Inspect an existing destination manually. Installing the template only makes it available to Plasma; the user explicitly selects it from Add Panel if supported. Existing panels and their configuration are not modified. See [the dock template README](panel-template/README.md).
 
 Installer unit tests cover installation, no-overwrite, symlink refusal, marked removal and refusal to remove unmanaged directories. Static tests do not validate Plasma runtime compatibility.
+
+
+## Automated desktop CI
+
+The `.github/workflows/desktop-validation.yml` workflow runs on desktop-related pushes to `02-desktop-shell`, pull requests targeting `main`, and manual dispatch. It runs the full desktop unittest discovery suite, both static package/template validators, and `node --check` for the panel layout script.
+
+The workflow uses GitHub-hosted Ubuntu with Python 3.12 and Node.js 22, requests read-only repository contents permission, and does not start a Plasma session or claim runtime validation. Check the Actions run for the actual result; workflow creation alone is not a passing CI result.
