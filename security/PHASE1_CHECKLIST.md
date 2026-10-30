@@ -54,7 +54,8 @@
 - [x] Audit approval-request and audit-event schema consistency against normative contract; document missing approval binding and correlation requirements.
 - [x] Reconcile SEC-SCHEMA-002 by requiring `task_id` and `step_id` keys in audit events while preserving nullable values; producer/standards validation remains pending.  
 - [ ] Record remaining accepted architecture decisions and unresolved contract blockers.  
-- [ ] Resolve SEC-SCHEMA-003: decide and version the audit-event `registry_version` field required by authorization lifecycle evidence.
+- [x] Draft `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md` for SEC-SCHEMA-003: require trusted `registry_version` in a separately versioned audit-event 0.2.0 envelope; producer-owner acceptance remains pending.
+- [ ] Resolve SEC-SCHEMA-003 with NEXUS-07/TUSKER-04; implement producer migration and positive/negative 0.2.0 validation after owner agreement.
 
 ## Exit evidence
 
