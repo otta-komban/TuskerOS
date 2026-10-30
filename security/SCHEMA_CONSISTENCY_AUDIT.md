@@ -81,3 +81,12 @@ These tests validate schema structure and representative JSON envelopes. They do
 **Required tests:** Accept concrete and explicit-null values; reject omitted keys and invalid types; require a stable reason for denial/failure events at producer level. Run Draft 2020-12 validation and producer tests against the approved v0.2.0 schema.
 
 **Status:** Identified in C0022; no schema change made pending producer-owner review. Privileged release remains blocked.
+
+
+## Candidate schema implementation — C0023
+
+A separately versioned candidate, `security/schemas/audit-event-0.2.0.schema.json`, now implements the combined SEC-SCHEMA-003/004 proposal without changing the active v0.1.0 schema.
+
+The candidate requires `registry_version`, `executor_id`, and `reason_code`; the latter two retain explicit-null support for applicable event states. A conditional rule requires non-empty `reason_code` for `denied` and `failure` result statuses. The test suite adds candidate positive/negative envelope cases and cross-version rejection. CI has not yet been observed for this change.
+
+**Status:** Schema candidate and test code committed; owner approval, trusted producer provenance, audit event lifecycle, migration and persistence/integrity tests remain open. This is not producer or runtime conformance evidence.
