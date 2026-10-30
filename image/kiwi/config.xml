@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<image schemaversion="8.0" name="tuskeros-fedora44-x86_64">
+  <description type="system">
+    <author>TuskerOS ATLAS-01</author>
+    <contact>Project-maintained image description</contact>
+    <specification>Provisional Fedora 44 x86_64 image-description scaffold. Package composition is injected only after owner review and repository resolution.</specification>
+    <license>GPL-3.0-or-later</license>
+  </description>
+
+  <preferences arch="x86_64">
+    <version>0.1.0</version>
+    <packagemanager>dnf5</packagemanager>
+    <release-version>44</release-version>
+    <rpm-check-signatures>true</rpm-check-signatures>
+    <type image="iso" primary="true" firmware="efi" eficsm="false"/>
+    <type image="oem" firmware="efi"/>
+  </preferences>
+
+  <repository type="rpm-md" alias="fedora-44">
+    <source path="https://download.fedoraproject.org/pub/fedora/linux/releases/44/Everything/x86_64/os/"/>
+  </repository>
+  <repository type="rpm-md" alias="fedora-44-updates">
+    <source path="https://download.fedoraproject.org/pub/fedora/linux/updates/44/Everything/x86_64/"/>
+  </repository>
+
+  <!-- KIWI bootstrap environment; this is not the final installed package set. -->
+  <packages type="bootstrap">
+    <package name="filesystem"/>
+  </packages>
+
+  <!--
+    Intentionally empty until os/package-manifest.csv has owner-approved
+    entries and tools/atlas/resolve-package-manifest.py has produced a
+    Fedora 44 x86_64 resolution lock. Do not build this scaffold yet.
+  -->
+  <packages type="image"/>
+</image>
