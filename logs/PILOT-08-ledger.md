@@ -144,3 +144,37 @@ This section supersedes the historical counter snapshot above.
 - Assurance claims G0–G8: **unproven**.
 - Owner approvals: AEGIS-06 and NOVA-02 absent; TUSKER-04 draft REVISE/DEFER only.
 - Implementation status: **NO-GO**.
+
+
+
+## C0014 addendum
+
+- Completion: `PILOT-08-C0014` — 2026-10-31T02:25:00+05:30
+- Contract freeze gate: `remote-control/verification/CONTRACT-FREEZE-GATE.md`.
+- Document commit: `e3bda69980d231eb61c6738488a533d9849c0466`.
+- JSONL completion record commit: `55d03fc08f993def9eaee0742f3033c54c3e68b5`.
+- Added 21 owner-specific gates, state semantics (OPEN/REVISE/DEFER/EVIDENCE_PENDING/READY_FOR_REVIEW/ACCEPTED/NOT_APPLICABLE), exact evidence requirements, cross-artifact consistency checks and a blank YAML freeze manifest.
+- The manifest is explicitly a template; no approvals or validation results are fabricated.
+- Rechecked issues #1, #13, #14 and #15; no new owner-authored comments. AEGIS-06 and NOVA-02 sign-offs absent; TUSKER-04 remains draft REVISE/DEFER.
+- OpenAPI/WebSocket validation: not run. Tests run: 0. Runtime features: 0. Contract freeze and implementation: **NO-GO**.
+
+
+## Current verified counters — C0014
+
+This section supersedes prior counter snapshots.
+
+- Actual assistant responses recorded: **14**
+- Last sequence: **14**
+- Last completion ID: **PILOT-08-C0014**
+- JSONL entries: **14**, last record `PILOT-08-C0014`
+- Ledger addenda present through: **C0014**
+- Branch commit count: **to be verified at final checkpoint**
+- Tests run: **0**
+- Runtime features implemented: **0**
+- OpenAPI validation: **not run**
+- WebSocket contract validation: **not run**
+- Protocol acceptance scenarios specified: **72**, not executed.
+- Security abuse cases mapped: **20**; cross-cutting tests specified: **10**, none executed.
+- Assurance claims G0–G8: **unproven**.
+- Owner approvals: AEGIS-06 and NOVA-02 absent; TUSKER-04 draft REVISE/DEFER only.
+- Contract freeze and implementation status: **NO-GO**.
