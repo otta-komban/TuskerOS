@@ -120,8 +120,8 @@ class ResolverCliTests(unittest.TestCase):
         self.manifest = self.root / "manifest.csv"
         self.output = self.root / "nested" / "resolution.json"
         self.manifest.write_text(
-            "layer,package,owner,required,rationale\\n"
-            "base-core,bash,ATLAS-01,true,base shell\\n",
+            "layer,package,owner,required,rationale\n"
+            "base-core,bash,ATLAS-01,true,base shell\n",
             encoding="utf-8",
         )
 
@@ -140,7 +140,7 @@ class ResolverCliTests(unittest.TestCase):
             return RESOLVER.main()
 
     def test_cli_success_writes_complete_json(self):
-        query = "bash-0:5.2.26-3.fc44.x86_64\\tfedora"
+        query = "bash-0:5.2.26-3.fc44.x86_64\tfedora"
         result = self.invoke_cli([
             "enabled repo evidence",
             query,
@@ -171,14 +171,14 @@ class ResolverCliTests(unittest.TestCase):
 
     def test_atomic_writer_replaces_existing_file_with_valid_json(self):
         self.output.parent.mkdir(parents=True)
-        self.output.write_text('{"old": true}\\n', encoding="utf-8")
+        self.output.write_text('{"old": true}\n', encoding="utf-8")
         write_json_atomic(self.output, {"new": True})
         self.assertEqual(json.loads(self.output.read_text(encoding="utf-8")), {"new": True})
         self.assertEqual(list(self.output.parent.glob("*.tmp")), [])
 
     def test_atomic_writer_preserves_previous_file_when_replace_fails(self):
         self.output.parent.mkdir(parents=True)
-        self.output.write_text('{"old": true}\\n', encoding="utf-8")
+        self.output.write_text('{"old": true}\n', encoding="utf-8")
         with mock.patch.object(RESOLVER.os, "replace", side_effect=OSError("replace failed")):
             with self.assertRaisesRegex(OSError, "replace failed"):
                 write_json_atomic(self.output, {"new": True})
