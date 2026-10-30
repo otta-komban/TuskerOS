@@ -95,6 +95,6 @@
 - [ ] Obtain NEXUS-07/TUSKER-04 acceptance of registry_status provenance and event lifecycle before promoting audit-event v0.2.0.
 
 
-- **C0026 — Audit event lifecycle/status consistency:** candidate v0.2.0 constrains each of 15 event types to its defined result status; positive and negative schema tests added. Candidate remains unaccepted pending producer-owner review; no runtime behavior is claimed.
+- **C0027 — Audit event lifecycle/status consistency:** candidate v0.2.0 constrains each of 15 event types to its defined result status; positive and negative schema tests added. Candidate remains unaccepted pending producer-owner review; no runtime behavior is claimed.
 
 - [ ] Resolve SEC-SCHEMA-006 with NEXUS-07/TUSKER-04: agree candidate audit-event names and result mappings for presentation, dismissal, invalidation, revocation, consume acceptance/rejection and reconciliation; then add schema/producer tests. Active v0.1.0 and candidate v0.2.0 remain unapproved for producer migration.
