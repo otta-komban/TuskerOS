@@ -78,6 +78,7 @@ def valid_audit_v020_event():
     event = json.loads(json.dumps(VALID_EVENT))
     event["schema_version"] = "0.2.0"
     event["registry_version"] = "registry-2026-10-31.1"
+    event["registry_status"] = "resolved"
     return event
 
 
@@ -247,3 +248,67 @@ def test_audit_event_v020_candidate_rejects_v010_envelope():
 def test_audit_event_v010_schema_rejects_v020_envelope():
     event = valid_audit_v020_event()
     assert list(audit_validator().iter_errors(event))
+
+
+
+def test_audit_event_v020_candidate_accepts_unavailable_registry_request():
+    event = valid_audit_v020_event()
+    event["registry_status"] = "unavailable"
+    event["registry_version"] = None
+    event["event_type"] = "requested"
+    event["result_status"] = "accepted"
+    event["executor_id"] = None
+    event["reason_code"] = None
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+def test_audit_event_v020_candidate_accepts_registry_unavailable_denial():
+    event = valid_audit_v020_event()
+    event["registry_status"] = "unavailable"
+    event["registry_version"] = None
+    event["event_type"] = "policy_denied"
+    event["result_status"] = "denied"
+    event["executor_id"] = None
+    event["reason_code"] = "POLICY_REGISTRY_UNAVAILABLE"
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+def test_audit_event_v020_candidate_rejects_resolved_registry_without_version():
+    event = valid_audit_v020_event()
+    event["registry_version"] = None
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v020_candidate_rejects_unavailable_registry_with_version():
+    event = valid_audit_v020_event()
+    event["registry_status"] = "unavailable"
+    event["event_type"] = "requested"
+    event["result_status"] = "accepted"
+    event["reason_code"] = None
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v020_candidate_rejects_unavailable_registry_authorization():
+    event = valid_audit_v020_event()
+    event["registry_status"] = "unavailable"
+    event["registry_version"] = None
+    event["event_type"] = "authorized"
+    event["result_status"] = "success"
+    event["reason_code"] = None
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v020_candidate_requires_registry_failure_reason():
+    event = valid_audit_v020_event()
+    event["registry_status"] = "unavailable"
+    event["registry_version"] = None
+    event["event_type"] = "policy_denied"
+    event["result_status"] = "denied"
+    event["reason_code"] = "POLICY_UNKNOWN_ACTION"
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v020_candidate_requires_registry_status():
+    event = valid_audit_v020_event()
+    del event["registry_status"]
+    assert list(audit_v020_validator().iter_errors(event))
