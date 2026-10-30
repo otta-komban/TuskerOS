@@ -50,7 +50,7 @@ All checkboxes remain open until the task has been implemented or researched and
 - [ ] Add configuration parsing, validation and persistence.
 - [x] Add desktop test harness.
   - [x] Add CI checks for the desktop validator and unit tests.
-    - Evidence: `.github/workflows/desktop-validation.yml` runs Python unit tests, both static validators and Node.js syntax validation on pushes to `02-desktop-shell`, pull requests to `main`, and manual dispatch. First hosted run is pending.
+    - Evidence: `.github/workflows/desktop-validation.yml` runs Python unit tests, both static validators and Node.js syntax validation on pushes to `02-desktop-shell`, pull requests to `main`, and manual dispatch. Hosted run 41116394507 passed all 15 tests and all four validation steps; Plasma runtime is not covered.
 - [ ] Add diagnostics and privacy-conscious crash logging.
 - [ ] Add safe defaults and reset/recovery path.
 - [ ] Verify clean build in the selected Fedora development environment.
