@@ -100,3 +100,5 @@
 - [ ] Resolve SEC-SCHEMA-006 with NEXUS-07/TUSKER-04: agree candidate audit-event names and result mappings for presentation, dismissal, invalidation, revocation, consume acceptance/rejection and reconciliation; then add schema/producer tests. Active v0.1.0 and candidate v0.2.0 remain unapproved for producer migration.
 
 - [ ] Obtain NEXUS-07/TUSKER-04 agreement on candidate v0.2.0 package `transaction_id` + `snapshot_digest` correlation fields and producer ownership; confirm AEGIS action digest is recomputed independently with RFC 8785 JCS, not copied from FORGE `plan_digest`.
+
+- [ ] **C0044 — FORGE-09 re-review:** reason_code remains optional in Python transition/history validation despite schema requirement for rejected/cancelled events; follow-up posted on issue #29 (comment 6534092148). Await FORGE-owned fix and re-review; no cross-branch edits or test claims.
