@@ -51,6 +51,27 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(loaded["panel"]["icon_size"], 64)
         self.assertEqual(os.stat(self.path).st_mode & 0o777, 0o600)
 
+    def test_invalid_root_falls_back_to_defaults(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        self.path.write_text(json.dumps(["not", "an", "object"]), encoding="utf-8")
+        settings, errors = load_settings(self.path)
+        self.assertTrue(any("root must be a JSON object" in error for error in errors))
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+
+    def test_unsupported_schema_version_falls_back_to_defaults(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        self.path.write_text(json.dumps({"schema_version": 2}), encoding="utf-8")
+        settings, errors = load_settings(self.path)
+        self.assertTrue(any("schema_version must equal 1" in error for error in errors))
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+
+    def test_broken_symlink_is_reported_not_treated_as_missing(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        self.path.symlink_to(self.path.parent / "missing-target.json")
+        settings, errors = load_settings(self.path)
+        self.assertTrue(any("must not be a symlink" in error for error in errors))
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+
     def test_save_refuses_symlink(self) -> None:
         self.path.parent.mkdir(parents=True)
         target = self.path.parent / "target.json"
