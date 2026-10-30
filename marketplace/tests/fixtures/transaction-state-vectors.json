@@ -80,6 +80,12 @@
           }
         },
         {
+          "event": "revalidated",
+          "evidence": {
+            "snapshot_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        },
+        {
           "event": "stale",
           "evidence": {
             "observed_snapshot_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
