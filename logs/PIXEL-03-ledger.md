@@ -31,3 +31,14 @@ At C0007, the existing JSONL file contained only the C0006 record even though th
 - No KDE adapter, IPC transport, asset broker, desktop settings mutation, apply or rollback was implemented.
 - NOVA-02 must review target Plasma/Qt versions, IPC/authentication, MVP surfaces and asset brokering. Draft is not an approved integration API.
 - CI run 41116174120: validate-theme-packs job and all steps succeeded; the job summary does not expose the test count. NOVA-02 review requested in issue #30.
+
+
+| 10 | PIXEL-03-C0010 | Reporting and audit format | Adopted the required compact progress dashboard for every response; verified 73 branch commits before this logging update; recorded the reporting contract in JSONL. |
+
+## C0010 handover
+
+- Completion count: 10/100 (10%); 90 remaining.
+- Dashboard is now mandatory in every user-facing response: completions, remaining, commits/latest SHA, branch, log status, and progress bar.
+- Every response must end with **continue**.
+- Branch history was verified at 73 commits before C0010's two audit-file commits. Expected count after both commits: 75.
+- Latest branch head will be verified after the ledger commit.
