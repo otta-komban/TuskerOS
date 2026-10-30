@@ -8,12 +8,12 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **9 / 100**
-- Last recorded completion: **NOVA-02-C0009**
+- Actual assistant responses recorded: **10 / 100**
+- Last recorded completion: **NOVA-02-C0010**
 - Current phase: **P2 — Foundation / P3 — Working MVP**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
-- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, Fedora/Plasma runtime-validation runbook, and a validated schema-v1 desktop settings foundation. Plasma runtime and UI integration remain pending.**
-- Tests: **All 23 desktop unit tests passed in GitHub Actions run 41124464540; both static validators and Node.js dock-template syntax check passed. Fedora QML lint and Plasma runtime tests have not run.**
+- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, Fedora/Plasma runtime-validation runbook, and a hardened schema-v1 desktop settings foundation with dangling-symlink regression coverage. Plasma runtime and UI integration remain pending.**
+- Tests: **All 26 desktop unit tests passed in GitHub Actions run 41125249406; both static validators and Node.js dock-template syntax check passed. Fedora QML lint and Plasma runtime tests have not run. Fedora QML lint and Plasma runtime tests have not run.**
 - Contract status: **Desktop consumer review accepted on issue #9; AEGIS-06 and PILOT-08 agreement pending.**
 
 ## Completion history
