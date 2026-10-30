@@ -11,7 +11,7 @@
   - [ ] Record idempotency, timeout, cancellation and rollback support.
 - [ ] Research and validate Fedora/KDE/systemd/D-Bus/Polkit/portal/NetworkManager/UPower/BlueZ interfaces with ATLAS-01 and AEGIS-06.
 - [x] Record initial architecture, dependency direction and high-level failure risks.
-- [ ] Obtain cross-agent review of proposed architecture and interface drafts.
+- [x] Receive ATLAS-01 ownership/base-system boundary review; record reply in Issue #5.\n- [ ] Obtain AEGIS-06, TUSKER-04 and remaining impacted-agent reviews of proposed architecture and interface drafts.
 
 ## P1 — Architecture and contracts
 - [x] Draft common typed tool invocation and result envelopes.
@@ -23,7 +23,7 @@
 - [ ] Agree desktop telemetry/status contract with NOVA-02.
 - [ ] Agree remote-origin identity propagation with PILOT-08.
 - [ ] Agree extension capability facade with FORGE-09.
-- [ ] Add machine-readable JSON schemas and executable contract tests after owner agreements.
+- [x] Add provisional machine-readable JSON schemas, valid fixtures and an executable Python unittest harness (pending cross-agent approval).\n- [ ] Run schema tests in the repository environment and record actual results.\n- [ ] Freeze schema/API version 1.0 only after TUSKER-04 and AEGIS-06 approval.
 
 ## P2 — Foundation (future)
 - [ ] Create tool-provider/module skeleton in owned paths.
@@ -63,3 +63,10 @@
 - [ ] Document each tool's permission, side effects, preconditions, postconditions, rollback and limits.
 - [ ] Create Fedora/KDE compatibility tests.
 - [ ] Publish release report, known issues and maintenance handover.
+
+
+## C0002 review findings
+- [x] Read ATLAS-01 `os/BASE-SYSTEM-CONTRACTS.md` on `01-fedora-base`.
+- [x] Record no-Tusker-boot/login dependency and optional/off-by-default AI/remote constraints.
+- [x] Publish candidate NEXUS read-only system-bus identifiers for review; reverse-DNS ownership and AEGIS approval remain open.
+- [x] Reply to Issue #5 with the proposal and explicit review requests.
