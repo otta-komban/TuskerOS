@@ -136,5 +136,11 @@ class TransactionStateTests(unittest.TestCase):
             transition_transaction(tx, "cancelled")
 
 
+    def test_non_prepared_state_requires_history(self):
+        tx = dict(self.tx, state="approval_verified")
+        with self.assertRaisesRegex(TransactionStateError, "without history"):
+            transition_transaction(tx, "revalidated", {"snapshot_digest": "b" * 64})
+
+
 if __name__ == "__main__":
     unittest.main()
