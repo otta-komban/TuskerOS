@@ -14,7 +14,10 @@
     "policy_version",
     "action_digest",
     "principal_binding",
-    "evaluated_at"
+    "evaluated_at",
+    "expires_at",
+    "approval_request_id",
+    "authorization_ref"
   ],
   "properties": {
     "schema_version": {
@@ -105,10 +108,16 @@
         ]
       },
       "then": {
+        "required": [
+          "approval_request_id"
+        ],
         "properties": {
           "approval_request_id": {
             "type": "string",
             "format": "uuid"
+          },
+          "authorization_ref": {
+            "type": "null"
           }
         }
       }
@@ -125,6 +134,10 @@
         ]
       },
       "then": {
+        "required": [
+          "expires_at",
+          "authorization_ref"
+        ],
         "properties": {
           "expires_at": {
             "type": "string",
@@ -133,6 +146,31 @@
           "authorization_ref": {
             "type": "string",
             "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "DENY"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "expires_at": {
+            "type": "null"
+          },
+          "approval_request_id": {
+            "type": "null"
+          },
+          "authorization_ref": {
+            "type": "null"
           }
         }
       }
