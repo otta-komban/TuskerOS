@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 26
-- **Latest completion:** `AEGIS-06-C0026`
+- **Verified completion count:** 28
+- **Latest completion:** `AEGIS-06-C0028`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `6f9ebe14762a4f40f7a1ba7f48f1eb77eea13286`
+- **Latest log commit:** `843591a971d7ee105d5da78d5a21f193d279f7f3`
 
 ## Completion index
 
@@ -43,6 +43,9 @@
 | AEGIS-06-C0023 | approval-schema-regression-test-hardening | Aligned the schema audit with the committed approval-request v0.2.0 binding shape, removed redundant test-schema loading, and added a negative test rejecting caller-supplied top-level identity fields; follow-up CI passed 33 tests. | security/SCHEMA_CONSISTENCY_AUDIT.md; security/tests/test_security_schemas.py |
 | AEGIS-06-C0024 | audit-schema-edge-case-review | Identified SEC-SCHEMA-005: the proposed non-null registry_version field does not define truthful request-created/denial audit events when the registry cannot be loaded; documented owner decisions and fail-closed event requirements. | security/AUTHORIZATION_LIFECYCLE.md; security/OPERATION_REGISTRY.md |
 | AEGIS-06-C0025 | audit-registry-resolution-semantics | Refined candidate audit-event v0.2.0 to represent resolved versus unavailable registry state without fabricated versions; restricted unavailable events to request receipt or fail-closed denial, retained denial/failure reason rules, and passed 54 schema tests. | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
+| AEGIS-06-C0026 | Security branch sync and verification | Rechecked main divergence, NEXUS-07 issue #17 and candidate audit-event v0.2.0 CI; preserved branch isolation and recorded outstanding runtime-owner blockers. | Branch comparison; issue #17 comments; Actions run 41129041995 |
+| AEGIS-06-C0027 | Integration security review | Reviewed FORGE-09 package transaction approval/rollback boundary and posted AEGIS decisions on exact transaction/snapshot binding, fresh opaque authorization, independent broker identity, one-time consume, durable audit and separately authorized compensation. | GitHub issue #29 comment 6533750815 |
+| AEGIS-06-C0028 | Security schema regression coverage | Added 13 negative cases rejecting all post-request lifecycle events when registry status is unavailable; refreshed branch-divergence evidence; Actions run 41130628432 passed 67 tests. | security/tests/test_security_schemas.py; security/SECURITY_TEST_MATRIX.md; security/MAIN_BRANCH_DIVERGENCE_REVIEW.md; security/PHASE1_CHECKLIST.md |
 
 ## C0007 — Privileged operations release gate
 
@@ -333,3 +336,27 @@
 - **Verification limits:** Schema/meta-schema and JSON-envelope tests only. No trusted registry producer, audit persistence/integrity, broker IPC, authorization consume or privileged runtime tested.
 - **Commits:** candidate `e9df52cca1240f7e95a9656850a6aa0f211c0468`; registry state `bf735cda0d5f56ba320c3517be3d01d3628cdd62`; tests `0936c1ba395f9d6d55d588e7492e831481782c37`; conditional fix `b858a58d554ffc1595fcb504783cd301eac0512d`; proposal `ab425af0d36e0992e2aa557234d3f8a167059900`; audit `abd11b010d54ed6b17eee617623f291e0493c905`; checklist `64ee9a1857d7d19b30b3ed20f71ac1e5a48fd1c5`; JSONL `f8593b904970921133abc21ffa07442847f148bd`.
 - **Open:** NEXUS-07/TUSKER-04 must accept registry status provenance, event lifecycle semantics, stable reason code and migration before candidate promotion. Schema validation is not producer conformance.
+
+## C0026 — Security branch sync and verification
+
+- **Completion:** 26 / 100
+- **Timestamp:** 2026-10-30T21:23:32.019Z
+- **Branch comparison:** 180 ahead / 4 behind `main`; the four main-only commits are two TUSKER-04 documentation additions followed by their reverts, with no net file changes from the merge base.
+- **CI:** Run 41129041995 passed 54 schema tests on Python 3.12.
+- **Blocker:** NEXUS-07 has not supplied transport, atomic-consume, trusted IPC identity or runtime constraints.
+
+## C0027 — FORGE-09 package transaction security review
+
+- **Completion:** 27 / 100
+- **Timestamp:** 2026-10-30T21:23:56.051Z
+- **Decision:** Package transaction approval must bind transaction ID, canonical package/action/version/source plan, installed-state snapshot digest, principal/session/device, operation, policy/registry versions and expiry. Consume only a fresh opaque authorization reference; independently authenticate broker IPC peer; durably audit before dispatch; separately authorize compensation/rollback.
+- **Coordination:** Posted AEGIS decision to issue #29, comment 6533750815.
+- **Blockers:** NEXUS-07 transport/identity/consume API and PHOENIX-10 package locking/execution/read-back/recovery guarantees. No package execution or rollback implementation claimed.
+
+## C0028 — Registry-unavailable lifecycle regression coverage
+
+- **Completion:** 28 / 100
+- **Timestamp:** 2026-10-30T21:24:00.000Z
+- **Tests:** Added 13 parametrized negative cases for all post-request lifecycle event classes when registry status is unavailable. GitHub Actions run 41130628432 passed **67 tests in 0.58s** (job 124320290914).
+- **Commits:** tests `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8`; divergence review `245199912928623bfce0fda96a1d57fd81530af6`; test matrix `5687436de2a0819c3b0e297959f368932d901159`; checklist `17f774bc8375b38fabb177f857399264894f3c3b`; JSONL `843591a971d7ee105d5da78d5a21f193d279f7f3`.
+- **Limits:** Candidate v0.2.0 only; active v0.1.0 unchanged. No trusted registry producer, audit persistence, broker IPC or privileged runtime tested.
