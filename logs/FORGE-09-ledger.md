@@ -3,7 +3,7 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0004
+- Current recorded completion: C0005
 - Current phase: P2 — SDK and marketplace foundation
 
 | Completion | Phase | Category | Summary | Evidence | Status |
@@ -12,6 +12,7 @@
 | FORGE-09-C0002 | P2 | implementation | Marketplace catalog contract and fixture, developer bundle schema and Python proposal, lifecycle docs, deterministic dependency planner and tests; 15 in-memory behavior checks. | `marketplace/`; `bundles/`; `sdk/tools/dependency_plan.py` | partial |
 | FORGE-09-C0003 | P2 | implementation | Added fail-closed catalog metadata validator and eight unittest cases; documents the boundary between structural validation and trust/authorization. | `marketplace/tools/validate_catalog_entry.py`; `marketplace/tests/test_validate_catalog_entry.py`; `marketplace/tools/README.md` | partial |
 | FORGE-09-C0004 | P2 | implementation | Added semantic release parsing/precedence, compatibility range checks, compatible candidate selection, prerelease opt-in, ambiguity rejection and dependency-order preview; tests committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `marketplace/tools/RESOLUTION.md` | partial |
+| FORGE-09-C0005 | P2 | implementation | Enforced exact/comparison dependency version constraints, intersected shared dependency requirements across parents, rejected missing/malformed edge constraints and updated the manifest schema/docs; 15 resolver test methods committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `sdk/schemas/extension-manifest.schema.json`; `marketplace/tools/RESOLUTION.md` | partial |
 
 ## Phase checklist
 
@@ -39,7 +40,7 @@
 - [x] Add fail-closed catalog metadata validator and focused tests.
 - [x] Add semantic release selection, compatibility checks and ordered catalog preview.
 - [ ] Execute committed Python unittest suites in a working repository checkout.
-- [ ] Validate dependency version constraints from manifests before plan generation.
+- [x] Add dependency version constraint parsing and enforce edge constraints during catalog plan generation when supplied by the validated-manifest caller.
 - [ ] Validate Fedora package availability with ATLAS-01.
 
 ### P3 — Working MVP
@@ -75,5 +76,5 @@
 - Cross-agent review issue #7 currently has only the FORGE-09 update and no replies from AEGIS-06, NEXUS-07 or PIXEL-03. ATLAS-01 request #24 has no replies yet.
 - The sample extension and catalog fixture are metadata-only. Catalog validation and resolution do not make an entry trusted or installable.
 - C0002's 15 checks were in-memory reconstructions, not execution of committed tests. C0003's eight validator tests and C0004's resolver tests are committed but not run. A local checkout previously failed because this environment could not resolve github.com.
-- C0002, C0003 and C0004 remain partial; do not describe the marketplace or bundle system as production-ready.
-- C0004 resolver limits: dependency IDs are taken from a separately validated graph; dependency-edge version constraints are not yet evaluated. Trust, signature verification, revocation, fetch, permission authorization and installation are external.
+- C0002, C0003, C0004 and C0005 remain partial; do not describe the marketplace or bundle system as production-ready.
+- C0005 resolver limits: callers must construct the edge-constraint mapping from validated manifests and preserve package identity binding. Constraint syntax is intentionally limited to exact semantic versions and comma-conjoined comparisons. Trust, signature verification, revocation, fetch, permission authorization and installation remain external.
