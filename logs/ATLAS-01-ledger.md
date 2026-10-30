@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 10
+Current verified count: 11
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -17,5 +17,6 @@ Current verified count: 10
 | 8 | ATLAS-01-C0008 | P1 | validation | partial | Fixed hyphenated resolver import; nine focused helper/manifest tests passed in isolated harness; no DNF5 run; commit `362615c` |
 | 9 | ATLAS-01-C0009 | P1 | implementation | partial | Added branch-scoped GitHub Actions compile + unittest workflow; commit `ca64944`; workflow execution pending |
 | 10 | ATLAS-01-C0010 | P1 | validation | partial | Hardened CSV shape validation; added four malformed/duplicate manifest regression tests; commits `0a36c3d`, `87d529e`; CI execution pending |
+| 11 | ATLAS-01-C0011 | P1 | validation | partial | Fixed four CSV fixture newline bugs; GitHub Actions run `41116328126` compiled resolver/tests and passed the unittest step (13 test methods); audited DNF5 repo/repoquery command semantics; commit `1b5fa29`; Fedora DNF5 runtime resolution remains untested |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
