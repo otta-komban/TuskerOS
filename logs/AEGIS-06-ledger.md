@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 9
-- **Latest completion:** `AEGIS-06-C0009`
+- **Verified completion count:** 12
+- **Latest completion:** `AEGIS-06-C0012`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `5cc1ff689139e08aa317e0067b8c46680b7b4771`
+- **Latest log commit:** `a38a8ff64ccebe77e59600b71f7efa1ba7998e18`
 
 ## Completion index
 
@@ -114,3 +114,20 @@
 - **Verification limits:** Source comparison only. No complete Draft 2020-12 meta-schema validation, format assertion, executable fixture or runtime test claimed.
 - **Blocker:** Reconcile both findings, obtain cross-agent review, and add automated schema/producer tests before privileged release.
 
+
+
+| AEGIS-06-C0012 | Schema contract correction | Reconciled audit correlation requiredness while retaining explicit null semantics; recorded remaining validation and approval-binding blockers | security/schemas/audit-event.schema.json; security/SCHEMA_CONSISTENCY_AUDIT.md |
+
+## C0012 — Audit correlation schema correction
+
+- **Completion:** 12 / 100
+- **Timestamp:** 2026-10-30T20:42:15.286Z
+- **Deliverable:** `security/schemas/audit-event.schema.json`
+- **Audit:** Updated `security/SCHEMA_CONSISTENCY_AUDIT.md` with resolution and limits.
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Schema change:** Added `task_id` and `step_id` to top-level `required`; both remain nullable so producers use explicit `null` when correlation is unavailable.
+- **Structural verification:** Updated schema parsed as JSON; both required keys and nullable property types confirmed. No Draft 2020-12 meta-schema, format assertion, fixture-to-schema or producer test is claimed.
+- **Remaining blockers:** SEC-SCHEMA-001 approval binding remains unresolved; NEXUS-07 issue #17 has no owner response; runtime-owner compatibility review and producer tests remain pending.
+- **Branch comparison:** 71 commits ahead and 4 behind `main` (diverged); no merge, rebase, cherry-pick or force-push.
+- **Commits:** Schema `106b1b72c6787b44faa1ef2b9c2b7119b5e6a0fa`; audit `32c8358ff09be684d1fc2e72bb2e5fcc3abd290f`; checklist `97f88e719e7525fbd8585851bbeadc1a161dc007`; JSONL `a38a8ff64ccebe77e59600b71f7efa1ba7998e18`.
+- **Verification limits:** Draft artifact structural check only; no runtime implementation, privileged operation or executable security test was performed.
