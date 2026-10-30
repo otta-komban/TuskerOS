@@ -24,3 +24,7 @@ This directory owns the declarative theme format, Theme Engine architecture, the
 ## Validation
 
 The schema is normative for manifest shape. Runtime validation must additionally check asset existence, size limits, content type, digest, path containment, license/provenance metadata, and platform compatibility. Schema-valid does not mean trusted or safe to install.
+
+## Theme Pack v1 asset policy
+
+V1 accepts PNG/JPEG/WebP images, TTF/OTF/WOFF2 fonts, and OGG/WAV sounds. SVG is deliberately excluded because it may carry active content. Asset references use semantic roles and must resolve to declared asset IDs of the expected kind. The schema allowlists known desktop surface IDs. Runtime validation must still sniff actual file content, enforce size budgets, verify SHA-256, reject symlink escapes and use safe decoders; JSON Schema alone cannot establish file safety.
