@@ -23,8 +23,10 @@ Target: 100 actual assistant responses; counts are never fabricated.
 | TUSKER-04-C0011 | 2026-10-31T01:12:29+05:30 | cross-layer-contract-acceptance-matrix | Published Core cross-layer acceptance matrix for NEXUS/AEGIS mapping and unresolved owner decisions. | partial | [Acceptance matrix](../tusker-core/CROSS-LAYER-ACCEPTANCE.md) |
 | TUSKER-04-C0012 | 2026-10-31T01:20:00+05:30 | aegis-proposal-mapping | Published a field-by-field Core-to-AEGIS proposal mapping; documented trust/canonicalization/decision/broker semantics and requested approval-handoff and typed-consume clarifications. | partial | [Proposal mapping](../tusker-core/AEGIS-PROPOSAL-MAPPING.md); [AEGIS #16 clarification](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6532930809) |
 
-Current verified response count: 12  
-Current completion sequence: TUSKER-04-C0012  
-JSONL audit: 13 physical lines, 12 unique completion IDs; C0009 is duplicated and both append-only records are preserved.  
+| TUSKER-04-C0013 | 2026-10-31T02:08:44+05:30 | nexus-adapter-compatibility | Published a concrete Core-to-NEXUS adapter profile for identifier/correlation mapping, descriptor timeout negotiation, arbitrary-JSON result fidelity, authorization stop conditions, cancellation and unknown-outcome reconciliation, with a future conformance matrix. | partial | [NEXUS adapter profile](../tusker-core/NEXUS-ADAPTER-PROFILE.md); [NEXUS interface contract](https://github.com/otta-komban/TuskerOS/blob/07-system-integration/system-integration/INTERFACE_CONTRACTS.md) |
+
+Current verified response count: 13  
+Current completion sequence: TUSKER-04-C0013  
+JSONL audit: 14 physical lines, 13 unique completion IDs; C0009 is duplicated and both append-only records are preserved.  
 C0011 has exactly one canonical ledger row; duplicate Markdown ledger rows from the previous update were consolidated.  
 Branch: 04-tusker-core. Ahead/behind figures are refreshed after this ledger commit.
