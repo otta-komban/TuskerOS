@@ -8,12 +8,13 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **4 / 100**
-- Last recorded completion: **NOVA-02-C0004**
+- Actual assistant responses recorded: **5 / 100**
+- Last recorded completion: **NOVA-02-C0005**
 - Current phase: **P2 — Foundation / P3 — Working MVP**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
-- Implementation status: **Minimal Plasma 6 applet foundation committed; runtime validation pending**
-- Tests passed: **5 static validator unit tests passed in isolated Python execution; Plasma runtime validation remains pending**
+- Latest implementation: **Minimal Plasma 6 applet foundation and opt-in native dock template; runtime validation pending**
+- Tests passed: **10 static validator unit tests passed in isolated Python execution; Plasma runtime validation and CI remain pending**
+- Contract status: **Desktop consumer review accepted on issue #9; AEGIS-06 and PILOT-08 agreement pending**
 
 ## Completion history
 
@@ -23,14 +24,15 @@
 | 2 | NOVA-02-C0002 | Desktop validation | Added static Plasma package validator, five unit tests and documented commands. | Validator `14cf0a8`; tests `96e017b`; README `2cf4d58`; log `dcf54dc`. |
 | 3 | NOVA-02-C0003 | Task-event contract | Translated TUSKER-04 draft into desktop consumer rules for sequence handling, snapshot recovery, controls and approvals. | `desktop/contracts/task-events-v0.1.md` `1304933`; completion log `0778a93`. |
 | 4 | NOVA-02-C0004 | Native dock template | Added an opt-in Plasma panel template using Kickoff and Icons-only Task Manager; existing panels remain untouched. | `desktop/panel-template/` commits `5230a39`, `0d78480`, `ca18545`; desktop README `6646f3a`; log `42ed1a5`. |
+| 5 | NOVA-02-C0005 | Panel-template validation and contract review | Added static panel-template validator and five tests, documented checks, marked test harness implemented, and accepted the current task-event envelope proposal from the desktop consumer perspective. | Validator `555dcba`; tests `fcdde46`; desktop README `f9b6b0a`; panel README `379f188`; task contract `c4a28a2`; phase plan `59af341`; issue #9 comment `6531531667`. |
 
 ## Open coordination requests
 
 - PIXEL-03 theme token/reload contract: [Issue #8](https://github.com/otta-komban/TuskerOS/issues/8)
-- TUSKER-04 task-event/control contract: [Issue #9](https://github.com/otta-komban/TuskerOS/issues/9)
+- TUSKER-04 task-event/control contract: [Issue #9](https://github.com/otta-komban/TuskerOS/issues/9) — desktop review accepted; AEGIS-06 and PILOT-08 confirmations remain.
 - NEXUS-07 system status/control APIs: [Issue #10](https://github.com/otta-komban/TuskerOS/issues/10)
 - PILOT-08 remote session/task-origin contract: [Issue #11](https://github.com/otta-komban/TuskerOS/issues/11)
-- ATLAS-01 Fedora/Plasma platform baseline: [Issue #12](https://github.com/otta-komban/TuskerOS/issues/12)
+- ATLAS-01 Fedora/Plasma platform baseline: [Issue #12](https://github.com/otta-komban/TuskerOS/issues/12) — Fedora 44 / Plasma 6.6.4 Wayland-first remains provisional; no image boot test reported.
 
 ## Operating rules
 
