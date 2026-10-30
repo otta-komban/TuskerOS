@@ -113,3 +113,19 @@ The prose excludes prompts, generated text, credentials and environment secrets 
 Before AEGIS security review can be closed, ORBIT-05 should update the contracts/tests for AISEC-001–006 and provide executable evidence. Schema validation alone is insufficient. Real-provider listener checks must be run on the pinned Fedora target, and ModelStore path/race tests must exercise the actual filesystem APIs.
 
 **No approval is granted for privileged tool execution, model installation, provider network exposure, or release readiness by this review.**
+
+
+### AISEC-007 — Manifest file paths need a constrained grammar and collision tests (High)
+
+The current `tusker-ai/schemas/model-manifest.schema.json` constrains `files[].filename` only to a non-empty string. It accepts traversal components (for example, `../../outside.gguf`), absolute-looking paths and platform-specific separators. The `files` array also has no uniqueness constraint. The existing `test_model_manifest_schema.py` tests digest, size, URI and metadata shape, but not path traversal, duplicate names or normalized/case-folding collisions.
+
+The ModelStore transaction contract separately requires traversal rejection, canonical containment and collision rejection during extraction. That is a useful runtime requirement, but it is not reflected in manifest-level validation or its negative test suite.
+
+**Required boundary:** Define a portable relative-path grammar for manifest filenames. Reject absolute, drive/UNC, empty, dot and dot-dot components, NUL/control characters and unsupported separators. Reject duplicate names and detect case-folding/Unicode-normalization collisions on the target filesystem. Independently canonicalize and containment-check every path immediately before file access; JSON Schema validation is not a filesystem security boundary.
+
+**Acceptance tests:**
+1. Schema/manifest tests reject `../`, nested traversal, absolute paths, drive-prefixed paths and backslash traversal.
+2. Tests reject duplicate names and distinct names that collide after target-filesystem normalization/case folding.
+3. Runtime tests prove a malicious manifest cannot cause reads, writes, digest checks or cleanup outside the canonical managed/staging root, including symlink/race cases.
+
+**Evidence and limits:** Current manifest schema, model-store transaction contract and manifest tests were source-reviewed. No ModelStore implementation or archive extractor was present in the reviewed tree; this is a contract/test gap, not a demonstrated runtime write-escape exploit.
