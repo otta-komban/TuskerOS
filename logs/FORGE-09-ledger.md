@@ -3,7 +3,7 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0007
+- Current recorded completion: C0008
 - Current phase: P2 — SDK and marketplace foundation
 
 | Completion | Phase | Category | Summary | Evidence | Status |
@@ -14,7 +14,8 @@
 | FORGE-09-C0004 | P2 | implementation | Added semantic release parsing/precedence, compatibility range checks, compatible candidate selection, prerelease opt-in, ambiguity rejection and dependency-order preview; tests committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `marketplace/tools/RESOLUTION.md` | partial |
 | FORGE-09-C0005 | P2 | implementation | Enforced exact/comparison dependency version constraints, intersected shared dependency requirements across parents, rejected missing/malformed edge constraints and updated the manifest schema/docs; 15 resolver test methods committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `sdk/schemas/extension-manifest.schema.json`; `marketplace/tools/RESOLUTION.md` | partial |
 | FORGE-09-C0006 | P3 | implementation | Added installed package ownership schema and fail-closed dry-run removal planning; protects shared packages and transitive dependencies, preserves user/system ownership, and adds nine tests (execution pending). | `marketplace/tools/package_ownership.py`; `marketplace/tests/test_package_ownership.py`; `marketplace/schemas/installed-package-state.schema.json` | partial |
-| FORGE-09-C0007 | P3 | implementation | Added non-executing transaction previews, approval-claim scope/expiry/digest checks, snapshot revalidation, rollback reporting and allow-listed audit-event contract; 12 tests committed, execution pending. | `marketplace/tools/transaction_contract.py`; `marketplace/tests/test_transaction_contract.py`; `marketplace/schemas/package-transaction-audit-event.schema.json` | partial |
+| FORGE-09-C0007 | P3 | implementation | Added non-executing transaction previews, approval-claim scope/expiry/digest checks, snapshot revalidation, rollback reporting and allow-listed audit-event contract; 13 tests committed, execution pending. | `marketplace/tools/transaction_contract.py`; `marketplace/tests/test_transaction_contract.py`; `marketplace/schemas/package-transaction-audit-event.schema.json` | partial |
+| FORGE-09-C0008 | P3 | implementation | Added a pure lifecycle transition validator and state schema; gates execution on external approval-verification evidence, matching snapshot revalidation and lock reference; nine tests committed, execution pending. Opened AEGIS-06/PHOENIX-10 review issue #29. | `marketplace/tools/transaction_state.py`; `marketplace/tests/test_transaction_state.py`; `marketplace/schemas/package-transaction-state.schema.json`; issue #29 | partial |
 
 ## Phase checklist
 
@@ -84,3 +85,5 @@
 - C0006 ownership model requires the installer adapter to attribute the bundle/extension owner to every package acquired for that owner, including dependencies. Removal output is advisory dry-run data only; an executor must refresh installed state, obtain authorization and revalidate before applying a package transaction.
 
 - C0007 approval claims are not cryptographically authenticated by FORGE-09; the external trusted authorization service must verify issuer/signature before claim validation. Preview digest equality is not authorization. No transaction executor, package-manager invocation, durable audit writer or rollback implementation exists. Twelve tests are committed but not executed; only audit-schema JSON syntax was parsed successfully.
+
+- C0008 lifecycle transitions validate structure and correlation references only. They do not authenticate external approval, acquire actual package-manager locks or prove execution outcomes. Cross-agent review is requested in issue #29; no approval response is assumed. Nine tests are committed but not executed; only state-schema JSON syntax was parsed.
