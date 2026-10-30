@@ -15,7 +15,7 @@
 - [x] Draft initial security invariants and risk register.
 - [ ] Review threat model with TUSKER-04.
 - [ ] Review OS-tool threat surface with NEXUS-07.
-- [ ] Review remote identity/approval threats with PILOT-08.
+- [x] Review remote identity/approval threats with PILOT-08; DEC-AEG-001–008 are recorded as owner decisions, with remote approval disabled for MVP and implementation still gated.
 - [ ] Review extension/marketplace threat surface with FORGE-09.
 - [ ] Review OS security mechanisms and service packaging with ATLAS-01.
 - [ ] Finalize risk owners, likelihood/impact ratings and acceptance criteria.
@@ -39,7 +39,7 @@
 - [ ] Agree tool registration and execution contracts with NEXUS-07.
 - [x] Expand security test matrix for atomic approval consumption, replay, concurrency and unknown broker outcomes.  
 - [ ] Confirm operation registry schema, ownership, versioning and review process with NEXUS-07.
-- [ ] Agree remote principal/session and approval binding with PILOT-08.
+- [x] Record PILOT-08 remote principal/session and approval security decisions in `REMOTE_DEVICE_SECURITY_CONTRACT.md`; producer/runtime implementation and cross-agent contract migration remain pending.
 - [ ] Agree extension capability and sandbox manifest with FORGE-09.
 - [ ] Agree desktop approval UI trust boundary with NOVA-02.
 - [ ] Agree system service/Polkit/SELinux packaging with ATLAS-01.
