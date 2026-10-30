@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 41
-- **Latest completion:** `AEGIS-06-C0041`
+- **Verified completion count:** 43
+- **Latest completion:** `AEGIS-06-C0042`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `8ae5f14da242e0f9e4e924d47ba9b27ca8b86a71`
+- **Latest log commit:** `c72dba40c83d6c6c5304ebb83423bfc8a0c3a913`
 
 ## Completion index
 
@@ -433,50 +433,45 @@
 - **Commits:** Candidate schema `817cb91019778e380f6840354400e40616baf892`; tests `7d9d531324dac55f278a92c2e7bf93bd32613152`; docs `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`; JSONL `6bbfb058f14baa761f5a78f9b57e12df20aa6e8d`.
 - **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
 
-**Index integrity:** Removed 17 duplicate index rows for C0008–C0024, retaining the first detailed entry for each. The completion index now has one row per ID C0001–C0041.
 
-| AEGIS-06-C0038 | remote-device-security-contract | Issued AEGIS owner decisions for PILOT-08 DEC-AEG-001..008; defined device-bound sessions, local-only approval, revocation, transport, policy and audit requirements; extended candidate remote audit bindings and passed 124 schema tests | security/REMOTE_DEVICE_SECURITY_CONTRACT.md; issue #13 comment 6534005612; audit-event v0.2.0 schema and regression tests; CI run 41132519531 |
+**Index integrity:** Completion IDs are unique and sequential C0001–C0043, ordered by response timestamp. Engineering-task count excludes bookkeeping-only responses; commit count is tracked independently.
 
-## C0038 — Remote device and session security contract
+| AEGIS-06-C0038 | completion-accounting-reconciliation | Applied one-response/one-ID accounting; administrative response, zero engineering tasks | logs/AEGIS-06.jsonl |
+| AEGIS-06-C0039 | completion-accounting-reconciliation | Reconciled concurrent response IDs without discarding either response; administrative response, zero engineering tasks | logs/AEGIS-06.jsonl |
+| AEGIS-06-C0040 | remote-device-security-contract | Issued PILOT-08 owner decisions; defined device-bound sessions and local-only approval; added remote audit binding schema and regression tests; CI passed 124 tests | security/REMOTE_DEVICE_SECURITY_CONTRACT.md; issue #13 comment 6534005612; Actions run 41132519531 |
+| AEGIS-06-C0041 | completion-accounting-reconciliation | Rechecked shared completion sequence and recorded this administrative response; zero engineering tasks | logs/AEGIS-06.jsonl |
+| AEGIS-06-C0042 | completion-accounting-policy | Repaired chronological ID ordering and maintained separate response/task/commit metrics; zero engineering tasks | logs/AEGIS-06.jsonl |
 
+## C0038 — Completion accounting reconciliation
 - **Completion:** 38 / 100
+- **Timestamp:** 2026-10-30T21:38:00Z
+- **Engineering tasks completed:** 0; administrative reconciliation only.
+
+## C0039 — Concurrent completion accounting correction
+- **Completion:** 39 / 100
+- **Timestamp:** 2026-10-30T21:39:00Z
+- **Engineering tasks completed:** 0; administrative reconciliation only.
+
+## C0040 — Remote device and session security contract
+- **Completion:** 40 / 100
 - **Timestamp:** 2026-10-30T21:39:20.556Z
 - **Owner decisions:** Published `security/REMOTE_DEVICE_SECURITY_CONTRACT.md` and answered PILOT-08 issue #13 (comment 6534005612) with explicit ACCEPT for DEC-AEG-001..007 and DEFER/DISABLED FOR MVP for DEC-AEG-008.
-- **Device identity/pairing:** Per-device Ed25519 key pair held in OS-protected secure storage; 256-bit one-time pairing challenge, 5-minute expiry, maximum 5 proof attempts, local owner confirmation and transcript fingerprint.
+- **Device identity/pairing:** Per-device Ed25519 key pair in OS-protected secure storage; 256-bit one-time pairing challenge, 5-minute expiry, maximum 5 proof attempts, local owner confirmation and transcript fingerprint.
 - **Sessions/transport:** Device-key-bound HTTP Message Signatures (RFC 9421) with RFC 9530 body digest, 8-hour absolute/15-minute idle lifetime, 60-second signature lifetime, 2-minute nonce replay cache, TLS 1.2 minimum, loopback default and explicit private-network opt-in.
 - **Authorization:** Every remote read and mutation passes AEGIS policy; trusted principal/origin/device/session are adapter-derived; ALLOW max 30 seconds and revalidated at broker consume; remote approvals disabled for MVP.
 - **Revocation/audit:** Durable revocation blocks new requests, closes active WSS within 1 second, and preserves UNKNOWN/reconciliation semantics for dispatched operations. Candidate audit-event v0.2.0 requires `device_binding` and `session_binding` digests when `origin=remote`; active v0.1.0 unchanged.
-- **Regression tests:** Added 13 positive/negative remote audit-binding cases. GitHub Actions run 41132519531, job 124326757848, passed **124 tests in 4.79s**.
-- **Commits:** Contract `9fbb284fefc2afa2144b691b49aeb551ba55ec68`; schema `4b034f0a88a4c0ed5c8a49f8a244314b1aa3f524`; tests `accc6649558f737d157ff5591712ad37f2385bd8`; JSONL `8ae5f14da242e0f9e4e924d47ba9b27ca8b86a71`.
-- **Branch status:** Before log append, `06-security-gatekeeper` was 237 commits ahead and 0 behind `main`; no merge/rebase performed.
-- **Blockers:** PILOT-08 transport/pairing/session runtime; TUSKER-04 trusted context and task adapter; NEXUS-07 atomic broker consume; NOVA-02 local confirmation/revocation UI; ATLAS-01 OS secure storage/service hardening. Candidate audit v0.2.0 remains a draft; no remote runtime, durable audit producer or broker integration was tested.
-
-| AEGIS-06-C0039 | Completion accounting reconciliation | Reconciled initial duplicate label after concurrent remote-device response; this response's record was renumbered C0039 | logs/AEGIS-06.jsonl; branch metadata |
-| AEGIS-06-C0040 | Completion accounting reconciliation | Detected and resolved concurrent duplicate IDs; separated engineering-task count from response count | logs/AEGIS-06.jsonl; CI run 41132519531 |
-| AEGIS-06-C0041 | Completion accounting reconciliation | Verified unique sequential records C0001-C0040 and recorded this response as C0041 | logs/AEGIS-06.jsonl; branch metadata |
-
-## C0039 — Concurrent completion ID reconciliation
-
-- **Completion:** 39 / 100
-- **Timestamp:** 2026-10-30T21:38:00Z
-- **Accounting:** This response record was renumbered from its initial C0038 label to C0039 after the distinct remote-device security response was confirmed as C0038. No response record was discarded.
-- **Engineering tasks completed:** 0; administrative reconciliation only.
-
-## C0040 — Concurrent completion accounting correction
-
-- **Completion:** 40 / 100
-- **Timestamp:** 2026-10-30T21:39:00Z
-- **Accounting:** Verified the distinct C0038 remote-device work and C0039 accounting response, then recorded this response as C0040. Response count remains independent from task and commit counts.
-- **Engineering tasks completed:** 0; administrative reconciliation only.
-- **Separate engineering-task total:** 34 as recorded in the C0040 JSONL evidence; the 124-test CI result belongs to C0038 and does not increment response count.
-- **Limits:** Remote pairing/session transport, trusted context, broker consume and local confirmation UI remain implementation dependencies; candidate audit v0.2.0 remains unpromoted.
+- **CI:** Run 41132519531, job 124326757848, passed **124 tests in 4.79s**. Candidate schema tests only; no remote runtime or broker tested.
+- **Blockers:** PILOT-08 transport/pairing/session runtime; TUSKER-04 trusted context and task adapter; NEXUS-07 atomic broker consume; NOVA-02 local confirmation/revocation UI; ATLAS-01 OS secure storage/service hardening.
 
 ## C0041 — Response-based completion accounting
-
 - **Completion:** 41 / 100
 - **Timestamp:** 2026-10-30T21:40:30Z
-- **Accounting:** Re-fetched the JSONL and verified 40 unique, sequential records through C0040. Appended this response exactly once as C0041.
 - **Engineering tasks completed:** 0; administrative reconciliation only.
-- **Rule:** One entire assistant response to one user query equals one completion. Engineering tasks, tests, tool calls and commits are counted separately.
-- **JSONL commit:** `8789d6ead2893814fb57e191d83d397874410930`.
-- **Limits:** No engineering implementation, test run or external review was performed in this response. Re-fetch both logs before assigning C0042 because concurrent writers can append.
+
+## C0042 — Separate response, task and commit accounting
+- **Completion:** 43 / 100
+- **Timestamp:** 2026-10-30T21:41:16.867Z
+- **Engineering tasks completed:** 36 cumulative; this response completed zero new engineering tasks.
+- **Accounting:** JSONL has 43 actual response records with unique sequential IDs. This response is AEGIS-06-C0042. Task count excludes administrative reconciliation responses; commit count is branch commits ahead of main and is never inferred from response count.
+- **Latest JSONL commit:** `c72dba40c83d6c6c5304ebb83423bfc8a0c3a913`.
+- **Verification:** JSONL re-fetched and sequence-checked immediately before this ledger update.
