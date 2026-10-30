@@ -390,3 +390,15 @@
 - **Verification:** Static cross-document comparison only. Proposed cases are not implemented or executed; no CI/runtime conformance claimed. Active v0.1.0 and candidate v0.2.0 schemas unchanged.
 - **Commits:** audit `3423f692c637f23231d73664cae7d829ac211e81`; matrix `63957f57f04a0673f0e78c3e4c855b6ee78e04fe`; checklist `c14d8db23e689dd578f999a961405197f60fff79`; JSONL `81023a6bcea9399bd86ef89edfc0112b2c51df95`.
 - **Blocker:** NEXUS-07/TUSKER-04 owner agreement and producer-level lifecycle tests remain pending.
+
+## C0030 — Audit event lifecycle/status consistency
+
+- **Completion:** 30 / 100
+- **Timestamp:** 2026-10-30T21:26:30Z
+- **Finding:** The candidate audit-event v0.2.0 schema previously accepted contradictory `event_type`/`result_status` combinations.
+- **Changes:** Constrained all 15 currently declared event types to explicit result statuses; added 15 positive and 15 negative parameterized cases. Updated `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`, `security/SECURITY_TEST_MATRIX.md` (AUD-SCHEMA-037), and `security/PHASE1_CHECKLIST.md`.
+- **CI:** Initial run 41130734451 exposed two outdated reason-code test fixtures (95 passed, 2 failed). Corrected the fixtures; run [41130846710](https://github.com/otta-komban/TuskerOS/actions/runs/41130846710) passed **97 tests in 2.08s** on Python 3.12.
+- **Coordination:** Requested NEXUS-07 review of approval-expired, cancellation-requested and compensation-started mappings on issue #17 (comment 6533778928).
+- **Verification limits:** Schema/meta-schema and JSON-envelope tests only. SEC-SCHEMA-006 separately identifies missing event types for presentation, dismissal, invalidation, revocation, consume and reconciliation. Candidate v0.2.0 remains unapproved; active v0.1.0 unchanged. No producer, audit persistence/integrity, broker IPC, authorization consume or privileged runtime tested.
+- **Commits:** schema `7fe3a970f8a1f42d94329d18a31830b632a287a3`; tests `e2e13a1ef7eef20c278c1823f3e1f437418d7b45`; fixture fix `7b66c802d038ca65e72d26514a50c3a3197bee98`; matrix ID reconciliation `9967daa3e0f7efa22e42d267fe38528bc219201f`; proposal `3b410b064c8706bfee30e0ff65dd71a5804b8337`; checklist `0aff1934b88379cbdc829d8f5dc3b75fe15525fb`; JSONL `82c14721593ded22459d983b5d08e45361d8f732`.
+- **Blocker:** NEXUS-07/TUSKER-04 must agree canonical lifecycle event names, result mappings, trusted producer ownership and migration before candidate promotion.
