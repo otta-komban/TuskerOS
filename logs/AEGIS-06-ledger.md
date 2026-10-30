@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 19
-- **Latest completion:** `AEGIS-06-C0019`
+- **Verified completion count:** 20
+- **Latest completion:** `AEGIS-06-C0020`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `c93f8fc9e81ddcb40bcb55dc3af7e7b51649cb9f`
+- **Latest log commit:** `15810ef515d387b84b73d1c1b54f8e5737e8fcbe`
 
 ## Completion index
 
@@ -240,3 +240,16 @@
 - **Status:** Proposal only. The 0.1.0 audit schema remains unchanged; no producer migration, persistence, or runtime enforcement is claimed.
 - **Blocker:** NEXUS-07/TUSKER-04 must accept the trusted registry-version source and producer migration before a 0.2.0 schema and producer tests are implemented.
 - **Proposal commit:** `79e83d4b596a2b979036ee2528e55463b4ba39d5`; **checklist commit:** `d776bec5d485d7fee79bbff93bfd79b318b4c2f5`; **JSONL commit:** `c93f8fc9e81ddcb40bcb55dc3af7e7b51649cb9f`.
+
+| AEGIS-06-C0020 | Audit record integrity | Restored corrupted schema consistency audit and reconciled all three findings with current schema/proposal status and CI evidence | `security/SCHEMA_CONSISTENCY_AUDIT.md`; `logs/AEGIS-06.jsonl` |
+
+
+## C0020 — Schema audit record restoration
+
+- **Completion:** 20 / 100
+- **Timestamp:** 2026-10-30T20:57:14.672Z
+- **Deliverable:** `security/SCHEMA_CONSISTENCY_AUDIT.md` restored after detecting literal `[object Object]` corruption.
+- **Restored findings:** SEC-SCHEMA-001 (approval binding represented in draft v0.2.0; runtime acceptance pending), SEC-SCHEMA-002 (required nullable `task_id`/`step_id`), and SEC-SCHEMA-003 (audit `registry_version` gap; separate v0.2.0 proposal only).
+- **CI evidence:** Runs 41126223487 (17 passed), 41126585567 (32 passed), and 41126895122 (32 passed). These validate schema/envelope cases, not runtime producers or broker execution.
+- **Commit:** Audit restoration `f282ba0fb532bf4f79c2ae9e95f17289344eecc7`; JSONL `15810ef515d387b84b73d1c1b54f8e5737e8fcbe`.
+- **Remaining blockers:** SEC-SCHEMA-003 producer-owner acceptance; NEXUS-07 transport, durable atomic consume, trusted peer identity and runtime implementation.
