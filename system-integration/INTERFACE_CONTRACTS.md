@@ -81,3 +81,15 @@ Health states: `starting`, `ready`, `degraded`, `stopping`, `failed`. Include co
 - ORBIT-05: only device capability/telemetry fields consumed for model suitability; no model runtime control ownership.
 - PILOT-08: remote principal/device identity propagation and task-origin fields.
 - FORGE-09: extension capability discovery and permission projection.
+
+## 10. Machine-readable schema artifacts
+Provisional JSON Schema Draft 2020-12 documents and valid example fixtures live under `system-integration/contracts/`:
+- `tool-invocation.schema.json`
+- `tool-result.schema.json`
+- `event-envelope.schema.json`
+- `health-status.schema.json`
+
+The test harness is `system-integration/tests/test_contracts.py` and the test-only dependency is `system-integration/requirements-test.txt`. Run from repository root with `python -m pip install -r system-integration/requirements-test.txt` followed by `python -m unittest discover -s system-integration/tests -v`. Fixtures and tests are provisional and do not imply cross-agent approval. Test execution is pending; no passing result is claimed.
+
+## 11. Candidate NEXUS service identifiers
+See `system-integration/SERVICE_IDENTIFIERS.md`. Candidate system-bus name `org.tuskeros.SystemTools1`, object path `/org/tuskeros/SystemTools1`, and interface `org.tuskeros.SystemTools1.Manager` are not frozen. The project must confirm control of the reverse-DNS namespace and obtain ATLAS-01/AEGIS-06 review before packaging or implementation. No Polkit action IDs or privileged methods are assigned by NEXUS.
