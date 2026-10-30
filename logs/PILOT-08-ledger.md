@@ -91,3 +91,23 @@ Append one JSON object per actual assistant response to `logs/PILOT-08.jsonl`. N
 - Schema examples are illustrative only; no actual test results are represented.
 - Test harness/stack: not selected. Tests run: 0. Runtime features: 0. OpenAPI validation: not run.
 - AEGIS-06 and NOVA-02 owner sign-offs remain absent; TUSKER-04 remains draft REVISE/DEFER. Implementation status: **NO-GO**.
+
+
+## Current verified counters — C0012
+
+This section supersedes the historical counter snapshot in the earlier "Verified counters" section.
+
+- Actual assistant responses recorded: **12**
+- Last sequence: **12**
+- Last completion ID: **PILOT-08-C0012**
+- JSONL entries: **12**, last record `PILOT-08-C0012`
+- Ledger addenda present through: **C0012**
+- Branch commit count: verified separately from GitHub branch history at the final checkpoint.
+- Tests run: **0**
+- Runtime features implemented: **0**
+- OpenAPI validation: **not run**
+- Protocol scenarios specified: **72**, not executed.
+- Security test matrix: 20 abuse cases and 10 additive cross-cutting cases specified.
+- Security evidence protocol: authored; test harness/stack not selected.
+- Owner approvals: AEGIS-06 and NOVA-02 absent; TUSKER-04 draft REVISE/DEFER only.
+- Implementation status: **NO-GO**.
