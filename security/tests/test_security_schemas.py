@@ -8,7 +8,6 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas"
 AUDIT_SCHEMA = json.loads((SCHEMA_DIR / "audit-event.schema.json").read_text())
 APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json").read_text())
-APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json").read_text())
 
 VALID_EVENT = {
     "schema_version": "0.1.0",
@@ -166,6 +165,12 @@ def test_duplicate_resource_scope_is_rejected():
 def test_approval_request_rejects_unknown_nested_binding_fields():
     request = json.loads(json.dumps(VALID_APPROVAL))
     request["binding"]["untrusted_identity"] = "root"
+    assert list(approval_validator().iter_errors(request))
+
+
+def test_approval_request_rejects_unknown_top_level_fields():
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["caller_principal"] = "root"
     assert list(approval_validator().iter_errors(request))
 
 
