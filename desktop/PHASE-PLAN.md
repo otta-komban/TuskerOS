@@ -49,7 +49,8 @@ All checkboxes remain open until the task has been implemented or researched and
 - [ ] Add reproducible build and development instructions.
 - [x] Document a reproducible Fedora/Plasma runtime-validation procedure.
   - Evidence: `desktop/validation/FEDORA-PLASMA-RUNTIME.md` records package discovery, Qt 6 QML lint, isolated applet validation, real Wayland-session checks, rollback and evidence requirements. This is a runbook, not an executed runtime test.
-- [ ] Add configuration parsing, validation and persistence.
+- [x] Add configuration parsing, validation and persistence.
+  - Evidence: `desktop/config/settings.py` implements schema-v1 defaults, strict validation, safe fallback, partial merges, and atomic mode-0600 persistence with symlink refusal. Eight tests in `desktop/tests/test_settings.py` pass in hosted CI run 41124464540 (23 total desktop tests). UI integration and future schema migration remain open.
 - [x] Add desktop test harness.
   - [x] Add CI checks for the desktop validator and unit tests.
     - Evidence: `.github/workflows/desktop-validation.yml` runs Python unit tests, both static validators and Node.js syntax validation on pushes to `02-desktop-shell`, pull requests to `main`, and manual dispatch. Hosted run 41116394507 passed all 15 tests and all four validation steps; Plasma runtime is not covered.
