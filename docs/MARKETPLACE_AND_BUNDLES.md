@@ -45,7 +45,13 @@ The initial Python bundle is a proposal, not yet a guaranteed Fedora package ava
 - Request required authorization for system package changes.
 - Install via platform package transaction.
 - Record installed package ownership and bundle membership.
-- On removal, remove only packages no longer required by another bundle or user selection; preserve user data and user-managed environments.
+- On removal, create a dry-run plan from the installed ownership snapshot. Remove only packages attributed to the requested bundle/extension that have no remaining owner and are not required by any retained package. Preserve user/system-owned packages and their transitive dependencies. Execute only after the plan is reviewed, separately authorized and passed to the platform package transaction adapter; the planner itself never deletes or installs anything.
+
+## Installed package ownership and removal planning
+
+`marketplace/schemas/installed-package-state.schema.json` defines the local ownership snapshot. Each installed package records its exact package ID/version, a set of owner identities (`bundle`, `extension`, `user`, `system`) and installed dependency IDs. The same bundle/extension owner must be recorded on every package acquired for that owner, including dependencies. Existing user/system ownership and other bundle/extension owners are retained when a shared package is reused.
+
+`marketplace/tools/package_ownership.py` validates the snapshot and produces a dry-run removal plan for one bundle or extension owner. Only packages attributed to that owner and left without another owner are removal candidates. Any candidate required by a retained package is protected, together with its transitive dependencies. User/system owners cannot be selected for removal. Duplicate records, missing dependency references and malformed state fail closed. The output includes explicit remove/keep reasons and `execution: not_performed`; it does not invoke DNF/Flatpak/pipx, mutate state, delete user data or authorize a transaction. A future adapter must revalidate current installed state, obtain policy approval and execute the reviewed plan transactionally where supported.
 
 ## Marketplace governance
 
@@ -72,4 +78,4 @@ Release versions are strict semantic versions. Compatibility bounds accept numer
 
 The resolver expects dependency IDs and version constraints from separately validated manifests. It supports exact semantic versions and comma-conjoined comparisons (`>=`, `>`, `<=`, `<`, `=`), intersects constraints from multiple parents, and fails closed when no candidate satisfies them. It still does not fetch artifacts, verify trust/signatures, authorize permissions or install packages. Security policy and cryptographic trust remain external requirements. See `marketplace/tools/RESOLUTION.md`.
 
-Tests: `sdk/tests/test_dependency_plan.py` and `marketplace/tests/test_catalog_resolver.py`.
+Tests: `sdk/tests/test_dependency_plan.py`, `marketplace/tests/test_catalog_resolver.py` and `marketplace/tests/test_package_ownership.py`.
