@@ -117,6 +117,7 @@
 
 
 | AEGIS-06-C0012 | Schema contract correction | Reconciled audit correlation requiredness while retaining explicit null semantics; recorded remaining validation and approval-binding blockers | security/schemas/audit-event.schema.json; security/SCHEMA_CONSISTENCY_AUDIT.md |
+| AEGIS-06-C0013 | Approval binding proposal | Drafted a candidate v0.2.0 binding envelope in the schema audit without changing active v0.1.0 wire format; owner acceptance remains pending | security/SCHEMA_CONSISTENCY_AUDIT.md; commits 806cb35, 3a14d3f (JSONL record pending) |
 
 ## C0012 — Audit correlation schema correction
 
