@@ -3,7 +3,7 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0003
+- Current recorded completion: C0004
 - Current phase: P2 — SDK and marketplace foundation
 
 | Completion | Phase | Category | Summary | Evidence | Status |
@@ -11,6 +11,7 @@
 | FORGE-09-C0001 | P0/P1 | design/implementation | Initial ecosystem architecture, extension contract, manifest schema, metadata-only example and validator. | `docs/DEVELOPER_ECOSYSTEM_ARCHITECTURE.md`; `docs/EXTENSION_CONTRACT.md`; `sdk/` | partial |
 | FORGE-09-C0002 | P2 | implementation | Marketplace catalog contract and fixture, developer bundle schema and Python proposal, lifecycle docs, deterministic dependency planner and tests; 15 in-memory behavior checks. | `marketplace/`; `bundles/`; `sdk/tools/dependency_plan.py` | partial |
 | FORGE-09-C0003 | P2 | implementation | Added fail-closed catalog metadata validator and eight unittest cases; documents the boundary between structural validation and trust/authorization. | `marketplace/tools/validate_catalog_entry.py`; `marketplace/tests/test_validate_catalog_entry.py`; `marketplace/tools/README.md` | partial |
+| FORGE-09-C0004 | P2 | implementation | Added semantic release parsing/precedence, compatibility range checks, compatible candidate selection, prerelease opt-in, ambiguity rejection and dependency-order preview; tests committed, execution pending. | `marketplace/tools/catalog_resolver.py`; `marketplace/tests/test_catalog_resolver.py`; `marketplace/tools/RESOLUTION.md` | partial |
 
 ## Phase checklist
 
@@ -36,8 +37,9 @@
 - [x] Add deterministic topological ordering for an already-resolved dependency graph.
 - [x] Add developer bundle schema and initial Python profile proposal.
 - [x] Add fail-closed catalog metadata validator and focused tests.
+- [x] Add semantic release selection, compatibility checks and ordered catalog preview.
 - [ ] Execute committed Python unittest suites in a working repository checkout.
-- [ ] Implement version selection and semantic version-range resolution.
+- [ ] Validate dependency version constraints from manifests before plan generation.
 - [ ] Validate Fedora package availability with ATLAS-01.
 
 ### P3 — Working MVP
@@ -71,6 +73,7 @@
 
 - Initial branch intake found LICENSE but not README or the expected coordination registry/specification files; planning context was supplied in the Project Library.
 - Cross-agent review issue #7 currently has only the FORGE-09 update and no replies from AEGIS-06, NEXUS-07 or PIXEL-03. ATLAS-01 request #24 has no replies yet.
-- The sample extension and catalog fixture are metadata-only. Catalog validation does not make an entry trusted or installable.
-- C0002's 15 checks were in-memory reconstructions, not execution of committed tests. C0003's eight unittest cases are committed but not run. A local checkout previously failed because this environment could not resolve github.com.
-- C0002 and C0003 are partial; do not describe the marketplace or bundle system as production-ready.
+- The sample extension and catalog fixture are metadata-only. Catalog validation and resolution do not make an entry trusted or installable.
+- C0002's 15 checks were in-memory reconstructions, not execution of committed tests. C0003's eight validator tests and C0004's resolver tests are committed but not run. A local checkout previously failed because this environment could not resolve github.com.
+- C0002, C0003 and C0004 remain partial; do not describe the marketplace or bundle system as production-ready.
+- C0004 resolver limits: dependency IDs are taken from a separately validated graph; dependency-edge version constraints are not yet evaluated. Trust, signature verification, revocation, fetch, permission authorization and installation are external.
