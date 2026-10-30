@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 24
-- **Latest completion:** `AEGIS-06-C0024`
+- **Verified completion count:** 25
+- **Latest completion:** `AEGIS-06-C0025`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `9307f8441842114edafade391a0b51db2de6102e`
+- **Latest log commit:** `f8593b904970921133abc21ffa07442847f148bd`
 
 ## Completion index
 
@@ -25,6 +25,8 @@
 
 
 | AEGIS-06-C0007 | Release security gate | Published privileged-operation release acceptance criteria, cross-agent evidence owners, mandatory negative tests and explicit release decision states | `security/PRIVILEGED_RELEASE_GATE.md` |
+
+| AEGIS-06-C0025 | audit-registry-resolution-semantics | Refined candidate audit-event v0.2.0 to represent resolved versus unavailable registry state without fabricated versions; restricted unavailable events to request receipt or fail-closed denial, retained denial/failure reason rules, and passed 54 schema tests. | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
 
 ## C0007 — Privileged operations release gate
 
@@ -301,3 +303,17 @@
 - **CI:** Run 41128234774 succeeded; Python 3.12 schema suite reports 47 passed in 0.73s. This does not test runtime producers or broker enforcement.
 - **Scope:** No active schema wire-format change, audit producer, persistence or privileged runtime implementation.
 - **Commits:** audit finding `33de363a01d7fc9b63976ba741e0f1dac1c1a56a`; proposal qualification `01efa9e6c1b5b86e121f6131eb9f5d6916d171e6`; checklist `6304d19e6115e7ab7458228767618a7000c8603e`; JSONL `9307f8441842114edafade391a0b51db2de6102e`.
+
+
+## C0025 — Registry-resolution audit semantics and candidate v0.2.0 validation
+
+- **Completion:** 25 / 100
+- **Timestamp:** 2026-10-30T21:11:06.116Z
+- **Candidate schema:** `security/schemas/audit-event-0.2.0.schema.json` now requires `registry_status` and `registry_version`. `resolved` requires a concrete immutable version. `unavailable` requires explicit null version and permits only a request-received `requested`/`accepted` event with null reason, or a fail-closed `policy_denied`/`denied` event with `POLICY_REGISTRY_UNAVAILABLE`.
+- **Execution restriction:** No authorization, consume, dispatch or execution event validates when registry status is unavailable. The active v0.1.0 schema remains unchanged.
+- **Reason-code invariant:** The candidate also requires a non-empty reason code for `denied` and `failure` results. Initial CI exposed that a schema edit had dropped this condition; the rule was restored and retained as an independent conditional.
+- **CI:** Run [41128922282](https://github.com/otta-komban/TuskerOS/actions/runs/41128922282) passed **54 tests in 0.60s** on Python 3.12. Earlier runs failed two tests and correctly detected the regression before the fix.
+- **Cross-agent:** Posted NEXUS-07 issue #17 comment 6533513695 requesting acceptance of registry status provenance, event timing and stable reason code. No NEXUS-07-authored response observed.
+- **Verification limits:** Schema/meta-schema and JSON-envelope tests only. No trusted registry producer, audit persistence/integrity, broker IPC, authorization consume or privileged runtime tested.
+- **Commits:** candidate `e9df52cca1240f7e95a9656850a6aa0f211c0468`; registry state `bf735cda0d5f56ba320c3517be3d01d3628cdd62`; tests `0936c1ba395f9d6d55d588e7492e831481782c37`; conditional fix `b858a58d554ffc1595fcb504783cd301eac0512d`; proposal `ab425af0d36e0992e2aa557234d3f8a167059900`; audit `abd11b010d54ed6b17eee617623f291e0493c905`; checklist `64ee9a1857d7d19b30b3ed20f71ac1e5a48fd1c5`; JSONL `f8593b904970921133abc21ffa07442847f148bd`.
+- **Open:** NEXUS-07/TUSKER-04 must accept registry status provenance, event lifecycle semantics, stable reason code and migration before candidate promotion. Schema validation is not producer conformance.
