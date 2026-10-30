@@ -27,6 +27,17 @@ TRANSITIONS = {
 TERMINAL_STATES = {
     "committed", "rolled_back", "rollback_failed", "stale", "rejected", "cancelled"
 }
+EVIDENCE_KEYS = {
+    "approval_verified": {"approval_id", "verification_ref", "authority"},
+    "revalidated": {"snapshot_digest"},
+    "stale": {"observed_snapshot_digest"},
+    "execution_started": {"lock_ref"},
+    "committed": {"result_ref"},
+    "rolled_back": {"result_ref"},
+    "rollback_failed": {"result_ref"},
+    "rejected": {"reason_code"},
+    "cancelled": {"reason_code"},
+}
 
 
 def transition_transaction(
@@ -36,9 +47,8 @@ def transition_transaction(
 ) -> dict[str, Any]:
     """Return a new lifecycle record after validating one legal transition.
 
-    Evidence is descriptive correlation metadata, not cryptographic proof.
-    In particular, approval_verified must only be emitted by an adapter after
-    the trusted authorization service has verified the approval token.
+    Evidence is correlation metadata, not cryptographic proof. The trusted
+    adapter must verify external approval and perform each real operation.
     """
     if not isinstance(transaction, Mapping):
         raise TransactionStateError("transaction must be an object")
@@ -46,7 +56,8 @@ def transition_transaction(
     optional = {"history", "terminal"}
     if not required.issubset(transaction) or set(transaction) - required - optional:
         raise TransactionStateError("transaction has an invalid shape")
-    if "history" in transaction and not isinstance(transaction["history"], list):
+    history_value = transaction.get("history", [])
+    if not isinstance(history_value, list):
         raise TransactionStateError("transaction history must be an array")
     if "terminal" in transaction and not isinstance(transaction["terminal"], bool):
         raise TransactionStateError("transaction terminal must be a boolean")
@@ -54,8 +65,36 @@ def transition_transaction(
         if not isinstance(transaction[field], str) or not transaction[field].strip():
             raise TransactionStateError(f"{field} must be a non-empty string")
     current = transaction["state"]
-    if current not in TRANSITIONS:
+    if not isinstance(current, str) or current not in TRANSITIONS:
         raise TransactionStateError("unknown current transaction state")
+    for field in ("plan_digest", "snapshot_digest"):
+        digest = transaction[field]
+        if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+            raise TransactionStateError(f"{field} must be a lowercase SHA-256 digest")
+    if "terminal" in transaction and transaction["terminal"] != (current in TERMINAL_STATES):
+        raise TransactionStateError("terminal flag does not match current state")
+    if history_value and (
+        not isinstance(history_value[-1], Mapping)
+        or history_value[-1].get("event") != current
+    ):
+        raise TransactionStateError("history must end with the current transaction state")
+    for index, item in enumerate(history_value):
+        if not isinstance(item, Mapping) or set(item) != {"from", "event", "evidence"}:
+            raise TransactionStateError(f"history[{index}] has an invalid shape")
+        source = item["from"]
+        target = item["event"]
+        if not isinstance(source, str) or source not in TRANSITIONS:
+            raise TransactionStateError(f"history[{index}].from is invalid")
+        if not isinstance(target, str) or target not in TRANSITIONS[source]:
+            raise TransactionStateError(f"history[{index}].event is invalid")
+        item_evidence = item["evidence"]
+        if not isinstance(item_evidence, Mapping) or any(
+            not isinstance(k, str) or not isinstance(v, str) or not v.strip()
+            for k, v in item_evidence.items()
+        ):
+            raise TransactionStateError(f"history[{index}].evidence is invalid")
+        if set(item_evidence) - EVIDENCE_KEYS.get(target, set()):
+            raise TransactionStateError(f"history[{index}] contains unsupported evidence")
     if not isinstance(event, str) or event not in TRANSITIONS[current]:
         raise TransactionStateError(f"transition {current} -> {event!r} is not allowed")
     if evidence is None:
@@ -65,6 +104,8 @@ def transition_transaction(
         for k, v in evidence.items()
     ):
         raise TransactionStateError("evidence must map text keys to non-empty text values")
+    if set(evidence) - EVIDENCE_KEYS.get(event, set()):
+        raise TransactionStateError("evidence contains unsupported or sensitive fields")
     if event == "approval_verified" and not {
         "approval_id", "verification_ref", "authority"
     }.issubset(evidence):
@@ -75,13 +116,13 @@ def transition_transaction(
         raise TransactionStateError("revalidated evidence must match the reviewed snapshot digest")
     if event == "stale" and evidence.get("observed_snapshot_digest") == transaction["snapshot_digest"]:
         raise TransactionStateError("stale transition requires a different observed snapshot digest")
-    if event == "execution_started" and evidence.get("lock_ref") is None:
+    if event == "execution_started" and not evidence.get("lock_ref"):
         raise TransactionStateError("execution_started requires a package transaction lock reference")
     if event in {"committed", "rolled_back", "rollback_failed"} and not evidence.get("result_ref"):
         raise TransactionStateError(f"{event} requires a result_ref")
     updated = dict(transaction)
     updated["state"] = event
-    history = list(transaction.get("history", []))
+    history = list(history_value)
     history.append({"from": current, "event": event, "evidence": dict(evidence)})
     updated["history"] = history
     updated["terminal"] = event in TERMINAL_STATES
