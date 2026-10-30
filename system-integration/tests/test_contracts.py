@@ -16,8 +16,32 @@ class ContractSchemaTests(unittest.TestCase):
         Draft202012Validator.check_schema(schema)
         Draft202012Validator(schema, format_checker=FormatChecker()).validate(fixture)
 
+    def validate_descriptor_semantics(self, descriptor):
+        bounds = descriptor["timeout_ms"]
+        if not bounds["minimum"] <= bounds["default"] <= bounds["maximum"]:
+            raise ValueError("timeout bounds must satisfy minimum <= default <= maximum")
+        idem = descriptor["idempotency"]
+        if not idem["supported"] and idem["scope"] != "none":
+            raise ValueError("unsupported idempotency must use scope=none")
+        if idem["supported"] and idem["scope"] == "none":
+            raise ValueError("supported idempotency must declare a non-none scope")
+
     def test_tool_descriptor_example(self):
         self.validate_fixture("tool-descriptor.schema.json", "tool-descriptor.valid.json")
+        descriptor = json.loads((EXAMPLES / "tool-descriptor.valid.json").read_text(encoding="utf-8"))
+        self.validate_descriptor_semantics(descriptor)
+
+    def test_tool_descriptor_rejects_inverted_timeout_bounds(self):
+        descriptor = json.loads((EXAMPLES / "tool-descriptor.valid.json").read_text(encoding="utf-8"))
+        descriptor["timeout_ms"] = {"default": 5000, "minimum": 10000, "maximum": 20000}
+        with self.assertRaises(ValueError):
+            self.validate_descriptor_semantics(descriptor)
+
+    def test_tool_descriptor_rejects_inconsistent_idempotency(self):
+        descriptor = json.loads((EXAMPLES / "tool-descriptor.valid.json").read_text(encoding="utf-8"))
+        descriptor["idempotency"] = {"supported": False, "scope": "request"}
+        with self.assertRaises(ValueError):
+            self.validate_descriptor_semantics(descriptor)
 
     def test_tool_descriptor_rejects_unknown_idempotency_scope(self):
         schema = json.loads((SCHEMAS / "tool-descriptor.schema.json").read_text(encoding="utf-8"))
