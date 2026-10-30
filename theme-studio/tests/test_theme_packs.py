@@ -8,7 +8,7 @@ import re
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "theme-studio/schema/theme-pack.schema.json"
 SAMPLES = [
     ROOT / "themes/monochrome/theme.json",
@@ -25,7 +25,7 @@ EXECUTABLE_KEYS = {
     "python", "shell", "entrypoint", "post_install", "pre_install",
 }
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{2,63}$")
-VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$")
+VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$")
 
 
 def walk_keys(value):
@@ -69,7 +69,6 @@ class ThemePackStructuralTests(unittest.TestCase):
         for path in SAMPLES:
             with self.subTest(pack=path.parent.name):
                 pack = json.loads(path.read_text(encoding="utf-8"))
-                # Avoid shipping unreviewed or unlicensed binary assets.
                 self.assertEqual(pack["assets"], [])
 
 
