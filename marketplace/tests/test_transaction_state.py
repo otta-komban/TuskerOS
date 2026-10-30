@@ -78,5 +78,30 @@ class TransactionStateTests(unittest.TestCase):
         self.assertEqual(self.tx, original)
 
 
+    def test_rejects_malformed_digest(self):
+        tx = dict(self.tx, plan_digest="not-a-digest")
+        with self.assertRaisesRegex(TransactionStateError, "SHA-256"):
+            transition_transaction(tx, "cancelled")
+
+    def test_rejects_terminal_flag_mismatch(self):
+        tx = dict(self.tx, terminal=True)
+        with self.assertRaisesRegex(TransactionStateError, "terminal flag"):
+            transition_transaction(tx, "cancelled")
+
+    def test_rejects_untrusted_arbitrary_evidence_fields(self):
+        with self.assertRaisesRegex(TransactionStateError, "sensitive"):
+            transition_transaction(self.tx, "cancelled", {"password": "secret"})
+
+    def test_rejects_malformed_history(self):
+        tx = dict(self.tx, history=[{"secret": "do-not-store"}])
+        with self.assertRaisesRegex(TransactionStateError, "history"):
+            transition_transaction(tx, "cancelled")
+
+    def test_rejects_non_string_current_state(self):
+        tx = dict(self.tx, state=[])
+        with self.assertRaisesRegex(TransactionStateError, "unknown current"):
+            transition_transaction(tx, "cancelled")
+
+
 if __name__ == "__main__":
     unittest.main()
