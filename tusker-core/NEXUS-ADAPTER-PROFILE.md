@@ -98,3 +98,21 @@ This gate reconciles AEGIS-06's confirmed rule that mutation idempotency is mand
 | Mutation without key | descriptor/registry identifies a mutation and key is null | Reject before AEGIS/NEXUS executor dispatch |
 | Mutation without durable idempotency | mutation descriptor has unsupported idempotency or scope `none` | Reject catalogue admission; zero dispatch |
 | Read-only without key | trusted descriptor says read-only, key null | May proceed through normal AEGIS policy preflight |
+
+
+## 8. NEXUS result status mapping — Core adapter behavior
+
+The pure helper `adapters/nexus_result.py` maps a schema-validated NEXUS result to a conservative Core action. It is deliberately not wired to dispatch or persistence yet.
+
+| NEXUS status | Core adapter action | Safety rule |
+|---|---|---|
+| `succeeded` + postcondition `verified` or `not_applicable` | `completed` | Core still checks that all required task postconditions are satisfied before task completion |
+| `succeeded` + `not_verified` or `unknown` postcondition | `verification_required` | Never mark the task completed from provider success alone |
+| `needs_approval` | `reauthorization_required` | Provider/broker approval is not AEGIS authorization; no automatic resume or dispatch |
+| `running` | `running` | Nonterminal |
+| `cancelled` + operation state `stopped` | `cancelled` | Terminal cancellation only after confirmed operation stop |
+| `cancelled` with any other operation state | `reconcile` | Acknowledgement is not proof of stop |
+| `rejected` or `failed` | `failed_preserve_effects` | Core inspects side effects and prior steps before choosing failed vs partially completed |
+| `unknown_outcome`, malformed or unrecognized status | `reconcile` | Never blind retry or infer safe failure |
+
+The helper only classifies an already received result. Its caller remains responsible for schema validation, transactional state transitions, evidence retention, cancellation races, and reconciliation. Unknown statuses fail closed.
