@@ -146,7 +146,7 @@ A valid signature establishes package origin/integrity under a trust policy; it 
 - [ ] NOVA-02 acknowledges desktop token/API contract.
 - [ ] FORGE-09 acknowledges marketplace package boundary.
 - [ ] KDE/Qt surface compatibility research completed against selected Fedora/KDE versions.
-- [ ] Schema validation tests and malicious-package fixtures added.
+- [x] Schema validation tests and malicious-package fixtures added (Draft 2020-12 validator, starter-pack checks, and negative cases committed; CI execution is currently failing and requires diagnosis).
 - [ ] Initial architecture reviewed and accepted as G1 contract baseline.
 
 Only the checked items above have evidence in this commit. Remaining items are open.
