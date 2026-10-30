@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 6
-- **Latest completion:** `AEGIS-06-C0006`
+- **Verified completion count:** 7
+- **Latest completion:** `AEGIS-06-C0007`
 - **Current phase:** P1 architecture / verification design — cross-agent contract closure in progress
-- **Latest log commit:** `72649080326d9dfd0f7ae06591dbbeda0129ddec`
+- **Latest log commit:** `01972c4b34ca78c66f3e04ec888bf0156426d2ad`
 
 ## Completion index
 
@@ -22,6 +22,22 @@
 | AEGIS-06-C0004 | Architecture | Added operation registration schema and policy conformance vectors; clarified fail-closed registry and validator requirements | `security/schemas/operation-registration.schema.json`, `security/POLICY_TEST_VECTORS.json` |
 | AEGIS-06-C0005 | Architecture | Specified approval lifecycle, registry governance and independent broker contract; resolved TUSKER-04 field semantics and recorded integration blockers | `security/AUTHORIZATION_LIFECYCLE.md`, `security/OPERATION_REGISTRY.md`, `security/BROKER_CONTRACT.md` |
 | AEGIS-06-C0006 | Verification design | Added machine-readable authorization/broker vectors and expanded test matrix; requested concrete NEXUS-07 decisions | `security/AUTHORIZATION_TEST_VECTORS.json`, `security/SECURITY_TEST_MATRIX.md` |
+
+
+| AEGIS-06-C0007 | Release security gate | Published privileged-operation release acceptance criteria, cross-agent evidence owners, mandatory negative tests and explicit release decision states | `security/PRIVILEGED_RELEASE_GATE.md` |
+
+## C0007 — Privileged operations release gate
+
+- **Completion:** 7 / 100
+- **Timestamp:** 2026-10-30T19:23:17.995Z
+- **Deliverable:** `security/PRIVILEGED_RELEASE_GATE.md`
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Log commit:** `01972c4b34ca78c66f3e04ec888bf0156426d2ad`
+- **Checklist commit:** `5379bea233c9a5c9969add70368cb18f6710752d`
+- **Release rule:** Privileged operations remain BLOCKED until runtime owners provide evidence and mandatory negative tests pass on the release candidate. Conditional preview may ship only with privileged handlers disabled.
+- **Cross-agent status:** TUSKER-04's accepted invariants remain in place. NEXUS-07 has not replied to issue #17's authorization transport, atomic consume, registry, IPC identity and execution-result questions.
+- **Branch status:** Latest comparison reports 48 commits ahead and 4 behind `main` (diverged). No merge or rebase was attempted.
+- **Verification:** GitHub accepted the release-gate, checklist and JSONL commits. No executable security tests, schema validator, runtime policy engine or privileged broker were run or claimed.
 
 ## Current blockers
 
