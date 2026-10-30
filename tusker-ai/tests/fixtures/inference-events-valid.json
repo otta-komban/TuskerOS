@@ -1,0 +1,32 @@
+[
+  {
+    "request_id": "req-fixture-001",
+    "sequence": 0,
+    "timestamp": "2026-01-01T00:00:00Z",
+    "type": "started",
+    "provider_id": "fake",
+    "model_id": "fixture-model"
+  },
+  {
+    "request_id": "req-fixture-001",
+    "sequence": 1,
+    "timestamp": "2026-01-01T00:00:00.010Z",
+    "type": "text_delta",
+    "delta": "Hello"
+  },
+  {
+    "request_id": "req-fixture-001",
+    "sequence": 2,
+    "timestamp": "2026-01-01T00:00:00.020Z",
+    "type": "usage",
+    "input_tokens": 12,
+    "output_tokens": 1
+  },
+  {
+    "request_id": "req-fixture-001",
+    "sequence": 3,
+    "timestamp": "2026-01-01T00:00:00.030Z",
+    "type": "completed",
+    "finish_reason": "stop"
+  }
+]
