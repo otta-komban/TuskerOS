@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas"
 AUDIT_SCHEMA = json.loads((SCHEMA_DIR / "audit-event.schema.json").read_text())
 APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json").read_text())
+POLICY_SCHEMA = json.loads((SCHEMA_DIR / "policy-decision.schema.json").read_text())
 AUDIT_V020_SCHEMA = json.loads((SCHEMA_DIR / "audit-event-0.2.0.schema.json").read_text())
 
 VALID_EVENT = {
@@ -68,6 +69,10 @@ def audit_validator():
 
 def approval_validator():
     return make_validator(APPROVAL_SCHEMA)
+
+
+def policy_validator():
+    return make_validator(POLICY_SCHEMA)
 
 
 def audit_v020_validator():
@@ -480,3 +485,102 @@ def test_audit_event_v020_non_remote_origin_rejects_remote_bindings(field):
     event = valid_audit_v020_event()
     event[field] = "sha256:" + "a" * 64
     assert list(audit_v020_validator().iter_errors(event))
+
+
+VALID_ALLOW_DECISION = {
+    "schema_version": "0.1.0",
+    "decision_id": "123e4567-e89b-12d3-a456-426614174020",
+    "proposal_id": "123e4567-e89b-12d3-a456-426614174021",
+    "decision": "ALLOW",
+    "reason_code": "POLICY_ALLOWED",
+    "risk_class": "R2",
+    "policy_version": "0.1.0",
+    "action_digest": "sha256:" + "2" * 64,
+    "principal_binding": "sha256:" + "3" * 64,
+    "evaluated_at": "2026-10-31T00:00:00Z",
+    "expires_at": "2026-10-31T00:02:00Z",
+    "approval_request_id": None,
+    "authorization_ref": "opaque-authorization-reference",
+}
+
+
+def test_policy_decision_allow_requires_expiry_and_authorization_reference():
+    assert list(policy_validator().iter_errors(VALID_ALLOW_DECISION)) == []
+    for field in ("expires_at", "authorization_ref"):
+        decision = dict(VALID_ALLOW_DECISION)
+        decision[field] = None
+        assert list(policy_validator().iter_errors(decision))
+
+
+def test_policy_decision_allow_rejects_missing_authorization_reference():
+    decision = dict(VALID_ALLOW_DECISION)
+    del decision["authorization_ref"]
+    assert list(policy_validator().iter_errors(decision))
+
+
+def test_policy_decision_require_approval_requires_request_and_has_no_grant():
+    decision = dict(VALID_ALLOW_DECISION)
+    decision.update(
+        decision="REQUIRE_APPROVAL",
+        expires_at=None,
+        approval_request_id="123e4567-e89b-12d3-a456-426614174022",
+        authorization_ref=None,
+    )
+    assert list(policy_validator().iter_errors(decision))
+
+
+def test_policy_decision_require_approval_rejects_missing_request_id():
+    decision = dict(VALID_ALLOW_DECISION)
+    decision.update(
+        decision="REQUIRE_APPROVAL",
+        expires_at=None,
+        approval_request_id=None,
+        authorization_ref=None,
+    )
+    assert list(policy_validator().iter_errors(decision))
+
+
+def test_policy_decision_require_approval_rejects_grant_reference():
+    decision = dict(VALID_ALLOW_DECISION)
+    decision.update(
+        decision="REQUIRE_APPROVAL",
+        expires_at=None,
+        approval_request_id="123e4567-e89b-12d3-a456-426614174022",
+    )
+    assert list(policy_validator().iter_errors(decision))
+
+
+def test_policy_decision_deny_has_no_expiry_approval_or_authorization():
+    decision = dict(VALID_ALLOW_DECISION)
+    decision.update(
+        decision="DENY",
+        expires_at=None,
+        approval_request_id=None,
+        authorization_ref=None,
+    )
+    assert list(policy_validator().iter_errors(decision))
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("expires_at", "2026-10-31T00:02:00Z"),
+        ("approval_request_id", "123e4567-e89b-12d3-a456-426614174022"),
+        ("authorization_ref", "caller-supplied-grant"),
+    ],
+)
+def test_policy_decision_deny_rejects_authority_bearing_fields(field, value):
+    decision = dict(VALID_ALLOW_DECISION)
+    decision.update(
+        decision="DENY",
+        expires_at=None,
+        approval_request_id=None,
+        authorization_ref=None,
+    )
+    decision[field] = value
+    assert list(policy_validator().iter_errors(decision))
+
+
+def test_policy_decision_rejects_unknown_top_level_authority_claims():
+    decision = dict(VALID_ALLOW_DECISION, caller_principal="root")
+    assert list(policy_validator().iter_errors(decision))
