@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/audit-event-0.1.0.json",
+  "title": "TuskerOS Security Audit Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "timestamp_utc",
+    "event_type",
+    "principal_binding",
+    "origin",
+    "proposal_id",
+    "decision_id",
+    "operation_id",
+    "risk_class",
+    "policy_version",
+    "action_digest",
+    "result_status",
+    "correlation_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "event_type": {
+      "enum": [
+        "requested",
+        "authorized",
+        "started",
+        "succeeded",
+        "failed",
+        "cancellation_requested",
+        "cancelled",
+        "outcome_unknown",
+        "compensation_started",
+        "compensation_verified",
+        "compensation_failed",
+        "approval_granted",
+        "approval_denied",
+        "approval_expired",
+        "policy_denied"
+      ]
+    },
+    "principal_binding": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "origin": {
+      "enum": [
+        "local",
+        "remote",
+        "extension",
+        "system"
+      ]
+    },
+    "task_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "step_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "proposal_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "decision_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "risk_class": {
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ]
+    },
+    "policy_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "approval_request_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "executor_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "result_status": {
+      "enum": [
+        "accepted",
+        "denied",
+        "pending",
+        "success",
+        "failure",
+        "unknown",
+        "cancelled"
+      ]
+    },
+    "reason_code": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 96
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}
