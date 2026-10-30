@@ -31,6 +31,94 @@ VALID_EVENT = {
 }
 
 
+APPROVAL_SCHEMA = json.loads(
+    (SCHEMA_DIR / "approval-request.schema.json").read_text()
+)
+
+VALID_APPROVAL = {
+    "schema_version": "0.2.0",
+    "approval_request_id": "123e4567-e89b-12d3-a456-426614174010",
+    "proposal_id": "123e4567-e89b-12d3-a456-426614174011",
+    "action_id": "system.settings.update",
+    "action_digest": "sha256:" + "c" * 64,
+    "principal_binding": "sha256:" + "d" * 64,
+    "binding": {
+        "session_binding": "sha256:" + "e" * 64,
+        "device_binding": "sha256:" + "f" * 64,
+        "registry_version": "registry-2026-10-31.1",
+        "resource_scope": ["settings:display"],
+        "precondition_digest": "sha256:" + "a" * 64,
+    },
+    "policy_version": "0.1.0",
+    "risk_class": "R2",
+    "summary": "Update display settings",
+    "target": "Display settings",
+    "impact": "Changes the active display configuration",
+    "reversible": True,
+    "created_at": "2026-10-31T00:00:00Z",
+    "expires_at": "2026-10-31T00:05:00Z",
+}
+
+
+def approval_validator():
+    Draft202012Validator.check_schema(APPROVAL_SCHEMA)
+    return Draft202012Validator(
+        APPROVAL_SCHEMA,
+        format_checker=FormatChecker(),
+    )
+
+
+def test_valid_approval_request_with_all_bindings_is_valid():
+    assert list(approval_validator().iter_errors(VALID_APPROVAL)) == []
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "session_binding",
+        "device_binding",
+        "registry_version",
+        "resource_scope",
+        "precondition_digest",
+    ],
+)
+def test_approval_binding_members_cannot_be_omitted(field):
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    del request["binding"][field]
+    assert list(approval_validator().iter_errors(request))
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("session_binding", None),
+        ("device_binding", None),
+        ("registry_version", ""),
+        ("resource_scope", []),
+        ("precondition_digest", "sha256:bad"),
+    ],
+)
+def test_invalid_approval_binding_values_are_rejected(field, value):
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["binding"][field] = value
+    assert list(approval_validator().iter_errors(request))
+
+
+def test_duplicate_resource_scope_is_rejected():
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["binding"]["resource_scope"] = [
+        "settings:display",
+        "settings:display",
+    ]
+    assert list(approval_validator().iter_errors(request))
+
+
+def test_approval_request_rejects_unknown_fields():
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["binding"]["untrusted_identity"] = "root"
+    assert list(approval_validator().iter_errors(request))
+
+
 def audit_validator():
     Draft202012Validator.check_schema(AUDIT_SCHEMA)
     return Draft202012Validator(
