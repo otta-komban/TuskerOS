@@ -341,3 +341,57 @@ def test_audit_event_v020_candidate_rejects_all_post_request_events_without_regi
     event["result_status"] = result_status
     event["reason_code"] = reason_code
     assert list(audit_v020_validator().iter_errors(event))
+
+
+AUDIT_V020_EVENT_STATUS_PAIRS = [
+    ("requested", "accepted"),
+    ("authorized", "success"),
+    ("started", "pending"),
+    ("succeeded", "success"),
+    ("failed", "failure"),
+    ("cancellation_requested", "accepted"),
+    ("cancelled", "cancelled"),
+    ("outcome_unknown", "unknown"),
+    ("compensation_started", "pending"),
+    ("compensation_verified", "success"),
+    ("compensation_failed", "failure"),
+    ("approval_granted", "accepted"),
+    ("approval_denied", "denied"),
+    ("approval_expired", "denied"),
+    ("policy_denied", "denied"),
+]
+
+
+@pytest.mark.parametrize("event_type,result_status", AUDIT_V020_EVENT_STATUS_PAIRS)
+def test_audit_event_v020_candidate_accepts_defined_lifecycle_status_pair(event_type, result_status):
+    event = valid_audit_v020_event()
+    event["event_type"] = event_type
+    event["result_status"] = result_status
+    if result_status in ("denied", "failure"):
+        event["reason_code"] = "AUDIT_TEST_REASON"
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+@pytest.mark.parametrize("event_type,wrong_status", [
+    ("requested", "success"),
+    ("authorized", "denied"),
+    ("started", "success"),
+    ("succeeded", "failure"),
+    ("failed", "success"),
+    ("cancellation_requested", "cancelled"),
+    ("cancelled", "success"),
+    ("outcome_unknown", "failure"),
+    ("compensation_started", "success"),
+    ("compensation_verified", "failure"),
+    ("compensation_failed", "success"),
+    ("approval_granted", "denied"),
+    ("approval_denied", "success"),
+    ("approval_expired", "success"),
+    ("policy_denied", "success"),
+])
+def test_audit_event_v020_candidate_rejects_inconsistent_lifecycle_status_pair(event_type, wrong_status):
+    event = valid_audit_v020_event()
+    event["event_type"] = event_type
+    event["result_status"] = wrong_status
+    event["reason_code"] = "AUDIT_TEST_REASON" if wrong_status in ("denied", "failure") else None
+    assert list(audit_v020_validator().iter_errors(event))
