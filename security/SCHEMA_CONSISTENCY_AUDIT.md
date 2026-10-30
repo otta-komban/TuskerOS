@@ -75,3 +75,45 @@ The top-level `action_digest` remains required and is still the integrity bindin
 **Compatibility:** This is a draft wire-format version change from `0.1.0` to `0.2.0`, not a claim that any runtime producer/consumer has migrated. Existing 0.1.0 messages must not be silently treated as 0.2.0. Runtime owners must confirm the binding source, canonical resource representation, and migration strategy before contract freeze.
 
 **Validation limits:** JSON structure and schema text were reviewed; no Draft 2020-12 meta-schema/format validator, producer fixture, UI presentation test, or runtime enforcement test is claimed. Schema constraints cannot prove that the hashes correspond to trusted values or that resource identifiers are canonical/sorted; those are semantic enforcement requirements.
+
+## C0013 proposal — explicit approval binding envelope (candidate v0.2.0)
+
+SEC-SCHEMA-001 remains **open**. To make the missing contract shape reviewable without silently changing the active v0.1.0 wire format, this proposal defines a candidate nested `approval_binding` object for a separately versioned v0.2.0 schema. The current `security/schemas/approval-request.schema.json` remains unchanged.
+
+Candidate required members:
+
+| Member | Proposed type | Source and enforcement |
+|---|---|---|
+| `session_binding` | `sha256:<64 lowercase hex>` | Trusted transport/authorization service derives this from the authenticated session; never accepted as caller identity. |
+| `device_binding` | `sha256:<64 lowercase hex>` | Trusted OS/session integration derives this from authenticated device context; never accepted as caller identity. |
+| `registry_version` | non-empty string, max 128 | Exact immutable operation-registry version used for evaluation. |
+| `canonical_resources` | unique array of non-empty strings, each max 512 | Resolved canonical resource identifiers. Empty array explicitly means the operation has no resource scope. Canonicalization remains registry/operation-owner defined. |
+| `precondition_digest` | `sha256:<64 lowercase hex>` | Digest of the relevant precondition snapshot. Sensitive snapshot contents may remain in trusted server-side state. |
+
+### Required trust and consume behavior
+
+1. The approval-request producer MUST obtain session/device bindings from authenticated transport/OS context. Caller JSON fields are not proof of identity.
+2. The trusted resolver MUST populate registry version and canonical resources after resolving the registered operation and its target scope.
+3. The authorization authority MUST bind the complete tuple above to the immutable approval record and compare it again at consume time. Any mismatch invalidates the approval and yields no grant.
+4. The precondition digest MUST be recomputed from the current relevant snapshot before consume; a mismatch invalidates approval.
+5. The approval presentation MUST show the operation, target and meaningful resource scope using trusted operation metadata and validated arguments. Raw internal digests need not be displayed.
+6. If authenticated session/device context or a reliable precondition snapshot is unavailable, approval creation/consumption fails closed; a caller-supplied substitute is forbidden.
+
+### Versioning and compatibility
+
+- Candidate version: `0.2.0`; do not mutate the active v0.1.0 schema in place.
+- The candidate is a design proposal only. It is not an active producer contract and does not authorize runtime implementation.
+- Before adoption, NEXUS-07 must confirm how the broker receives and checks the binding tuple at atomic consume; TUSKER-04 must confirm proposal/approval producer compatibility; PILOT-08 and ATLAS-01 must confirm remote/local session and device provenance.
+- On acceptance, publish a separate v0.2.0 schema and positive/negative fixtures, then update the contract's machine-readable artifact index. Keep v0.1.0 compatibility explicit rather than silently reinterpreting its envelope.
+
+### Minimum conformance cases for the candidate
+
+- Valid trusted binding tuple is accepted.
+- Each missing member and each malformed digest is rejected.
+- Duplicate canonical resource identifiers are rejected.
+- Caller-supplied or mismatched session/device binding is rejected at the trusted boundary.
+- Changed registry version, resource set or precondition digest invalidates approval.
+- Every mismatch/unavailable-context case issues no authorization grant and produces zero broker handler calls.
+
+This proposal narrows the field-shape question but does not resolve ownership or transport. **SEC-SCHEMA-001 remains a privileged-release blocker until runtime owners accept and implement the binding checks.**
+
