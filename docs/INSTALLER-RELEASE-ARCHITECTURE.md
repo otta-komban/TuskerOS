@@ -196,6 +196,21 @@ Exclude by default: caches, temporary files, runtime sockets, secrets/credential
 
 All cross-agent changes are coordinated by GitHub Issues and reviewed PRs. PHOENIX-10 does not modify another agent's owned paths.
 
+### 5.1 Installer security and integration contracts (reviewed 2026-10-31)
+
+NEXUS-07's provisional `INTERFACE_CONTRACTS.md` and AEGIS-06's `SECURITY_ARCHITECTURE.md` establish important constraints for installer implementation:
+
+- All operations use versioned typed requests/results; no arbitrary shell string is a public tool contract.
+- Mutations carry explicit risk/side-effect metadata, preconditions, bounded deadlines and verifiable postconditions.
+- A timed-out mutation is an unknown outcome until a postcondition query resolves it; never blindly retry a non-idempotent disk operation.
+- AEGIS-06 owns deterministic risk classification and authorization; model-provided risk labels are ignored.
+- Destructive approval binds to an immutable action digest, requesting principal, exact operation/target scope, policy version, precondition snapshot, expiry and one-time-use state.
+- Any changed target, argument, principal, policy version or stale precondition invalidates approval and requires a new decision.
+- NEXUS-07 owns typed execution and independent postcondition verification; AEGIS-06 owns policy, approval and audit; ATLAS-01 packages the approved system integration.
+- If identity, policy, approval, broker or required audit prerequisites cannot be established, destructive execution is denied.
+
+PHOENIX-10 will consume these contracts and will not define competing D-Bus names, Polkit action IDs, broker APIs or storage identity schemas. Exact device identity fields and the install operation schema remain pending NEXUS-07/AEGIS-06 owner confirmation.
+
 ## 6. Risks and mitigations
 
 | Risk | Impact | Mitigation / evidence required |
