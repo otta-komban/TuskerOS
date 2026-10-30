@@ -171,3 +171,13 @@ This means the Python helper can accept/produce a state record rejected by the p
 
 **Verification limit:** source inspection only. No FORGE code was modified and no FORGE tests were executed. The package execution security gate remains unchanged: approval authentication, exact snapshot revalidation, native locking, durable audit, broker consume and recovery guarantees are still required independently.
 
+
+## C0049 — NEXUS-07 public invocation authorization-boundary re-review
+
+Re-reviewed NEXUS-07 branch `07-system-integration` at `a0cc0a74242070135b6b7937bd7605c7861fe7d8`, including `system-integration/contracts/tool-invocation.schema.json`, `INTERFACE_CONTRACTS.md` and `system-integration/tests/test_contracts.py`.
+
+**Positive change:** the current public invocation schema no longer declares `authorization_context`; top-level `additionalProperties: false` and the closed `caller` object reject undeclared caller-supplied authority claims. This closes the earlier schema-level arbitrary-object allowance for the public v1 envelope.
+
+**Remaining gaps:** the public invocation example in `INTERFACE_CONTRACTS.md` still contains `authorization_context: {}`, conflicting with the machine schema. Neither contract defines a separate typed broker-internal envelope or the trusted injection/consume API. The fetched test module has no explicit negative regression cases for caller-supplied `authorization_context`, `principal`, `decision` or `authorization_ref`, nor a positive test proving authenticated broker context alone reaches AEGIS consume. No implementation/test evidence demonstrates kernel-authenticated IPC identity bound to principal/session or consume-before-mutating-dispatch.
+
+AEGIS posted the focused re-review on NEXUS-07 issue #17 (comment 6534567960), requesting removal of the stale public example field, explicit smuggling-negative tests, a positive trusted-context adapter test, and a typed peer-authentication/atomic-consume integration contract. No NEXUS-owned files were changed and no NEXUS tests were executed. Public-schema rejection is a useful contract improvement, not proof of runtime identity or authorization enforcement; mutating operations remain fail-closed/disabled until those runtime gates are implemented and tested.
