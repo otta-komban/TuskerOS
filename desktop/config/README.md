@@ -21,7 +21,7 @@ Import `load_settings`, `validate_settings`, `save_settings` from `desktop.confi
 
 - `validate_settings(value)` returns a list of validation errors. Partial nested objects are accepted and merged with defaults.
 - `load_settings(path)` returns `(effective_settings, errors)`. A missing file returns defaults without error; malformed, oversized, symlinked, duplicate-key, or invalid input returns defaults with an error list. Duplicate keys at any JSON object depth are rejected to avoid ambiguous last-key-wins parsing.
-- `save_settings(path, value)` validates before writing, creates parent directories, writes a complete effective config to a temporary file with mode `0600`, fsyncs it, and atomically replaces the destination. It refuses symlink destinations and raises `ValueError` for invalid input.
+- `save_settings(path, value)` validates before writing, creates parent directories, writes a complete effective config to a temporary file with mode `0600`, fsyncs the file, atomically replaces the destination, and fsyncs the parent directory so the rename is durable. The temporary file descriptor is managed by a context manager, including on write/fsync failures. atomically replaces the destination. It refuses symlink destinations and raises `ValueError` for invalid input.
 
 The caller chooses the user config path (recommended: `$XDG_CONFIG_HOME/tuskeros/desktop.json`, falling back to `~/.config/tuskeros/desktop.json`). This module does not read environment variables or perform any privileged operation. Integrate with the UI only after settings migration and desktop component contracts are agreed.
 
