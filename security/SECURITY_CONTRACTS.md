@@ -103,7 +103,7 @@ Stable minimum reason codes:
 - POLICY_ACTION_DIGEST_MISMATCH
 - POLICY_VERSION_MISMATCH
 - POLICY_PRECONDITION_FAILED
-- POLICY_AUDIT_UNAVAILABLE
+- POLICY_AUDIT_UNAVAILABLE\n- POLICY_SERVICE_UNAVAILABLE\n- POLICY_ORIGIN_MISMATCH\n- POLICY_AUTHORIZATION_EXPIRED
 - BROKER_CALLER_UNAUTHORIZED
 - BROKER_OPERATION_UNSUPPORTED
 - BROKER_RESOURCE_LIMIT
@@ -127,7 +127,7 @@ Retries MUST re-enter policy evaluation; they MUST NOT reuse stale approval or a
 
 ## 11. Machine-readable artifacts
 
-Draft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, and audit-event.schema.json. The deterministic evaluation and canonicalization rules are in security/POLICY_ENGINE_SPEC.md. Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately.
+Draft JSON Schema 2020-12 files are published under security/schemas/: action-proposal.schema.json, policy-decision.schema.json, approval-request.schema.json, audit-event.schema.json, and operation-registration.schema.json. `security/POLICY_ENGINE_SPEC.md` defines deterministic evaluation and canonicalization; `security/POLICY_TEST_VECTORS.json` supplies language-neutral conformance cases (not yet executed). Operation-specific argument schemas remain owned by the operation registry. The proposal envelope intentionally excludes principal and origin; authenticated context is supplied separately. JSON Schema validators MUST enable format assertion for UUID and date-time fields. The generic proposal schema does not by itself make `idempotency_key` mandatory for mutations; the operation registry enforces that requirement.
 
 ## 12. Compatibility gate
 
