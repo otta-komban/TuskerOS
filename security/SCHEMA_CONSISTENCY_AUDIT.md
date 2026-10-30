@@ -119,3 +119,14 @@ The separate audit-event v0.2.0 candidate now requires `registry_status` and `re
 - Authorization, consume, dispatch and execution events cannot validate with unavailable registry status.
 
 Added Draft 2020-12 tests for both allowed unavailable-registry records and rejection of resolved/null, unavailable/versioned, unavailable/authorized and wrong-reason cases. The active v0.1.0 schema remains unchanged. This is an AEGIS-proposed schema rule; NEXUS-07/TUSKER-04 acceptance and producer integration remain open.
+
+
+## SEC-SCHEMA-005 candidate test result — C0025
+
+The v0.2.0 candidate was refined with required `registry_status` (`resolved`/`unavailable`) and explicit `registry_version` string/null semantics. Unavailable status permits only request receipt or a dedicated fail-closed registry denial; all authorization/consume/dispatch/execution events require a resolved concrete version.
+
+- Initial CI runs 41128733954, 41128742563, 41128747002, 41128751266, 41128838747, 41128848970 and 41128855681 failed two tests: the edit had dropped the existing denial/failure reason-code conditional.
+- Corrected schema retained three independent conditionals (resolved version, unavailable event restriction, and non-empty denial/failure reason).
+- GitHub Actions run 41128922282 succeeded: **54 passed in 0.60s**, Python 3.12.
+
+This validates the candidate schema and JSON fixtures only. Trusted registry provenance, producer behavior, durable audit storage and runtime fail-closed behavior remain untested and owner-dependent.
