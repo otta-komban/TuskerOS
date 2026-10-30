@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 51
-- **Latest completion:** `AEGIS-06-C0051`
+- **Verified completion count:** 52
+- **Latest completion:** `AEGIS-06-C0052`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
-- **Engineering tasks completed:** 41 (separate from assistant responses and commits)
+- **Engineering tasks completed:** 42 (separate from assistant responses and commits)
 - **Latest log commit:** `9aa7bd717db7327d53c01a4add28853958599406`
 
 ## Completion index
@@ -68,6 +68,8 @@
 
 | AEGIS-06-C0049 | cross-agent-security-review | Re-reviewed NEXUS-07 public invocation authorization boundary; confirmed strict schema no longer accepts caller-reachable authorization_context, identified stale public example and missing regression/runtime evidence, posted owner review and updated AEGIS audit/checklist. | NEXUS-07 issue #17 comment 6534567960; security/SCHEMA_CONSISTENCY_AUDIT.md; security/PHASE1_CHECKLIST.md |
 | AEGIS-06-C0050 | security-schema-regression-tests | Added positive/negative policy-decision schema coverage for ALLOW, REQUIRE_APPROVAL and DENY authorization-field invariants; CI passed 145 tests. | security/tests/test_security_schemas.py; security/SECURITY_TEST_MATRIX.md; Actions run 41136487180 (145 passed) |
+| AEGIS-06-C0051 | security-schema-regression-tests | Added action-proposal negative tests rejecting caller-supplied identity, origin, decision, approval and authorization authority fields. | Test `c85635f`; CI run 41136489429 (145 passed); JSONL C0051 |
+| AEGIS-06-C0052 | remote-audit-binding-schema-regression | Added negative tests rejecting raw remote device/session identifiers in candidate audit events; documented AUD-REMOTE-001–006; recorded accepted PILOT-08 security decisions. | Test `197f9fc`; matrix `cdb3848`; checklist `7ce99d5`; CI run 41136489429 (145 passed); issue #13 comment 6534607436 |
 
 ## C0007 — Privileged operations release gate
 
@@ -565,3 +567,10 @@
 - **CI:** [Run 41136489429](https://github.com/otta-komban/TuskerOS/actions/runs/41136489429), Python 3.12, **145 passed in 5.15s**, on descendant commit `7ce99d5b6c25f5db4dcef6712755d4468d53d2dd`.
 - **Test commit:** `c85635fc03df3b8ee4101c40ac853f2690bf7ff3`; JSONL commit: `9aa7bd717db7327d53c01a4add28853958599406`.
 - **Limits:** This is schema regression coverage only. It does not prove runtime identity injection, broker consume, atomic replay prevention, audit persistence or zero-handler-call behavior.
+## C0052 — Remote audit binding regression coverage
+
+- **Completion:** 52 / 100
+- **Engineering tasks completed:** 42 cumulative (+1 this response).
+- **Changes:** Added negative schema coverage for raw `device_id` and `session_id`; documented AUD-REMOTE-001–006; updated the checklist for PILOT-08's accepted DEC-AEG-001–008 security requirements. Remote approval remains disabled for MVP.
+- **Evidence:** Test `197f9fc05714ab34c6b48e376f0ab40768ea7cfa`; matrix `cdb384845a51b813afd8769d17c106a10c1bf5fb`; checklist `7ce99d5b6c25f5db4dcef6712755d4468d53d2dd`; CI [41136489429](https://github.com/otta-komban/TuskerOS/actions/runs/41136489429), Python 3.12, 145 passed; issue #13 comment 6534607436.
+- **Limits:** Schema-level validation only. Trusted digest derivation, audit persistence, pairing/session runtime, HTTP signature validation, revocation and broker consume remain unverified.
