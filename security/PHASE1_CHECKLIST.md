@@ -53,7 +53,8 @@
 - [x] Record proposed broker integration defaults and explicit owner-response checklist; decisions remain unaccepted pending NEXUS-07.  
 - [x] Audit approval-request and audit-event schema consistency against normative contract; document missing approval binding and correlation requirements.
 - [x] Reconcile SEC-SCHEMA-002 by requiring `task_id` and `step_id` keys in audit events while preserving nullable values; producer/standards validation remains pending.  
-- [ ] Record remaining accepted architecture decisions and unresolved contract blockers.
+- [ ] Record remaining accepted architecture decisions and unresolved contract blockers.  
+- [ ] Resolve SEC-SCHEMA-003: decide and version the audit-event `registry_version` field required by authorization lifecycle evidence.
 
 ## Exit evidence
 
@@ -69,6 +70,7 @@
 - [x] Review `main`-only divergence commits and document findings in `security/MAIN_BRANCH_DIVERGENCE_REVIEW.md`.
 - [ ] Obtain NEXUS-07 authorization/broker implementation decisions before freezing privileged runtime contracts.  
 - [x] Publish `security/BROKER_INTEGRATION_DECISIONS.md` with proposed (not accepted) defaults for authorization evidence, atomic consume, registry ownership, IPC identity and UNKNOWN/idempotency.  
-- [x] Draft a versioned v0.2.0 `approval_binding` envelope proposal for SEC-SCHEMA-001 in `security/SCHEMA_CONSISTENCY_AUDIT.md`; active v0.1.0 schema remains unchanged.
-- [ ] Obtain NEXUS-07/TUSKER-04/PILOT-08/ATLAS-01 acceptance of binding provenance and consume-time comparison; then publish candidate schema and positive/negative fixtures.
-- [x] Add automated Draft 2020-12 schema and audit-event envelope tests, including positive correlated/null fixtures and negative required-field/type/format cases; CI run 41126223487 passed (17 tests). Producer integration tests remain open.
+- [x] Publish draft approval-request schema v0.2.0 with required session/device, registry-version, resource-scope and precondition-digest bindings for SEC-SCHEMA-001; runtime-owner acceptance remains pending.
+- [ ] Obtain NEXUS-07/TUSKER-04/PILOT-08/ATLAS-01 acceptance of binding provenance, v0.1.0-to-v0.2.0 migration and consume-time comparison.
+- [x] Add automated Draft 2020-12 schema and audit-event envelope tests, including positive correlated/null fixtures and negative required-field/type/format cases; CI run 41126223487 passed (17 tests). Producer integration tests remain open.  
+- [x] Add positive/negative Draft 2020-12 fixtures for approval-request v0.2.0 binding completeness, digest shape, resource scope and version rejection; CI result pending.
