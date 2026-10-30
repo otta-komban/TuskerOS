@@ -66,6 +66,7 @@
 - [ ] Obtain explicit NOVA-02 confirmation of event/snapshot/control fields.
   - [x] Compare event envelope against Core schema; add missing terminal cancellation event and require trusted origin metadata; request NOVA confirmation (issue #9; owner response pending).
 - [ ] Obtain explicit PILOT-08 confirmation of remote task/identity fields.
+  - [x] Publish Core owner response for DEC-TUS-001 through DEC-TUS-007 and post it to issue #14; decisions remain REVISE except pause/resume DEFERRED, with implementation blockers explicitly retained.
 - [ ] Obtain ATLAS-01 decision on IPC, packaging, service lifecycle and runtime paths.
   - [x] Re-request concrete transport, peer identity, user-service lifecycle, XDG paths and SQLite/WAL recommendation (issue #27; owner response pending).
 - [ ] Record accepted shared decisions and exact contract versions.
