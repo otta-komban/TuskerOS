@@ -21,6 +21,14 @@
 |---:|---|---|---|---|
 | 1 | NOVA-02-C0001 | Activation and repository intake | Reviewed blueprint, inspected repository/branch, reviewed KDE developer docs, drafted desktop architecture and P0-P7 checklist. | `desktop/README.md` 13a8c94; `desktop/PHASE-PLAN.md` 91d3562; completion log 19bf065; initial ledger 976922a. |
 
+## Open coordination requests
+
+- PIXEL-03 theme token/reload contract: [Issue #8](https://github.com/otta-komban/TuskerOS/issues/8)
+- TUSKER-04 task-event/control contract: [Issue #9](https://github.com/otta-komban/TuskerOS/issues/9)
+- NEXUS-07 system status/control APIs: [Issue #10](https://github.com/otta-komban/TuskerOS/issues/10)
+- PILOT-08 remote session/task-origin contract: [Issue #11](https://github.com/otta-komban/TuskerOS/issues/11)
+- ATLAS-01 Fedora/Plasma platform baseline: [Issue #12](https://github.com/otta-komban/TuskerOS/issues/12)
+
 ## Operating rules
 
 - Append one JSONL record for every actual assistant response; never fabricate or backfill counts.
