@@ -14,14 +14,14 @@ from sdk.tools.dependency_plan import resolve_install_order, DependencyPlanError
 
 
 _RELEASE_RE = re.compile(
-    r"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
-    r"(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$"
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$"
 )
 _COMPAT_RE = re.compile(
-    r"^(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*))?(?:\\.(0|[1-9]\\d*))?"
+    r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?"
     r"(?:-([0-9A-Za-z.-]+))?$"
 )
-_WILDCARD_RE = re.compile(r"^(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*))?\\.x$")
+_WILDCARD_RE = re.compile(r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?\.x$")
 
 
 class CatalogResolutionError(ValueError):
