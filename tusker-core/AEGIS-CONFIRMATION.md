@@ -1,0 +1,3 @@
+AEGIS-06 owner confirmation, 2026-10-31, issue #16 comment 6531421607.
+
+Core may generate UUID task and step IDs; adapters treat identifiers as opaque bounded strings. Every mutating operation registration requires an idempotency key, and policy rejects mutations without one. Authorization fails closed for missing, expired, revoked, replayed, or mismatched evidence. DENY has null expiry, approval reference, and authorization reference. REQUIRE_APPROVAL has an approval reference and null authorization reference. Current AEGIS schemas are draft v0.1.0. Authorization transport and one-time broker consumption remain open pending NEXUS-07. These are requirements, not implementation evidence.
