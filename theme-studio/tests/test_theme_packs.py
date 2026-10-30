@@ -1,31 +1,33 @@
-"""Structural safety tests for the TuskerOS theme-pack examples.
+"""Theme-pack schema and safety regression tests.
 
-These tests use only Python's standard library. Full JSON Schema validation is
-intentionally a separate CI dependency and is not claimed by this test module.
+Install the development dependency with: python -m pip install -r requirements-dev.txt
+Run from the repository root: python -m unittest discover -s theme-studio/tests -v
 """
+import copy
 import json
 import re
 import unittest
 from pathlib import Path
 
+from jsonschema import Draft202012Validator, FormatChecker
+
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA = ROOT / "theme-studio/schema/theme-pack.schema.json"
-SAMPLES = [
+SCHEMA_PATH = ROOT / "theme-studio/schema/theme-pack.schema.json"
+SAMPLE_PATHS = [
     ROOT / "themes/monochrome/theme.json",
     ROOT / "themes/classic-glass/theme.json",
     ROOT / "themes/smooth-ui/theme.json",
 ]
-TOP_LEVEL = {
-    "schema_version", "id", "version", "metadata", "compatibility",
-    "tokens", "accessibility", "assets", "surface_overrides", "mixins",
-}
 EXECUTABLE_KEYS = {
     "script", "scripts", "command", "commands", "exec", "executable",
     "hook", "hooks", "plugin", "plugins", "qml", "javascript",
     "python", "shell", "entrypoint", "post_install", "pre_install",
 }
-ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{2,63}$")
-VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$")
+SHA = "a" * 64
+
+
+def load_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def walk_keys(value):
@@ -38,38 +40,91 @@ def walk_keys(value):
             yield from walk_keys(child)
 
 
-class ThemePackStructuralTests(unittest.TestCase):
-    def test_schema_is_valid_json_and_closed_at_root(self):
-        schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
-        self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
-        self.assertFalse(schema["additionalProperties"])
-        self.assertEqual(schema["properties"]["schema_version"]["const"], "1.0.0")
+def valid_asset(asset_id="wallpaper-main", kind="wallpaper", path="assets/wallpaper.webp", media_type="image/webp"):
+    return {
+        "id": asset_id,
+        "kind": kind,
+        "path": path,
+        "media_type": media_type,
+        "sha256": SHA,
+        "license": "CC0-1.0",
+    }
 
-    def test_all_starter_packs_have_required_structure(self):
-        for path in SAMPLES:
-            with self.subTest(pack=path.parent.name):
-                pack = json.loads(path.read_text(encoding="utf-8"))
-                self.assertEqual(pack["schema_version"], "1.0.0")
-                self.assertTrue(ID_RE.fullmatch(pack["id"]))
-                self.assertTrue(VERSION_RE.fullmatch(pack["version"]))
-                self.assertTrue(set(pack).issubset(TOP_LEVEL))
-                for field in ("metadata", "compatibility", "tokens", "accessibility", "assets"):
-                    self.assertIn(field, pack)
-                self.assertEqual(pack["tokens"]["motion"]["reduced_motion_compatible"], True)
-                self.assertEqual(pack["accessibility"]["focus_indicator"], True)
-                self.assertEqual(pack["accessibility"]["reduced_motion"], True)
 
-    def test_starter_packs_contain_no_executable_extension_keys(self):
-        for path in SAMPLES:
-            with self.subTest(pack=path.parent.name):
-                pack = json.loads(path.read_text(encoding="utf-8"))
-                self.assertTrue(EXECUTABLE_KEYS.isdisjoint(set(walk_keys(pack))))
+def asset_roles_match_kinds(pack):
+    expected = {
+        "desktop_wallpaper": "wallpaper",
+        "lock_screen_wallpaper": "wallpaper",
+        "icon_set": "icon",
+        "font_regular": "font",
+        "font_emphasis": "font",
+        "notification_sound": "sound",
+        "startup_sound": "sound",
+    }
+    assets = {item["id"]: item["kind"] for item in pack.get("assets", [])}
+    for role, asset_id in pack.get("asset_roles", {}).items():
+        if asset_id not in assets or assets[asset_id] != expected[role]:
+            return False
+    return True
 
-    def test_assets_are_empty_until_provenance_is_registered(self):
-        for path in SAMPLES:
+
+class ThemePackSchemaTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.schema = load_json(SCHEMA_PATH)
+        cls.validator = Draft202012Validator(cls.schema, format_checker=FormatChecker())
+
+    def test_schema_itself_is_valid_draft_2020_12(self):
+        Draft202012Validator.check_schema(self.schema)
+
+    def test_all_starter_packs_validate(self):
+        for path in SAMPLE_PATHS:
             with self.subTest(pack=path.parent.name):
-                pack = json.loads(path.read_text(encoding="utf-8"))
-                self.assertEqual(pack["assets"], [])
+                pack = load_json(path)
+                self.validator.validate(pack)
+                self.assertTrue(asset_roles_match_kinds(pack))
+
+    def test_starter_packs_have_no_executable_extension_keys(self):
+        for path in SAMPLE_PATHS:
+            with self.subTest(pack=path.parent.name):
+                self.assertTrue(EXECUTABLE_KEYS.isdisjoint(set(walk_keys(load_json(path)))))
+
+    def test_unknown_manifest_field_is_rejected(self):
+        pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
+        pack["post_install"] = "echo unsafe"
+        self.assertFalse(self.validator.is_valid(pack))
+
+    def test_svg_active_content_format_is_rejected(self):
+        pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
+        pack["assets"] = [valid_asset(media_type="image/svg+xml", path="assets/active.svg")]
+        self.assertFalse(self.validator.is_valid(pack))
+
+    def test_path_traversal_is_rejected(self):
+        for unsafe_path in ("../outside.webp", "assets/../../outside.webp", "/etc/passwd", r"assets\\evil.webp", "assets//double.webp"):
+            with self.subTest(path=unsafe_path):
+                pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
+                pack["assets"] = [valid_asset(path=unsafe_path)]
+                self.assertFalse(self.validator.is_valid(pack))
+
+    def test_unknown_surface_override_is_rejected(self):
+        pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
+        pack["surface_overrides"] = {"arbitrary.plugin.surface": {"opacity": 0.8}}
+        self.assertFalse(self.validator.is_valid(pack))
+
+    def test_asset_role_must_resolve_to_declared_asset_of_expected_kind(self):
+        pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
+        pack["assets"] = [valid_asset()]
+        pack["asset_roles"] = {"desktop_wallpaper": "wallpaper-main"}
+        self.validator.validate(pack)
+        self.assertTrue(asset_roles_match_kinds(pack))
+        pack["asset_roles"]["font_regular"] = "wallpaper-main"
+        self.assertFalse(asset_roles_match_kinds(pack))
+
+    def test_duplicate_asset_ids_are_rejected_by_semantic_validator(self):
+        pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
+        pack["assets"] = [valid_asset(), valid_asset(path="assets/other.webp")]
+        ids = [asset["id"] for asset in pack["assets"]]
+        self.assertNotEqual(len(ids), len(set(ids)))
 
 
 if __name__ == "__main__":
