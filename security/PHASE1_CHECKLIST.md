@@ -90,5 +90,5 @@
 
 
 - [x] Specify candidate registry-resolution state: resolved requires a concrete version; unavailable permits only pre-evaluation request receipt or explicit fail-closed registry denial; no authorization/dispatch with unavailable status.
-- [x] Add schema tests for registry-unavailable request/denial, resolved-null, unavailable-with-version, unavailable authorization and wrong reason code; follow-up CI pending.
+- [x] Add schema tests for registry-unavailable request/denial, resolved-null, unavailable-with-version, unavailable authorization and wrong reason code; run 41128922282 passed 54 tests after correcting two conditional-rule regressions found by earlier CI.
 - [ ] Obtain NEXUS-07/TUSKER-04 acceptance of registry_status provenance and event lifecycle before promoting audit-event v0.2.0.
