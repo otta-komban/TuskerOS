@@ -237,11 +237,11 @@ PHOENIX-10 will consume these contracts and will not define competing D-Bus name
   - [ ] P0.1.c Define clean install, preserve-data and manual partitioning scope.
   - [ ] P0.1.d Define account, locale, network and encryption choices.
 - [ ] P0.2 Research current Fedora-supported installer/image/recovery options.
-  - [x] P0.2.a Review Anaconda/Kickstart documentation and bootc Kickstart support.
-  - [x] P0.2.b Review osbuild Image Builder Fedora installation and bootc ISO documentation.
-  - [x] P0.2.c Review bootc staged upgrade and rollback semantics.
-  - [ ] P0.2.d Validate exact Fedora version/tool availability after ATLAS-01 selects the base.
-  - [ ] P0.2.e Compare selected path against a traditional Anaconda/Lorax alternative.
+  - [x] P0.2.a Review Anaconda Live installer, Fedora KDE and WebUI readiness evidence.
+  - [x] P0.2.b Review KIWI NG 11.1.6, Fedora 44 support and Fedora-maintained image-description workflow.
+  - [x] P0.2.c Review osbuild/Image Builder and Lorax as alternatives.
+  - [ ] P0.2.d Build/boot Fedora 44 KDE ISO and QCOW2 POC; record actual tool/package versions.
+  - [ ] P0.2.e Validate Anaconda storage UX and Secure Boot separately.
 - [ ] P0.3 Define backup, restore, rollback and disaster recovery journeys.
   - [ ] P0.3.a Distinguish OS deployment rollback from user-data restore.
   - [ ] P0.3.b Define recovery media and offline recovery requirements.
