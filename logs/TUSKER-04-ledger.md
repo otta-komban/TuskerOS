@@ -19,8 +19,10 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 | TUSKER-04-C0009 | 2026-10-31T00:57:11+05:30 | security-contract-reconciliation | Recorded AEGIS owner confirmation: UUID IDs remain a Core producer rule; mutations require idempotency keys; authorization binding is fail-closed. Transport and one-time broker consumption remain open. | partial | [AEGIS confirmation](../tusker-core/AEGIS-CONFIRMATION.md); [AEGIS issue #16](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6531421607); [checklist update](https://github.com/otta-komban/TuskerOS/commit/c498d0f9b598bfcdc85bf16f0ecae58e63b339d7) |
 
-Current verified response count: 9  
-Current completion sequence: TUSKER-04-C0009  
-Branch history is maintained separately from response count. Latest verified comparison after C0009: 54 commits ahead of main and 4 behind. Two C0006 documentation updates accidentally landed on main; their files were deleted in two cleanup commits, restoring the prior file-content state but not rewriting branch history. Do not force-reset main or merge/rebase blindly; coordinate a history-preserving reconciliation with the repository owner. All subsequent TUSKER-04 artifacts remain on 04-tusker-core.
+| TUSKER-04-C0010 | 2026-10-31T01:04:18+05:30 | security-adapter-contract-reconciliation | Reconciled AEGIS authorization/consume requirements with NEXUS tool/broker boundaries; published provisional Core adapter sequence and requested exact owner decisions on strict context shape, atomic consume, approval handoff and replay handling. | partial | [Authorization adapter record](../tusker-core/AUTHORIZATION-ADAPTER.md); [NEXUS #5 review](https://github.com/otta-komban/TuskerOS/issues/5#issuecomment-6531850660); [AEGIS #16 review](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6531852629) |
+
+Current verified response count: 10  
+Current completion sequence: TUSKER-04-C0010  
+Branch history is maintained separately from response count. Latest verified comparison after C0010 design note and log update: 57 commits ahead of main and 4 behind (checked 2026-10-31T01:04:18+05:30). Two C0006 documentation updates accidentally landed on main; their files were deleted in two cleanup commits, restoring the prior file-content state but not rewriting branch history. Do not force-reset main or merge/rebase blindly; coordinate a history-preserving reconciliation with the repository owner. All subsequent TUSKER-04 artifacts remain on 04-tusker-core.
   
-The JSONL log is append-only. Each entry records the state at the time it was first written; the ledger and branch history provide later commit evidence.
+The JSONL log is append-only. Each entry records the state at the time it was first written; the ledger and branch history provide later commit evidence. The JSONL contains 11 lines for 10 unique completion IDs because C0009 was accidentally duplicated; both C0009 lines are preserved and the duplicate is not counted.
