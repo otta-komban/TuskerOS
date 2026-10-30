@@ -61,7 +61,7 @@
 - [x] Open ORBIT-05 inference contract coordination issue.
 - [ ] Obtain explicit ORBIT-05 acknowledgement and contract.
   - [x] Review published provider proposal and request exact normative request/event/error schemas and cancellation/disconnection semantics (issue #25; owner response pending).
-- [ ] Obtain explicit AEGIS-06 confirmation of identity/digest/decision fields.
+- [x] Obtain AEGIS-06 semantic confirmation for UUID IDs, mutation idempotency, fail-closed ALLOW validation and DENY/REQUIRE_APPROVAL fields (issue #16 comment 6531421607; transport/one-time broker consumption still open).
 - [ ] Obtain explicit NEXUS-07 confirmation of invocation/result/cancellation fields.
 - [ ] Obtain explicit NOVA-02 confirmation of event/snapshot/control fields.
   - [x] Compare event envelope against Core schema; add missing terminal cancellation event and require trusted origin metadata; request NOVA confirmation (issue #9; owner response pending).
