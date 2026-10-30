@@ -49,6 +49,9 @@ The top-level `action_digest` remains required. The schema shape does not prove 
 - GitHub Actions run [41126223487](https://github.com/otta-komban/TuskerOS/actions/runs/41126223487): **17 passed**; all five Draft 2020-12 schemas checked and audit-event correlated/null/negative envelope cases exercised.
 - GitHub Actions run [41126585567](https://github.com/otta-komban/TuskerOS/actions/runs/41126585567): **32 passed**; added positive and negative approval-request v0.2.0 binding-envelope cases.
 - Branch-head run [41126895122](https://github.com/otta-komban/TuskerOS/actions/runs/41126895122): **32 passed in 0.51s** on Python 3.12.
+- An intermediate run [41126754247](https://github.com/otta-komban/TuskerOS/actions/runs/41126754247) failed during pytest collection because a schema path was passed to `json.loads` without reading the file. The test loader was corrected and duplicate schema loading removed.
+- Follow-up run [41126943598](https://github.com/otta-komban/TuskerOS/actions/runs/41126943598): **33 passed in 0.49s**; added a negative test rejecting caller-supplied top-level principal identity.
+- Later branch run [41127219083](https://github.com/otta-komban/TuskerOS/actions/runs/41127219083): **33 passed in 0.52s** on Python 3.12.
 
 These tests validate schema structure and representative JSON envelopes. They do not test a live audit producer, durable audit persistence/integrity, trusted identity derivation, approval UI display, authorization-store atomicity, broker IPC, or privileged runtime execution.
 
