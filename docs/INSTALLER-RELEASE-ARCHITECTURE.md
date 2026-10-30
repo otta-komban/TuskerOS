@@ -147,16 +147,15 @@ First-boot setup is idempotent and resumable. It should:
 ### 3.4 Updates and rollback
 
 For the provisional mutable RPM/DNF MVP:
-- fetch metadata and image by immutable digest, validate trust policy, architecture, channel and minimum version;
-- stage/download without changing the running deployment;
-- verify disk space, image signature/provenance and compatibility before activation;
-- schedule reboot/activation with user-visible control and clear deferral;
-- run post-boot health checks; record the deployment that was booted and test result;
-- keep a known-good deployment and expose a documented rollback path;
-- suppress/reconcile automatic update scheduling during rollback so the failed release is not immediately reapplied;
-- handle boot failure, interrupted downloads and failed health checks without corrupting the currently running deployment.
+- consume signed repository/channel metadata and verify TLS, repository identity and RPM signatures; never use `--nogpgcheck`;
+- define update windows, user-visible deferral, disk-space checks and dependency/conflict preflight;
+- download/cache packages before applying transactions where possible; record transaction IDs and package NEVRAs;
+- apply DNF transactions with explicit failure reporting and post-update service/desktop health checks;
+- do not promise automatic rollback of arbitrary RPM transactions; define recovery as repair/reinstall from signed media plus restoration of user data and configuration backups;
+- evaluate Btrfs snapshots or other filesystem snapshots only after ATLAS-01 confirms filesystem layout and restore semantics; snapshots are not a substitute for tested backups;
+- document downgrade policy and ensure security fixes are not silently held back.
 
-For a traditional mutable RPM/DNF base, do not claim bootc-style atomicity. Define package transaction policy, snapshots (if available), backups and recovery separately with ATLAS-01.
+Bootc/OSTree staged deployment and rollback are deferred to a separate ADR. If later selected, test `/etc` rollback/migration, `/var` persistence, driver compatibility, offline staging, failed-boot recovery and update-timer suppression before advertising transactional rollback.
 
 ### 3.5 Backup and restore boundaries
 
