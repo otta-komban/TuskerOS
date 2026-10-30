@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 16
-- **Latest completion:** `AEGIS-06-C0016`
+- **Verified completion count:** 17
+- **Latest completion:** `AEGIS-06-C0017`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `11f55c2504b588f26e5d11682d3ceffdb5e5d7e7`
+- **Latest log commit:** `27ad3941afcc3fda275ef001bd695ff53db54fd1`
 
 ## Completion index
 
@@ -117,7 +117,7 @@
 
 
 | AEGIS-06-C0012 | Schema contract correction | Reconciled audit correlation requiredness while retaining explicit null semantics; recorded remaining validation and approval-binding blockers | security/schemas/audit-event.schema.json; security/SCHEMA_CONSISTENCY_AUDIT.md |
-| AEGIS-06-C0013 | Approval binding proposal | Drafted a candidate v0.2.0 binding envelope in the schema audit without changing active v0.1.0 wire format; owner acceptance remains pending | security/SCHEMA_CONSISTENCY_AUDIT.md; commits 806cb35, 3a14d3f (JSONL record pending) |
+| Historical design note | Approval binding proposal | Superseded by the versioned v0.2.0 approval schema; retained as rationale, not counted as a separate completion | security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md |
 
 ## C0012 — Audit correlation schema correction
 
@@ -152,20 +152,20 @@
 
 
 
-## C0017 — Approval-binding lifecycle crosswalk and concurrent-change reconciliation
+## C0015 — Approval-binding lifecycle crosswalk and concurrent-change reconciliation
 
 - **Completion:** 17 / 100
 - **Timestamp:** 2026-10-30T20:53:29.909Z
 - **Deliverable:** `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md` (historical design rationale; supersession note added).
-- **Concurrent branch state:** C0013 published approval-request schema v0.2.0 with typed session/device, registry-version, resource-scope and precondition-digest bindings. C0015 added automated Draft 2020-12/audit-envelope validation; CI run 41126223487 reports 17 passed. C0016 defined the fresh ALLOW + opaque authorization_ref handoff and typed consume outcomes.
-- **Reconciliation:** This design-analysis completion is C0017. The historical proposal was not a second schema change; it is explicitly marked superseded by the current v0.2.0 draft. C0013/C0015/C0016 remain separate completion records.
+- **Concurrent branch state:** C0013 published approval-request schema v0.2.0 with typed session/device, registry-version, resource-scope and precondition-digest bindings. C0014 added automated Draft 2020-12/audit-envelope validation; CI run 41126223487 reports 17 passed. C0016 defined the fresh ALLOW + opaque authorization_ref handoff and typed consume outcomes; C0017 added approval-binding regression fixtures and a 32-test CI run.
+- **Reconciliation:** This reconciliation is C0015. The historical proposal was not a second schema change; it is explicitly marked superseded by the current v0.2.0 draft. C0013, C0014, C0016 and C0017 remain separate completion records.
 - **Review value:** Retains lifecycle mapping, trusted server-side binding-reference alternative, consume-time revalidation, atomic one-time consumption, durable consumption ID, lost-response reconciliation and closure evidence.
 - **Current contract status:** v0.2.0 remains draft pending runtime-owner compatibility/migration acceptance. Schema and fixture CI do not prove producer integration, trusted identity derivation, broker enforcement or privileged runtime behavior.
 - **Cross-agent blocker:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. Runtime/API transport, peer identity, durable atomic consume and UNKNOWN/idempotency reconciliation remain open.
 - **Commits:** Historical proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; supersession note `d007d8220977fb848a1d7de1b4a4df26ffd07880`; JSONL reconciliation `9a5785663842d2e21a501861e0efabfe13b699ba`.
-- **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0017.
+- **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0015.
 
-| AEGIS-06-C0015 | Schema validation CI | Added Draft 2020-12 validation and audit-event positive/negative tests; CI passed 17 tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
+| AEGIS-06-C0014 | Schema validation CI | Added Draft 2020-12 validation and audit-event positive/negative tests; CI passed 17 tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
 | AEGIS-06-C0016 | Approval handoff contract | Defined fresh post-approval ALLOW + opaque authorization reference, typed consume outcomes and conformance cases; answered TUSKER-04's AEGIS-owned questions | security/AUTHORIZATION_LIFECYCLE.md; security/BROKER_CONTRACT.md; security/AUTHORIZATION_TEST_VECTORS.json; security/SECURITY_TEST_MATRIX.md |
 
 ## C0016 — Approval handoff and typed consume outcomes
@@ -181,3 +181,14 @@
 - **Cross-agent:** Posted AEGIS clarification on TUSKER-04 issue #16, comment 6533203333. NEXUS-07 issue #17 remains unanswered; runtime transport/API and durable transaction decisions remain open.
 - **Verification limits:** Documentation/fixture update only. No Draft 2020-12 validator, executable tests, runtime implementation or privileged operation claimed for C0016.
 - **Commits:** Lifecycle `ce955e413de453706bc37eb0c4a0a8c5af5c1334`; broker `c2c2d9080691454a2a18dc271f7d173350a25033`; vectors `43bac949a05c3d806de1c5e9fafcff2d55f94723`; matrix `08412fb36a80e706f45e8ba5851b0d49e094e86b`; checklist `dd17159c5347b7753bfcc3a51785cd8e9233b797`; JSONL `76fd87bfb40b7cfadc5143d7365715ab6f247c06`.
+
+
+| AEGIS-06-C0017 | Approval schema regression tests | Added positive/negative v0.2.0 approval-binding fixtures; CI validated all five Draft 2020-12 schemas with 32 passing tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
+
+## C0017 — Approval schema regression tests
+
+- **Completion:** 17 / 100
+- **Timestamp:** 2026-10-30T20:54:20.883Z
+- **Verification:** GitHub Actions run 41126585567 passed 32 tests, including positive and negative approval-request v0.2.0 binding cases and all five Draft 2020-12 security schemas.
+- **Scope:** Schema and envelope validation only; no audit producer, trusted identity derivation, authorization service, privileged broker or live runtime was exercised.
+- **Blocker:** NEXUS-07 runtime transport/API and broker contract remain unanswered; schema migration and trusted binding enforcement require owner acceptance and integration tests.
