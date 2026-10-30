@@ -204,3 +204,14 @@
 - **Latest JSONL commit:** `daaa4c6cfb854340833185e029e86cab0d6c2732`.
 - **Branch-head CI:** Run [41126895122](https://github.com/otta-komban/TuskerOS/actions/runs/41126895122) succeeded; 32 tests passed in 0.51s.
 - **Reason:** Concurrent branch updates briefly left the readable ledger one completion behind the machine log; the ledger now includes this reconciliation.
+
+| AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger with the verified JSONL history after concurrent branch updates | logs/AEGIS-06.jsonl; logs/AEGIS-06-ledger.md |
+
+## C0018 — Progress ledger reconciliation
+
+- **Completion:** 18 / 100
+- **Timestamp:** 2026-10-30T20:55:25.491Z
+- **Action:** Updated the readable ledger to reflect the latest verified completion record and preserved the existing completion history.
+- **Verification at record time:** JSONL contained 17 unique sequential records through C0017; GitHub Actions run 41126895122 succeeded with 32 tests on Python 3.12.
+- **Current reconciliation note:** This JSONL now contains 18 unique sequential records through C0018; this ledger entry brings the readable count into alignment.
+- **Open blockers:** SEC-SCHEMA-001 runtime-owner acceptance; SEC-SCHEMA-003 audit `registry_version` decision; NEXUS-07 transport/atomic-consume implementation; audit producer/persistence tests.
