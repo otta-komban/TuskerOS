@@ -36,7 +36,7 @@ This is a greenfield branch. Do not infer implementation or test status from pla
 
 ## 3. Fedora release assessment (initial, time-sensitive)
 
-As of 2026-10-31, Fedora 44 is the current released KDE Plasma desktop download and a supported stable baseline. Fedora 45 is still pre-release: the Fedora 45 final Go/No-Go decision was NO-GO on 2026-10-29, with the next target date reported as 2026-11-03. Therefore:
+As of 2026-10-31, Fedora 44 is the current released KDE Plasma desktop download and a supported stable baseline. Fedora 45 is still pre-release on 2026-10-31: the Fedora 45 final Go/No-Go meeting on 2026-10-29 declared the release GO, with the target date of 2026-11-03. Therefore:
 
 - **Provisional development baseline: Fedora 44.**
 - Do not pin production images to Fedora 45 until Fedora Project marks it GA and the selected build tooling supports it in a stable/reproducible way.
@@ -45,7 +45,7 @@ As of 2026-10-31, Fedora 44 is the current released KDE Plasma desktop download 
 
 Sources checked:
 - Fedora KDE download page: https://fedoraproject.org/kde/download/
-- Fedora 45 final Go/No-Go meeting log: https://meetbot.fedoraproject.org/meeting_matrix_fedoraproject-org/2026-10-22/f45-final-go-no-go-meeting.2026-10-22-17.00.html
+- Fedora 45 final Go/No-Go meeting log: https://meetbot.fedoraproject.org/meeting_matrix_fedoraproject-org/2026-10-29/f45-final-go-no-go-meeting.2026-10-29-18.02.html
 - Fedora release lifecycle: https://docs.fedoraproject.org/en-US/releases/lifecycle/
 - Fedora image building overview: https://fedoraproject.org/wiki/Building_a_Fedora
 
