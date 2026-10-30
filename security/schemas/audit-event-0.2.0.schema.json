@@ -177,6 +177,16 @@
     "snapshot_digest": {
       "type": "string",
       "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "device_binding": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Digest of the registered remote device public-key thumbprint; required when origin is remote."
+    },
+    "session_binding": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Digest of the random server-side remote session identifier; required when origin is remote."
     }
   },
   "allOf": [
@@ -609,6 +619,40 @@
         "required": [
           "result_status"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "remote"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "required": [
+          "device_binding",
+          "session_binding"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "device_binding"
+              ]
+            },
+            {
+              "required": [
+                "session_binding"
+              ]
+            }
+          ]
+        }
       }
     }
   ],
