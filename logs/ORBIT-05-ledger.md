@@ -7,21 +7,21 @@ Machine-readable log: logs/ORBIT-05.jsonl
 
 ## Current state
 
-- Verified assistant responses recorded: 8
+- Verified assistant responses recorded: 9
 - Target: 100 actual assistant responses
 - Current phase: P1 provider lifecycle/conformance, machine-readable event contract, automated contract CI, benchmark methodology, model governance and security review
 - Starting branch commit: 8c463dcec409fc9354b2adcb9b51a722d7c97fe5
-- Latest relevant commits: provider contract 9581ee87599db9d2890ef0456e46f96c04e54677; cross-agent alignment ca1cdd31f6d7fc0b186f8c7bf70d0d4ec7b24a27; Fedora integration 364aeb448eaa0eb15c47b6166ec44570342d5ffa; latest contract CI workflow 170876b33cefc173c29806a066c9b7a6a8d1c828; C0008 log/ledger commits pending.
+- Latest relevant commits: provider contract 9581ee87599db9d2890ef0456e46f96c04e54677; cross-agent alignment ca1cdd31f6d7fc0b186f8c7bf70d0d4ec7b24a27; Fedora integration 364aeb448eaa0eb15c47b6166ec44570342d5ffa; latest successful contract test commit 22682dec101e6ec239a985555ce9e1cc542037a8; C0009 log/ledger commits pending.
 - Benchmarks performed: 0 (protocol proposal published; no measurements)
 - Model manifest schema: proposed 0.1.0; synthetic valid fixture and Draft 2020-12 positive/negative test harness committed; tests not yet executed
 - Model catalog admission policy: proposal published; no model approved
-- Provider lifecycle/conformance: 8 lifecycle states and 24 test scenarios specified; language-neutral inference event schema and synthetic trace fixture committed; test harness not executed; adapter implementation and provider conformance not executed
+- Provider lifecycle/conformance: 8 lifecycle states and 24 test scenarios specified; language-neutral inference event schema and synthetic trace fixture committed; schema/fixture test harness executed successfully in GitHub Actions run 41116139411; adapter implementation and provider conformance not executed
 - Hardware recommendation method: proposal published; no measured fit recommendations
 - Runtime/model defaults selected: none
 - Repository intake: initial branch contained LICENSE only; ORBIT-05 documentation and logs have been added.
 - Planning source: Project Library TuskerOS_Ten_Agent_Execution_Blueprint.md, including agent registry, shared phase/dependency rules, quality/release gates and ORBIT-05 P0–P7 plan.
 - Platform context: ATLAS-01 proposes Fedora 44/x86_64 as the initial development baseline; this is provisional pending its build/image POC and architecture decision.
-- Open blockers: provider contract awaits TUSKER-04/NEXUS-07 review; ATLAS-01 package/service review and AEGIS-06 security review are open; exact-version license audits and benchmark hardware remain outstanding; event-schema/model-manifest test harness has not been executed; CI workflow has been committed but no run is available yet.
+- Open blockers: provider contract awaits TUSKER-04/NEXUS-07 review; ATLAS-01 package/service review and AEGIS-06 security review are open; exact-version license audits and benchmark hardware remain outstanding; schema/fixture CI run 41116139411 passed after C0009 fixes; provider and security reviews, Fedora packaging, exact-version license audits and benchmark host remain outstanding.
 
 ## Completion history
 
@@ -34,7 +34,8 @@ Machine-readable log: logs/ORBIT-05.jsonl
 | ORBIT-05-C0005 | Model catalog admission / schema testing | Added model catalog admission policy, synthetic manifest fixture and Draft 2020-12 positive/negative schema tests with isolated dependencies. | tusker-ai/docs/MODEL-CATALOG-POLICY.md; tusker-ai/tests/fixtures/model-manifest-valid.json; tusker-ai/tests/test_model_manifest_schema.py; tusker-ai/requirements-test.txt; commits ad570b7041e5e6dd95ce4da692804f9b8a2bcd17, e376d6f25220d19e3412f28a1c283ff0d99053fc, 5261c88f554355be730c004c5a9897bac01f4906, 951e1330ea781f3b5a5f5317b11af8b7ac4e76f1, 8e691a52367f2e0f750d990832b20e43776071dd. Tests not executed. |
 | ORBIT-05-C0006 | Provider lifecycle / conformance design | Specified eight lifecycle states, request/event invariants, cancellation/deadline/concurrency semantics and 24 conformance scenarios; linked from checklist. | tusker-ai/docs/PROVIDER-CONFORMANCE.md commit f2e45714ed70ce1e1a2f514f24c9b08c877ba77c; CHECKLIST.md commit e485f5cef1871cf370555bd64957767ca4ea9a1e. No adapter or provider tests executed. |
 | ORBIT-05-C0007 | Provider contract / schema / conformance tests | Added language-neutral inference event schema, synthetic success trace, schema and trace-level test assertions; linked artifacts from conformance plan and checklist. Tests authored, not executed. | tusker-ai/schemas/inference-event.schema.json; tusker-ai/tests/fixtures/inference-events-valid.json; tusker-ai/tests/test_inference_event_schema.py; commits e5cd9b94622e5f64920ceacf53c70fc22ff731ec, 2bd0503ccc1bf4a7dd8bc036a9ee60c23509a419, dd9327a4a5605f6eaed513ea01bfebc97454c701, 561a88db41baef93b8ae9794653e1034952956ed, 131c56a0a61c696da3d6cb31311de65cd2d18fbf, bfbaa92a3a31d0246ec295010f5bf7b473de2309. |
-| ORBIT-05-C0008 | Contract validation / CI | Added focused GitHub Actions workflow for model manifest and inference event schema/fixture tests; documented gate and checked outstanding cross-agent reviews. No workflow run yet; no test pass claimed. | .github/workflows/tusker-ai-contracts.yml commit 170876b33cefc173c29806a066c9b7a6a8d1c828; PROVIDER-CONFORMANCE.md and CHECKLIST.md updates; issues #20/#22/#26/#28 open, zero comments. |
+| ORBIT-05-C0008 | Contract validation / CI | Added focused GitHub Actions workflow for model manifest and inference event schema/fixture tests; documented gate and checked outstanding cross-agent reviews. | .github/workflows/tusker-ai-contracts.yml commit 170876b33cefc173c29806a066c9b7a6a8d1c828. Initial run failed; failures diagnosed in C0009. |
+| ORBIT-05-C0009 | Contract validation / CI debugging | Expanded inference-event schema and trace tests; fixed format dependencies, schema property evaluation and trace assertions; latest GitHub Actions suite passed. | CI run 41116139411 on 22682dec101e6ec239a985555ce9e1cc542037a8; inference event schema, test suite and requirements updates. |
 
 ## Rules
 
