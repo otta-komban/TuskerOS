@@ -7,8 +7,8 @@
 
 ## Current state
 
-- **Verified completion count:** 17
-- **Latest completion:** `AEGIS-06-C0017`
+- **Verified completion count:** 18
+- **Latest completion:** `AEGIS-06-C0018`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
 - **Latest log commit:** `27ad3941afcc3fda275ef001bd695ff53db54fd1`
 
@@ -192,3 +192,15 @@
 - **Verification:** GitHub Actions run 41126585567 passed 32 tests, including positive and negative approval-request v0.2.0 binding cases and all five Draft 2020-12 security schemas.
 - **Scope:** Schema and envelope validation only; no audit producer, trusted identity derivation, authorization service, privileged broker or live runtime was exercised.
 - **Blocker:** NEXUS-07 runtime transport/API and broker contract remain unanswered; schema migration and trusted binding enforcement require owner acceptance and integration tests.
+
+
+| AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger with the 18 unique JSONL completion records and verified passing branch-head schema CI | `logs/AEGIS-06.jsonl`, `logs/AEGIS-06-ledger.md` |
+
+## C0018 — Completion ledger reconciliation
+
+- **Completion:** 18 / 100
+- **Timestamp:** 2026-10-30T20:55:25.491Z
+- **JSONL:** 18 records with unique sequential IDs C0001–C0018.
+- **Latest JSONL commit:** `daaa4c6cfb854340833185e029e86cab0d6c2732`.
+- **Branch-head CI:** Run [41126895122](https://github.com/otta-komban/TuskerOS/actions/runs/41126895122) succeeded; 32 tests passed in 0.51s.
+- **Reason:** Concurrent branch updates briefly left the readable ledger one completion behind the machine log; the ledger now includes this reconciliation.
