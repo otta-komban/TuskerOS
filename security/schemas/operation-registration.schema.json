@@ -179,11 +179,7 @@
       "if": {
         "properties": {
           "minimum_risk_class": {
-            "enum": [
-              "R2",
-              "R3",
-              "R4"
-            ]
+            "const": "R2"
           }
         },
         "required": [
@@ -197,6 +193,28 @@
               "on_escalation",
               "always"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "minimum_risk_class": {
+            "enum": [
+              "R3",
+              "R4"
+            ]
+          }
+        },
+        "required": [
+          "minimum_risk_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "approval_mode": {
+            "const": "always"
           }
         }
       }
