@@ -90,3 +90,10 @@ The candidate combines SEC-SCHEMA-003 and SEC-SCHEMA-004:
 The test suite now loads the candidate through the same Draft 2020-12 validator and format checker used for the existing schemas. Added positive/negative cases cover required fields, explicit nulls, invalid and overlength values, denial/failure reason requirements, and rejection of cross-version envelopes. CI execution is pending.
 
 This establishes schema-level candidate behavior only. It does not establish that a trusted producer can supply registry_version, that executor/reason semantics are accepted by event producers, or that audit persistence/integrity is implemented. Keep the candidate unpromoted until NEXUS-07 and TUSKER-04 accept provenance, lifecycle semantics and migration.
+
+
+## Open design question — registry unavailable before evaluation (SEC-SCHEMA-005)
+
+The required non-empty `registry_version` above is not yet sufficient to define every lifecycle event. `AUTHORIZATION_LIFECYCLE.md` requires request-created and denial events, while `OPERATION_REGISTRY.md` requires deny-all when no trustworthy registry snapshot is available. The proposal does not yet define a truthful registry field for those pre-evaluation/failure events.
+
+Do not fabricate `unknown`, use an empty string, or silently omit the event. Before freezing 0.2.0, NEXUS-07 and TUSKER-04 must decide whether a pre-evaluation event carries an explicit null plus a separate registry-resolution state/reason, while ALLOW/CONSUMED/dispatch events require a concrete immutable version. The decision must preserve correlation across decision, consume and execution audit records. This remains an open question; the proposed non-null field is not approved for all event types.
