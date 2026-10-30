@@ -52,4 +52,4 @@ The tests validate the Draft 2020-12 schema and starter manifests, and include n
 
 ## Preview rendering contract (draft)
 
-The isolated preview-session manager is not yet connected to KDE/Qt. The proposed adapter boundary, request schema, capability negotiation, isolation requirements and failure semantics are documented in `contracts/preview-rendering-contract.md`. It is a draft for NOVA-02 review, not an approved integration API. No preview adapter, apply path or persistent desktop mutation is implemented by this contract.
+The isolated preview-session manager is not yet connected to KDE/Qt. The proposed adapter boundary, request, capability and response schemas, status-specific acknowledgement validation, capability negotiation, isolation requirements and failure semantics are documented in `contracts/preview-rendering-contract.md`. It is a draft for NOVA-02 review, not an approved integration API. No preview adapter, apply path or persistent desktop mutation is implemented by this contract.
