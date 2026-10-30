@@ -56,3 +56,10 @@ Manifest schema review; SPDX vs CycloneDX; provenance and signature formats; key
 The initial JSON Schema is at `schemas/release-manifest.schema.json` (JSON Schema Draft 2020-12, schema version `1.0.0`). It defines required release/source/recipe/platform/repository/package/SBOM/provenance/artifact fields, exact artifact byte size and SHA-256, optional signature evidence references, and explicit per-artifact test statuses.
 
 This schema is a structural contract only. It does not prove that referenced evidence exists, that a digest matches downloaded bytes, that a signature is trusted, that a timestamp is actually UTC, or that required tests passed. Those checks belong in the release validator and promotion policy. A candidate must not advance merely because it passes JSON Schema validation. The schema is an initial PHOENIX-10 proposal pending ATLAS-01 and AEGIS-06 review; signing formats and anti-rollback policy remain owner-controlled and unresolved.
+
+
+## Validation-plan and schema-tightening update (C0007)
+
+The schema now requires Git commit identifiers to be exactly 40 or 64 lowercase hexadecimal characters, requires a UTC `Z` suffix on the timestamp (with date-time format assertion enabled by the validator), and rejects empty repository, package and firmware-target inventories. The validation matrix is documented in `docs/RELEASE-MANIFEST-VALIDATION-PLAN.md` and separates structural validation from semantic checks, evidence-byte verification, test-gate evaluation, signing and staged-download verification.
+
+C0007 performed a JSON parse and focused schema-structure smoke check for the Draft 2020-12 declaration, commit patterns, UTC suffix pattern, non-empty arrays and test-status enum. This was a small in-tool structural smoke check only; no Draft 2020-12 validator, fixture suite, evidence fetch, digest verification, signing or promotion test was run. The schema and validation plan remain proposals pending owner review.
