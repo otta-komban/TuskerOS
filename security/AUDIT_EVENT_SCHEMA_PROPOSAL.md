@@ -89,7 +89,7 @@ The candidate combines SEC-SCHEMA-003 and SEC-SCHEMA-004:
 - retains required nullable `task_id` and `step_id`;
 - fixes `schema_version` to `0.2.0` and uses a distinct schema identifier.
 
-The test suite now loads the candidate through the same Draft 2020-12 validator and format checker used for the existing schemas. Added positive/negative cases cover required fields, explicit nulls, invalid and overlength values, denial/failure reason requirements, and rejection of cross-version envelopes. CI execution is pending.
+The test suite now loads the candidate through the same Draft 2020-12 validator and format checker used for the existing schemas. Added positive/negative cases cover required fields, explicit nulls, invalid and overlength values, denial/failure reason requirements, and rejection of cross-version envelopes. GitHub Actions run 41128179870 passed 47 tests in 0.45s for the initial candidate before SEC-SCHEMA-005 registry-state semantics were added.
 
 This establishes schema-level candidate behavior only. It does not establish that a trusted producer can supply registry_version, that executor/reason semantics are accepted by event producers, or that audit persistence/integrity is implemented. Keep the candidate unpromoted until NEXUS-07 and TUSKER-04 accept provenance, lifecycle semantics and migration.
 
@@ -112,3 +112,16 @@ The candidate v0.2.0 schema now requires both `registry_status` and `registry_ve
 - No ALLOW/authorization, consume, dispatch, success, failure or UNKNOWN execution event can use unavailable registry status. Those events require a resolved immutable registry version.
 
 This is an AEGIS schema proposal, not a claim that NEXUS-07 has accepted the state source or that producers can currently emit it. The registry authority must derive `registry_status` and `registry_version`; caller/model/UI values are untrusted. Keep SEC-SCHEMA-005 open for owner review and producer lifecycle validation.
+
+
+## Registry-unavailable semantics and validation — C0025
+
+The candidate now requires `registry_status` and `registry_version` as a pair:
+
+- `registry_status: resolved` requires a concrete non-empty immutable version.
+- `registry_status: unavailable` requires `registry_version: null` and permits only a pre-evaluation `requested`/`accepted` event with null reason, or a fail-closed `policy_denied`/`denied` event with `POLICY_REGISTRY_UNAVAILABLE`.
+- No authorization, consume, dispatch or execution event can validate with unavailable status.
+
+The first CI attempt after adding these rules failed two tests because the schema edit accidentally replaced (rather than preserved) the prior denial/failure non-empty reason-code condition. That failure was corrected by retaining all three independent conditional rules. GitHub Actions run 41128922282 then passed **54 tests in 0.60s** on Python 3.12.
+
+The active v0.1.0 schema remains unchanged. This is schema-level validation only; the trusted status source, producer event timing and migration still require NEXUS-07/TUSKER-04 acceptance. The candidate must not be treated as runtime conformance.
