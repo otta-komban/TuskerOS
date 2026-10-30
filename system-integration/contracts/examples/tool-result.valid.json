@@ -14,5 +14,15 @@
   "timing": {
     "duration_ms": 12
   },
-  "error": null
+  "error": null,
+  "task_id": "task-1",
+  "step_id": "step-1",
+  "correlation_id": "corr-1",
+  "cancellation": {
+    "request_state": "not_requested",
+    "operation_state": "completed"
+  },
+  "evidence_refs": [
+    "system-snapshot:op-1"
+  ]
 }
