@@ -129,3 +129,8 @@ Lifecycle records now validate lowercase SHA-256 plan/snapshot digests, terminal
 The validator also verifies history continuity from the initial `prepared` state, checks required evidence on historical transitions, and requires a valid differing observed snapshot digest for a `stale` event. A malformed or discontinuous lifecycle history is rejected rather than repaired silently.
 
 The lifecycle validator also rejects history-free records unless their initial state is `prepared`; persisted non-initial states must carry a continuous transition history.
+
+
+## Trusted package transaction adapter boundary
+
+The draft contract in `docs/PACKAGE_TRANSACTION_ADAPTER_CONTRACT.md` defines the required sequence from immutable preview through external approval authentication, fresh state revalidation, native package-manager lock, bounded execution, read-back verification, recovery and durable audit. It assigns trust/policy to AEGIS-06 and package execution/recovery to PHOENIX-10. It also defines failure handling, idempotency and conformance tests. This is a design contract only: no executor is implemented, and implementation remains blocked pending the named partner decisions.
