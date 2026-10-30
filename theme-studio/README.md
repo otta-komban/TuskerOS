@@ -49,3 +49,7 @@ The tests validate the Draft 2020-12 schema and starter manifests, and include n
 ## Preview sessions
 
 `runtime/preview_sessions.py` provides an owner-scoped, in-memory preview-session manager for resolved composition snapshots. Sessions default to a five-minute lifetime and a 32-session process-local capacity. Reads return detached copies; owners cannot read or cancel another owner's session. Expiry is checked on access and capacity operations, and callers can invoke `cleanup_expired()` periodically. Preview sessions never activate profiles, write the profile store, or apply desktop settings. Desktop rendering and transactional apply/rollback are separate future integrations.
+
+## Preview rendering contract (draft)
+
+The isolated preview-session manager is not yet connected to KDE/Qt. The proposed adapter boundary, request schema, capability negotiation, isolation requirements and failure semantics are documented in `contracts/preview-rendering-contract.md`. It is a draft for NOVA-02 review, not an approved integration API. No preview adapter, apply path or persistent desktop mutation is implemented by this contract.
