@@ -39,3 +39,8 @@ python -m unittest discover -s theme-studio/tests -v
 ```
 
 The tests validate the Draft 2020-12 schema and starter manifests, and include negative cases for executable extension fields, SVG assets, path traversal, unknown surfaces and invalid asset-role references. Asset-role and duplicate-ID checks are runtime semantic checks; JSON Schema alone does not enforce cross-field references or uniqueness by an object property.
+
+
+## Profile composition runtime
+
+`runtime/profile_composer.py` composes a named or active persisted profile against a caller-supplied validated catalog. The catalog is an inert mapping keyed by pack ID; each record contains `kind` (`theme` or `mixin`), `version`, and declarative `tokens`. Base-theme versions are checked against the profile pin. Profile format v1 selects mixins by ID rather than pinned version, so callers should supply a stable catalog snapshot. Composition returns tokens and per-token provenance without applying desktop settings or executing pack content.
