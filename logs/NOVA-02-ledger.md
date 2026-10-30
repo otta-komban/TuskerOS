@@ -8,12 +8,12 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **8 / 100**
-- Last recorded completion: **NOVA-02-C0008**
+- Actual assistant responses recorded: **9 / 100**
+- Last recorded completion: **NOVA-02-C0009**
 - Current phase: **P2 — Foundation / P3 — Working MVP**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
-- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, and a documented Fedora/Plasma runtime-validation runbook. Runtime validation remains pending.**
-- Tests: **All 15 desktop unit tests passed in GitHub Actions; both static validators and Node.js dock-template syntax check passed. Fedora QML lint and Plasma runtime tests have not run.**
+- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, Fedora/Plasma runtime-validation runbook, and a validated schema-v1 desktop settings foundation. Plasma runtime and UI integration remain pending.**
+- Tests: **All 23 desktop unit tests passed in GitHub Actions run 41124464540; both static validators and Node.js dock-template syntax check passed. Fedora QML lint and Plasma runtime tests have not run.**
 - Contract status: **Desktop consumer review accepted on issue #9; AEGIS-06 and PILOT-08 agreement pending.**
 
 ## Completion history
@@ -28,6 +28,7 @@
 | 6 | NOVA-02-C0006 | Safe dock installation and recovery | Added a no-sudo user-level installer and marker-checked removal; five installer tests passed in an isolated harness. | Installer `1619313`; tests `e9ee1d2`; panel README `2471aa6`; desktop README `e3ee575`. |
 | 7 | NOVA-02-C0007 | Desktop CI | Added GitHub Actions static validation and verified 15 unit tests, both validators and Node.js syntax check pass in hosted CI. | Workflow `c75ddc3`; desktop README `c5fb91b`; phase plan `47cfaf5`; Actions run [41116394507](https://github.com/otta-komban/TuskerOS/actions/runs/41116394507); log `e574252`. |
 | 8 | NOVA-02-C0008 | Fedora/Plasma runtime validation plan | Added a reproducible Fedora 44 / Plasma Wayland validation runbook and documented Qt 6 QML lint package discovery; corrected stale CI/runtime status in desktop docs. No runtime test was executed. | Runbook `66bf7ce`; desktop README `446c3fe`; phase plan `6ada6cf` and runbook checklist `a77da4a`; Fedora package reference [qt6-qtdeclarative-devel](https://packages.fedoraproject.org/pkgs/qt6-qtdeclarative/qt6-qtdeclarative-devel/fedora-44-updates.html). |
+| 9 | NOVA-02-C0009 | Desktop settings foundation | Added schema-v1 defaults, strict validation, partial merges, bounded safe loading, atomic private persistence and eight tests. Hosted CI passed 23 total desktop tests. UI/runtime integration remains pending. | `desktop/config/settings.py` `7aa6511`; tests `bc1180d`; schema docs `c15986f`; README `03d1a6c`; phase plan `7f7cf55`; Actions run [41124464540](https://github.com/otta-komban/TuskerOS/actions/runs/41124464540). |
 
 ## Open coordination requests
 
