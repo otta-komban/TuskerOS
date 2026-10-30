@@ -271,6 +271,336 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "requested"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "authorized"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "success"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "started"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "pending"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "succeeded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "success"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "failure"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "cancellation_requested"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "outcome_unknown"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "unknown"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "compensation_started"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "pending"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "compensation_verified"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "success"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "compensation_failed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "failure"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval_granted"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval_denied"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval_expired"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "policy_denied"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
     }
   ]
 }
