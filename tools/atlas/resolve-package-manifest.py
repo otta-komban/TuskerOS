@@ -43,13 +43,26 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as stream:
         lines = (line for line in stream if line.strip() and not line.lstrip().startswith("#"))
         reader = csv.DictReader(lines)
-        if not reader.fieldnames or not REQUIRED_COLUMNS.issubset(reader.fieldnames):
-            raise RuntimeError(f"Manifest header must contain: {', '.join(sorted(REQUIRED_COLUMNS))}")
+        if (
+            not reader.fieldnames
+            or any(not name or not name.strip() for name in reader.fieldnames)
+            or len(reader.fieldnames) != len(set(reader.fieldnames))
+            or not REQUIRED_COLUMNS.issubset(reader.fieldnames)
+        ):
+            raise RuntimeError(
+                f"Manifest header must contain unique, non-empty columns including: "
+                f"{', '.join(sorted(REQUIRED_COLUMNS))}"
+            )
         rows = list(reader)
     if not rows:
         raise RuntimeError("Manifest contains no package rows; obtain owner-reviewed package names first.")
     seen: set[tuple[str, str]] = set()
     for row in rows:
+        if None in row:
+            raise RuntimeError(f"Manifest row has more fields than its header: {row!r}")
+        missing = [column for column in REQUIRED_COLUMNS if row.get(column) is None]
+        if missing:
+            raise RuntimeError(f"Manifest row is missing values for: {', '.join(sorted(missing))}")
         package = (row.get("package") or "").strip()
         layer = (row.get("layer") or "").strip()
         if not layer or not PACKAGE_RE.fullmatch(package):
