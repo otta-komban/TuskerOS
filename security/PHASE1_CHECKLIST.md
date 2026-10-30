@@ -45,6 +45,8 @@
 - [ ] Confirm authorization reference transport, token audience and one-time nonce semantics with NEXUS-07.
 - [x] Record TUSKER-04 clarifications: UUID task/step producer IDs are compatible; mutation idempotency is mandatory at registry/policy boundary; malformed or mismatched ALLOW evidence fails closed; DENY null fields are intentional.
 - [x] Publish authorization lifecycle, operation registry governance and privileged broker security contract drafts.
+- [x] Specify post-approval fresh ALLOW + opaque authorization_ref handoff; approval_request_id remains correlation-only and cannot be consumed by broker.
+- [x] Define typed authorization-consume outcomes and add approval-handoff/audit-failure/replay conformance fixtures; execution remains pending.
 - [x] Publish privileged-operations release gate with cross-agent evidence owners and mandatory negative-test acceptance criteria.
 - [x] Perform JSON syntax and fixture-internal structural audit; Draft 2020-12 validation and runtime execution remain pending.
 - [x] Review all four main-only commits and document the net-zero revert sequence; no merge/rebase performed.
