@@ -70,6 +70,6 @@ The initial Python bundle is a proposal, not yet a guaranteed Fedora package ava
 
 Release versions are strict semantic versions. Compatibility bounds accept numeric major/minor/patch values; maximum bounds may use `MAJOR.x` or `MAJOR.MINOR.x` wildcard families. Prereleases are excluded by default, and equal-precedence releases are rejected as ambiguous.
 
-The resolver expects dependency IDs from separately validated manifests. It does not interpret dependency version constraints, fetch artifacts, verify trust/signatures, authorize permissions or install packages. Security policy and cryptographic trust remain external requirements. See `marketplace/tools/RESOLUTION.md`.
+The resolver expects dependency IDs and version constraints from separately validated manifests. It supports exact semantic versions and comma-conjoined comparisons (`>=`, `>`, `<=`, `<`, `=`), intersects constraints from multiple parents, and fails closed when no candidate satisfies them. It still does not fetch artifacts, verify trust/signatures, authorize permissions or install packages. Security policy and cryptographic trust remain external requirements. See `marketplace/tools/RESOLUTION.md`.
 
 Tests: `sdk/tests/test_dependency_plan.py` and `marketplace/tests/test_catalog_resolver.py`.
