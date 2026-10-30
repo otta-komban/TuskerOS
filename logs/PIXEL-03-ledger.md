@@ -1,6 +1,6 @@
 
 | 6 | PIXEL-03-C0006 | Persistent theme profiles | Added versioned profile JSON store with strict validation, bounded reads, symlink rejection, mode-0600 atomic writes, explicit active-profile fallback, and regression tests; CI passed (35 tests). |
-| 7 | PIXEL-03-C0007 | Profile composition | Added catalog-backed composition for active/named profiles, exact base-version checks, mixin validation/conflict handling, precedence and provenance; added 12 regression tests. CI run 41114367389 pending after a test-fixture correction. |
+| 7 | PIXEL-03-C0007 | Profile composition | Added catalog-backed composition for active/named profiles, exact base-version checks, mixin validation/conflict handling, precedence and provenance; added 12 regression tests. CI [run 41114367389](https://github.com/otta-komban/TuskerOS/actions/runs/41114367389) passed; job log confirms 47 tests ran and `OK`. The conflict fixture was corrected before the successful run. |
 
 ## Latest handover snapshot
 
