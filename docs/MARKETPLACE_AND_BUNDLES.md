@@ -64,8 +64,12 @@ The initial Python bundle is a proposal, not yet a guaranteed Fedora package ava
 - PIXEL-03: categories, theme/layout listing fields, preview asset metadata.
 - NEXUS-07: typed APIs exposed to extension host, if any.
 
-## Dependency planning helper (P2)
+## Dependency planning and catalog resolution
 
-`sdk/tools/dependency_plan.py` provides deterministic topological ordering for a dependency graph **after** a separate resolver has selected a concrete version for every package ID. It rejects missing nodes, duplicate dependency declarations and cycles. It does not parse version ranges, select versions, fetch artifacts, check signatures, authorize permissions, or perform installation. The function is side-effect free and suitable for unit tests and preview generation once catalog resolution is implemented.
+`sdk/tools/dependency_plan.py` provides deterministic topological ordering for an already-resolved dependency graph. `marketplace/tools/catalog_resolver.py` adds semantic-version parsing, compatibility checks, highest-compatible-release selection and a combined catalog selection/dependency-order preview.
 
-Tests: `sdk/tests/test_dependency_plan.py`.
+Release versions are strict semantic versions. Compatibility bounds accept numeric major/minor/patch values; maximum bounds may use `MAJOR.x` or `MAJOR.MINOR.x` wildcard families. Prereleases are excluded by default, and equal-precedence releases are rejected as ambiguous.
+
+The resolver expects dependency IDs from separately validated manifests. It does not interpret dependency version constraints, fetch artifacts, verify trust/signatures, authorize permissions or install packages. Security policy and cryptographic trust remain external requirements. See `marketplace/tools/RESOLUTION.md`.
+
+Tests: `sdk/tests/test_dependency_plan.py` and `marketplace/tests/test_catalog_resolver.py`.
