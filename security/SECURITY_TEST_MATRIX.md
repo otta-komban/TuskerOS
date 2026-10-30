@@ -166,3 +166,5 @@ These are proposed cases for the separately versioned audit-event v0.2.0 contrac
 | AUD-SCHEMA-030 | Unavailable registry paired with unrelated denial reason | Reject; use the dedicated stable reason code |
 
 These candidate cases are exercised by the v0.2.0 schema test suite. They do not establish runtime producer behavior or trusted provenance.
+
+C0026 schema-registry regression coverage: the v0.2.0 candidate test suite now rejects every post-request lifecycle event (authorization, execution, cancellation, UNKNOWN, compensation and approval outcomes) when registry status is unavailable. The 13 parametrized negative cases run as part of the schema suite; they do not test a live producer, broker, audit store or runtime.
