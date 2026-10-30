@@ -215,3 +215,14 @@
 - **Verification at record time:** JSONL contained 17 unique sequential records through C0017; GitHub Actions run 41126895122 succeeded with 32 tests on Python 3.12.
 - **Current reconciliation note:** This JSONL now contains 18 unique sequential records through C0018; this ledger entry brings the readable count into alignment.
 - **Open blockers:** SEC-SCHEMA-001 runtime-owner acceptance; SEC-SCHEMA-003 audit `registry_version` decision; NEXUS-07 transport/atomic-consume implementation; audit producer/persistence tests.
+
+
+| AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger against the sequential JSONL record and current CI evidence | logs/AEGIS-06.jsonl; logs/AEGIS-06-ledger.md |
+
+## C0018 — Progress ledger reconciliation
+
+- **Completion:** 18 / 100
+- **Timestamp:** 2026-10-30T20:55:25.491Z
+- **Result:** JSONL now contains 18 sequential records with unique IDs C0001–C0018; ledger count and latest completion updated to match.
+- **CI evidence:** The record reports workflow run 41126895122 succeeded with 32 passing tests on Python 3.12. This is schema validation evidence only, not producer, broker or privileged runtime evidence.
+- **Remaining blockers:** SEC-SCHEMA-001 runtime-owner acceptance, SEC-SCHEMA-003 audit registry-version schema decision, NEXUS-07 transport/atomic-consume implementation, and audit producer/persistence tests.
