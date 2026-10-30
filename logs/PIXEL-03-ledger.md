@@ -17,9 +17,9 @@
 
 | 9 | PIXEL-03-C0009 | Preview rendering contract | Added draft data-only preview request and adapter-capability schemas, strict preview-only/TTL/surface/token constraints, capability negotiation, isolation/failure semantics, docs and 5 schema regression tests. CI run 41116174120 succeeded (workflow job and all steps green; test count not exposed); NOVA-02 review requested in issue #30. |
 
-## Logging integrity note
+## Logging integrity repair
 
-At C0007, the existing JSONL file contained only the C0006 record even though the established ledger count was 6. C0001-C0005 JSONL records were not available in the branch file and have not been reconstructed or fabricated. C0007 and later records are appended; recover the missing historical records from repository history/backups if a fully populated JSONL audit trail is required.
+The missing C0001-C0005 JSONL records were recovered verbatim from the branch's own Git history: C0001-C0004 from commit `366f059184898946544d854ca6db8ec4c05ccc99` and C0005 from commit `5c183c8562c64ab0bb55e9fa5c21a25f4ba411a0`. The active JSONL now contains C0001-C0013 in sequence, with 13 physical records and 13 unique completion IDs. Historical record bodies were not recreated or fabricated.
 
 ## C0009 handover
 
@@ -78,3 +78,10 @@ At C0007, the existing JSONL file contained only the C0006 record even though th
 - Tests are authored but have not yet been run in GitHub Actions; no CI pass is claimed.
 - This does not implement the engine-side preview response validator, KDE adapter, IPC or apply/rollback.
 - Historical JSONL integrity gap remains: C0001-C0005 records are unavailable and were not fabricated.
+
+
+## C0013 log repair verification
+
+- Recovered historical C0001-C0005 verbatim from immutable branch commits.
+- Active JSONL integrity: 13 records; 13 unique IDs; sequences 1–13 contiguous.
+- Recovery sources: [C0001–C0004](https://github.com/otta-komban/TuskerOS/commit/366f059184898946544d854ca6db8ec4c05ccc99), [C0005](https://github.com/otta-komban/TuskerOS/commit/5c183c8562c64ab0bb55e9fa5c21a25f4ba411a0).
