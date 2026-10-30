@@ -51,7 +51,7 @@ def valid_asset(asset_id="wallpaper-main", kind="wallpaper", path="assets/wallpa
     }
 
 
-def asset_roles_match_kinds(pack):
+def semantic_errors(pack):
     expected = {
         "desktop_wallpaper": "wallpaper",
         "lock_screen_wallpaper": "wallpaper",
@@ -61,11 +61,20 @@ def asset_roles_match_kinds(pack):
         "notification_sound": "sound",
         "startup_sound": "sound",
     }
-    assets = {item["id"]: item["kind"] for item in pack.get("assets", [])}
+    assets = pack.get("assets", [])
+    ids = [item["id"] for item in assets]
+    errors = []
+    if len(ids) != len(set(ids)):
+        errors.append("duplicate asset IDs")
+    by_id = {item["id"]: item["kind"] for item in assets}
     for role, asset_id in pack.get("asset_roles", {}).items():
-        if asset_id not in assets or assets[asset_id] != expected[role]:
-            return False
-    return True
+        if asset_id not in by_id or by_id[asset_id] != expected[role]:
+            errors.append("asset role reference missing or wrong kind: " + role)
+    return errors
+
+
+def asset_roles_match_kinds(pack):
+    return not semantic_errors(pack)
 
 
 class ThemePackSchemaTests(unittest.TestCase):
@@ -123,8 +132,7 @@ class ThemePackSchemaTests(unittest.TestCase):
     def test_duplicate_asset_ids_are_rejected_by_semantic_validator(self):
         pack = copy.deepcopy(load_json(SAMPLE_PATHS[0]))
         pack["assets"] = [valid_asset(), valid_asset(path="assets/other.webp")]
-        ids = [asset["id"] for asset in pack["assets"]]
-        self.assertNotEqual(len(ids), len(set(ids)))
+        self.assertIn("duplicate asset IDs", semantic_errors(pack))
 
 
 if __name__ == "__main__":
