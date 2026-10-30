@@ -19,7 +19,7 @@
 
 | Number | ID | Category | Summary | Evidence / commit |
 |---:|---|---|---|---|
-| 1 | NOVA-02-C0001 | Activation and repository intake | Reviewed blueprint, inspected repository/branch, reviewed KDE developer docs, drafted desktop architecture and P0-P7 checklist. | Initial documentation commit(s) on `02-desktop-shell`; see JSONL record. |
+| 1 | NOVA-02-C0001 | Activation and repository intake | Reviewed blueprint, inspected repository/branch, reviewed KDE developer docs, drafted desktop architecture and P0-P7 checklist. | `desktop/README.md` 13a8c94; `desktop/PHASE-PLAN.md` 91d3562; completion log 19bf065; initial ledger 976922a. |
 
 ## Operating rules
 
