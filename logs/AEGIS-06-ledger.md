@@ -7,11 +7,11 @@
 
 ## Current state
 
-- **Verified completion count:** 48
-- **Latest completion:** `AEGIS-06-C0048`
-- **Current phase:** P1 security integration review — AI runtime security review complete; ORBIT-05 remediation and runtime evidence pending
-- **Engineering tasks completed:** 38 (separate from assistant responses and commits)
-- **Latest log commit:** `714ac86373e6511d41702462107973f18d021a86`
+- **Verified completion count:** 49
+- **Latest completion:** `AEGIS-06-C0049`
+- **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
+- **Engineering tasks completed:** 39 (separate from assistant responses and commits)
+- **Latest log commit:** `5433f2b243dbf4572a0cf67e6042324bc1925bfd`
 
 ## Completion index
 
@@ -65,6 +65,8 @@
 | AEGIS-06-C0046 | cross-agent-security-review | Reviewed ORBIT-05's provider and ModelStore contracts; documented six security findings with concrete acceptance tests and posted the owner review on issue #28. | Reviewed 05-ai-runtime revision a30ee3558e5d247d662027a176ad96c68988e3a6: PROVIDER-CONTRACT.md, MODEL-STORE-TRANSACTIONS.md, PROVIDER-CONFORMANCE.md, model-manifest.schema.json, inference-event.schema.json and CROSS-AGENT-ALIGNMENT.md.; Recorded AISEC-001 through AISEC-006 in security/AI_RUNTIME_SECURITY_REVIEW.md: untrusted manifest trust claims; remote source URI/SSRF policy; race-resistant archive extraction; kernel-observed provider listener/owner verification; owned-process launch/cancellation; allow-list logging. |
 | AEGIS-06-C0047 | completion-accounting-reconciliation | Verified concurrent responses C0045 and C0046 are distinct engineering tasks, retained their task increments, and recorded this administrative response once as C0047. | Immediately before append, JSONL contained 46 unique sequential response records C0001-C0046.; C0045 is a FORGE-09 reason_code consistency review (+1 engineering task); C0046 is an ORBIT-05 provider/ModelStore security review with six findings and owner issue #28 comment 6534114249 (+1 engineering task). |
 | AEGIS-06-C0048 | completion-accounting-reconciliation | Verified 47 unique sequential response records, identified the ledger index ordering defect, and recorded this response as C0048 without increasing the engineering-task count. | JSONL contained 47 unique sequential records C0001-C0047 before this append.; Ledger index contained 47 unique rows but placed C0047 before C0046; ledger state lagged JSONL. |
+
+| AEGIS-06-C0049 | cross-agent-security-review | Re-reviewed NEXUS-07 public invocation authorization boundary; confirmed strict schema no longer accepts caller-reachable authorization_context, identified stale public example and missing regression/runtime evidence, posted owner review and updated AEGIS audit/checklist. | NEXUS-07 issue #17 comment 6534567960; security/SCHEMA_CONSISTENCY_AUDIT.md; security/PHASE1_CHECKLIST.md |
 
 ## C0007 — Privileged operations release gate
 
@@ -531,3 +533,15 @@
 - **Accounting:** Verified 47 unique sequential JSONL records C0001–C0047. The Markdown index had the correct 47 unique IDs but placed C0047 before C0046; this update rebuilds the index in sequential order and records this response as C0048.
 - **Branch at response start:** `15aabf96a8430720739b20fe9de4519021a1bc2c`, 265 commits ahead / 0 behind `main`.
 - **Limits:** No implementation, tests or issue comment performed in this accounting response.
+
+
+## C0049 — NEXUS-07 public invocation authorization-boundary re-review
+
+- **Completion:** 49 / 100
+- **Engineering tasks completed:** 39 cumulative (+1 this response).
+- **Reviewed revision:** `07-system-integration` at `a0cc0a74242070135b6b7937bd7605c7861fe7d8`.
+- **Positive change:** public `tool-invocation.schema.json` omits caller-reachable `authorization_context`; closed objects and top-level `additionalProperties: false` reject undeclared authority fields.
+- **Remaining:** `INTERFACE_CONTRACTS.md` public example still contains `authorization_context: {}`; explicit authority-field negative tests, trusted-context positive adapter test, typed internal envelope, authenticated peer/principal binding and consume-before-dispatch runtime evidence are absent from the reviewed artifacts.
+- **Owner review:** [NEXUS-07 issue #17 comment 6534567960](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6534567960).
+- **AEGIS evidence commits:** audit `07947dee530311d6cb40ece39213f56b49d9131a`; checklist `a759ce324674aa135fd4edd1a0ff62df3a027344`; JSONL `5433f2b243dbf4572a0cf67e6042324bc1925bfd`.
+- **Limits:** Source/contract review only; no NEXUS files changed and no NEXUS tests executed. Mutating operations remain fail-closed/disabled pending trusted runtime enforcement.
