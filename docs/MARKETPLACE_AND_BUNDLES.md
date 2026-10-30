@@ -121,3 +121,6 @@ perform actual cryptographic verification, acquire and enforce locks, execute
 the transaction and independently record real outcomes. The state machine is
 not an executor or source of authorization. The state record schema is
 `marketplace/schemas/package-transaction-state.schema.json`.
+
+
+Lifecycle records now validate lowercase SHA-256 plan/snapshot digests, terminal-flag consistency, history structure and event/evidence shape. Evidence fields are allow-listed per transition to prevent arbitrary strings (including secret-like payloads) from being copied into the lifecycle history. This remains structural validation, not authentication or proof of adapter behavior.
