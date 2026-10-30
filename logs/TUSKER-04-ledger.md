@@ -31,9 +31,11 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 | TUSKER-04-C0016 | 2026-10-31T02:55:04+05:30 | nexus-result-adapter-implementation | Added pure fail-closed NEXUS result classifier and six tests; fixed repo-root test discovery/CI trigger; removed duplicate test/checklist entries. Six focused tests passed locally; scheduler integration/full suite/CI remain pending. | partial | [Result adapter](../tusker-core/adapters/nexus_result.py); [mapping tests](../tusker-core/tests/test_nexus_result_mapping.py); [NEXUS review](https://github.com/otta-komban/TuskerOS/issues/5#issuecomment-6533778021) |
 
-Current verified response count: 16  
-Current completion sequence: TUSKER-04-C0016  
-JSONL audit: 15 physical lines, 15 unique completion IDs; the duplicate C0009 replay was removed, retaining the original full canonical record.  
+| TUSKER-04-C0017 | 2026-10-31T03:08:00+05:30 | response-accounting-governance | Confirmed one completion per full assistant response; separated response, engineering-task and verified-commit metrics. Verified 16 prior unique sequential records; this response adds C0017. No engineering implementation task was requested or completed. | complete | JSONL record commit `e600195a4d99e6375f6405ba26fbd7b43a137a81`; pre-update branch HEAD `45d7da8ef7fa9794f8d0c3fc4e204e2825fd38a2` |
+
+Current verified response count: 17  
+Current completion sequence: TUSKER-04-C0017  
+JSONL audit: 17 physical records, 17 unique completion IDs; sequences 1–17 contiguous; no duplicate IDs.  
 C0011 has exactly one canonical ledger row; duplicate Markdown ledger rows from the previous update were consolidated.  
 Branch: 04-tusker-core. Ahead/behind figures are refreshed after this ledger commit.
 
