@@ -96,3 +96,6 @@ The lifecycle validator also rejects history-free records unless their initial s
 ## Trusted package transaction adapter boundary
 
 The proposed language-neutral adapter sequence and failure/conformance requirements are documented in `docs/PACKAGE_TRANSACTION_ADAPTER_CONTRACT.md`. It separates AEGIS-06 approval authentication and policy from PHOENIX-10 package-manager locking, execution, recovery and outcome verification. FORGE-09 preview/lifecycle helpers remain non-executing. Adapter implementation is blocked pending partner decisions; do not interpret evidence references as proof or authorization.
+
+
+The transaction-state JSON Schema now constrains each history item to one of the eleven legal source/event pairs and requires the event-specific evidence keys with no additional properties. It also constrains empty history/terminal flags for prepared, active and terminal states. The Python lifecycle validator remains the authoritative continuity check across the full history and binds the final event to the current state; schema validation alone does not authenticate evidence or prove execution.
