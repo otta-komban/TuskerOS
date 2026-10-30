@@ -28,3 +28,36 @@ shared. Packages with user/system ownership cannot be selected as the removal
 owner, and packages required by any retained package (including transitive
 dependencies) remain in the keep list. Missing package references and
 ambiguous ownership state fail closed.
+
+
+## Package transaction contract (preview only)
+
+`marketplace/tools/transaction_contract.py` defines a non-executing boundary
+between reviewed package plans and a future platform installer adapter:
+
+- `create_transaction_preview(snapshot, operations, transaction_id)` binds
+  the exact action/package/version list to a deterministic SHA-256 fingerprint
+  of the installed-state snapshot and emits `state: prepared` and
+  `execution: not_performed`.
+- `validate_approval_claims(token, preview, now)` checks expiry, action scope
+  and digest binding. Its result is explicitly `claims_valid_unverified`.
+  AEGIS-06/platform authorization services must authenticate the issuer and
+  cryptographically verify the token before this function is called. A claim
+  check is not an authorization decision.
+- `revalidate_snapshot(preview, current_snapshot)` fails closed if installed
+  state changed after review. The adapter must obtain a fresh snapshot
+  immediately before execution and repeat authorization/revalidation as
+  required by policy.
+- `build_rollback_report(...)` describes a reported rollback outcome; it does
+  not perform or independently verify rollback.
+- `build_audit_event(...)` emits an allow-listed record. The adapter owns
+  append-only durable JSONL persistence, access control, retention and
+  tamper-evidence. Never put credentials, approval tokens or arbitrary
+  exception text in audit details.
+
+The audit event shape is defined in
+`marketplace/schemas/package-transaction-audit-event.schema.json`.
+This module has no DNF/Flatpak/pipx integration, no token-signature verifier,
+no authorization authority, no transaction state store and no rollback
+executor. Do not treat a preview or a claims-valid result as permission to
+execute. The adapter remains blocked on AEGIS-06 and PHOENIX-10 agreement.
