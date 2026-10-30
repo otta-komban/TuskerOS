@@ -55,7 +55,8 @@ All checkboxes remain open until the task has been implemented or researched and
   - [x] Add CI checks for the desktop validator and unit tests.
     - Evidence: `.github/workflows/desktop-validation.yml` runs Python unit tests, both static validators and Node.js syntax validation on pushes to `02-desktop-shell`, pull requests to `main`, and manual dispatch. Hosted run 41116394507 passed all 15 tests and all four validation steps; Plasma runtime is not covered.
 - [ ] Add diagnostics and privacy-conscious crash logging.
-- [ ] Add safe defaults and reset/recovery path.
+- [x] Add safe defaults and reset/recovery path.
+  - Evidence: `desktop/config/settings.py` supplies safe defaults and atomic private persistence; `python -m desktop.tools.settings_recovery check` reports invalid configuration without echoing values, and `reset --yes` explicitly restores schema-v1 defaults. Six CLI tests cover confirmation, XDG path selection, invalid input, private permissions and symlink refusal.
 - [ ] Verify clean build in the selected Fedora development environment.
 
 ## P3 — Working MVP
