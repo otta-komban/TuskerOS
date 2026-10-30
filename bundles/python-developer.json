@@ -1,0 +1,28 @@
+{
+  "bundle_version": 1,
+  "id": "org.tuskeros.bundles.python-developer",
+  "name": "Python Developer",
+  "description": "A starter Python environment with interpreter, virtual environment tooling, linting and editor integration prerequisites.",
+  "category": "python",
+  "packages": [
+    {"manager": "dnf", "name": "python3"},
+    {"manager": "dnf", "name": "python3-pip"},
+    {"manager": "dnf", "name": "python3-virtualenv"},
+    {"manager": "dnf", "name": "python3-devel"},
+    {"manager": "dnf", "name": "git"},
+    {"manager": "pipx", "name": "ruff"},
+    {"manager": "pipx", "name": "pytest"},
+    {"manager": "pipx", "name": "mypy", "optional": true}
+  ],
+  "environment": {
+    "variables": {"PYTHONDONTWRITEBYTECODE": "1"}
+  },
+  "compatibility": {
+    "tuskeros": {"min": "0.1.0", "max": "0.x"}
+  },
+  "resources": {
+    "estimated_download_mb": 350,
+    "estimated_disk_mb": 900,
+    "recommended_ram_mb": 2048
+  }
+}
