@@ -7,11 +7,11 @@
 
 ## Current state
 
-- **Verified completion count:** 49
-- **Latest completion:** `AEGIS-06-C0049`
+- **Verified completion count:** 50
+- **Latest completion:** `AEGIS-06-C0050`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
-- **Engineering tasks completed:** 39 (separate from assistant responses and commits)
-- **Latest log commit:** `5433f2b243dbf4572a0cf67e6042324bc1925bfd`
+- **Engineering tasks completed:** 40 (separate from assistant responses and commits)
+- **Latest log commit:** `ce5cdc384d3e0cff97af92d79539754682d383bf`
 
 ## Completion index
 
@@ -67,6 +67,7 @@
 | AEGIS-06-C0048 | completion-accounting-reconciliation | Verified 47 unique sequential response records, identified the ledger index ordering defect, and recorded this response as C0048 without increasing the engineering-task count. | JSONL contained 47 unique sequential records C0001-C0047 before this append.; Ledger index contained 47 unique rows but placed C0047 before C0046; ledger state lagged JSONL. |
 
 | AEGIS-06-C0049 | cross-agent-security-review | Re-reviewed NEXUS-07 public invocation authorization boundary; confirmed strict schema no longer accepts caller-reachable authorization_context, identified stale public example and missing regression/runtime evidence, posted owner review and updated AEGIS audit/checklist. | NEXUS-07 issue #17 comment 6534567960; security/SCHEMA_CONSISTENCY_AUDIT.md; security/PHASE1_CHECKLIST.md |
+| AEGIS-06-C0050 | security-schema-regression-tests | Added positive/negative policy-decision schema coverage for ALLOW, REQUIRE_APPROVAL and DENY authorization-field invariants; CI passed 145 tests. | security/tests/test_security_schemas.py; security/SECURITY_TEST_MATRIX.md; Actions run 41136487180 (145 passed) |
 
 ## C0007 — Privileged operations release gate
 
@@ -545,3 +546,13 @@
 - **Owner review:** [NEXUS-07 issue #17 comment 6534567960](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6534567960).
 - **AEGIS evidence commits:** audit `07947dee530311d6cb40ece39213f56b49d9131a`; checklist `a759ce324674aa135fd4edd1a0ff62df3a027344`; JSONL `5433f2b243dbf4572a0cf67e6042324bc1925bfd`.
 - **Limits:** Source/contract review only; no NEXUS files changed and no NEXUS tests executed. Mutating operations remain fail-closed/disabled pending trusted runtime enforcement.
+
+## C0050 — Policy-decision authorization-field regression tests
+
+- **Completion:** 50 / 100
+- **Engineering tasks completed:** 40 cumulative (+1 this response).
+- **Changes:** Added direct schema fixtures and negative cases for ALLOW grant/expiry, REQUIRE_APPROVAL request/no-grant, DENY no-authority fields, and rejection of unknown `caller_principal`.
+- **Coverage matrix:** `security/SECURITY_TEST_MATRIX.md`, POL-DEC-001–004.
+- **CI:** [Run 41136487180](https://github.com/otta-komban/TuskerOS/actions/runs/41136487180), Python 3.12, **145 passed in 5.05s**, on test correction commit `4aa7362b5ef5a933c03124a6145e13405aeacb0a`.
+- **Change commits:** tests `487893b7b135cfd9a8890f68d856b5b44041c1f2`; matrix `78177afbc3ace6051a66ea8479b8402dd9f21d29`; test correction `4aa7362b5ef5a933c03124a6145e13405aeacb0a`; JSONL `ce5cdc384d3e0cff97af92d79539754682d383bf`.
+- **Limits:** Schema-only validation; no policy engine, broker, authorization store, audit persistence, atomic consume or privileged operation was exercised.
