@@ -1,0 +1,217 @@
+openapi: 3.1.0
+info:
+  title: TuskerOS Remote Control API
+  version: 0.1.0-draft
+  description: |
+    PILOT-08 proposal only. Not approved for implementation until AEGIS-06,
+    TUSKER-04 and NOVA-02 review the applicable contracts.
+servers:
+  - url: https://localhost
+    description: Local development placeholder; deployment binding is not specified here.
+tags:
+  - name: Pairing
+  - name: Devices
+  - name: Sessions
+  - name: Tasks
+  - name: Approvals
+  - name: Events
+paths:
+  /api/v1/pairing/challenges:
+    post:
+      tags: [Pairing]
+      summary: Create a local-owner-authorized pairing challenge
+      description: Local desktop only; never callable by an unpaired remote client.
+      operationId: createPairingChallenge
+      security: []
+      responses:
+        '201':
+          description: Short-lived challenge created for local display.
+        '401':
+          description: Local owner authentication required.
+        '403':
+          description: Local policy denied pairing.
+  /api/v1/pairing/complete:
+    post:
+      tags: [Pairing]
+      summary: Submit proof for a pending pairing challenge
+      description: Enrollment completes only after explicit local owner confirmation.
+      operationId: completePairing
+      security: []
+      responses:
+        '202':
+          description: Proof accepted; awaiting local confirmation.
+        '400':
+          description: Invalid, expired, or replayed challenge.
+        '409':
+          description: Challenge already consumed or enrollment conflict.
+  /api/v1/devices:
+    get:
+      tags: [Devices]
+      summary: List paired devices
+      operationId: listDevices
+      security:
+        - deviceSession: []
+      responses:
+        '200':
+          description: Authorized device list.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+  /api/v1/devices/{device_id}:
+    delete:
+      tags: [Devices]
+      summary: Revoke a paired device and its sessions
+      operationId: revokeDevice
+      security:
+        - deviceSession: []
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Device and active sessions revoked.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+        '404':
+          description: Device not found.
+  /api/v1/sessions:
+    post:
+      tags: [Sessions]
+      summary: Authenticate a paired device using proof of possession
+      operationId: createSession
+      security: []
+      responses:
+        '201':
+          description: Session issued according to approved session policy.
+        '401':
+          description: Device proof invalid or device revoked.
+        '429':
+          description: Rate limit exceeded.
+  /api/v1/sessions/current:
+    delete:
+      tags: [Sessions]
+      summary: Revoke current session
+      operationId: revokeCurrentSession
+      security:
+        - deviceSession: []
+      responses:
+        '204':
+          description: Current session revoked.
+        '401':
+          description: Invalid or expired session.
+  /api/v1/device/status:
+    get:
+      tags: [Devices]
+      summary: Read a minimal device and remote-connection status projection
+      operationId: getDeviceStatus
+      security:
+        - deviceSession: []
+      responses:
+        '200':
+          description: Authorized status projection.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+  /api/v1/tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks visible to the authenticated owner
+      operationId: listTasks
+      security:
+        - deviceSession: []
+      responses:
+        '200':
+          description: Paginated task summaries; schema owned by TUSKER-04.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+    post:
+      tags: [Tasks]
+      summary: Submit a bounded task through TUSKER-04
+      operationId: submitTask
+      security:
+        - deviceSession: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '202':
+          description: Accepted by TUSKER-04; task schema and semantics pending owner review.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: AEGIS-06 policy denied.
+        '409':
+          description: Idempotency or task-state conflict.
+  /api/v1/tasks/{task_id}:
+    get:
+      tags: [Tasks]
+      summary: Read an authorized task projection
+      operationId: getTask
+      security:
+        - deviceSession: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authorized task detail projection; schema pending TUSKER-04.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied or resource not visible.
+        '404':
+          description: Task not found.
+  /api/v1/events:
+    get:
+      tags: [Events]
+      summary: Authenticated WebSocket event stream
+      description: |
+        Upgrade to WSS. Browser Origin allowlist, authentication, authorization,
+        message/connection limits, session expiry and revocation behavior are
+        mandatory. Event envelope and subscription contract pending TUSKER-04
+        and AEGIS-06 review.
+      operationId: connectEvents
+      security:
+        - deviceSession: []
+      responses:
+        '101':
+          description: WebSocket upgrade accepted.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Origin or policy rejected.
+components:
+  securitySchemes:
+    deviceSession:
+      type: http
+      scheme: bearer
+      description: Placeholder only; token/proof-of-possession design pending AEGIS-06.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
