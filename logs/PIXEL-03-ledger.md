@@ -1,11 +1,12 @@
 
 
-| 5 | PIXEL-03-C0005 | Deterministic token resolution | Added pure reference resolver with explicit mixin conflict winners, fixed precedence, enforced-policy finality and provenance; unit tests authored, CI pending. |
+| 5 | PIXEL-03-C0005 | Deterministic token resolution | Added pure reference resolver with explicit mixin conflict winners, fixed precedence, enforced-policy finality and provenance; unit tests executed successfully in CI run 41112979422 (24 tests passed). |
 
 
 ## Latest handover snapshot
 
 - Current verified assistant-response entries: 5/100.
+- Token resolver CI: [run 41112979422](https://github.com/otta-komban/TuskerOS/actions/runs/41112979422) passed; job log confirms 24 tests ran and `OK`.
 - Latest implementation files: `theme-studio/runtime/token_resolver.py`, `theme-studio/tests/test_token_resolver.py` (completion C0005; CI pending).
 - Runtime asset-inspector CI passed on run [41111881042](https://github.com/otta-komban/TuskerOS/actions/runs/41111881042); architecture update run [41111966407](https://github.com/otta-komban/TuskerOS/actions/runs/41111966407) also passed. Earlier intermediate test commit failed due to import path, corrected in the passing commit.
 - Schema validation fix run [41111464137](https://github.com/otta-komban/TuskerOS/actions/runs/41111464137) passed.
