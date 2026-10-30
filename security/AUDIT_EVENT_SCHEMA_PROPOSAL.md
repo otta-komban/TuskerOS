@@ -1,7 +1,7 @@
 # Audit event registry-version schema proposal
 
 **Owner:** AEGIS-06  
-**Status:** Proposed; producer-owner acceptance pending  
+**Status:** Candidate v0.2.0 schema and envelope tests implemented on `06-security-gatekeeper`; producer-owner acceptance pending  
 **Current schema:** audit-event 0.1.0-draft  
 **Finding:** SEC-SCHEMA-003
 
@@ -74,3 +74,19 @@ Negative:
 - denial/failure event without a stable reason_code.
 
 These cases remain proposed. Do not change the current 0.1.0 audit schema or claim producer conformance until NEXUS-07/TUSKER-04 agree on event lifecycle semantics and migration.
+
+
+## Candidate implementation evidence — AEGIS-06 C0023
+
+A separate candidate file now exists at `security/schemas/audit-event-0.2.0.schema.json`. The active `audit-event.schema.json` remains v0.1.0 and is unchanged by this candidate.
+
+The candidate combines SEC-SCHEMA-003 and SEC-SCHEMA-004:
+- requires non-empty `registry_version` (1–128 characters);
+- requires `executor_id` and `reason_code` keys while preserving nullable values;
+- requires a non-empty string `reason_code` when `result_status` is `denied` or `failure`;
+- retains required nullable `task_id` and `step_id`;
+- fixes `schema_version` to `0.2.0` and uses a distinct schema identifier.
+
+The test suite now loads the candidate through the same Draft 2020-12 validator and format checker used for the existing schemas. Added positive/negative cases cover required fields, explicit nulls, invalid and overlength values, denial/failure reason requirements, and rejection of cross-version envelopes. CI execution is pending.
+
+This establishes schema-level candidate behavior only. It does not establish that a trusted producer can supply registry_version, that executor/reason semantics are accepted by event producers, or that audit persistence/integrity is implemented. Keep the candidate unpromoted until NEXUS-07 and TUSKER-04 accept provenance, lifecycle semantics and migration.
