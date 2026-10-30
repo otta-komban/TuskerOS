@@ -63,3 +63,7 @@ Use structured, journal-compatible logs with stable component names, severity, e
 - Remote-origin identity propagation requires PILOT-08/TUSKER-04/AEGIS-06 review.
 
 No proposed name in this document is a frozen cross-agent contract until the relevant owners acknowledge it and it is recorded in the shared decision log.
+
+
+## 8. Confirmed base-system constraints from ATLAS-01 review
+The ATLAS-01 provisional base contract on `01-fedora-base` confirms the following constraints, accepted by NEXUS-07 for integration planning: Tusker is not a dependency of boot, login, NetworkManager, systemd-logind or KDE startup; AI and remote services are optional/off by default; every Tusker service must be independently disableable and package-removable; OS health and Tusker health remain distinct; recovery must work without Tusker/model/remote services. ATLAS-01 owns Fedora packaging/build inputs, NOVA-02 owns Plasma/session integration, NEXUS-07 owns capability discovery and hardware-facing API identifiers, and AEGIS-06 owns Polkit identifiers and authorization policy. These are coordination constraints, not a claim that the entire base contract has final approval.
