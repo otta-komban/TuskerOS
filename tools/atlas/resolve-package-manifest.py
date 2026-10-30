@@ -108,7 +108,7 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
     return rows
 
 
-def parse_query_matches(output: str) -> tuple[str, str]:
+def parse_query_matches(output: str, expected_package: str | None = None) -> tuple[str, str]:
     """Return one unambiguous NEVRA/repository pair from DNF5 query output."""
     matches = {line.strip() for line in output.splitlines() if line.strip()}
     if not matches:
@@ -118,7 +118,14 @@ def parse_query_matches(output: str) -> tuple[str, str]:
         fields = match.split("\t")
         if len(fields) != 2 or not all(field.strip() for field in fields):
             raise RuntimeError(f"unexpected DNF5 query output row: {match!r}")
-        parsed.add((fields[0].strip(), fields[1].strip()))
+        nevra, repository = (field.strip() for field in fields)
+        if expected_package is not None and not nevra.startswith(f"{expected_package}-"):
+            raise RuntimeError(
+                f"DNF5 returned package outside requested name {expected_package!r}: {nevra!r}"
+            )
+        if not nevra.endswith((".x86_64", ".noarch")):
+            raise RuntimeError(f"DNF5 returned unsupported architecture in NEVRA: {nevra!r}")
+        parsed.add((nevra, repository))
     nevras = {nevra for nevra, _repo in parsed}
     repositories = {repo for _nevra, repo in parsed}
     if len(nevras) != 1:
@@ -157,7 +164,7 @@ def main() -> int:
             "--latest-limit=1", "--qf", QUERY_FORMAT, row["package"]
         ])
         try:
-            nevra, repo_id = parse_query_matches(output)
+            nevra, repo_id = parse_query_matches(output, row["package"])
         except RuntimeError as exc:
             failures.append(f"{row['layer']}/{row['package']}: {exc}")
             continue
