@@ -44,3 +44,8 @@ The tests validate the Draft 2020-12 schema and starter manifests, and include n
 ## Profile composition runtime
 
 `runtime/profile_composer.py` composes a named or active persisted profile against a caller-supplied validated catalog. The catalog is an inert mapping keyed by pack ID; each record contains `kind` (`theme` or `mixin`), `version`, and declarative `tokens`. Base-theme versions are checked against the profile pin. Profile format v1 selects mixins by ID rather than pinned version, so callers should supply a stable catalog snapshot. Composition returns tokens and per-token provenance without applying desktop settings or executing pack content.
+
+
+## Preview sessions
+
+`runtime/preview_sessions.py` provides an owner-scoped, in-memory preview-session manager for resolved composition snapshots. Sessions default to a five-minute lifetime and a 32-session process-local capacity. Reads return detached copies; owners cannot read or cancel another owner's session. Expiry is checked on access and capacity operations, and callers can invoke `cleanup_expired()` periodically. Preview sessions never activate profiles, write the profile store, or apply desktop settings. Desktop rendering and transactional apply/rollback are separate future integrations.
