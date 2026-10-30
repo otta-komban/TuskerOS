@@ -130,3 +130,12 @@ The active v0.1.0 schema remains unchanged. This is schema-level validation only
 ## Event lifecycle/status consistency — C0030
 
 The v0.2.0 candidate now constrains `event_type` to its corresponding `result_status` rather than accepting arbitrary cross-products of the two enums. The explicit pairs are: requested/accepted; authorized/success; started/pending; succeeded/success; failed/failure; cancellation_requested/accepted; cancelled/cancelled; outcome_unknown/unknown; compensation_started/pending; compensation_verified/success; compensation_failed/failure; approval_granted/accepted; approval_denied/denied; approval_expired/denied; and policy_denied/denied. Denial/failure reason-code requirements remain independently enforced. These are proposed producer semantics; runtime-owner acceptance is still required before the candidate is frozen.
+
+
+## Package transaction audit correlation — C0030
+
+The candidate v0.2.0 envelope now permits optional `transaction_id` and `snapshot_digest` fields as an all-or-none pair. They are intended for package transaction audit records and correlate AEGIS decisions with FORGE previews and PHOENIX adapter evidence. `snapshot_digest` must use the AEGIS SHA-256 representation (`sha256:` plus 64 lowercase hex characters); transaction IDs are bounded opaque identifiers.
+
+The pair is optional for non-package operations. Its presence does not replace `action_digest`: AEGIS must independently recompute the complete typed action digest using RFC 8785 JCS + SHA-256, with transaction ID, exact ordered package/action/version/source plan, package-manager options and the live installed-state snapshot digest included in the canonical proposal/resource binding. A caller-provided FORGE `plan_digest` is correlation data only.
+
+This is a candidate-only schema extension. Active audit-event v0.1.0 is unchanged; producer ownership, event naming, persistence and v0.2.0 migration remain subject to NEXUS-07/TUSKER-04 acceptance.

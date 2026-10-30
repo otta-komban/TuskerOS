@@ -146,3 +146,15 @@ This validates the candidate schema and JSON fixtures only. Trusted registry pro
 **Required validation:** positive and negative schema fixtures for each lifecycle event; producer tests proving each transition emits exactly one correlated event; replay/concurrency and lost-consume-response tests proving consume and reconciliation records cannot be confused with dispatch or terminal execution results.
 
 **Status:** Identified in C0026. No candidate or active schema change made pending producer-owner agreement. Active audit-event v0.1.0 remains unchanged; candidate v0.2.0 is not approved for producer migration or runtime conformance.
+
+
+## C0030 — package transaction audit correlation
+
+The C0030 review of FORGE-09's transaction helper found two integration constraints:
+
+1. Its `canonical_digest` uses Python sorted-key JSON serialization and returns an unprefixed SHA-256 hex string. This is not the AEGIS normative RFC 8785 JCS action digest and must not be accepted as `action_digest` or authorization evidence.
+2. The AEGIS candidate audit schema did not permit package `transaction_id` and installed-state `snapshot_digest` correlation fields requested in the C0027 package boundary decision.
+
+The candidate audit-event v0.2.0 schema now allows `transaction_id` and `snapshot_digest` together or neither; the digest is `sha256:` + 64 lowercase hex. Tests cover the valid pair, each missing counterpart and malformed digest. `action_digest` remains the independently recomputed AEGIS canonical action binding.
+
+The extension is candidate-only. Active v0.1.0 is unchanged; no producer, audit persistence, token verification, broker or package-manager execution is implemented or validated.

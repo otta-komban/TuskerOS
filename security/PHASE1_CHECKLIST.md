@@ -98,3 +98,5 @@
 - **C0030 — Audit event lifecycle/status consistency:** candidate v0.2.0 constrains each of 15 event types to its defined result status; positive and negative schema tests added. Candidate remains unaccepted pending producer-owner review; no runtime behavior is claimed.
 
 - [ ] Resolve SEC-SCHEMA-006 with NEXUS-07/TUSKER-04: agree candidate audit-event names and result mappings for presentation, dismissal, invalidation, revocation, consume acceptance/rejection and reconciliation; then add schema/producer tests. Active v0.1.0 and candidate v0.2.0 remain unapproved for producer migration.
+
+- [ ] Obtain NEXUS-07/TUSKER-04 agreement on candidate v0.2.0 package `transaction_id` + `snapshot_digest` correlation fields and producer ownership; confirm AEGIS action digest is recomputed independently with RFC 8785 JCS, not copied from FORGE `plan_digest`.
