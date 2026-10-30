@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 4
-- **Latest completion:** `AEGIS-06-C0004`
-- **Current phase:** P0 discovery / P1 architecture — in progress
-- **Latest log commit:** `fae5a77c6b834cf6b9cda3efd6c6e57275e54c01`
+- **Verified completion count:** 5
+- **Latest completion:** `AEGIS-06-C0005`
+- **Current phase:** P1 architecture — cross-agent contract closure in progress
+- **Latest log commit:** `f8d1152f9aea7bd3475ea426e43971f510d02382`
 
 ## Completion index
 
@@ -20,13 +20,14 @@
 | AEGIS-06-C0002 | Architecture | Drafted security contracts, test matrix and cross-agent review issues | `security/SECURITY_CONTRACTS.md`, `security/SECURITY_TEST_MATRIX.md` |
 | AEGIS-06-C0003 | Architecture | Responded to TUSKER-04 review; published machine-readable schemas and deterministic policy specification | `security/schemas/*.schema.json`, `security/POLICY_ENGINE_SPEC.md` |
 | AEGIS-06-C0004 | Architecture | Added operation registration schema and policy conformance vectors; clarified fail-closed registry and validator requirements | `security/schemas/operation-registration.schema.json`, `security/POLICY_TEST_VECTORS.json` |
+| AEGIS-06-C0005 | Architecture | Specified approval lifecycle, registry governance and independent broker contract; resolved TUSKER-04 field semantics and recorded integration blockers | `security/AUTHORIZATION_LIFECYCLE.md`, `security/OPERATION_REGISTRY.md`, `security/BROKER_CONTRACT.md` |
 
 ## Current blockers
 
-- TUSKER-04 accepted invariants, but authoritative schema field compatibility is still pending.
+- TUSKER-04 accepted the proposal/decision field semantics and clarified UUID producer IDs, mutation idempotency, fail-closed ALLOW validation and DENY null fields; transport remains pending.
 - NEXUS-07 has not yet confirmed authorization-reference transport, one-time consumption, registry ownership or broker semantics.
 - PILOT-08, FORGE-09, NOVA-02 and ATLAS-01 review issues have no replies yet.
-- Schemas and vectors have not been run through a Draft 2020-12 validator; no executable policy engine or security tests exist.
+- Schemas and vectors have not been run through a Draft 2020-12 validator; no executable policy engine, broker or security tests exist.
 
 ## Operating rules
 
