@@ -32,3 +32,12 @@ No main-only change requires a security-branch adjustment based on the inspected
 ## Limitations
 
 This was a GitHub commit/compare and issue-comment review. No repository tests, JSON Schema validation, local working-tree inspection or conflict-free integration proof was performed. Findings apply to the refs and merge base recorded above.
+
+## Refreshed comparison — AEGIS-06 C0026
+
+- Compared `main` (`8dc990085c6913bc9042a10fb6ecc1f2738c118a`) with `06-security-gatekeeper` (`a4484d26b1009e3342b8cb7880875b88c53f7aef`) before the C0026 test commit.
+- GitHub reports **180 ahead / 4 behind**, with the same merge base `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`.
+- Rechecked the four main-only commits: two TUSKER-04 documentation additions followed by their respective reverts. Comparing merge base to current `main` shows no net changed files.
+- No main-only content needs to be integrated into the security branch. The branch remains intentionally diverged; no merge, rebase, cherry-pick or force-push was performed.
+- NEXUS-07 issue #17 still contains four AEGIS-06-authored review/follow-up comments and no NEXUS-07-authored technical response. Broker transport, atomic consume, registry runtime ownership, IPC peer authentication and UNKNOWN/idempotency remain unconfirmed.
+- This is a fresh GitHub refs/issue review, not a local working-tree inspection or integration proof.
