@@ -138,3 +138,18 @@ The machine-readable expected outcomes are in `security/AUTHORIZATION_TEST_VECTO
 | AUTH-021 | Replayed reference after successful consume | ALREADY_CONSUMED; reconcile existing execution | 0 additional |
 
 Canonical typed outcomes are defined in `security/AUTHORIZATION_LIFECYCLE.md`. These are specifications only; no executable tests have been run.
+
+
+## Audit-event required executor/reason keys (candidate v0.2.0; specified only)
+
+| ID | Scenario | Expected result |
+|---|---|---|
+| AUD-SCHEMA-019 | Event includes executor_id and reason_code strings | Accept |
+| AUD-SCHEMA-020 | Pre-execution event includes executor_id: null | Accept |
+| AUD-SCHEMA-021 | Event with no applicable reason includes reason_code: null | Accept |
+| AUD-SCHEMA-022 | Event omits executor_id | Reject |
+| AUD-SCHEMA-023 | Event omits reason_code | Reject |
+| AUD-SCHEMA-024 | Event supplies invalid non-string/non-null executor_id or reason_code | Reject |
+| AUD-SCHEMA-025 | Denial/failure producer emits no stable reason_code | Producer rejects event |
+
+These are proposed cases for the separately versioned audit-event v0.2.0 contract. They are not implemented or executed; the current v0.1.0 schema still permits omission.

@@ -264,3 +264,16 @@
 - **Scope:** Documentation integrity only; no schema or runtime behavior changed.
 - **Ledger commit:** `14a31b89fbc83d2b4ef2bd0c1997ea438731fe30`; **JSONL commit:** `2091abc23bafdbb7b228b883d66727b5584b6bdc`.
 - **Outstanding blockers:** NEXUS-07 transport/atomic-consume/runtime decisions and SEC-SCHEMA-003 audit registry-version producer acceptance remain open.
+
+
+| AEGIS-06-C0022 | Audit schema consistency review | Identified missing required executor_id/reason_code keys; extended candidate audit-event v0.2.0 proposal and unexecuted test cases | security/SCHEMA_CONSISTENCY_AUDIT.md; security/AUDIT_EVENT_SCHEMA_PROPOSAL.md; security/SECURITY_TEST_MATRIX.md |
+
+## C0022 — Audit-event executor/reason field completeness
+
+- **Completion:** 22 / 100
+- **Timestamp:** 2026-10-30T20:59:16.496Z
+- **Finding SEC-SCHEMA-004:** The normative audit contract lists `executor_id` and `reason_code` as minimum fields. The active v0.1.0 schema defines nullable properties but does not require their keys.
+- **Proposed resolution:** Require both keys in the same candidate audit-event v0.2.0 revision as SEC-SCHEMA-003's `registry_version`. Preserve explicit nulls for pre-execution executor and events with no applicable reason; denial/failure producers should emit stable reason codes.
+- **Tests specified:** AUD-SCHEMA-019 through AUD-SCHEMA-025 cover concrete values, explicit nulls, missing keys, invalid types and denial/failure reason semantics. These are specifications only.
+- **Change boundary:** No active schema wire-format change or producer implementation. NEXUS-07/TUSKER-04 review and migration acceptance remain required.
+- **Cross-agent blocker:** NEXUS-07 issue #17 remains unanswered; broker transport, atomic consume and runtime integration remain blocked.

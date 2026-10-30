@@ -65,3 +65,19 @@ These tests validate schema structure and representative JSON envelopes. They do
 6. Decide and version the audit-event v0.2.0 migration only after producer-owner review.
 
 **Release implication:** Keep privileged execution blocked until approval bindings are enforced by trusted runtime components, audit correlation/version requirements are implemented by producers, and mandatory negative tests pass against the release candidate.
+
+
+## Finding SEC-SCHEMA-004 — executor and reason keys are not required
+
+**Severity:** Medium — audit completeness gap  
+**Evidence:** Section 7 of `security/SECURITY_CONTRACTS.md` lists `executor_id` and `reason_code` among the minimum audit-event fields. The current `security/schemas/audit-event.schema.json` defines both properties as nullable, but neither appears in the top-level `required` array. The current positive audit fixture supplies both keys, but the negative fixture suite does not test omission of either.
+
+**Risk:** A schema-valid event may omit executor and reason keys entirely. Consumers cannot distinguish an explicitly unavailable value from a producer that failed to emit a minimum field.
+
+**Proposed resolution (not applied):** Require both keys in the separately versioned audit-event v0.2.0 proposal, preserving nullable values: `executor_id: null` before executor assignment and `reason_code: null` when no reason applies. Denial/failure events should carry a stable non-null reason code. Producers must emit the keys rather than omit them.
+
+**Combined schema plan:** Resolve SEC-SCHEMA-003 (`registry_version`) and SEC-SCHEMA-004 (`executor_id` and `reason_code`) together in `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`. No wire-format change has been applied to the active v0.1.0 schema.
+
+**Required tests:** Accept concrete and explicit-null values; reject omitted keys and invalid types; require a stable reason for denial/failure events at producer level. Run Draft 2020-12 validation and producer tests against the approved v0.2.0 schema.
+
+**Status:** Identified in C0022; no schema change made pending producer-owner review. Privileged release remains blocked.

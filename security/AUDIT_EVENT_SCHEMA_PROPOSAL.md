@@ -50,3 +50,27 @@ Negative:
 - **AEGIS-06:** security semantics, schema and negative-test review.
 
 This proposal does not modify the 0.1.0 schema and does not claim producer integration, audit persistence, integrity protection or runtime enforcement. Keep SEC-SCHEMA-003 open until the owners accept the versioned field and tests pass against the actual producer.
+
+
+## Additional minimum audit fields — SEC-SCHEMA-004
+
+The normative audit contract also lists `executor_id` and `reason_code` as minimum fields. The current 0.1.0 schema defines both as nullable properties but does not require their keys. Include the following in the same candidate 0.2.0 revision as `registry_version`, subject to producer-owner acceptance:
+
+| Property | Proposed type | Constraint | Semantics |
+|---|---|---|---|
+| `executor_id` | string or null | maxLength 128 when string | Required key; null before an executor is assigned. Producers supply the stable executor identity once known. |
+| `reason_code` | string or null | maxLength 96 when string | Required key; null when no reason applies. Denial/failure producers should provide a stable reason code. |
+
+### Additional validation cases
+
+Positive:
+- 0.2.0 event with concrete executor_id and reason_code;
+- explicit `executor_id: null` for a pre-execution event;
+- explicit `reason_code: null` when no reason applies.
+
+Negative:
+- omitted executor_id or reason_code key;
+- non-string, non-null executor_id or reason_code;
+- denial/failure event without a stable reason_code.
+
+These cases remain proposed. Do not change the current 0.1.0 audit schema or claim producer conformance until NEXUS-07/TUSKER-04 agree on event lifecycle semantics and migration.

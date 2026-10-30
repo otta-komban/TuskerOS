@@ -77,3 +77,5 @@
 - [x] Add positive/negative approval-request v0.2.0 binding-envelope cases, reject caller-supplied principal fields, and deduplicate schema loading in `security/tests/test_security_schemas.py`; branch CI run 41127219083 passed (33 tests).
 - [ ] Confirm approval-binding producer/UI/authority semantics, including trusted digest derivation and canonical resource normalization; schema-only validation is insufficient.  
 
+
+- [ ] Obtain producer-owner agreement on SEC-SCHEMA-004: require executor_id and reason_code keys with explicit-null semantics in the same candidate audit-event v0.2.0 revision as registry_version; add schema and producer tests.
