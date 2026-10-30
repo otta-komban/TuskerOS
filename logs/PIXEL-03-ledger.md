@@ -4,9 +4,9 @@
 
 ## Latest handover snapshot
 
-- Current verified assistant-response entries: 7/100.
+- Current verified assistant-response entries: 8/100.
 - Profile-store CI: [run 41113728775](https://github.com/otta-komban/TuskerOS/actions/runs/41113728775) passed; job log confirms 35 tests ran and `OK`.
-- Profile-composition CI: [run 41114367389](https://github.com/otta-komban/TuskerOS/actions/runs/41114367389) is pending; an earlier run exposed a test fixture that accidentally retained a conflict winner, and the fixture was corrected in commit `d6935f2`.
+- Profile-composition CI: [run 41114367389](https://github.com/otta-komban/TuskerOS/actions/runs/41114367389) passed; job log confirms 47 tests ran and `OK`.
 - Latest profile-store implementation: `theme-studio/runtime/profile_store.py` and `theme-studio/tests/test_profile_store.py`; tests passed in CI run 41113728775 (35 tests).
 - Profile store persists declarative selections only; it is not yet connected to pack-registry validation, token resolution or desktop preview/apply.
 - Token resolver validation passed on [run 41112979422](https://github.com/otta-komban/TuskerOS/actions/runs/41112979422), 24 tests.
@@ -14,6 +14,6 @@
 - Outstanding: cross-process locking policy; profile import/export; preview/apply/rollback; NOVA-02 and FORGE-09 contract acknowledgement; KDE/Qt surface compatibility research.
 
 
-## Logging integrity note
+| 8 | PIXEL-03-C0008 | Isolated preview sessions | Added bounded owner-scoped volatile preview snapshots, monotonic TTL, expiry cleanup, cancellation and detached-copy isolation; CI run 41115396024 pending. |\n\n## Logging integrity note
 
 At C0007, the existing JSONL file contained only the C0006 record even though the established ledger count was 6. C0001-C0005 JSONL records were not available in the branch file and have not been reconstructed or fabricated. C0007 is appended as sequence 7; recover the missing historical records from repository history/backups if a fully populated JSONL audit trail is required.
