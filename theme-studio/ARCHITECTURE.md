@@ -54,6 +54,7 @@ The canonical manifest is `theme.json`, validated against `schema/theme-pack.sch
 - Stable ID, semantic version, display metadata and license/provenance.
 - Minimum/maximum Theme Engine API compatibility.
 - Typed design tokens for colors, typography, spacing, shape, shadows and motion.
+- Explicit semantic asset-role references for desktop/lock-screen wallpapers, icon sets, fonts and system sounds.
 - Surface-specific references to shared tokens and inert assets.
 - Accessibility declarations and resource hints.
 
@@ -101,7 +102,9 @@ Controls:
 - Strict allowlist schema; reject unknown keys and versions.
 - No executable files or executable manifest fields.
 - Resolve all asset paths beneath a canonical pack root; reject symlink escapes.
-- Enforce per-file and total unpacked size limits, MIME allowlists and content sniffing.
+- Enforce per-file and total unpacked size limits, MIME allowlists and content sniffing. SVG is excluded from v1 because it can contain active content; a future vector-asset profile would require a separately reviewed sanitizer and strict external-reference policy.
+- Enforce semantic asset-role references against the declared asset IDs and kinds; reject dangling references and kind mismatches.
+- Restrict surface overrides to the schema's enumerated surface IDs; adapters must still confirm runtime support.
 - Verify SHA-256 digests and package provenance/signature when supplied by package policy.
 - Do not trust marketplace descriptions, filenames or claimed publisher identity.
 - Install as user data; never request root privileges to apply a theme.
@@ -147,3 +150,8 @@ A valid signature establishes package origin/integrity under a trust policy; it 
 - [ ] Initial architecture reviewed and accepted as G1 contract baseline.
 
 Only the checked items above have evidence in this commit. Remaining items are open.
+
+
+## 13. Schema hardening note
+
+Theme Pack v1 excludes SVG assets rather than attempting to sanitize a complex active-content format. V1 allows PNG, JPEG and WebP images, TTF/OTF/WOFF2 fonts, and OGG/WAV audio, all subject to runtime content sniffing, decoder isolation, size limits and digest verification. Asset-role references must resolve to declared asset IDs with matching kinds. Surface override IDs are restricted to the v1 allowlist in the JSON Schema. Path validation rejects absolute paths, backslashes, duplicate separators and dot-segment traversal; runtime canonical-path and symlink checks remain mandatory.
