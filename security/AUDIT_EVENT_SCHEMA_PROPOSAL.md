@@ -17,7 +17,8 @@ Add the following property and include it in the top-level `required` array:
 
 | Property | Type | Constraint | Source |
 |---|---|---|---|
-| `registry_version` | string | minLength 1, maxLength 128 | Trusted immutable operation-registry snapshot used during policy evaluation |
+| `registry_status` | enum | `resolved` or `unavailable`; sourced by trusted registry authority | Registry resolution outcome |
+| `registry_version` | string or null | non-empty 1–128 chars when resolved; null only for narrowly defined pre-evaluation/unavailable events | Trusted immutable operation-registry snapshot used during policy evaluation |
 
 The proposed 0.2.0 schema identifier should end in `audit-event-0.2.0.json`, and `schema_version` must be the constant `0.2.0`.
 
@@ -25,7 +26,7 @@ The proposed 0.2.0 schema identifier should end in `audit-event-0.2.0.json`, and
 
 1. The policy/registry authority supplies the exact immutable registry version used for the decision. Do not accept a model, extension, remote caller or UI assertion as authoritative.
 2. The producer records the same registry version that was included in the authorization/action digest and that the broker rechecks at consume time.
-3. If the registry version is unavailable, ambiguous or changes before execution, privileged execution fails closed and the audit event must not fabricate a version.
+3. `registry_status` is derived only by the trusted registry authority. When `resolved`, `registry_version` MUST be a concrete non-empty immutable version. When `unavailable`, `registry_version` MUST be explicit null and the event is restricted to a pre-evaluation `requested`/`accepted` record with null reason, or a `policy_denied`/`denied` record with `POLICY_REGISTRY_UNAVAILABLE`. No authorization, consume, dispatch or execution event is valid with unavailable registry status. A missing, corrupt, unverifiable, stale or unavailable registry fails closed.
 4. Consumers reject a 0.1.0 event when a 0.2.0 envelope is required, and vice versa. No implicit default such as `unknown`, empty string or current registry version is allowed.
 5. Preserve `task_id` and `step_id` as required keys with nullable values, per SEC-SCHEMA-002.
 6. Keep `policy_version` and `registry_version` distinct: policy rules and the registered operation set have independent version lifecycles.
@@ -38,7 +39,8 @@ Positive:
 - explicit null `task_id` and `step_id` remain valid.
 
 Negative:
-- missing, null or empty `registry_version`;
+- missing `registry_version` or `registry_status`; null/empty version with `registry_status: resolved`; non-null version with `registry_status: unavailable`;
+- unavailable registry paired with any authorization/dispatch/execution event, or denial without `POLICY_REGISTRY_UNAVAILABLE`;
 - registry version longer than 128 characters;
 - 0.1.0 payload presented to the 0.2.0 validator and vice versa;
 - unknown additional fields and malformed timestamp/UUID/digest values.
@@ -49,7 +51,7 @@ Negative:
 - **TUSKER-04:** audit producer correlation and action-digest compatibility.
 - **AEGIS-06:** security semantics, schema and negative-test review.
 
-This proposal does not modify the 0.1.0 schema and does not claim producer integration, audit persistence, integrity protection or runtime enforcement. Keep SEC-SCHEMA-003 open until the owners accept the versioned field and tests pass against the actual producer.
+This proposal does not modify the 0.1.0 schema and does not claim producer integration, audit persistence, integrity protection or runtime enforcement. Keep SEC-SCHEMA-003/005 open until the owners accept registry-state provenance and event timing and tests pass against the actual producer.
 
 
 ## Additional minimum audit fields — SEC-SCHEMA-004
@@ -97,3 +99,16 @@ This establishes schema-level candidate behavior only. It does not establish tha
 The required non-empty `registry_version` above is not yet sufficient to define every lifecycle event. `AUTHORIZATION_LIFECYCLE.md` requires request-created and denial events, while `OPERATION_REGISTRY.md` requires deny-all when no trustworthy registry snapshot is available. The proposal does not yet define a truthful registry field for those pre-evaluation/failure events.
 
 Do not fabricate `unknown`, use an empty string, or silently omit the event. Before freezing 0.2.0, NEXUS-07 and TUSKER-04 must decide whether a pre-evaluation event carries an explicit null plus a separate registry-resolution state/reason, while ALLOW/CONSUMED/dispatch events require a concrete immutable version. The decision must preserve correlation across decision, consume and execution audit records. This remains an open question; the proposed non-null field is not approved for all event types.
+
+
+## SEC-SCHEMA-005 candidate resolution — AEGIS-06 draft semantics
+
+The candidate v0.2.0 schema now requires both `registry_status` and `registry_version` keys:
+
+- `registry_status: resolved` requires a concrete non-empty `registry_version`.
+- `registry_status: unavailable` requires `registry_version: null` and permits only:
+  - `event_type: requested`, `result_status: accepted`, `reason_code: null` for the received request before registry resolution; or
+  - `event_type: policy_denied`, `result_status: denied`, `reason_code: POLICY_REGISTRY_UNAVAILABLE` for fail-closed rejection.
+- No ALLOW/authorization, consume, dispatch, success, failure or UNKNOWN execution event can use unavailable registry status. Those events require a resolved immutable registry version.
+
+This is an AEGIS schema proposal, not a claim that NEXUS-07 has accepted the state source or that producers can currently emit it. The registry authority must derive `registry_status` and `registry_version`; caller/model/UI values are untrusted. Keep SEC-SCHEMA-005 open for owner review and producer lifecycle validation.
