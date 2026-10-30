@@ -124,10 +124,14 @@ class TransactionStateTests(unittest.TestCase):
             transition_transaction(tx, "revalidated", {"snapshot_digest": "b" * 64})
 
     def test_rejects_invalid_observed_digest_in_stale_history(self):
-        tx = dict(self.tx, state="stale", terminal=True, history=[{
-            "from": "revalidated", "event": "stale",
-            "evidence": {"observed_snapshot_digest": "different"}
-        }])
+        tx = dict(self.tx, state="stale", terminal=True, history=[
+            {"from": "prepared", "event": "approval_verified",
+             "evidence": {"approval_id": "a1", "verification_ref": "v1", "authority": "aegis"}},
+            {"from": "approval_verified", "event": "revalidated",
+             "evidence": {"snapshot_digest": "b" * 64}},
+            {"from": "revalidated", "event": "stale",
+             "evidence": {"observed_snapshot_digest": "different"}}
+        ])
         with self.assertRaisesRegex(TransactionStateError, "invalid stale"):
             transition_transaction(tx, "cancelled")
 
