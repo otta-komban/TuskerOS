@@ -3,13 +3,13 @@
 Permanent identity: PIXEL-03  
 Branch: `03-theme-studio`  
 Target: 100 truthful assistant responses  
-Current verified entries: 3
+Current verified entries: 4
 
 | Sequence | Completion ID | Category | Evidence |
 |---:|---|---|---|
 | 1 | PIXEL-03-C0001 | Architecture and foundation | Theme Engine architecture, schema, desktop/marketplace contract drafts, three sample packs, and corrected structural safety test module committed on `03-theme-studio`. Tests have not been executed. |
 
-| 2 | PIXEL-03-C0002 | Schema security and CI | SVG excluded; path/surface restrictions and semantic asset roles added; Draft 2020-12 and malicious-manifest tests plus CI workflow committed. Initial CI run failed; follow-up identified a path traversal regex defect. |\n| 3 | PIXEL-03-C0003 | CI diagnosis and schema fix | Retrieved run 41111109001 logs: 8 tests passed, traversal case failed. Replaced path regex with strict segment allowlist in commit `e9a98e368f96eb0341ac53d089bcf6ad2baed5bc`; rerun 41111464137 queued. |
+| 2 | PIXEL-03-C0002 | Schema security and CI | SVG excluded; path/surface restrictions and semantic asset roles added; Draft 2020-12 and malicious-manifest tests plus CI workflow committed. Initial CI run failed; follow-up identified a path traversal regex defect. |\n| 3 | PIXEL-03-C0003 | CI diagnosis and schema fix | Retrieved run 41111109001 logs: 8 tests passed, traversal case failed. Replaced path regex with strict segment allowlist in commit `e9a98e368f96eb0341ac53d089bcf6ad2baed5bc`; rerun 41111464137 pending. |\n| 4 | PIXEL-03-C0004 | Runtime asset inspector | Added streaming content/digest inspection, root containment, symlink rejection, regular-file checks, per-kind/aggregate limits, duplicate ID checks and regression tests. Commits `cbc4a55`, `f75aa57`, `d3c1007`; CI pending. |
 
 The JSONL file is the append-only machine-readable record. Counts must be reconciled against actual assistant responses; do not infer completions from commits or tool calls.
 
@@ -21,9 +21,9 @@ The JSONL file is the append-only machine-readable record. Counts must be reconc
 
 ## Latest handover snapshot
 
-- Latest implementation commit: `e9a98e368f96eb0341ac53d089bcf6ad2baed5bc` (asset path traversal regex fix).
+- Latest implementation commits: `cbc4a55ce51bc6fcb402910c3c045d4e423886fe`, `f75aa57306ac17cfd4c39a3d6c4889115d0afa0b`, `d3c1007a547379fda1640e69a08491718d9f7107` (runtime inspector and tests).
 - Latest architecture update: `ba6259ac7ffb99bfba7205cf959373dffba39375`.
-- Latest completion log update: `d114c85746af0bc259eef492e749fb11c462e09d`.
+- Latest completion log update: `366f059184898946544d854ca6db8ec4c05ccc99`.
 - CI run 41110842071 failed; cause remains unknown because job-log retrieval timed out.
 - Follow-up CI run [41111109001](https://github.com/otta-komban/TuskerOS/actions/runs/41111109001) was in progress at handover.
 - Next action: retrieve the follow-up result and diagnose any failing test before claiming tests pass.
