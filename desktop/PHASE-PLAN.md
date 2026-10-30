@@ -47,6 +47,8 @@ All checkboxes remain open until the task has been implemented or researched and
 
 - [ ] Create a minimal Plasma 6 / Qt 6 desktop component skeleton.
 - [ ] Add reproducible build and development instructions.
+- [x] Document a reproducible Fedora/Plasma runtime-validation procedure.
+  - Evidence: `desktop/validation/FEDORA-PLASMA-RUNTIME.md` records package discovery, Qt 6 QML lint, isolated applet validation, real Wayland-session checks, rollback and evidence requirements. This is a runbook, not an executed runtime test.
 - [ ] Add configuration parsing, validation and persistence.
 - [x] Add desktop test harness.
   - [x] Add CI checks for the desktop validator and unit tests.
