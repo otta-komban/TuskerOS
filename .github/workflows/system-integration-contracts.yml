@@ -1,0 +1,36 @@
+name: System integration contract tests
+
+on:
+  push:
+    branches:
+      - 07-system-integration
+    paths:
+      - "system-integration/contracts/**"
+      - "system-integration/tests/**"
+      - "system-integration/requirements-test.txt"
+      - ".github/workflows/system-integration-contracts.yml"
+  pull_request:
+    paths:
+      - "system-integration/contracts/**"
+      - "system-integration/tests/**"
+      - "system-integration/requirements-test.txt"
+      - ".github/workflows/system-integration-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install -r system-integration/requirements-test.txt
+      - name: Validate JSON contracts and fixtures
+        run: python -m unittest discover -s system-integration/tests -v
