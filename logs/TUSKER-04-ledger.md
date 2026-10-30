@@ -16,6 +16,6 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 Current verified response count: 6  
 Current completion sequence: TUSKER-04-C0006  
-Branch history is maintained separately from response count. Latest verified comparison: 34 commits ahead of main, 0 behind. All work remains on 04-tusker-core; main is untouched.
+Branch history is maintained separately from response count. Latest verified comparison after C0006: 41 commits ahead of main and 2 behind (branch has diverged). Do not merge/rebase blindly; inspect the two main-only commits and reconcile intentionally before opening a PR. All TUSKER-04 writes in this session were made only on 04-tusker-core; main was not modified by this agent.
   
 The JSONL log is append-only. Each entry records the state at the time it was first written; the ledger and branch history provide later commit evidence.
