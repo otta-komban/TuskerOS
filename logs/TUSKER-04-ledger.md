@@ -12,6 +12,6 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 Current verified response count: 2  
 Current completion sequence: TUSKER-04-C0002  
-Branch commits in this continuation: 3 (contracts, checklist, completion JSONL). This ledger reconciliation is a further commit.
+Branch history is maintained separately from response count. At this handover, the branch contains 10 commits ahead of main, including architecture, contracts, checklist, and completion-log/ledger updates.
   
 The JSONL log is append-only. Each entry records the state at the time it was first written; the ledger and branch history provide later commit evidence.
