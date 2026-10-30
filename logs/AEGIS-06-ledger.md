@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 13
-- **Latest completion:** `AEGIS-06-C0013`
+- **Verified completion count:** 16
+- **Latest completion:** `AEGIS-06-C0016`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `c8512c053d775f304d40e753c620601317d996c5`
+- **Latest log commit:** `76fd87bfb40b7cfadc5143d7365715ab6f247c06`
 
 ## Completion index
 
@@ -164,3 +164,21 @@
 - **Cross-agent blocker:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. Runtime/API transport, peer identity, atomic consume and UNKNOWN/idempotency reconciliation remain open.
 - **Commits:** Historical proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; supersession note `d007d8220977fb848a1d7de1b4a4df26ffd07880`; JSONL `c3d6ae64ace2c60e43fab1a36fe0e83de127205d`.
 - **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0015.
+
+
+| AEGIS-06-C0015 | Schema validation CI | Added Draft 2020-12 validation and audit-event positive/negative tests; CI passed 17 tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
+| AEGIS-06-C0016 | Approval handoff contract | Defined fresh post-approval ALLOW + opaque authorization reference, typed consume outcomes and conformance cases; answered TUSKER-04's AEGIS-owned questions | security/AUTHORIZATION_LIFECYCLE.md; security/BROKER_CONTRACT.md; security/AUTHORIZATION_TEST_VECTORS.json; security/SECURITY_TEST_MATRIX.md |
+
+## C0016 — Approval handoff and typed consume outcomes
+
+- **Completion:** 16 / 100
+- **Timestamp:** 2026-10-30T20:53:07.048Z
+- **Deliverables:** `security/AUTHORIZATION_LIFECYCLE.md`, `security/BROKER_CONTRACT.md`, `security/AUTHORIZATION_TEST_VECTORS.json`, `security/SECURITY_TEST_MATRIX.md`.
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Decision:** After authenticated approval, AEGIS re-evaluates current exact bindings. Only successful re-evaluation returns a fresh ALLOW + new opaque `authorization_ref`. The original REQUIRE_APPROVAL decision remains non-authorizing. The `approval_request_id` is correlation-only and is never accepted by broker consume.
+- **State/invalidations:** PENDING -> APPROVED -> fresh evaluation -> ALLOW/ref; any changed binding invalidates and yields no ALLOW. Broker consumes only the fresh ref, atomically APPROVED -> CONSUMED. Earlier unconsumed refs are invalidated when a fresh one is issued; terminal requests are not reopened.
+- **Typed outcomes:** Defined success, pending/denied, expiry/revocation/invalidation, replay, binding/caller mismatch, authority/identity/clock/audit outage and ambiguous consume outcomes with explicit zero-grant/zero-handler rules.
+- **Fixtures:** 28 authorization/broker expected-outcome cases after adding AUTH-017–AUTH-023. They are specifications, not executed tests.
+- **Cross-agent:** Posted AEGIS clarification on TUSKER-04 issue #16, comment 6533203333. NEXUS-07 issue #17 remains unanswered; runtime transport/API and durable transaction decisions remain open.
+- **Verification limits:** Documentation/fixture update only. No Draft 2020-12 validator, executable tests, runtime implementation or privileged operation claimed for C0016.
+- **Commits:** Lifecycle `ce955e413de453706bc37eb0c4a0a8c5af5c1334`; broker `c2c2d9080691454a2a18dc271f7d173350a25033`; vectors `43bac949a05c3d806de1c5e9fafcff2d55f94723`; matrix `08412fb36a80e706f45e8ba5851b0d49e094e86b`; checklist `dd17159c5347b7753bfcc3a51785cd8e9233b797`; JSONL `76fd87bfb40b7cfadc5143d7365715ab6f247c06`.
