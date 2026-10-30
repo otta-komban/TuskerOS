@@ -134,3 +134,6 @@ The lifecycle validator also rejects history-free records unless their initial s
 ## Trusted package transaction adapter boundary
 
 The draft contract in `docs/PACKAGE_TRANSACTION_ADAPTER_CONTRACT.md` defines the required sequence from immutable preview through external approval authentication, fresh state revalidation, native package-manager lock, bounded execution, read-back verification, recovery and durable audit. It assigns trust/policy to AEGIS-06 and package execution/recovery to PHOENIX-10. It also defines failure handling, idempotency and conformance tests. This is a design contract only: no executor is implemented, and implementation remains blocked pending the named partner decisions.
+
+
+The package transaction state schema now enumerates the eleven permitted transition edges as exact source/event pairs and constrains event-specific evidence fields (including required lock/result references) without allowing extra evidence properties. It also requires appropriate history presence and terminal flags for prepared, active and terminal states. The Python validator additionally checks continuity and current-state/history agreement. These are structural safeguards only; they do not authenticate evidence or execute package operations.
