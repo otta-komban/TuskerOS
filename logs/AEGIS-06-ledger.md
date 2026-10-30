@@ -7,8 +7,8 @@
 
 ## Current state
 
-- **Verified completion count:** 38
-- **Latest completion:** `AEGIS-06-C0038`
+- **Verified completion count:** 41
+- **Latest completion:** `AEGIS-06-C0041`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
 - **Latest log commit:** `8ae5f14da242e0f9e4e924d47ba9b27ca8b86a71`
 
@@ -433,7 +433,7 @@
 - **Commits:** Candidate schema `817cb91019778e380f6840354400e40616baf892`; tests `7d9d531324dac55f278a92c2e7bf93bd32613152`; docs `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`; JSONL `6bbfb058f14baa761f5a78f9b57e12df20aa6e8d`.
 - **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
 
-**Index integrity:** Removed 17 duplicate index rows for C0008–C0024, retaining the first detailed entry for each. The completion index now has one row per ID C0001–C0037.
+**Index integrity:** Removed 17 duplicate index rows for C0008–C0024, retaining the first detailed entry for each. The completion index now has one row per ID C0001–C0041.
 
 | AEGIS-06-C0038 | remote-device-security-contract | Issued AEGIS owner decisions for PILOT-08 DEC-AEG-001..008; defined device-bound sessions, local-only approval, revocation, transport, policy and audit requirements; extended candidate remote audit bindings and passed 124 schema tests | security/REMOTE_DEVICE_SECURITY_CONTRACT.md; issue #13 comment 6534005612; audit-event v0.2.0 schema and regression tests; CI run 41132519531 |
 
@@ -451,16 +451,32 @@
 - **Branch status:** Before log append, `06-security-gatekeeper` was 237 commits ahead and 0 behind `main`; no merge/rebase performed.
 - **Blockers:** PILOT-08 transport/pairing/session runtime; TUSKER-04 trusted context and task adapter; NEXUS-07 atomic broker consume; NOVA-02 local confirmation/revocation UI; ATLAS-01 OS secure storage/service hardening. Candidate audit v0.2.0 remains a draft; no remote runtime, durable audit producer or broker integration was tested.
 
-| AEGIS-06-C0038 | Completion accounting reconciliation | Applied one-response/one-record rule; verified prior 37 records, branch ancestry and commit count | logs/AEGIS-06.jsonl; branch metadata |
+| AEGIS-06-C0039 | Completion accounting reconciliation | Reconciled initial duplicate label after concurrent remote-device response; this response's record was renumbered C0039 | logs/AEGIS-06.jsonl; branch metadata |
+| AEGIS-06-C0040 | Completion accounting reconciliation | Detected and resolved concurrent duplicate IDs; separated engineering-task count from response count | logs/AEGIS-06.jsonl; CI run 41132519531 |
+| AEGIS-06-C0041 | Completion accounting reconciliation | Verified unique sequential records C0001-C0040 and recorded this response as C0041 | logs/AEGIS-06.jsonl; branch metadata |
 
-## C0038 — Completion accounting reconciliation
+## C0039 — Concurrent completion ID reconciliation
 
-- **Completion:** 38 / 100
+- **Completion:** 39 / 100
 - **Timestamp:** 2026-10-30T21:38:00Z
-- **Accounting rule:** One complete assistant response to one user query equals one completion and exactly one sequential JSONL record. Tasks, tests, tool calls and commits are counted separately and never inflate the response count.
-- **Prior log verification:** 37 JSONL records, unique and sequential from C0001 through C0037; ledger contained the C0037 entry.
-- **This response:** Recorded once as AEGIS-06-C0038. Engineering tasks completed in this administrative response: 0.
-- **Branch verification:** `06-security-gatekeeper` HEAD `accc6649558f737d157ff5591712ad37f2385bd8`; comparison to `main`: 237 ahead / 0 behind.
-- **Commit count:** GitHub branch commit listing returned 100 + 100 + 42 records across pages 1–3 = 242 commits.
-- **JSONL commit:** `0c7d91c6ce9097c4ee585a93ed696cbd7d0ce462`.
-- **Limits:** No engineering implementation, test run, issue comment or code review was claimed. Re-fetch both logs before assigning C0039 to account for concurrent writers.
+- **Accounting:** This response record was renumbered from its initial C0038 label to C0039 after the distinct remote-device security response was confirmed as C0038. No response record was discarded.
+- **Engineering tasks completed:** 0; administrative reconciliation only.
+
+## C0040 — Concurrent completion accounting correction
+
+- **Completion:** 40 / 100
+- **Timestamp:** 2026-10-30T21:39:00Z
+- **Accounting:** Verified the distinct C0038 remote-device work and C0039 accounting response, then recorded this response as C0040. Response count remains independent from task and commit counts.
+- **Engineering tasks completed:** 0; administrative reconciliation only.
+- **Separate engineering-task total:** 34 as recorded in the C0040 JSONL evidence; the 124-test CI result belongs to C0038 and does not increment response count.
+- **Limits:** Remote pairing/session transport, trusted context, broker consume and local confirmation UI remain implementation dependencies; candidate audit v0.2.0 remains unpromoted.
+
+## C0041 — Response-based completion accounting
+
+- **Completion:** 41 / 100
+- **Timestamp:** 2026-10-30T21:40:30Z
+- **Accounting:** Re-fetched the JSONL and verified 40 unique, sequential records through C0040. Appended this response exactly once as C0041.
+- **Engineering tasks completed:** 0; administrative reconciliation only.
+- **Rule:** One entire assistant response to one user query equals one completion. Engineering tasks, tests, tool calls and commits are counted separately.
+- **JSONL commit:** `8789d6ead2893814fb57e191d83d397874410930`.
+- **Limits:** No engineering implementation, test run or external review was performed in this response. Re-fetch both logs before assigning C0042 because concurrent writers can append.
