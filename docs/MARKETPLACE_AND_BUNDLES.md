@@ -124,3 +124,6 @@ not an executor or source of authorization. The state record schema is
 
 
 Lifecycle records now validate lowercase SHA-256 plan/snapshot digests, terminal-flag consistency, history structure and event/evidence shape. Evidence fields are allow-listed per transition to prevent arbitrary strings (including secret-like payloads) from being copied into the lifecycle history. This remains structural validation, not authentication or proof of adapter behavior.
+
+
+The validator also verifies history continuity from the initial `prepared` state, checks required evidence on historical transitions, and requires a valid differing observed snapshot digest for a `stale` event. A malformed or discontinuous lifecycle history is rejected rather than repaired silently.
