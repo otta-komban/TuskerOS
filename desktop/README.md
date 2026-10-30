@@ -114,3 +114,8 @@ The workflow uses GitHub-hosted Ubuntu with Python 3.12 and Node.js 22, requests
 ## Fedora / Plasma runtime validation
 
 ATLAS-01 has proposed Fedora 44 / Plasma 6.6.4 / Wayland-first as the provisional target. The exact RPM package set remains to be resolved from the chosen Fedora repository snapshot. Follow [the Fedora/Plasma runtime validation runbook](validation/FEDORA-PLASMA-RUNTIME.md) for package discovery, Qt 6 QML lint, isolated applet checks, a real Wayland-session test and rollback evidence. The runbook is a plan only; no Fedora runtime test is claimed.
+
+
+## Desktop preferences foundation
+
+The dependency-free settings module at `desktop/config/settings.py` provides schema-v1 defaults, strict validation, partial-default merging, safe fallback for invalid files, and atomic user-scoped persistence (mode `0600`, symlink refusal). The assistant panel is disabled by default. The caller supplies the config path; the recommended location is `$XDG_CONFIG_HOME/tuskeros/desktop.json` or `~/.config/tuskeros/desktop.json`. See [the settings contract](config/README.md). This is a settings foundation only; it is not yet wired into Plasma UI or a settings migration framework.
