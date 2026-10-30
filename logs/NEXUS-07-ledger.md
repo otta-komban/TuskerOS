@@ -1,13 +1,14 @@
 # NEXUS-07 Completion Ledger
 
-| Sequence | Completion ID | Timestamp | Category | Summary | Evidence / commit | Blocker |
-|---:|---|---|---|---|---|---|
-| 1 | NEXUS-07-C0001 | 2026-10-31 | Activation / intake | Reviewed master blueprint and NEXUS checklist; verified repository/branch; created provisional architecture, interface contracts, dependency graph, Phase 1 checklist and risk register; opened cross-agent review issue. | Branch `07-system-integration`; docs commit `3c7334ee783848aa6469a4044bd60c7d89185af6`; [Issue #5](https://github.com/otta-komban/TuskerOS/issues/5). | Shared repository planning/coordination files absent; cross-agent approvals and implementation/test harness pending. |
-| 2 | NEXUS-07-C0002 | 2026-10-31 | Cross-agent review / schemas | Accepted ATLAS base-system constraints; proposed provisional D-Bus identifiers; added four JSON Schemas, fixtures and unittest harness; incorporated TUSKER-04 task lifecycle/cancellation/correlation review; published v0.2 schemas; requested focused TUSKER-04/AEGIS-06/ATLAS-01 review. | `SERVICE_IDENTIFIERS.md`; `contracts/*.schema.json`; `contracts/examples/*.json`; `tests/test_contracts.py`; Issue #5 comments 6531027798, 6531070583, 6531102446. | Namespace ownership and ATLAS/AEGIS/TUSKER final approvals pending; tests not run. |
-| 3 | NEXUS-07-C0003 | 2026-10-31 | Tool catalogue contract | Added provisional tool descriptor schema/example and fixture/negative tests; documented metadata enforcement and ownership boundaries. | `TOOL_CATALOGUE.md`; `contracts/tool-descriptor.schema.json`; `contracts/examples/tool-descriptor.valid.json`; test update; commits `cae9ff8`, `812c162`, `96dbc01`, `c82012e`, `0f5fe1d`. | TUSKER-04/AEGIS-06/ATLAS-01 review and namespace confirmation pending; tests not executed. |
+| Sequence | Completion ID | Category | Summary | Evidence | Blocker |
+|---:|---|---|---|---|---|
+| 1 | NEXUS-07-C0001 | Intake | Initial architecture and review issue. | Issue #5; initial docs. | Shared project specs absent. |
+| 2 | NEXUS-07-C0002 | Schemas | ATLAS boundaries accepted; typed contracts and fixtures added. | Issue #5 comments 6531027798, 6531070583, 6531102446. | AEGIS/ATLAS/TUSKER approvals pending. |
+| 3 | NEXUS-07-C0003 | Catalogue | Tool descriptor schema, example and tests added. | Commits cae9ff8, 812c162, 96dbc01, c82012e, 0f5fe1d. | Owner reviews pending. |
+| 4 | NEXUS-07-C0004 | CI | Semantic checks and GitHub Actions workflow added. | Commits 0974f64, 8e7315f, b2bfba2. | CI result unverified. |
+| 5 | NEXUS-07-C0005 | Adapter compatibility | Documented TUSKER-04 mapping constraints and added JSON result type tests. | Commits 4b42edb, 1b43b4b, 7758664; review 6531355859. | AEGIS/ATLAS reviews and test execution pending. |
 
-**Verified completion count:** 4 actual assistant responses recorded.  
-**Next ID:** `NEXUS-07-C0005`  
-**Branch:** `07-system-integration`  
-**Latest work:** Tool descriptor semantic invariants are covered by tests and CI automation has been added; CI result and owner approvals pending.
-| 4 | NEXUS-07-C0004 | 2026-10-31 | Contract validation automation | Added cross-field descriptor semantic tests and GitHub Actions workflow to run contract tests for branch pushes/PRs; updated Phase 1 checklist. | `tests/test_contracts.py`; `.github/workflows/system-integration-contracts.yml`; `PHASE1_CHECKLIST.md`; commits `0974f64`, `8e7315f`, `b2bfba2`. | CI result not yet observed; AEGIS/TUSKER/ATLAS reviews and namespace confirmation pending. |
+Verified completion count: 5 actual responses.
+Next ID: NEXUS-07-C0006.
+Branch: 07-system-integration.
+No test pass or CI success is claimed.
