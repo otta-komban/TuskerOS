@@ -7,17 +7,17 @@ Target: 100 actual assistant responses (C0001–C0100)
 
 | Sequence | Completion ID | Timestamp | Category | Summary | Evidence / commit | Blocker |
 |---:|---|---|---|---|---|---|
-| 1 | PILOT-08-C0001 | 2026-10-31T00:15:00+05:30 | Repository intake and architecture | Reviewed master blueprint and remote checklist; verified repository/branch baseline; drafted architecture, threat model, API contracts, dependencies, risks and granular P0–P7 plan. | Blueprint in Project Library; GitHub initial commit `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`; architecture document in this branch. | Awaiting AEGIS-06, TUSKER-04 and NOVA-02 review. |
+| 1 | PILOT-08-C0001 | 2026-10-31T00:15:00+05:30 | Repository intake and architecture | Reviewed master blueprint and remote checklist; verified repository/branch baseline; drafted architecture, threat model, API contracts, dependencies, risks and granular P0–P7 plan; committed architecture and completion records; opened cross-agent review. | Architecture commit `7acd87fdbaf0e935320329e7fa163a4f4600cf6f`; review issue [#1](https://github.com/otta-komban/TuskerOS/issues/1). | Awaiting AEGIS-06, TUSKER-04 and NOVA-02 review. |
 
 ## Verified counters
 
 - Actual assistant responses recorded: 1
 - Last sequence: 1
 - Last completion ID: PILOT-08-C0001
-- Commits by PILOT-08: pending first documentation commit
+- Documentation commits: 3 initial commits (architecture, JSONL, ledger); subsequent reconciliation commits are recorded in Git history.
 - Tests run: 0
 - Implemented runtime features: 0
-- P0: intake/documentation baseline drafted; review outstanding
+- P0: intake and draft documentation complete; review/sign-off outstanding
 - P1: proposal drafted; not approved
 
 ## Continuity rules
