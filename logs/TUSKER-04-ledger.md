@@ -11,7 +11,6 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 Current verified response count: 1  
 Current completion sequence: TUSKER-04-C0001  
-Commits created in this response: 4 (architecture, initial ledger, initial JSONL, ledger reconciliation).  
-Latest verified commit: 4b1697beb13725d3881707c339659fb435faed18
+Five branch commits have been created during initial setup: architecture, initial ledger, initial JSONL, and two ledger reconciliations. The latest ledger update is itself the fifth commit; consult the branch history for its SHA.
 
-The JSONL entry is append-only. Its `git_commit: null` records that no commit existed at the moment the response was first logged; the commit evidence is recorded here after verification.
+The JSONL entry is append-only. Its `git_commit: null` records that no commit existed at the moment the response was first logged; the JSONL log commit and subsequent ledger commits are independently visible in branch history.
