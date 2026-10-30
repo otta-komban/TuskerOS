@@ -100,7 +100,7 @@ def plan_owner_removal(
     still reachable from any non-eligible package are preserved, along with
     their transitive dependencies. User/system ownership is never removable.
     """
-    if owner_kind not in REMOVABLE_OWNER_KINDS:
+    if not isinstance(owner_kind, str) or owner_kind not in REMOVABLE_OWNER_KINDS:
         raise OwnershipPlanError("only bundle or extension ownership can be removed")
     owner_id = _non_empty_text(owner_id, "owner_id")
     indexed = validate_installed_state(state)
