@@ -81,14 +81,14 @@ def main() -> int:
         raise RuntimeError("dnf5 is required; install/use the Fedora 44 DNF5 client.")
 
     rows = read_manifest(args.manifest)
-    repo_evidence = run(["dnf5", "repolist", "--enabled", "-v"])
+    repo_evidence = run(["dnf5", "repo", "info"])
     resolved: list[dict[str, str]] = []
     failures: list[str] = []
 
     for row in rows:
         output = run([
-            "dnf5", "repoquery", "--available", "--latest-limit=1",
-            "--qf", QUERY_FORMAT, row["package"]
+            "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
+            "--latest-limit=1", "--qf", QUERY_FORMAT, row["package"]
         ])
         matches = sorted({line.strip() for line in output.splitlines() if line.strip()})
         if not matches:
