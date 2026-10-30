@@ -125,6 +125,30 @@ class PreviewSessionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.manager.create(compose_profile(self.store, self.catalog), owner_id=" ")
 
+    def test_non_finite_clock_values_are_rejected_on_every_lifecycle_operation(self):
+        result = compose_profile(self.store, self.catalog)
+        preview = self.manager.create(result, owner_id="user-a")
+        self.clock.value = float("nan")
+        with self.assertRaisesRegex(ValueError, "finite numeric"):
+            self.manager.create(result, owner_id="user-a")
+        self.clock.value = float("inf")
+        for operation in (
+            lambda: self.manager.get(preview.session_id, owner_id="user-a"),
+            lambda: self.manager.cancel(preview.session_id, owner_id="user-a"),
+            self.manager.cleanup_expired,
+            self.manager.count,
+        ):
+            with self.subTest(operation=operation):
+                with self.assertRaisesRegex(ValueError, "finite numeric"):
+                    operation()
+        self.clock.value = 100.0
+        self.assertEqual(self.manager.get(preview.session_id, owner_id="user-a").session_id, preview.session_id)
+
+    def test_overlong_session_id_is_rejected(self):
+        manager = PreviewSessionManager(id_factory=lambda: "x" * 257)
+        with self.assertRaisesRegex(PreviewSessionError, "invalid or duplicate"):
+            manager.create(compose_profile(self.store, self.catalog), owner_id="user-a")
+
     def test_duplicate_session_id_is_rejected_without_overwriting(self):
         clock = FakeClock()
         manager = PreviewSessionManager(ttl_seconds=30, clock=clock, id_factory=lambda: "same-id")

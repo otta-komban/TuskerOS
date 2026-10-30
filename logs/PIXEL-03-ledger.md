@@ -66,3 +66,15 @@ At C0007, the existing JSONL file contained only the C0006 record even though th
 - Rendered, partial and rejected statuses have distinct acceptance conditions; malformed, stale, mismatched or incomplete acknowledgements cannot be reported as successful previews.
 - This is a documentation/contract hardening completion; no runtime enforcement or CI result is claimed.
 - NOVA-02 issue #30 remains the integration approval gate.
+
+| 13 | PIXEL-03-C0013 | Preview-session clock hardening | Reject non-finite monotonic clock readings across all lifecycle operations and oversized generated session IDs; added regression tests. Tests authored; CI pending. |
+
+## C0013 handover
+
+- Completion count: 13/100 (13%); 87 remaining.
+- Preview session manager now validates every monotonic clock read as finite and numeric, preventing NaN/infinity from disabling expiry.
+- Generated session IDs are bounded to 256 characters before storage.
+- Regression tests cover non-finite clock readings during create/get/cancel/cleanup/count and overlong generated IDs.
+- Tests are authored but have not yet been run in GitHub Actions; no CI pass is claimed.
+- This does not implement the engine-side preview response validator, KDE adapter, IPC or apply/rollback.
+- Historical JSONL integrity gap remains: C0001-C0005 records are unavailable and were not fabricated.

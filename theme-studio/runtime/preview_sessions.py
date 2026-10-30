@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+import math
 import secrets
 import threading
 import time
@@ -105,6 +106,13 @@ class PreviewSessionManager:
             expires_at=item.expires_at,
         )
 
+    def _now(self) -> float:
+        """Return a finite monotonic timestamp; reject broken clock providers."""
+        now = self._clock()
+        if isinstance(now, bool) or not isinstance(now, (int, float)) or not math.isfinite(now):
+            raise ValueError("clock must return a finite numeric monotonic value")
+        return float(now)
+
     def _purge_expired(self, now: float) -> int:
         expired = [key for key, value in self._sessions.items() if now >= value.expires_at]
         for key in expired:
@@ -123,16 +131,14 @@ class PreviewSessionManager:
             raise ValueError("composition provenance must map token paths to source strings")
         tokens = deepcopy(composition.tokens)
         provenance = deepcopy(composition.provenance)
-        now = self._clock()
-        if isinstance(now, bool) or not isinstance(now, (int, float)):
-            raise ValueError("clock must return a numeric monotonic value")
+        now = self._now()
 
         with self._lock:
             self._purge_expired(now)
             if len(self._sessions) >= self._max_sessions:
                 raise PreviewCapacityError("preview session capacity reached")
             session_id = self._id_factory()
-            if not isinstance(session_id, str) or not session_id or session_id in self._sessions:
+            if not isinstance(session_id, str) or not session_id or len(session_id) > 256 or session_id in self._sessions:
                 raise PreviewSessionError("session ID factory returned an invalid or duplicate ID")
             item = _StoredPreview(
                 session_id=session_id,
@@ -153,7 +159,7 @@ class PreviewSessionManager:
         owner = self._owner(owner_id)
         if not isinstance(session_id, str) or not session_id:
             raise PreviewSessionNotFound("preview session not found")
-        now = self._clock()
+        now = self._now()
         with self._lock:
             self._purge_expired(now)
             item = self._sessions.get(session_id)
@@ -166,7 +172,7 @@ class PreviewSessionManager:
         owner = self._owner(owner_id)
         if not isinstance(session_id, str) or not session_id:
             raise PreviewSessionNotFound("preview session not found")
-        now = self._clock()
+        now = self._now()
         with self._lock:
             self._purge_expired(now)
             item = self._sessions.get(session_id)
@@ -179,13 +185,13 @@ class PreviewSessionManager:
 
     def cleanup_expired(self) -> int:
         """Remove all expired sessions and return the number removed."""
-        now = self._clock()
+        now = self._now()
         with self._lock:
             return self._purge_expired(now)
 
     def count(self) -> int:
         """Return the current non-expired session count."""
-        now = self._clock()
+        now = self._now()
         with self._lock:
             self._purge_expired(now)
             return len(self._sessions)
