@@ -12,7 +12,7 @@ The validator checks structure only. It does not verify publisher identity, arti
 
 ## Dependency planning
 
-`sdk/tools/dependency_plan.py` orders an already-resolved dependency graph. It does not select package versions, download packages, verify trust, authorize permissions, or install anything. See `sdk/tests/test_dependency_plan.py`.
+`sdk/tools/dependency_plan.py` orders an already-resolved dependency graph. It does not select package versions, download packages, verify trust, authorize permissions, or install anything. Marketplace release selection and compatibility preview are implemented separately in `marketplace/tools/catalog_resolver.py`.
 
 ## Current status
 
