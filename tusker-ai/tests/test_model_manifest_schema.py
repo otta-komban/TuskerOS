@@ -23,7 +23,7 @@ def test_synthetic_manifest_fixture_is_valid():
     lambda value: value.update(schema_version="9.9.9"),
     lambda value: value["files"][0].update(sha256="not-a-sha256"),
     lambda value: value["files"][0].update(size_bytes=0),
-    lambda value: value["license"].update(review_status="approved"),
+    lambda value: value["license"].update(review_status="approved-ish"),
     lambda value: value["model"].update(modalities=["telepathy"]),
     lambda value: value.update(unexpected_field=True),
 ])
