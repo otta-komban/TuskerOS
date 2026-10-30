@@ -49,7 +49,8 @@
 - [x] Perform JSON syntax and fixture-internal structural audit; Draft 2020-12 validation and runtime execution remain pending.
 - [x] Review all four main-only commits and document the net-zero revert sequence; no merge/rebase performed.
 - [x] Record proposed broker integration defaults and explicit owner-response checklist; decisions remain unaccepted pending NEXUS-07.  
-- [x] Audit approval-request and audit-event schema consistency against normative contract; document missing approval binding and correlation requirements.  
+- [x] Audit approval-request and audit-event schema consistency against normative contract; document missing approval binding and correlation requirements.
+- [x] Reconcile SEC-SCHEMA-002 by requiring `task_id` and `step_id` keys in audit events while preserving nullable values; producer/standards validation remains pending.  
 - [ ] Record remaining accepted architecture decisions and unresolved contract blockers.
 
 ## Exit evidence
