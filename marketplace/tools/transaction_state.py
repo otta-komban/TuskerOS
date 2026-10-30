@@ -78,6 +78,7 @@ def transition_transaction(
         or history_value[-1].get("event") != current
     ):
         raise TransactionStateError("history must end with the current transaction state")
+    expected_source = "prepared"
     for index, item in enumerate(history_value):
         if not isinstance(item, Mapping) or set(item) != {"from", "event", "evidence"}:
             raise TransactionStateError(f"history[{index}] has an invalid shape")
@@ -85,6 +86,8 @@ def transition_transaction(
         target = item["event"]
         if not isinstance(source, str) or source not in TRANSITIONS:
             raise TransactionStateError(f"history[{index}].from is invalid")
+        if source != expected_source:
+            raise TransactionStateError(f"history[{index}] breaks transition continuity")
         if not isinstance(target, str) or target not in TRANSITIONS[source]:
             raise TransactionStateError(f"history[{index}].event is invalid")
         item_evidence = item["evidence"]
@@ -95,6 +98,21 @@ def transition_transaction(
             raise TransactionStateError(f"history[{index}].evidence is invalid")
         if set(item_evidence) - EVIDENCE_KEYS.get(target, set()):
             raise TransactionStateError(f"history[{index}] contains unsupported evidence")
+        if target == "approval_verified" and not {"approval_id", "verification_ref", "authority"}.issubset(item_evidence):
+            raise TransactionStateError(f"history[{index}] lacks approval verification evidence")
+        if target == "revalidated" and item_evidence.get("snapshot_digest") != transaction["snapshot_digest"]:
+            raise TransactionStateError(f"history[{index}] has mismatched snapshot evidence")
+        if target == "stale":
+            observed = item_evidence.get("observed_snapshot_digest", "")
+            if len(observed) != 64 or any(ch not in "0123456789abcdef" for ch in observed) or observed == transaction["snapshot_digest"]:
+                raise TransactionStateError(f"history[{index}] has invalid stale snapshot evidence")
+        if target == "execution_started" and not item_evidence.get("lock_ref"):
+            raise TransactionStateError(f"history[{index}] lacks lock evidence")
+        if target in {"committed", "rolled_back", "rollback_failed"} and not item_evidence.get("result_ref"):
+            raise TransactionStateError(f"history[{index}] lacks result evidence")
+        expected_source = target
+    if history_value and expected_source != current:
+        raise TransactionStateError("history does not describe the current state")
     if not isinstance(event, str) or event not in TRANSITIONS[current]:
         raise TransactionStateError(f"transition {current} -> {event!r} is not allowed")
     if evidence is None:
@@ -114,8 +132,12 @@ def transition_transaction(
         )
     if event == "revalidated" and evidence.get("snapshot_digest") != transaction["snapshot_digest"]:
         raise TransactionStateError("revalidated evidence must match the reviewed snapshot digest")
-    if event == "stale" and evidence.get("observed_snapshot_digest") == transaction["snapshot_digest"]:
-        raise TransactionStateError("stale transition requires a different observed snapshot digest")
+    if event == "stale":
+        observed = evidence.get("observed_snapshot_digest", "")
+        if len(observed) != 64 or any(ch not in "0123456789abcdef" for ch in observed):
+            raise TransactionStateError("stale transition requires a valid observed snapshot digest")
+        if observed == transaction["snapshot_digest"]:
+            raise TransactionStateError("stale transition requires a different observed snapshot digest")
     if event == "execution_started" and not evidence.get("lock_ref"):
         raise TransactionStateError("execution_started requires a package transaction lock reference")
     if event in {"committed", "rolled_back", "rollback_failed"} and not evidence.get("result_ref"):
