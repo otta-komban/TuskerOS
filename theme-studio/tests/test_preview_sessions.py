@@ -9,6 +9,7 @@ from profile_store import ProfileStore
 from profile_composer import compose_profile
 from preview_sessions import (
     PreviewCapacityError,
+    PreviewSessionError,
     PreviewSessionManager,
     PreviewSessionNotFound,
 )
@@ -129,7 +130,7 @@ class PreviewSessionTests(unittest.TestCase):
         manager = PreviewSessionManager(ttl_seconds=30, clock=clock, id_factory=lambda: "same-id")
         result = compose_profile(self.store, self.catalog)
         manager.create(result, owner_id="user-a")
-        with self.assertRaisesRegex(Exception, "duplicate ID"):
+        with self.assertRaisesRegex(PreviewSessionError, "duplicate ID"):
             manager.create(result, owner_id="user-b")
         self.assertEqual(manager.count(), 1)
 
