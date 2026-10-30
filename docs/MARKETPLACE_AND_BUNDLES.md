@@ -137,3 +137,10 @@ The draft contract in `docs/PACKAGE_TRANSACTION_ADAPTER_CONTRACT.md` defines the
 
 
 The package transaction state schema now enumerates the eleven permitted transition edges as exact source/event pairs and constrains event-specific evidence fields (including required lock/result references) without allowing extra evidence properties. It also requires appropriate history presence and terminal flags for prepared, active and terminal states. The Python validator additionally checks continuity and current-state/history agreement. These are structural safeguards only; they do not authenticate evidence or execute package operations.
+
+
+## Lifecycle conformance vectors
+
+`marketplace/tests/fixtures/transaction-state-vectors.json` provides reusable valid and invalid lifecycle sequences. Positive vectors cover commit, rollback, stale snapshot, rejection and cancellation; negative vectors exercise bypass attempts, snapshot mismatch, unapproved evidence fields and terminal-state replay. The corresponding `marketplace/tests/test_transaction_state_vectors.py` unittest runner applies each sequence to the structural validator.
+
+These fixtures verify state-machine behavior only. They do not prove cryptographic approval, package-manager locking or actual transaction results, and the committed tests still require execution in a working checkout.
