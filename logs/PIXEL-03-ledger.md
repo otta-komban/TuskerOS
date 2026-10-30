@@ -1,10 +1,12 @@
 
-| 6 | PIXEL-03-C0006 | Persistent theme profiles | Added versioned profile JSON store with strict validation, bounded reads, symlink rejection, mode-0600 atomic writes, explicit active-profile fallback, and regression tests; CI pending. |
+| 6 | PIXEL-03-C0006 | Persistent theme profiles | Added versioned profile JSON store with strict validation, bounded reads, symlink rejection, mode-0600 atomic writes, explicit active-profile fallback, and regression tests; CI passed (35 tests). |
+| 7 | PIXEL-03-C0007 | Profile composition | Added catalog-backed composition for active/named profiles, exact base-version checks, mixin validation/conflict handling, precedence and provenance; added 12 regression tests. CI run 41114367389 pending after a test-fixture correction. |
 
 ## Latest handover snapshot
 
-- Current verified assistant-response entries: 6/100.
+- Current verified assistant-response entries: 7/100.
 - Profile-store CI: [run 41113728775](https://github.com/otta-komban/TuskerOS/actions/runs/41113728775) passed; job log confirms 35 tests ran and `OK`.
+- Profile-composition CI: [run 41114367389](https://github.com/otta-komban/TuskerOS/actions/runs/41114367389) is pending; an earlier run exposed a test fixture that accidentally retained a conflict winner, and the fixture was corrected in commit `d6935f2`.
 - Latest profile-store implementation: `theme-studio/runtime/profile_store.py` and `theme-studio/tests/test_profile_store.py`; tests passed in CI run 41113728775 (35 tests).
 - Profile store persists declarative selections only; it is not yet connected to pack-registry validation, token resolution or desktop preview/apply.
 - Token resolver validation passed on [run 41112979422](https://github.com/otta-komban/TuskerOS/actions/runs/41112979422), 24 tests.
