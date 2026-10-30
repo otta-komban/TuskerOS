@@ -29,8 +29,10 @@ Target: 100 actual assistant responses; counts are never fabricated.
 
 | TUSKER-04-C0015 | 2026-10-31T02:23:30+05:30 | authorization-approval-semantic-closure | Incorporated AEGIS-confirmed fresh ALLOW after approval, authorization_ref-only broker consumption, typed fail-closed outcomes and audit/reconciliation rules into Core's authorization documents and checklist. | partial | [Authorization adapter](../tusker-core/AUTHORIZATION-ADAPTER.md); [AEGIS proposal mapping](../tusker-core/AEGIS-PROPOSAL-MAPPING.md); [acceptance matrix](../tusker-core/CROSS-LAYER-ACCEPTANCE.md); [AEGIS issue #16](https://github.com/otta-komban/TuskerOS/issues/16#issuecomment-6533203333) |
 
-Current verified response count: 15  
-Current completion sequence: TUSKER-04-C0015  
+| TUSKER-04-C0016 | 2026-10-31T02:55:04+05:30 | nexus-result-adapter-implementation | Added pure fail-closed NEXUS result classifier and six tests; fixed repo-root test discovery/CI trigger; removed duplicate test/checklist entries. Six focused tests passed locally; scheduler integration/full suite/CI remain pending. | partial | [Result adapter](../tusker-core/adapters/nexus_result.py); [mapping tests](../tusker-core/tests/test_nexus_result_mapping.py); [NEXUS review](https://github.com/otta-komban/TuskerOS/issues/5#issuecomment-6533778021) |
+
+Current verified response count: 16  
+Current completion sequence: TUSKER-04-C0016  
 JSONL audit: 15 physical lines, 15 unique completion IDs; the duplicate C0009 replay was removed, retaining the original full canonical record.  
 C0011 has exactly one canonical ledger row; duplicate Markdown ledger rows from the previous update were consolidated.  
 Branch: 04-tusker-core. Ahead/behind figures are refreshed after this ledger commit.
