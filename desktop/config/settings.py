@@ -97,6 +97,16 @@ def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def _fsync_directory(path: Path) -> None:
+    """Persist directory-entry changes after an atomic rename."""
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    directory_fd = os.open(path, flags)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 def load_settings(path: Path) -> tuple[dict[str, Any], list[str]]:
     """Load preferences; missing or invalid files safely fall back to defaults."""
     path = Path(path)
@@ -135,14 +145,15 @@ def save_settings(path: Path, value: Any) -> None:
     fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
     try:
-        os.fchmod(fd, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            os.fchmod(stream.fileno(), 0o600)
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
         if path.is_symlink():
             raise ValueError("refusing to replace a symlink settings file")
         os.replace(temporary, path)
+        _fsync_directory(path.parent)
     finally:
         try:
             temporary.unlink()
