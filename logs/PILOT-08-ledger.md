@@ -42,3 +42,17 @@ Append one JSON object per actual assistant response to `logs/PILOT-08.jsonl`. N
 - Status: NO-GO; cross-agent approvals remain outstanding.
 
 - Final C0008 branch commit count reconciliation: **39 commits** (verified after this ledger update).
+
+## C0009 addendum
+
+- Completion: `PILOT-08-C0009` — 2026-10-30T19:37:29.263Z (recorded in JSONL with Asia/Kolkata offset)
+- Threat-model package: `remote-control/security/THREAT-MODEL-AND-ABUSE-CASE-REGISTER.md`
+- Threat-model commit: `573973bf10cdf67e6b8e45dc076a2c21a1e9a81d`
+- Decision-register update: `c692188801172b46810b9083c749be095b7adbee`
+- JSONL completion record commit: `cafc76b76f0cc808b07c793b95a22d9ec70e8c27`
+- Security analysis coverage: 12 attacker profiles, 12 assets, 10 trust boundaries, 6 attack trees, 20 abuse cases, 12 control/evidence rows and 10 residual risks.
+- Cross-agent update: TUSKER-04 draft v0.1 returns REVISE for DEC-TUS-001..004,006..007 and DEFER for DEC-TUS-005 (pause/resume excluded from MVP). Final schemas/persistence/replay remain open. AEGIS-06 and NOVA-02 still have no owner-authored review response at checkpoint.
+- Verified before this ledger update: branch HEAD `cafc76b76f0cc808b07c793b95a22d9ec70e8c27`; 42 branch commits; JSONL 9 entries; last `PILOT-08-C0009`.
+- Expected branch commit count after this ledger update: 43 (one ledger commit).
+- Actual assistant responses: 9; tests run: 0; runtime features: 0; OpenAPI validation: not run; protocol scenarios specified: 72, not executed.
+- Status: **NO-GO**. Threat analysis is a review artifact, not security sign-off or implementation authorization.
