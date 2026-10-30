@@ -49,3 +49,10 @@ Manifest schema review; SPDX vs CycloneDX; provenance and signature formats; key
 - [ ] Test reports record explicit status and evidence.
 - [ ] Staged artifact is independently verified after download.
 - [ ] Production promotion is blocked until boot, install, Secure Boot and recovery gates pass.
+
+
+## Machine-readable structural schema (C0006)
+
+The initial JSON Schema is at `schemas/release-manifest.schema.json` (JSON Schema Draft 2020-12, schema version `1.0.0`). It defines required release/source/recipe/platform/repository/package/SBOM/provenance/artifact fields, exact artifact byte size and SHA-256, optional signature evidence references, and explicit per-artifact test statuses.
+
+This schema is a structural contract only. It does not prove that referenced evidence exists, that a digest matches downloaded bytes, that a signature is trusted, that a timestamp is actually UTC, or that required tests passed. Those checks belong in the release validator and promotion policy. A candidate must not advance merely because it passes JSON Schema validation. The schema is an initial PHOENIX-10 proposal pending ATLAS-01 and AEGIS-06 review; signing formats and anti-rollback policy remain owner-controlled and unresolved.
