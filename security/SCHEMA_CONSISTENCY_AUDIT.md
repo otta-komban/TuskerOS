@@ -49,3 +49,13 @@ Two actionable schema/prose coverage gaps were found. SEC-SCHEMA-002 has now bee
 - Both properties remain nullable; producers must represent unavailable correlation explicitly as `null` rather than omit the keys.
 - The schema `$id` and `schema_version` remain `0.1.0` because this is a draft contract correction, not a declared new published version. Runtime-owner compatibility review is still required before treating the draft as frozen.
 - SEC-SCHEMA-001 remains unresolved and continues to block privileged release.
+
+
+## C0013 update — automated schema validation added
+
+- Added `security/tests/test_security_schemas.py` using Draft 2020-12 validation with format assertion enabled.
+- The suite checks that every current security schema is a valid Draft 2020-12 schema and exercises audit-event examples with correlated IDs and explicit null correlation.
+- Negative cases cover omitted `task_id`/`step_id`, invalid types, malformed UUID/date-time/digest values, invalid enums and unexpected properties.
+- Added isolated test dependencies in `security/requirements-test.txt` and GitHub Actions workflow `.github/workflows/security-contracts.yml`.
+- Workflow run [41126223487](https://github.com/otta-komban/TuskerOS/actions/runs/41126223487) was queued when this update was written. No test pass is claimed until the run completes.
+- This validates schemas and sample event envelopes only; it does not test a real audit producer, persistence integrity, or privileged runtime behavior.
