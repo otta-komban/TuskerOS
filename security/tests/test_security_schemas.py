@@ -171,3 +171,82 @@ def test_invalid_audit_event_fields_are_rejected(mutation):
     event = dict(VALID_EVENT)
     event.update(mutation)
     assert list(audit_validator().iter_errors(event))
+
+
+APPROVAL_SCHEMA = json.loads(
+    (SCHEMA_DIR / "approval-request.schema.json").read_text()
+)
+
+VALID_APPROVAL = {
+    "schema_version": "0.2.0",
+    "approval_request_id": "123e4567-e89b-12d3-a456-426614174010",
+    "proposal_id": "123e4567-e89b-12d3-a456-426614174011",
+    "action_id": "system.storage.install",
+    "action_digest": "sha256:" + "c" * 64,
+    "principal_binding": "sha256:" + "d" * 64,
+    "binding": {
+        "session_binding": "sha256:" + "e" * 64,
+        "device_binding": "sha256:" + "f" * 64,
+        "registry_version": "registry-2026-10-31.1",
+        "resource_scope": ["disk:wwn-0x5000c500aabbccdd"],
+        "precondition_digest": "sha256:" + "1" * 64,
+    },
+    "policy_version": "0.1.0",
+    "risk_class": "R4",
+    "summary": "Install TuskerOS",
+    "target": "Selected system disk",
+    "impact": "Partitions and data on the selected disk may be replaced",
+    "reversible": False,
+    "created_at": "2026-10-31T00:00:00Z",
+    "expires_at": "2026-10-31T00:02:00Z",
+}
+
+
+def approval_validator():
+    Draft202012Validator.check_schema(APPROVAL_SCHEMA)
+    return Draft202012Validator(
+        APPROVAL_SCHEMA,
+        format_checker=FormatChecker(),
+    )
+
+
+def test_approval_request_v020_with_complete_bindings_is_valid():
+    assert list(approval_validator().iter_errors(VALID_APPROVAL)) == []
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "session_binding",
+        "device_binding",
+        "registry_version",
+        "resource_scope",
+        "precondition_digest",
+    ],
+)
+def test_approval_binding_members_cannot_be_omitted(field):
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    del request["binding"][field]
+    assert list(approval_validator().iter_errors(request))
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        {"session_binding": "sha256:bad"},
+        {"device_binding": "sha256:bad"},
+        {"precondition_digest": "sha256:bad"},
+        {"resource_scope": []},
+        {"resource_scope": ["disk:one", "disk:one"]},
+    ],
+)
+def test_invalid_approval_binding_values_are_rejected(mutation):
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["binding"].update(mutation)
+    assert list(approval_validator().iter_errors(request))
+
+
+def test_approval_request_v010_is_not_accepted_by_v020_schema():
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["schema_version"] = "0.1.0"
+    assert list(approval_validator().iter_errors(request))
