@@ -1,31 +1,12 @@
-# PIXEL-03 Completion Ledger
 
-Permanent identity: PIXEL-03  
-Branch: `03-theme-studio`  
-Target: 100 truthful assistant responses  
-Current verified entries: 4
 
-| Sequence | Completion ID | Category | Evidence |
-|---:|---|---|---|
-| 1 | PIXEL-03-C0001 | Architecture and foundation | Theme Engine architecture, schema, desktop/marketplace contract drafts, three sample packs, and corrected structural safety test module committed on `03-theme-studio`. Tests have not been executed. |
-
-| 2 | PIXEL-03-C0002 | Schema security and CI | SVG excluded; path/surface restrictions and semantic asset roles added; Draft 2020-12 and malicious-manifest tests plus CI workflow committed. Initial CI run failed; follow-up identified a path traversal regex defect. |\n| 3 | PIXEL-03-C0003 | CI diagnosis and schema fix | Retrieved run 41111109001 logs: 8 tests passed, traversal case failed. Replaced path regex with strict segment allowlist in commit `e9a98e368f96eb0341ac53d089bcf6ad2baed5bc`; rerun 41111464137 pending. |\n| 4 | PIXEL-03-C0004 | Runtime asset inspector | Added streaming content/digest inspection, root containment, symlink rejection, regular-file checks, per-kind/aggregate limits, duplicate ID checks and regression tests. Commits `cbc4a55`, `f75aa57`, `d3c1007`; CI pending. |
-
-The JSONL file is the append-only machine-readable record. Counts must be reconciled against actual assistant responses; do not infer completions from commits or tool calls.
+| 5 | PIXEL-03-C0005 | Deterministic token resolution | Added pure reference resolver with explicit mixin conflict winners, fixed precedence, enforced-policy finality and provenance; unit tests authored, CI pending. |
 
 
 ## Latest handover snapshot
 
-- Historical snapshot from the initial architecture response; see latest snapshot below.
-
-
-## Latest handover snapshot
-
-- Latest implementation commits: `cbc4a55ce51bc6fcb402910c3c045d4e423886fe`, `f75aa57306ac17cfd4c39a3d6c4889115d0afa0b`, `d3c1007a547379fda1640e69a08491718d9f7107` (runtime inspector and tests).
-- Latest architecture update: `ba6259ac7ffb99bfba7205cf959373dffba39375`.
-- Latest completion log update: `366f059184898946544d854ca6db8ec4c05ccc99`.
-- CI run 41110842071 failed; cause remains unknown because job-log retrieval timed out.
-- Follow-up CI run [41111109001](https://github.com/otta-komban/TuskerOS/actions/runs/41111109001) was in progress at handover.
-- Next action: retrieve the follow-up result and diagnose any failing test before claiming tests pass.
-
-- Latest ledger commit: `da9d5d1f045652af302d1e63e0a3e9179881e162`.
+- Current verified assistant-response entries: 5/100.
+- Latest implementation files: `theme-studio/runtime/token_resolver.py`, `theme-studio/tests/test_token_resolver.py` (completion C0005; CI pending).
+- Runtime asset-inspector CI passed on run [41111881042](https://github.com/otta-komban/TuskerOS/actions/runs/41111881042); architecture update run [41111966407](https://github.com/otta-komban/TuskerOS/actions/runs/41111966407) also passed. Earlier intermediate test commit failed due to import path, corrected in the passing commit.
+- Schema validation fix run [41111464137](https://github.com/otta-komban/TuskerOS/actions/runs/41111464137) passed.
+- Outstanding: run CI for C0005; connect resolver to validated manifest/profile store; implement profile persistence and preview/apply/rollback; obtain NOVA-02 and FORGE-09 contract acknowledgement; harden asset inspection with directory-descriptor-relative traversal.
