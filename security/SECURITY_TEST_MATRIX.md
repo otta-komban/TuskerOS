@@ -123,3 +123,18 @@ For each executed test, record: test ID, test code path, command, environment, t
 | BRK-014 | Disconnect after dispatch before result | Return UNKNOWN; reconcile before retry | No blind retry |
 
 The machine-readable expected outcomes are in `security/AUTHORIZATION_TEST_VECTORS.json`. These remain specifications; no executable tests have been run.
+
+
+## Approval-to-authorization handoff and typed consume outcomes
+
+| ID | Scenario | Expected result | Handler calls |
+|---|---|---|---:|
+| AUTH-015 | Approve pending request; current bindings still match | Fresh ALLOW + new opaque authorization_ref; approval_request_id remains correlation only | 0 until broker consume |
+| AUTH-016 | Approve pending request; policy/resource/session/registry/precondition changed | INVALIDATED; no ALLOW or grant | 0 |
+| AUTH-017 | Broker submits approval_request_id instead of authorization_ref | BINDING_MISMATCH | 0 |
+| AUTH-018 | Consume commits state and required pre-dispatch audit atomically | CONSUMED + unique consumption_id + narrow grant | At most 1 |
+| AUTH-019 | Required audit commit fails before consume grant | AUDIT_UNAVAILABLE; transaction does not consume | 0 |
+| AUTH-020 | Consume response lost / outcome cannot be confirmed | CONSUME_OUTCOME_UNKNOWN; reconcile, no blind dispatch/retry | 0 until reconciled |
+| AUTH-021 | Replayed reference after successful consume | ALREADY_CONSUMED; reconcile existing execution | 0 additional |
+
+Canonical typed outcomes are defined in `security/AUTHORIZATION_LIFECYCLE.md`. These are specifications only; no executable tests have been run.
