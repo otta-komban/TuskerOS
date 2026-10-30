@@ -76,3 +76,9 @@ The unit tests cover valid metadata, malformed JSON, incorrect package structure
 ## Current status
 
 This is an architecture baseline, not a working shell implementation. The repository currently contains only its license on this branch. Build, runtime, accessibility and packaging claims remain unverified until an executable foundation and test environment exist.
+
+## Optional native dock template
+
+An opt-in Plasma layout template is available at `desktop/panel-template/`. It adds a bottom floating panel with the built-in Kickoff launcher and Icons-only Task Manager. It does not replace the user's current panel or impose a pinned-app list. See [the template README](panel-template/README.md) for manual developer installation and limitations.
+
+The template is a Plasma desktop-scripting artifact, not a standalone dock process. It remains subject to validation on the pinned Fedora/Plasma image; JavaScript syntax checking alone does not prove runtime compatibility.
