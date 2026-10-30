@@ -594,3 +594,52 @@ def test_policy_decision_deny_rejects_authority_bearing_fields(field, value):
 def test_policy_decision_rejects_unknown_top_level_authority_claims():
     decision = dict(VALID_ALLOW_DECISION, caller_principal="root")
     assert list(policy_validator().iter_errors(decision))
+
+# Public proposal JSON is untrusted. Authentication, origin and authorization
+# are injected by trusted adapters/services and cannot be caller assertions.
+def action_proposal_validator():
+    schema = json.loads((SCHEMA_DIR / "action-proposal.schema.json").read_text())
+    return make_validator(schema)
+
+
+def valid_action_proposal():
+    return {
+        "schema_version": "0.1.0",
+        "action_id": "system.settings.update",
+        "proposal_id": "123e4567-e89b-12d3-a456-426614174020",
+        "task_id": "task-123",
+        "step_id": "step-456",
+        "arguments": {"setting": "theme", "value": "dark"},
+        "resources": [{"kind": "setting", "id": "theme", "access": "modify"}],
+        "idempotency_key": "0123456789abcdef",
+        "requested_at": "2026-10-31T00:00:00Z",
+    }
+
+
+def test_action_proposal_with_minimum_typed_fields_is_valid():
+    assert list(action_proposal_validator().iter_errors(valid_action_proposal())) == []
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("principal", "root"),
+        ("origin", "system"),
+        ("decision", "ALLOW"),
+        ("authorization_ref", "caller-forged-grant"),
+        ("authorization_context", {"principal": "root", "decision": "ALLOW"}),
+        ("approval_granted", True),
+        ("risk_class", "R0"),
+    ],
+)
+def test_action_proposal_rejects_caller_supplied_authority_fields(field, value):
+    proposal = valid_action_proposal()
+    proposal[field] = value
+    assert list(action_proposal_validator().iter_errors(proposal))
+
+
+def test_action_proposal_rejects_unknown_resource_authority_fields():
+    proposal = valid_action_proposal()
+    proposal["resources"][0]["principal"] = "root"
+    assert list(action_proposal_validator().iter_errors(proposal))
+
