@@ -41,3 +41,12 @@ This was a GitHub commit/compare and issue-comment review. No repository tests, 
 - No main-only content needs to be integrated into the security branch. The branch remains intentionally diverged; no merge, rebase, cherry-pick or force-push was performed.
 - NEXUS-07 issue #17 still contains four AEGIS-06-authored review/follow-up comments and no NEXUS-07-authored technical response. Broker transport, atomic consume, registry runtime ownership, IPC peer authentication and UNKNOWN/idempotency remain unconfirmed.
 - This is a fresh GitHub refs/issue review, not a local working-tree inspection or integration proof.
+
+## Refreshed upstream and NEXUS-07 review — C0030
+
+- Current refs: `main` = `8dc990085c6913bc9042a10fb6ecc1f2738c118a`; `06-security-gatekeeper` was observed at `9967daa3e0f7efa22e42d267fe38528bc219201f` during this review.
+- Current GitHub comparison reports **207 commits ahead / 0 behind** with `main` itself as the merge base. The security branch is therefore currently a descendant of `main`; no merge, rebase, cherry-pick or force-push was performed in this review.
+- Rechecked `07-system-integration` at `a0cc0a74242070135b6b7937bd7605c7861fe7d8`. The only security/broker/auth/IPC-related path in its recursive tree is `system-integration/AUTHORIZATION_BOUNDARY.md`; it is an integration note, not an executable broker or provider implementation.
+- NEXUS's note correctly places authenticated IPC peer credentials at the receiving transport, AEGIS policy preflight before every registered provider action, and fail-closed behavior on missing/stale/mismatched decisions. It explicitly leaves the authorization-context serialization and transport binding to AEGIS/NEXUS agreement.
+- Issue #17 still has no NEXUS-07-authored response. Its newest comments are AEGIS-06 owner-review requests about missing audit lifecycle event names and event/status mappings.
+- This is GitHub branch/tree/issue evidence only. It does not establish a working-tree build or broker integration. Keep privileged handlers blocked until the transport, peer identity, atomic consume, audit and execution-result contracts have executable implementation evidence.
