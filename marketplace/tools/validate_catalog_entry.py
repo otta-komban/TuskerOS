@@ -81,7 +81,7 @@ def validate_catalog_entry(entry: object) -> list[str]:
             errors.append("$.package.id: invalid package identifier")
         for key, limit in (("name", 80), ("summary", 280), ("license", 80)):
             _text(p.get(key), f"$.package.{key}", errors, maximum=limit)
-        if p.get("kind") not in KINDS:
+        if not isinstance(p.get("kind"), str) or p.get("kind") not in KINDS:
             errors.append("$.package.kind: unsupported package kind")
         for key, limit in (("categories", 48), ("tags", 32)):
             if key in p:
@@ -124,9 +124,9 @@ def validate_catalog_entry(entry: object) -> list[str]:
 
     trust = entry.get("trust")
     if _keys(trust, TRUST, {"review_status", "signature_status"}, "$.trust", errors):
-        if trust.get("review_status") not in REVIEW:
+        if not isinstance(trust.get("review_status"), str) or trust.get("review_status") not in REVIEW:
             errors.append("$.trust.review_status: unsupported state")
-        if trust.get("signature_status") not in SIGNATURE:
+        if not isinstance(trust.get("signature_status"), str) or trust.get("signature_status") not in SIGNATURE:
             errors.append("$.trust.signature_status: unsupported state")
         if "reviewed_at" in trust:
             _date_time(trust["reviewed_at"], "$.trust.reviewed_at", errors)
