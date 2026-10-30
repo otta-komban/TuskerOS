@@ -3,7 +3,7 @@ import json
 import pathlib
 import unittest
 
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "contracts"
@@ -33,7 +33,7 @@ class ContractSchemaTests(unittest.TestCase):
         invalid = {"schema_version":"1.0","request_id":"550e8400-e29b-41d4-a716-446655440000",
                    "caller":{"component":"tusker-core","instance_id":"local-1"},
                    "tool":"system.info","arguments":{},"deadline_ms":999999}
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             Draft202012Validator(schema, format_checker=FormatChecker()).validate(invalid)
 
     def test_result_rejects_unknown_status(self):
