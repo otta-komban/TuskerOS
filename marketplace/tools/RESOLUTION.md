@@ -19,6 +19,28 @@ uses the SDK dependency planner to produce dependency-before-dependent order.
   input order.
 - Unknown range syntax and malformed matching catalog entries fail closed.
 
+## Dependency version constraints
+
+Manifest dependency entries carry a required version constraint. The resolver
+accepts an exact semantic version (for example `1.4.2`) or a comma-conjoined
+set of comparisons using `>=`, `>`, `<=`, `<` and `=` (for example
+`>=1.2.0,<2.0.0`). Each comparison uses semantic-version precedence; build
+metadata does not affect comparison. Every comparison in one expression must
+match.
+
+Pass the validated dependency graph and an edge-constraint mapping to
+`resolve_catalog_plan`. The mapping shape is
+`{parent_package_id: {dependency_package_id: constraint}}`. When supplied,
+each graph edge must have exactly one constraint. Constraints from multiple
+parents are intersected before a single release is selected for a shared
+dependency. Missing edge constraints, malformed expressions and an empty
+candidate intersection fail closed. Root packages have no incoming edge
+constraint unless another selected package depends on them.
+
+The resolver does not rewrite or infer constraints from catalog metadata; the
+caller must construct this mapping from validated manifests and preserve the
+manifest-to-package identity binding.
+
 ## Resolver boundaries
 
 `select_catalog_release` is a metadata selector, not a trust engine. It does
