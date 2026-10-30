@@ -50,6 +50,9 @@
 - [x] Draft versioned task, plan, step, action proposal, tool adapter, event, approval reference, result, error and cancellation contracts.
 - [x] Draft task state machine and transition invariants.
 - [x] Add provisional JSON Schema 2020-12 files for Task, Plan, TaskEvent, TaskResult and Cancellation (not yet consumer-approved or validator-tested).
+- [x] Add one representative valid JSON fixture for each Core schema (JSON syntax checked; full JSON Schema validation remains pending).
+- [x] Review NEXUS invocation/result/descriptor constraints and align Core operation-name and timeout ceilings.
+- [x] Review AEGIS action-proposal/policy-decision semantics and document fail-closed adapter requirements.
 - [x] Draft local persistence, retention, export/delete and migration requirements.
 - [x] Review NEXUS-07 tool contract proposal and submit owner feedback.
 - [x] Review AEGIS-06 security contract proposal and submit owner feedback.
