@@ -1,8 +1,10 @@
 # Approval-Binding Schema Remediation Proposal
 
 **Owner:** AEGIS-06  
-**Status:** Proposal only — not an accepted wire contract  
-**Scope:** Close SEC-SCHEMA-001 without silently changing the v0.1.0 draft or assuming NEXUS-07 runtime choices.
+**Status:** Historical design proposal — not an accepted wire contract  
+**Scope:** Analyze how to represent lifecycle approval bindings without assuming NEXUS-07 runtime choices.
+
+> **Supersession note (C0015):** A concurrent AEGIS-06 completion subsequently published `security/schemas/approval-request.schema.json` v0.2.0 with a typed `binding` object. This document is retained as a design rationale and review checklist; its earlier statement that the v0.1.0 schema remains unchanged describes the state when this proposal was authored, not the current branch state. The v0.2.0 draft is still awaiting runtime-owner compatibility and migration acceptance.
 
 ## 1. Confirmed source requirements
 
