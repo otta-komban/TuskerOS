@@ -48,7 +48,8 @@ All checkboxes remain open until the task has been implemented or researched and
 - [ ] Create a minimal Plasma 6 / Qt 6 desktop component skeleton.
 - [ ] Add reproducible build and development instructions.
 - [ ] Add configuration parsing, validation and persistence.
-- [ ] Add desktop test harness and CI checks.
+- [ ] Add desktop test harness.
+  - [ ] Add CI checks for the desktop validator and unit tests.
 - [ ] Add diagnostics and privacy-conscious crash logging.
 - [ ] Add safe defaults and reset/recovery path.
 - [ ] Verify clean build in the selected Fedora development environment.
