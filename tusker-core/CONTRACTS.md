@@ -308,3 +308,10 @@ Draft JSON Schema 2020-12 artifacts are in `tusker-core/schemas/`: `task.schema.
 
 
 This document is a Core-owned integration proposal. It is not a shared contract approval. Do not implement against unresolved field names as if frozen. Update version and contract tests after owners acknowledge the exact schemas.
+
+
+### Desktop event reconciliation follow-up (2026-10-31)
+
+A field-by-field comparison of Core's provisional `task-event.schema.json` with NOVA-02's `desktop/contracts/task-events-v0.1.md` identified two producer/consumer mismatches. The Core event enum now includes `task.cancelled` as the terminal cancellation event (distinct from `task.cancel_requested`), and `origin` is required with a required `kind` so the desktop can render trusted origin metadata. The existing event payload slots remain `step`, `progress`, `approval`, `result` and `error`; their detailed sub-schemas and exact cross-agent version remain open. Follow-up posted on issue #9 (comment 6531440523) requesting NOVA confirmation of those slots and any additional required fields. This is a producer-draft alignment, not shared approval or transport implementation.
+
+ORBIT-05 follow-up: reviewed the provider proposal and requested a normative v0.1 inference request/event/error schema with exact bounds and cancellation/disconnection semantics (issue #25 comment 6531437037). ATLAS-01 follow-up: requested a concrete Core transport, peer-identity, systemd user-service, XDG path and SQLite/WAL recommendation (issue #27 comment 6531438627). Both decisions remain pending.
