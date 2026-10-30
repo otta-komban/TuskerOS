@@ -79,3 +79,15 @@ Append one JSON object per actual assistant response to `logs/PILOT-08.jsonl`. N
 - No executable tests, runtime features or OpenAPI validation claimed.
 - Owner review remains open: AEGIS-06 and NOVA-02 have no owner-authored sign-off; TUSKER-04 decisions remain draft REVISE/DEFER.
 - Status: **NO-GO**.
+
+
+## C0012 addendum
+
+- Completion: `PILOT-08-C0012` — 2026-10-31T02:05:00+05:30
+- Evidence protocol: `remote-control/verification/SECURITY-TEST-EVIDENCE-AND-EXECUTION-PROTOCOL.md`.
+- Document commit: `dabdfc235707e94dbdc63ac6cc87f1fb6e76d03b`.
+- JSONL completion record commit: `6505fc06d8c34dd74de80c128029c1f24b115b7a`.
+- Defined explicit test lifecycle states (SPECIFIED, IMPLEMENTED, BLOCKED, EXECUTED, PASS, FAIL, INCONCLUSIVE, WAIVED), immutable run manifest/per-test result fields, required instrumentation, zero-dispatch proof, reviewer roles, severity triage, artifact integrity and release reporting.
+- Schema examples are illustrative only; no actual test results are represented.
+- Test harness/stack: not selected. Tests run: 0. Runtime features: 0. OpenAPI validation: not run.
+- AEGIS-06 and NOVA-02 owner sign-offs remain absent; TUSKER-04 remains draft REVISE/DEFER. Implementation status: **NO-GO**.
