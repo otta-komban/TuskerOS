@@ -107,7 +107,7 @@ def validate_approval_claims(
         _text(token.get(key), f"token.{key}")
     if not isinstance(token["approved_actions"], list) or not token["approved_actions"]:
         raise TransactionContractError("token.approved_actions must be a non-empty array")
-    if any(action not in ALLOWED_ACTIONS for action in token["approved_actions"]):
+    if any(not isinstance(action, str) or action not in ALLOWED_ACTIONS for action in token["approved_actions"]):
         raise TransactionContractError("token contains an unsupported approved action")
     try:
         current = datetime.fromisoformat(_text(now, "now").replace("Z", "+00:00"))
@@ -154,7 +154,7 @@ def build_rollback_report(
 ) -> dict[str, Any]:
     """Describe rollback outcome; it does not perform or verify rollback."""
     transaction_id = _text(transaction_id, "transaction_id")
-    if status not in ROLLBACK_STATES:
+    if not isinstance(status, str) or status not in ROLLBACK_STATES:
         raise TransactionContractError("unsupported rollback status")
     for field, values in (("restored_packages", restored_packages),
                           ("failed_packages", failed_packages)):
