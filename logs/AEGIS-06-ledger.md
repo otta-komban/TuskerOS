@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 20
-- **Latest completion:** `AEGIS-06-C0020`
+- **Verified completion count:** 21
+- **Latest completion:** `AEGIS-06-C0021`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `15810ef515d387b84b73d1c1b54f8e5737e8fcbe`
+- **Latest log commit:** `2091abc23bafdbb7b228b883d66727b5584b6bdc`
 
 ## Completion index
 
@@ -241,6 +241,7 @@
 - **Proposal commit:** `79e83d4b596a2b979036ee2528e55463b4ba39d5`; **checklist commit:** `d776bec5d485d7fee79bbff93bfd79b318b4c2f5`; **JSONL commit:** `c93f8fc9e81ddcb40bcb55dc3af7e7b51649cb9f`.
 
 | AEGIS-06-C0020 | Audit record integrity | Restored corrupted schema consistency audit and reconciled all three findings with current schema/proposal status and CI evidence | `security/SCHEMA_CONSISTENCY_AUDIT.md`; `logs/AEGIS-06.jsonl` |
+| AEGIS-06-C0021 | Completion ledger reconciliation | Restored missing C0015 index row and removed duplicate C0018 entries; verified unique index rows C0001-C0020 | `logs/AEGIS-06-ledger.md` |
 
 
 ## C0020 — Schema audit record restoration
@@ -252,3 +253,14 @@
 - **CI evidence:** Runs 41126223487 (17 passed), 41126585567 (32 passed), and 41126895122 (32 passed). These validate schema/envelope cases, not runtime producers or broker execution.
 - **Commit:** Audit restoration `f282ba0fb532bf4f79c2ae9e95f17289344eecc7`; JSONL `15810ef515d387b84b73d1c1b54f8e5737e8fcbe`.
 - **Remaining blockers:** SEC-SCHEMA-003 producer-owner acceptance; NEXUS-07 transport, durable atomic consume, trusted peer identity and runtime implementation.
+
+
+## C0021 — Completion ledger reconciliation
+
+- **Completion:** 21 / 100
+- **Timestamp:** 2026-10-30T20:58:19.178Z
+- **Deliverable:** Normalized `logs/AEGIS-06-ledger.md` completion index.
+- **Correction:** Restored missing C0015 index row and removed duplicate C0018 rows. Verified exactly 20 unique index entries, C0001–C0020, before recording C0021.
+- **Scope:** Documentation integrity only; no schema or runtime behavior changed.
+- **Ledger commit:** `14a31b89fbc83d2b4ef2bd0c1997ea438731fe30`; **JSONL commit:** `2091abc23bafdbb7b228b883d66727b5584b6bdc`.
+- **Outstanding blockers:** NEXUS-07 transport/atomic-consume/runtime decisions and SEC-SCHEMA-003 audit registry-version producer acceptance remain open.
