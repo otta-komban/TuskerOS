@@ -189,3 +189,15 @@ C0026 schema-registry regression coverage: the v0.2.0 candidate test suite now r
 | AUD-SCHEMA-036 | Candidate schema receives an unsupported lifecycle event type | Reject until owner-approved event name and semantics are added |
 
 These cases are proposed from SEC-SCHEMA-006. They are not implemented or executed. Do not count them as passing schema or producer tests.
+
+
+## Policy-decision authorization-field schema tests
+
+| Test | Decision | Required invariant | Coverage |
+|---|---|---|---|
+| POL-DEC-001 | ALLOW | Non-empty authorization reference and expiry | Positive and missing/null negative |
+| POL-DEC-002 | REQUIRE_APPROVAL | Approval request ID present; no authorization grant | Positive, missing request ID and grant-reference negative |
+| POL-DEC-003 | DENY | No expiry, approval request ID or authorization reference | Positive and authority-field negative cases |
+| POL-DEC-004 | Any | Reject unknown top-level caller authority claims | Negative |
+
+Automated schema tests added in `security/tests/test_security_schemas.py`. These validate the policy-decision JSON Schema only; they do not prove that a trusted policy engine minted the reference, that a broker validates it, or that one-time consumption is atomic. CI run 41136304088 is the current validation run; its result is pending at the time of this entry.
