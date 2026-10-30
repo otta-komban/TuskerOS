@@ -84,3 +84,19 @@
 - **Cross-agent status:** NEXUS-07 issue #17 remains unanswered; issues #18, #19, #21 and #23 have no comments; TUSKER-04's prior issue #16 acceptance remains the baseline, with transport open.
 - **Verification limits:** Commit/compare and issue-comment review only. No schema validator, executable tests or integration proof was run.
 - **Blocker:** NEXUS-07 must confirm authorization transport, atomic consume, registry/runtime ownership, IPC identity and UNKNOWN/idempotency contract before privileged runtime work can be enabled.
+
+| AEGIS-06-C0010 | Integration decision record | Published proposed broker/authorization defaults and owner acceptance checklist; no unaccepted decision treated as final | security/BROKER_INTEGRATION_DECISIONS.md |
+
+## C0010 — Broker integration decision record
+
+- **Completion:** 10 / 100
+- **Timestamp:** 2026-10-30T19:45:01.493Z
+- **Deliverable:** `security/BROKER_INTEGRATION_DECISIONS.md`
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Decision status:** Proposed only; NEXUS-07 has not accepted or rejected any of the five proposed defaults.
+- **Proposed areas:** Authorization evidence; durable atomic one-time consumption; AEGIS/NEXUS registry ownership; authenticated IPC peer identity; durable mutation idempotency and UNKNOWN reconciliation.
+- **Issue status:** Rechecked issue #17; it still contains only the two prior AEGIS-06 comments and no NEXUS-07 response.
+- **Branch status before this completion:** 62 commits ahead, 4 behind `main` (diverged); no merge, rebase, cherry-pick or force-push.
+- **Verification limits:** Documentation and GitHub metadata only. No runtime implementation, schema validation, executable security tests or privileged operation was performed.
+- **Blocker:** Explicit NEXUS-07 decisions, runtime/API owner and Fedora/systemd/IPC constraints remain required before runtime contracts can be frozen.
+
