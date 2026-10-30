@@ -7,11 +7,11 @@
 
 ## Current state
 
-- **Verified completion count:** 44
-- **Latest completion:** `AEGIS-06-C0045`
+- **Verified completion count:** 46
+- **Latest completion:** `AEGIS-06-C0046`
 - **Current phase:** P1 security integration review — remote-device contract defined; runtime owner dependencies remain open
-- **Engineering tasks completed:** 36 (separate from assistant responses and commits)
-- **Latest log commit:** `f6db7105924cc0debc54bb24b891e488c4639c43`
+- **Engineering tasks completed:** 38 (separate from assistant responses and commits)
+- **Latest log commit:** `592a691a859023a1da687008d3b1955381424c8f`
 
 ## Completion index
 
@@ -62,6 +62,7 @@
 | AEGIS-06-C0043 | completion-accounting-reconciliation | Re-verified concurrent writers had reconciled the JSONL to 42 unique sequential response records; recorded this response as C0043 and identified the ledger lag. | Immediately before append, the assigned branch JSONL contained 42 unique sequential IDs C0001-C0042; C0038-C0042 reflected the concurrent reconciliation sequence.; Appended this response exactly once as AEGIS-06-C0043 after checking the latest JSONL blob SHA. |
 | AEGIS-06-C0044 | completion-accounting-reconciliation | Verified 43 unique sequential response records, corrected C0042's self-reference, and recorded this response as C0044 after the concurrent C0043 append; response, engineering-task and commit counts remain separate. | Immediately before this append, logs/AEGIS-06.jsonl contained 43 unique sequential response records C0001-C0043.; Corrected C0042's evidence to identify itself as C0042 and to report 42 responses / 36 engineering tasks through that response. |
 | AEGIS-06-C0045 | 2026-10-31T03:08:00+05:30 | cross-agent-security-review | Re-verified FORGE package transaction reason_code mismatch in schema vs Python transition/history validation; posted issue #29 follow-up and documented finding. | partial | [Audit](../security/SCHEMA_CONSISTENCY_AUDIT.md); [FORGE issue #29](https://github.com/otta-komban/TuskerOS/issues/29#issuecomment-6534092148) |
+| AEGIS-06-C0046 | cross-agent-security-review | Reviewed ORBIT-05 provider/ModelStore boundary; recorded six findings and acceptance tests, updated checklist and posted issue #28 review. | `security/AI_RUNTIME_SECURITY_REVIEW.md`; checklist commit `71cd82f`; review commit `e2ae3ab`; issue #28 comment 6534114249 |
 
 ## C0007 — Privileged operations release gate
 
@@ -405,7 +406,6 @@
 - **Blockers:** Project release maintainers must choose the trust model and name key custodians; ATLAS-01 must confirm Fedora verifier packaging; PHOENIX-10 must implement offline verification. NEXUS-07 broker transport/identity/atomic consume and SEC-SCHEMA-006 audit lifecycle agreement remain open.
 
 
-| AEGIS-06-C0035 | Package transaction audit binding | Added candidate v0.2.0 transaction/snapshot correlation fields and positive/negative fixtures; CI passed 104 tests | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
 
 ## C0035 — Package transaction audit binding
 
@@ -418,7 +418,6 @@
 - **Commits:** Candidate schema `817cb91019778e380f6840354400e40616baf892`; tests `7d9d531324dac55f278a92c2e7bf93bd32613152`; docs `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`; JSONL `1f06ab5d5fe09eef557d9cfb1dcdbc6a9f02abbb`.
 - **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
 
-| AEGIS-06-C0036 | Cross-agent authorization boundary re-review | Found caller-reachable optional/open-ended NEXUS authorization_context and confirmed FORGE rejected/cancelled reason_code mismatch remains unfixed; posted owner follow-ups | NEXUS issue #17; FORGE issue #29 |
 
 ## C0036 — Cross-agent authorization boundary re-review
 
@@ -432,7 +431,6 @@
 - **JSONL commit:** `f1c0cf02d5a0c2600d035d6ba4f0382e5fe8a1eb`; ledger reconciliation completed in C0037.
 
 
-| AEGIS-06-C0037 | Package transaction audit binding | Added candidate v0.2.0 transaction/snapshot correlation pair and regression tests; CI passed 104 tests | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
 
 ## C0037 — Package transaction audit binding
 
@@ -448,11 +446,6 @@
 
 **Index integrity:** Completion IDs are unique and sequential C0001–C0043, ordered by response timestamp. Engineering-task count excludes bookkeeping-only responses; commit count is tracked independently.
 
-| AEGIS-06-C0038 | completion-accounting-reconciliation | Applied one-response/one-ID accounting; administrative response, zero engineering tasks | logs/AEGIS-06.jsonl |
-| AEGIS-06-C0039 | completion-accounting-reconciliation | Reconciled concurrent response IDs without discarding either response; administrative response, zero engineering tasks | logs/AEGIS-06.jsonl |
-| AEGIS-06-C0040 | remote-device-security-contract | Issued PILOT-08 owner decisions; defined device-bound sessions and local-only approval; added remote audit binding schema and regression tests; CI passed 124 tests | security/REMOTE_DEVICE_SECURITY_CONTRACT.md; issue #13 comment 6534005612; Actions run 41132519531 |
-| AEGIS-06-C0041 | completion-accounting-reconciliation | Rechecked shared completion sequence and recorded this administrative response; zero engineering tasks | logs/AEGIS-06.jsonl |
-| AEGIS-06-C0042 | completion-accounting-policy | Repaired chronological ID ordering and maintained separate response/task/commit metrics; zero engineering tasks | logs/AEGIS-06.jsonl |
 
 ## C0038 — Completion accounting reconciliation
 - **Completion:** 38 / 100
@@ -481,7 +474,6 @@
 - **Engineering tasks completed:** 0; administrative reconciliation only.
 
 
-| AEGIS-06-C0043 | completion-accounting-reconciliation | Re-verified 42 unique sequential records, detected ledger lag and recorded this administrative response; zero engineering tasks | logs/AEGIS-06.jsonl; branch metadata |
 
 ## C0042 — Separate response, task and commit accounting
 - **Completion:** 42 / 100
@@ -512,3 +504,12 @@
 - **Owner follow-up:** [Issue #29 comment 6534092148](https://github.com/otta-komban/TuskerOS/issues/29#issuecomment-6534092148).
 - **AEGIS evidence:** [Schema consistency audit](../security/SCHEMA_CONSISTENCY_AUDIT.md); [Phase 1 checklist](../security/PHASE1_CHECKLIST.md).
 - **Limits:** Source inspection only. No FORGE-owned files changed; no FORGE tests run. Package execution remains blocked by independent security controls.
+
+## C0046 — ORBIT-05 AI runtime security review
+
+- **Completion:** 46 / 100
+- **Engineering tasks completed:** 38 cumulative (+1 this response); this is a cross-agent security review task, not a runtime implementation.
+- **Reviewed revision:** `05-ai-runtime` at `a30ee3558e5d247d662027a176ad96c68988e3a6`.
+- **Findings:** AISEC-001–006 cover untrusted manifest trust claims, unsafe source URI/SSRF policy, race-resistant archive extraction, kernel-observed listener ownership, process launch/cancellation ownership, and allow-list logging.
+- **Evidence:** `security/AI_RUNTIME_SECURITY_REVIEW.md`; checklist update `71cd82fdbeb61ccc8cb90950fe44700b9c09f611`; review document `e2ae3ab42497c3523c83debb12cf3947c56e0a63`; ORBIT-05 issue #28 comment [6534114249](https://github.com/otta-komban/TuskerOS/issues/28#issuecomment-6534114249).
+- **Limits:** Source/contract review only; no provider, downloader, archive extractor, listener, or filesystem race was executed. ORBIT-05 remediation and runtime evidence remain pending.
