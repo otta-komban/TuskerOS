@@ -17,15 +17,15 @@ Target: 100 actual assistant responses (C0001–C0100)
 
 ## Verified counters
 
-- Actual assistant responses recorded: 7
-- Last sequence: 7
-- Last completion ID: PILOT-08-C0007
-- Branch commits created during intake through C0007: 34 (includes C0007 readiness document and final log/ledger reconciliation commits)
+- Actual assistant responses recorded: 8
+- Last sequence: 8
+- Last completion ID: PILOT-08-C0008
+- Branch commits created during intake through C0008: 37 (includes C0007 readiness document and final log/ledger reconciliation commits)
 - Tests run: 0
 - Implemented runtime features: 0
 - Verification scenarios specified: 72 (PAIR 10, SESS 14, AUTH 10, TASK 16, EVT 12, NET 10; remote approval scenarios remain conditional and are not counted)
 - P0: objective exit criteria documented; TUSKER-04 draft response received; AEGIS-06 and NOVA-02 reviews/sign-off outstanding; NO-GO
-- P1: architecture, draft OpenAPI, protocol acceptance criteria, traceability matrix, decision register and implementation-readiness review committed; contracts remain unapproved
+- P1: architecture, draft OpenAPI, protocol acceptance criteria, traceability matrix, decision register, implementation-readiness review and coverage/change-control package committed; contracts remain unapproved
 - P2: not started; implementation stack and security boundary are not approved
 
 ## Continuity rules
