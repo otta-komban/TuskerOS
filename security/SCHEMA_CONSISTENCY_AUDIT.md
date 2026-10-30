@@ -117,3 +117,21 @@ Candidate required members:
 
 This proposal narrows the field-shape question but does not resolve ownership or transport. **SEC-SCHEMA-001 remains a privileged-release blocker until runtime owners accept and implement the binding checks.**
 
+
+
+## Finding SEC-SCHEMA-003 — audit event omits registry version required by lifecycle
+
+**Severity:** Medium — audit evidence completeness gap  
+**Evidence:** `security/AUTHORIZATION_LIFECYCLE.md` requires audit records to include policy/registry version. The current `security/schemas/audit-event.schema.json` requires `policy_version` but has no `registry_version` property. A schema-valid event therefore cannot explicitly record which operation-registry revision governed the authorization.
+
+**Risk:** Incident reconstruction and registry-change analysis cannot reliably distinguish events evaluated under different registry revisions from the audit envelope alone.
+
+**Recommended resolution:** Add a required, non-empty `registry_version` string (bounded to 128 characters to align with approval-request 0.2.0) to a separately versioned audit-event schema after producer-owner review. The value must come from the trusted immutable registry snapshot used for evaluation. Do not silently change the existing 0.1.0 draft.
+
+**Status:** Identified in C0013; no audit schema change made. Confirm whether a version string or immutable registry-snapshot reference is the stable producer contract before freezing the next schema version.
+
+## C0013 update — approval binding draft review
+
+- Reviewed the branch's approval-request 0.2.0 draft and aligned `security/APPROVAL_BINDING_SCHEMA_PROPOSAL.md` to its actual nested `binding` shape: separate session/device digests, registry version, canonical resource identifiers and precondition digest.
+- Documented trust-source, canonicalization, digest coverage, fail-closed and 0.1.0-to-0.2.0 migration requirements. Runtime-owner acceptance and producer/UI/broker tests remain pending.
+- Identified SEC-SCHEMA-003: lifecycle requires registry version in audit evidence, but audit-event schema has no such property. No audit wire-format change made.
