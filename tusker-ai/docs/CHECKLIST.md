@@ -32,6 +32,7 @@ This is the agent-specific execution checklist derived from the TuskerOS Ten-Age
   - [ ] Specify deterministic provider adapter conformance suite (see PROVIDER-CONFORMANCE.md).
   - [x] Publish language-neutral inference event JSON Schema and synthetic valid trace fixture; schema and trace tests pass in GitHub Actions run 41117411271.
   - [ ] Model inventory and manifest validation.
+  - [x] Publish proposed model-store transaction, safe staging, verification, atomic activation, rollback and startup-recovery contract; implementation and cross-agent approval remain pending.
   - [ ] Inference request, streaming events and structured errors.
   - [ ] Cancellation, timeout, load/unload and health checks.
   - [ ] Resource limits, concurrency and OOM handling.
