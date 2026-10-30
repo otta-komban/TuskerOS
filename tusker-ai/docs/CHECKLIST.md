@@ -30,6 +30,7 @@ This is the agent-specific execution checklist derived from the TuskerOS Ten-Age
   - [ ] Provider discovery and capability reporting.
   - [ ] Define adapter lifecycle state machine and process ownership.
   - [ ] Specify deterministic provider adapter conformance suite (see PROVIDER-CONFORMANCE.md).
+  - [x] Publish language-neutral inference event JSON Schema and synthetic valid trace fixture; executable tests authored but not yet run.
   - [ ] Model inventory and manifest validation.
   - [ ] Inference request, streaming events and structured errors.
   - [ ] Cancellation, timeout, load/unload and health checks.
