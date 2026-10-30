@@ -100,7 +100,7 @@ UEFI boot is not Secure Boot validation.
 - [ ] Retain build logs, package manifests, checksums, source commit, tool versions and SBOM/provenance output.
 - [ ] Generate a build report with PASS/FAIL/BLOCKED for every gate; never infer pass from a successful command alone.
 
-## 7. Install safety test matrix
+## 7. Installer authorization and typed-operation contract\n\nThe POC must validate the installer boundary against NEXUS-07 and AEGIS-06 proposals before implementing writes:\n\n- [ ] Define a typed operation for selecting/preflighting a target disk; no arbitrary command or raw shell string.\n- [ ] Resolve a stable device identity and precondition snapshot; do not use enumeration order or a transient `/dev/sdX` name as the sole identity.\n- [ ] Bind the approval to an immutable action digest, exact disk identity, partition plan, requester, policy version and expiry.\n- [ ] Revalidate identity and preconditions immediately before the write; reject stale approval or changed target.\n- [ ] Return a structured operation result with status, side effects, operation ID and postcondition state.\n- [ ] Treat timeout/uncertain completion as `unknown_outcome`; query state before retrying.\n- [ ] Emit correlated audit events without passwords, LUKS keys, recovery keys or private data.\n- [ ] Ensure recovery path does not depend on AI runtime or the normal Tusker daemon.\n\nNEXUS-07 owns the operation/execution contract; AEGIS-06 owns risk, approval and audit policy. PHOENIX-10 owns the installer workflow and tests only after both owners confirm the boundary.\n\n## 8. Install safety test matrix
 
 All destructive tests use disposable virtual disks only. No developer or host disk is a target.
 
@@ -117,7 +117,7 @@ All destructive tests use disposable virtual disks only. No developer or host di
 | Secure Boot enabled with trusted chain | Boot succeeds only when trust policy is satisfied |
 | Untrusted boot component | Boot is rejected by configured trust chain |
 
-## 8. Acceptance criteria
+## 9. Acceptance criteria
 
 The POC passes only if all required items are evidenced:
 
@@ -134,7 +134,7 @@ The POC passes only if all required items are evidenced:
 
 A failed required item means the POC is **FAIL** or **BLOCKED**, not "mostly supported". If KIWI fails the live ISO or Anaconda integration, evaluate Lorax/livemedia-creator for installer media while preserving a single reviewed package manifest where feasible.
 
-## 9. Evidence record template
+## 10. Evidence record template
 
 For each run, append a report under `tests/installer/poc/<date>-<run-id>/` containing:
 
@@ -149,7 +149,7 @@ For each run, append a report under `tests/installer/poc/<date>-<run-id>/` conta
 - Test matrix PASS/FAIL/BLOCKED with defect references.
 - Known limitations and reviewer sign-off.
 
-## 10. References
+## 11. References
 
 - Fedora image-building guide: https://fedoraproject.org/wiki/Building_a_Fedora
 - Fedora KIWI descriptions (historical project page; Pagure is archived): https://pagure.io/fedora-kiwi-descriptions/
@@ -163,3 +163,13 @@ For each run, append a report under `tests/installer/poc/<date>-<run-id>/` conta
 - Fedora 44 Anaconda Live package: https://packages.fedoraproject.org/pkgs/anaconda/anaconda-live/
 - Fedora 44 Anaconda WebUI package: https://packages.fedoraproject.org/pkgs/anaconda-webui/anaconda-webui/
 - Anaconda WebUI Fedora Spins readiness notes: https://fedoraproject.org/wiki/Changes/AnacondaWebUIforFedoraSpins
+
+## 12. Cross-agent contract inputs
+
+Reviewed on 2026-10-31:
+
+- NEXUS-07 `system-integration/INTERFACE_CONTRACTS.md` on `07-system-integration`: typed request/result envelope, mutation metadata, stable errors, deadlines, idempotency, postconditions and unknown-outcome semantics.
+- AEGIS-06 `security/SECURITY_ARCHITECTURE.md` on `06-security-gatekeeper`: deterministic policy, deny-by-default, exact action-digest approval binding, one-time expiry, broker validation and audit requirements.
+- ATLAS-01 `os/BASE-SYSTEM-CONTRACTS.md` on `01-fedora-base`: recovery must not depend on Tusker daemon/model; no arbitrary root API; package/service ownership remains with the responsible agent.
+
+These are proposals pending cross-agent approval. They are not runtime implementations and do not authorize PHOENIX-10 to create privileged operations independently.
