@@ -27,7 +27,7 @@ Keep optional layers separate from the default profile. AI runtime, developer to
 1. Run the resolver only on a Fedora 44 x86_64 host with DNF5 and the intended Fedora repositories enabled.
 2. Preserve enabled repository configuration and metadata evidence for the run.
 3. Resolve each source package name with DNF5 `repoquery`; do not install packages or change repository configuration.
-4. Record exact package NEVRA and repository ID for each resolution. Fail on missing or ambiguous results rather than silently selecting a guessed version.
+4. Record exactly one package NEVRA and one repository ID for each source package. Fail if the same NEVRA appears in multiple repositories, if multiple NEVRAs match, or if output is malformed; repository ambiguity must be reviewed rather than flattened into multiple lock rows.
 5. Review the resolved set with the owning agent, then use the same resolved inputs for the KIWI ISO and virtual-disk profiles.
 6. Refresh the lock only through a reviewed dependency update; record the source manifest revision and repository metadata evidence.
 
@@ -39,3 +39,13 @@ The resolver is an evidence-gathering tool, not a repository snapshotter. For re
 - No package layer is considered approved merely because DNF can resolve it.
 - Package removal tests must prove that optional Tusker layers do not remove Fedora boot, login, networking, recovery or KDE dependencies.
 - Record licenses and source repositories for third-party packages; Fedora official repositories remain the default.
+
+## Resolver validation
+
+Run the focused standard-library test suite with:
+
+```sh
+python3 -m unittest discover -s tools/atlas -p 'test_*.py' -v
+```
+
+The tests cover empty/malformed query output, duplicate rows, multiple NEVRAs, same-NEVRA results from multiple repositories, and required manifest ownership/rationale fields. These tests do not replace a Fedora 44 DNF5 repository-resolution run.
