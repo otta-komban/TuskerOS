@@ -8,11 +8,11 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **11 / 100**
-- Last recorded completion: **NOVA-02-C0011**
+- Actual assistant responses recorded: **12 / 100**
+- Last recorded completion: **NOVA-02-C0012**
 - Current phase: **P2 — Foundation / P3 — Working MVP**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
-- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, Fedora/Plasma runtime-validation runbook, and a hardened schema-v1 desktop settings foundation with a tested recovery CLI. Plasma runtime and UI integration remain pending.**
+- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, Fedora/Plasma runtime-validation runbook, and a hardened schema-v1 desktop settings foundation with a tested recovery CLI and a JSON Schema Draft 2020-12 artifact guarded by consistency tests. Plasma runtime and UI integration remain pending.**
 - Tests: **All 36 desktop unit tests passed in GitHub Actions run 41126921990; both static validators and Node.js dock-template syntax check passed. Fedora QML lint and Plasma runtime tests have not run.**
 - Contract status: **Desktop consumer review accepted on issue #9; AEGIS-06 and PILOT-08 agreement pending.**
 
@@ -31,6 +31,7 @@
 | 9 | NOVA-02-C0009 | Desktop settings foundation | Added schema-v1 defaults, strict validation, partial merges, bounded safe loading, atomic private persistence and eight tests. Hosted CI passed 23 total desktop tests. UI/runtime integration remains pending. | `desktop/config/settings.py` `7aa6511`; tests `bc1180d`; schema docs `c15986f`; README `03d1a6c`; phase plan `7f7cf55`; Actions run [41124464540](https://github.com/otta-komban/TuskerOS/actions/runs/41124464540). |
 | 10 | NOVA-02-C0010 | Settings safety hardening | Fixed dangling-symlink detection before missing-file handling; added invalid-root, unsupported-version and dangling-symlink regression tests. Hosted CI passed all 26 desktop tests, both static validators and Node.js syntax check. | Settings fix `26d5b01`; tests `64e3774`; config README `ce90984`; phase notes `5f34c0b` / `7c6d5e2`; Actions run [41125249406](https://github.com/otta-komban/TuskerOS/actions/runs/41125249406). |
 | 11 | NOVA-02-C0011 | Desktop settings recovery and diagnostics | Added a privacy-conscious settings check command and an explicitly confirmed schema-v1 reset command; six CLI tests pass. Hosted CI passed all 32 desktop tests, both validators and Node.js syntax check. | CLI `0f93f8d`; tests `34a56d3`; config README `a5fa8a3`; desktop README `cc7950c`; phase plan `492670d`; Actions run [41126354485](https://github.com/otta-komban/TuskerOS/actions/runs/41126354485). |
+| 12 | NOVA-02-C0012 | Desktop settings machine-readable schema | Published a JSON Schema Draft 2020-12 artifact for schema v1 and added four consistency tests to prevent drift from Python runtime defaults, keys and constraints. Hosted CI passed all 36 desktop tests, both validators and Node.js syntax check. | Schema `1b1b82c`; tests `aadb761`; config README `39d9c3e`; phase plan `1c32fbc`; Actions run [41126921990](https://github.com/otta-komban/TuskerOS/actions/runs/41126921990). |
 
 ## Open coordination requests
 
