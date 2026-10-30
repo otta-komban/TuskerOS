@@ -55,13 +55,13 @@ class QueryResultTests(unittest.TestCase):
     def test_unrequested_package_name_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "outside requested name"):
             parse_query_matches(
-                "bash-completion-0:2.11-1.fc44.noarch\\tfedora", "bash"
+                "bash-completion-0:2.11-1.fc44.noarch\tfedora", "bash"
             )
 
     def test_unsupported_architecture_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "unsupported architecture"):
             parse_query_matches(
-                "bash-0:5.2.26-3.fc44.aarch64\\tfedora", "bash"
+                "bash-0:5.2.26-3.fc44.aarch64\tfedora", "bash"
             )
 
 
