@@ -1,5 +1,10 @@
 """NEXUS result-to-Core lifecycle mapping tests."""
+import sys
 import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from adapters.nexus_result import classify_tool_result
 
