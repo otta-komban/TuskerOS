@@ -7,8 +7,8 @@
 
 ## Current state
 
-- **Verified completion count:** 36
-- **Latest completion:** `AEGIS-06-C0036`
+- **Verified completion count:** 37
+- **Latest completion:** `AEGIS-06-C0037`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
 - **Latest log commit:** `f1c0cf02d5a0c2600d035d6ba4f0382e5fe8a1eb`
 
@@ -65,7 +65,6 @@
 - **Verification:** GitHub accepted the release-gate, checklist and JSONL commits. No executable security tests, schema validator, runtime policy engine or privileged broker were run or claimed.
 
 
-| AEGIS-06-C0008 | Contract artifact audit | Parsed all five draft schemas and structurally checked both fixture sets; documented exact scope and validation limitations | security/CONTRACT_ARTIFACT_AUDIT.md |
 
 ## C0008 — Contract artifact structural audit
 
@@ -94,7 +93,6 @@
 - Commit log updates at least every five responses and at handover/session end.
 - Never push to `main` or modify another agent's branch.
 
-| AEGIS-06-C0009 | Integration audit | Inspected all four main-only commits; documented the add/revert sequence, no-net-change result and cross-agent blockers without merging | security/MAIN_BRANCH_DIVERGENCE_REVIEW.md |
 
 ## C0009 — Main-branch divergence and contract review
 
@@ -110,7 +108,6 @@
 - **Verification limits:** Commit/compare and issue-comment review only. No schema validator, executable tests or integration proof was run.
 - **Blocker:** NEXUS-07 must confirm authorization transport, atomic consume, registry/runtime ownership, IPC identity and UNKNOWN/idempotency contract before privileged runtime work can be enabled.
 
-| AEGIS-06-C0010 | Integration decision record | Published proposed broker/authorization defaults and owner acceptance checklist; no unaccepted decision treated as final | security/BROKER_INTEGRATION_DECISIONS.md |
 
 ## C0010 — Broker integration decision record
 
@@ -125,7 +122,6 @@
 - **Verification limits:** Documentation and GitHub metadata only. No runtime implementation, schema validation, executable security tests or privileged operation was performed.
 - **Blocker:** Explicit NEXUS-07 decisions, runtime/API owner and Fedora/systemd/IPC constraints remain required before runtime contracts can be frozen.
 
-| AEGIS-06-C0011 | Schema consistency audit | Found approval-binding representation gap and audit correlation required-field mismatch; documented remediation without changing unreviewed schemas | security/SCHEMA_CONSISTENCY_AUDIT.md |
 
 ## C0011 — Security contract/schema consistency audit
 
@@ -141,7 +137,6 @@
 
 
 
-| AEGIS-06-C0012 | Schema contract correction | Reconciled audit correlation requiredness while retaining explicit null semantics; recorded remaining validation and approval-binding blockers | security/schemas/audit-event.schema.json; security/SCHEMA_CONSISTENCY_AUDIT.md |
 | Historical design note | Approval binding proposal | Superseded by the versioned v0.2.0 approval schema; retained as rationale, not counted as a separate completion | security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md |
 
 ## C0012 — Audit correlation schema correction
@@ -161,7 +156,6 @@
 - **Checklist verification commit:** `3ddc59598ee2beefe346a5d9ddc86ba464b62209` confirms SEC-SCHEMA-002 is checked complete; SEC-SCHEMA-001 remains open.
 
 
-| AEGIS-06-C0013 | Schema contract remediation | Published approval-request schema v0.2.0 with explicit session/device, registry-version, resource-scope and precondition-digest bindings | security/schemas/approval-request.schema.json; security/SCHEMA_CONSISTENCY_AUDIT.md |
 
 ## C0013 — Approval binding schema remediation
 
@@ -190,9 +184,6 @@
 - **Commits:** Historical proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; supersession note `d007d8220977fb848a1d7de1b4a4df26ffd07880`; JSONL reconciliation `9a5785663842d2e21a501861e0efabfe13b699ba`.
 - **Verification limits:** No producer integration test, runtime enforcement, broker execution or privileged operation was performed by C0015.
 
-| AEGIS-06-C0014 | Schema validation CI | Added Draft 2020-12 validation and audit-event positive/negative tests; CI passed 17 tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
-| AEGIS-06-C0015 | Approval-binding lifecycle crosswalk | Reconciled lifecycle binding requirements with the concurrent 0.2.0 draft and documented trust, compatibility and consume-time review criteria | `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md` |
-| AEGIS-06-C0016 | Approval handoff contract | Defined fresh post-approval ALLOW + opaque authorization reference, typed consume outcomes and conformance cases; answered TUSKER-04's AEGIS-owned questions | security/AUTHORIZATION_LIFECYCLE.md; security/BROKER_CONTRACT.md; security/AUTHORIZATION_TEST_VECTORS.json; security/SECURITY_TEST_MATRIX.md |
 
 ## C0016 — Approval handoff and typed consume outcomes
 
@@ -209,7 +200,6 @@
 - **Commits:** Lifecycle `ce955e413de453706bc37eb0c4a0a8c5af5c1334`; broker `c2c2d9080691454a2a18dc271f7d173350a25033`; vectors `43bac949a05c3d806de1c5e9fafcff2d55f94723`; matrix `08412fb36a80e706f45e8ba5851b0d49e094e86b`; checklist `dd17159c5347b7753bfcc3a51785cd8e9233b797`; JSONL `76fd87bfb40b7cfadc5143d7365715ab6f247c06`.
 
 
-| AEGIS-06-C0017 | Approval schema regression tests | Added positive/negative v0.2.0 approval-binding fixtures; CI validated all five Draft 2020-12 schemas with 32 passing tests | security/tests/test_security_schemas.py; .github/workflows/security-contracts.yml |
 
 ## C0017 — Approval schema regression tests
 
@@ -220,8 +210,6 @@
 - **Blocker:** NEXUS-07 runtime transport/API and broker contract remain unanswered; schema migration and trusted binding enforcement require owner acceptance and integration tests.
 
 
-| AEGIS-06-C0018 | Progress ledger reconciliation | Reconciled the readable ledger with the 18 unique JSONL completion records and verified passing branch-head schema CI | `logs/AEGIS-06.jsonl`, `logs/AEGIS-06-ledger.md` |
-| AEGIS-06-C0019 | Audit schema versioning proposal | Proposed required trusted registry_version in a separately versioned audit-event 0.2.0 envelope; owner acceptance remains pending | `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md`; `security/PHASE1_CHECKLIST.md` |
 
 ## C0018 — Progress ledger reconciliation
 
@@ -244,8 +232,6 @@
 - **Blocker:** NEXUS-07/TUSKER-04 must accept the trusted registry-version source and producer migration before a 0.2.0 schema and producer tests are implemented.
 - **Proposal commit:** `79e83d4b596a2b979036ee2528e55463b4ba39d5`; **checklist commit:** `d776bec5d485d7fee79bbff93bfd79b318b4c2f5`; **JSONL commit:** `c93f8fc9e81ddcb40bcb55dc3af7e7b51649cb9f`.
 
-| AEGIS-06-C0020 | Audit record integrity | Restored corrupted schema consistency audit and reconciled all three findings with current schema/proposal status and CI evidence | `security/SCHEMA_CONSISTENCY_AUDIT.md`; `logs/AEGIS-06.jsonl` |
-| AEGIS-06-C0021 | Completion ledger reconciliation | Restored missing C0015 index row and removed duplicate C0018 entries; verified unique index rows C0001-C0020 | `logs/AEGIS-06-ledger.md` |
 
 
 ## C0020 — Schema audit record restoration
@@ -270,9 +256,6 @@
 - **Outstanding blockers:** NEXUS-07 transport/atomic-consume/runtime decisions and SEC-SCHEMA-003 audit registry-version producer acceptance remain open.
 
 
-| AEGIS-06-C0022 | Audit schema consistency review | Identified missing required executor_id/reason_code keys; extended candidate audit-event v0.2.0 proposal and unexecuted test cases | security/SCHEMA_CONSISTENCY_AUDIT.md; security/AUDIT_EVENT_SCHEMA_PROPOSAL.md; security/SECURITY_TEST_MATRIX.md |
-| AEGIS-06-C0023 | Approval schema regression test hardening | Aligned audit review with approval-request v0.2.0, rejected caller-supplied principal fields and verified follow-up CI with 33 passing tests | `security/tests/test_security_schemas.py`; `security/SCHEMA_CONSISTENCY_AUDIT.md` |
-| AEGIS-06-C0024 | Audit schema edge-case review | Identified registry-unavailable audit-event ambiguity; documented required owner decision and fail-closed event semantics | `security/SCHEMA_CONSISTENCY_AUDIT.md`; `security/AUDIT_EVENT_SCHEMA_PROPOSAL.md` |
 
 ## C0022 — Audit-event executor/reason field completeness
 
@@ -434,4 +417,20 @@
 - **Ownership:** No NEXUS-07 or FORGE-09 files modified. AEGIS does not own their implementation branches.
 - **Security status:** No trusted authorization transport, broker consume, package-manager execution or rollback implementation is claimed. Mutations remain blocked pending owner fixes and runtime evidence.
 - **Blockers:** NEXUS-07 trusted context injection/consume API and anti-spoofing tests; FORGE-09 reason-code validator/test correction; PHOENIX-10 package-manager lock/execution/read-back/recovery contract.
-- **JSONL commit:** `f1c0cf02d5a0c2600d035d6ba4f0382e5fe8a1eb`; ledger update pending verification.
+- **JSONL commit:** `f1c0cf02d5a0c2600d035d6ba4f0382e5fe8a1eb`; ledger reconciliation completed in C0037.
+
+
+| AEGIS-06-C0037 | Package transaction audit binding | Added candidate v0.2.0 transaction/snapshot correlation pair and regression tests; CI passed 104 tests | security/schemas/audit-event-0.2.0.schema.json; security/tests/test_security_schemas.py |
+
+## C0037 — Package transaction audit binding
+
+- **Completion:** 37 / 100
+- **Timestamp:** 2026-10-30T21:34:50.868Z
+- **Candidate schema:** Added optional `transaction_id` and `snapshot_digest` as an all-or-none pair to audit-event v0.2.0. Snapshot digest must be `sha256:` plus 64 lowercase hex characters. Active audit-event v0.1.0 remains unchanged.
+- **Tests:** Positive fixture accepts both fields; negative fixtures reject either missing counterpart and malformed/empty/null digests.
+- **CI:** GitHub Actions run [41131437944](https://github.com/otta-komban/TuskerOS/actions/runs/41131437944) completed successfully; Python 3.12 reported **104 passed in 3.63s** on commit `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`.
+- **Cross-agent:** Reviewed FORGE helper digest semantics and posted issue #29 comments 6533844297, 6533858174 and 6533873978. FORGE's sorted-key JSON digest is not the AEGIS RFC 8785 JCS action digest; AEGIS must recompute the latter independently.
+- **Commits:** Candidate schema `817cb91019778e380f6840354400e40616baf892`; tests `7d9d531324dac55f278a92c2e7bf93bd32613152`; docs `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`; JSONL `6bbfb058f14baa761f5a78f9b57e12df20aa6e8d`.
+- **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
+
+**Index integrity:** Removed 17 duplicate index rows for C0008–C0024, retaining the first detailed entry for each. The completion index now has one row per ID C0001–C0037.
