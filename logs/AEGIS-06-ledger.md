@@ -7,11 +7,11 @@
 
 ## Current state
 
-- **Verified completion count:** 50
-- **Latest completion:** `AEGIS-06-C0050`
+- **Verified completion count:** 51
+- **Latest completion:** `AEGIS-06-C0051`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
-- **Engineering tasks completed:** 40 (separate from assistant responses and commits)
-- **Latest log commit:** `ce5cdc384d3e0cff97af92d79539754682d383bf`
+- **Engineering tasks completed:** 41 (separate from assistant responses and commits)
+- **Latest log commit:** `9aa7bd717db7327d53c01a4add28853958599406`
 
 ## Completion index
 
@@ -556,3 +556,12 @@
 - **CI:** [Run 41136487180](https://github.com/otta-komban/TuskerOS/actions/runs/41136487180), Python 3.12, **145 passed in 5.05s**, on test correction commit `4aa7362b5ef5a933c03124a6145e13405aeacb0a`.
 - **Change commits:** tests `487893b7b135cfd9a8890f68d856b5b44041c1f2`; matrix `78177afbc3ace6051a66ea8479b8402dd9f21d29`; test correction `4aa7362b5ef5a933c03124a6145e13405aeacb0a`; JSONL `ce5cdc384d3e0cff97af92d79539754682d383bf`.
 - **Limits:** Schema-only validation; no policy engine, broker, authorization store, audit persistence, atomic consume or privileged operation was exercised.
+## C0051 — Public action-proposal authority-field regression tests
+
+- **Completion:** 51 / 100
+- **Engineering tasks completed:** 41 cumulative (+1 this response).
+- **Changes:** Added a valid action-proposal fixture and negative tests rejecting caller-supplied `principal`, `origin`, `decision=ALLOW`, `authorization_ref`, `authorization_context`, `approval_granted`, `risk_class`, and an undeclared resource-level `principal`.
+- **Implementation:** `security/tests/test_security_schemas.py`; validates against the existing strict `security/schemas/action-proposal.schema.json` without changing the wire schema.
+- **CI:** [Run 41136489429](https://github.com/otta-komban/TuskerOS/actions/runs/41136489429), Python 3.12, **145 passed in 5.15s**, on descendant commit `7ce99d5b6c25f5db4dcef6712755d4468d53d2dd`.
+- **Test commit:** `c85635fc03df3b8ee4101c40ac853f2690bf7ff3`; JSONL commit: `9aa7bd717db7327d53c01a4add28853958599406`.
+- **Limits:** This is schema regression coverage only. It does not prove runtime identity injection, broker consume, atomic replay prevention, audit persistence or zero-handler-call behavior.
