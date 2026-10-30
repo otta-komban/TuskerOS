@@ -79,34 +79,33 @@ class ManifestTests(unittest.TestCase):
                 "desktop,bash,ATLAS-01,true,\n"
             )
 
-
     def test_duplicate_header_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "unique, non-empty columns"):
             self.read_text(
-                "layer,package,owner,required,rationale,rationale\\n"
-                "desktop,bash,ATLAS-01,true,base,duplicate\\n"
+                "layer,package,owner,required,rationale,rationale\n"
+                "desktop,bash,ATLAS-01,true,base,duplicate\n"
             )
 
     def test_extra_csv_field_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "more fields than its header"):
             self.read_text(
-                "layer,package,owner,required,rationale\\n"
-                "desktop,bash,ATLAS-01,true,base shell,unexpected\\n"
+                "layer,package,owner,required,rationale\n"
+                "desktop,bash,ATLAS-01,true,base shell,unexpected\n"
             )
 
     def test_missing_csv_field_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "missing values"):
             self.read_text(
-                "layer,package,owner,required,rationale\\n"
-                "desktop,bash,ATLAS-01,true\\n"
+                "layer,package,owner,required,rationale\n"
+                "desktop,bash,ATLAS-01,true\n"
             )
 
     def test_duplicate_package_in_layer_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "Duplicate package in layer"):
             self.read_text(
-                "layer,package,owner,required,rationale\\n"
-                "desktop,bash,ATLAS-01,true,base shell\\n"
-                "desktop,bash,ATLAS-01,true,duplicate request\\n"
+                "layer,package,owner,required,rationale\n"
+                "desktop,bash,ATLAS-01,true,base shell\n"
+                "desktop,bash,ATLAS-01,true,duplicate request\n"
             )
 
 
