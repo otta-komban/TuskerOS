@@ -49,6 +49,7 @@
 - [x] Perform JSON syntax and fixture-internal structural audit; Draft 2020-12 validation and runtime execution remain pending.
 - [x] Review all four main-only commits and document the net-zero revert sequence; no merge/rebase performed.
 - [x] Record proposed broker integration defaults and explicit owner-response checklist; decisions remain unaccepted pending NEXUS-07.  
+- [x] Audit approval-request and audit-event schema consistency against normative contract; document missing approval binding and correlation requirements.  
 - [ ] Record remaining accepted architecture decisions and unresolved contract blockers.
 
 ## Exit evidence
@@ -64,4 +65,5 @@
 
 - [x] Review `main`-only divergence commits and document findings in `security/MAIN_BRANCH_DIVERGENCE_REVIEW.md`.
 - [ ] Obtain NEXUS-07 authorization/broker implementation decisions before freezing privileged runtime contracts.  
-- [x] Publish `security/BROKER_INTEGRATION_DECISIONS.md` with proposed (not accepted) defaults for authorization evidence, atomic consume, registry ownership, IPC identity and UNKNOWN/idempotency.
+- [x] Publish `security/BROKER_INTEGRATION_DECISIONS.md` with proposed (not accepted) defaults for authorization evidence, atomic consume, registry ownership, IPC identity and UNKNOWN/idempotency.  
+- [ ] Resolve SEC-SCHEMA-001 approval binding fields/versioning and SEC-SCHEMA-002 audit correlation required-field mismatch in `security/SCHEMA_CONSISTENCY_AUDIT.md`.
