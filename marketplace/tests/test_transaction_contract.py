@@ -81,5 +81,11 @@ class TransactionContractTests(unittest.TestCase):
         self.assertEqual(event["details"]["package_count"], 2)
 
 
+    def test_audit_event_rejects_negative_counters(self):
+        with self.assertRaisesRegex(TransactionContractError, "cannot be negative"):
+            build_audit_event("txn-1", "2026-10-31T12:00:00Z", "user", "previewed",
+                              "a" * 64, "b" * 64, "prepared", {"package_count": -1})
+
+
 if __name__ == "__main__":
     unittest.main()
