@@ -118,6 +118,46 @@ class PreviewContractSchemaTests(unittest.TestCase):
         with self.assertRaises(jsonschema.ValidationError):
             jsonschema.validate(payload, schema)
 
+    def test_rendered_response_requires_at_least_one_surface(self):
+        schema = self.load_schema("preview-render-response.schema.json")
+        payload = {"protocol_version": "1.0", "request_id": "request_0123456789abcdef",
+                   "session_id": "session_0123456789abcdef", "revision": 2,
+                   "status": "rendered", "rendered_surfaces": ["desktop"]}
+        jsonschema.Draft202012Validator.check_schema(schema)
+        jsonschema.validate(payload, schema)
+        payload["rendered_surfaces"] = []
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(payload, schema)
+
+    def test_partial_response_requires_rendered_and_omitted_surfaces(self):
+        schema = self.load_schema("preview-render-response.schema.json")
+        payload = {"protocol_version": "1.0", "request_id": "request_0123456789abcdef",
+                   "session_id": "session_0123456789abcdef", "revision": 2,
+                   "status": "partial", "rendered_surfaces": ["desktop"],
+                   "omitted_surfaces": [{"surface": "panel", "reason": "unsupported_effect"}]}
+        jsonschema.validate(payload, schema)
+        payload["omitted_surfaces"] = []
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(payload, schema)
+
+    def test_rejected_response_requires_stable_failure_code(self):
+        schema = self.load_schema("preview-render-response.schema.json")
+        payload = {"protocol_version": "1.0", "request_id": "request_0123456789abcdef",
+                   "session_id": "session_0123456789abcdef", "revision": 2,
+                   "status": "rejected", "failure_code": "expired_session"}
+        jsonschema.validate(payload, schema)
+        payload["failure_code"] = "arbitrary_error"
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(payload, schema)
+
+    def test_response_rejects_unknown_fields_and_apply_claims(self):
+        schema = self.load_schema("preview-render-response.schema.json")
+        payload = {"protocol_version": "1.0", "request_id": "request_0123456789abcdef",
+                   "session_id": "session_0123456789abcdef", "revision": 2,
+                   "status": "rejected", "failure_code": "adapter_unavailable", "apply": True}
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(payload, schema)
+
 
 if __name__ == "__main__":
     unittest.main()
