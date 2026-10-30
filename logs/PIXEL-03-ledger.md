@@ -12,3 +12,8 @@
 - Token resolver validation passed on [run 41112979422](https://github.com/otta-komban/TuskerOS/actions/runs/41112979422), 24 tests.
 - Runtime asset-inspector race caveat remains: production implementation should use directory-descriptor-relative traversal; private, non-writable staging root required.
 - Outstanding: cross-process locking policy; profile import/export; preview/apply/rollback; NOVA-02 and FORGE-09 contract acknowledgement; KDE/Qt surface compatibility research.
+
+
+## Logging integrity note
+
+At C0007, the existing JSONL file contained only the C0006 record even though the established ledger count was 6. C0001-C0005 JSONL records were not available in the branch file and have not been reconstructed or fabricated. C0007 is appended as sequence 7; recover the missing historical records from repository history/backups if a fully populated JSONL audit trail is required.
