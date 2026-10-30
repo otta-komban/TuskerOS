@@ -148,3 +148,18 @@
 - **Commits:** Schema `d50473c5e9aa33b6f9955b4e67224391e5249204`; audit `98f1176c46017f3f83e404030f60d2d8e817854e`; checklist `ccfe4d9b9643d85e06f54b1ed9c95df50ae3f2d0`; JSONL `c8512c053d775f304d40e753c620601317d996c5`.
 - **Blocker:** NEXUS-07 has not supplied runtime/API constraints or accepted the proposed binding/migration representation. Schema shape does not prove trusted identity, canonical resource ordering, semantic digest correctness or atomic consume behavior.
 - **Verification limits:** No Draft 2020-12 meta-schema/format validator, producer/UI fixture, runtime enforcement test or privileged operation was run.
+
+
+## C0013 — Approval-binding schema remediation proposal
+
+- **Completion:** 13 / 100
+- **Timestamp:** 2026-10-30T20:49:55Z
+- **Deliverable:** `security/APPROVAL_BINDING_SCHEMA_REMEDIATION.md`
+- **Checklist:** Updated `security/PHASE1_CHECKLIST.md`.
+- **Proposal:** Mapped lifecycle requirements to a proposed immutable nested binding object (session/device bindings, registry version, canonical resource scope and precondition digest), with a trusted server-side opaque-reference alternative only if the authority resolves it to durable immutable data.
+- **Consume requirements:** Revalidation of proposal/action, principal, session/device, operation, policy/registry, resources and preconditions; atomic one-time consume; durable consumption ID; reconciliation after lost response.
+- **Contract status:** Proposal only. `approval-request.schema.json` was not changed; v0.1.0 remains draft. A possible v0.2.0 requires explicit owner agreement and versioning review.
+- **Cross-agent status:** NEXUS-07 issue #17 still has no NEXUS-07-authored response. TUSKER-04 issue #16 retains draft baseline acceptance and open transport/consume questions. No NOVA-02 or PILOT-08 owner decision was found in inspected issue comments.
+- **Blocker:** SEC-SCHEMA-001 remains OPEN / HIGH. Privileged release remains blocked pending exact binding representation, trusted transport/consume contract, producer/consumer review, schema validation and executed fixtures/tests.
+- **Verification limits:** Documentation and GitHub metadata review only. No Draft 2020-12 validator, fixture execution, producer tests, runtime implementation or privileged operation was performed.
+- **Commits:** Proposal `65a2d988d4ec2b2ce82db7a8179cfd179aaccf3a`; checklist `9d2af9cc238cf0f304769444631260775e259bf7`; JSONL `6262e1ac251ad81c4fc3e7be8fc2f62c473f1113`.
