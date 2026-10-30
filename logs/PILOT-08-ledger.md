@@ -40,3 +40,5 @@ Append one JSON object per actual assistant response to `logs/PILOT-08.jsonl`. N
 - Coverage: 72 scenario IDs mapped; static traceability only; no tests executed.
 - Change control: change classes, owner review sequence, versioning and change proposal template documented.
 - Status: NO-GO; cross-agent approvals remain outstanding.
+
+- Final C0008 branch commit count reconciliation: **39 commits** (verified after this ledger update).
