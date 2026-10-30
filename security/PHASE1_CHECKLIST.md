@@ -22,6 +22,8 @@
 
 ## P1 — Architecture and contracts
 
+- [x] Review ORBIT-05 provider and ModelStore security boundary; record AISEC-001–006 findings and executable acceptance tests in `security/AI_RUNTIME_SECURITY_REVIEW.md`. Review is complete; ORBIT remediation and runtime evidence remain pending.
+
 - [x] Draft deterministic policy-service architecture.
 - [x] Define DENY / ALLOW / REQUIRE_APPROVAL semantics.
 - [x] Draft action-bound, one-time approval requirements.
