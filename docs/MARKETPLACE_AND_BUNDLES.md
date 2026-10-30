@@ -63,3 +63,9 @@ The initial Python bundle is a proposal, not yet a guaranteed Fedora package ava
 - PHOENIX-10: artifact signing, release channel and rollback integration.
 - PIXEL-03: categories, theme/layout listing fields, preview asset metadata.
 - NEXUS-07: typed APIs exposed to extension host, if any.
+
+## Dependency planning helper (P2)
+
+`sdk/tools/dependency_plan.py` provides deterministic topological ordering for a dependency graph **after** a separate resolver has selected a concrete version for every package ID. It rejects missing nodes, duplicate dependency declarations and cycles. It does not parse version ranges, select versions, fetch artifacts, check signatures, authorize permissions, or perform installation. The function is side-effect free and suitable for unit tests and preview generation once catalog resolution is implemented.
+
+Tests: `sdk/tests/test_dependency_plan.py`.
