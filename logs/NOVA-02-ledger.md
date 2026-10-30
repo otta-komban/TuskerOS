@@ -8,12 +8,12 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **6 / 100**
-- Last recorded completion: **NOVA-02-C0006**
+- Actual assistant responses recorded: **7 / 100**
+- Last recorded completion: **NOVA-02-C0007**
 - Current phase: **P2 — Foundation / P3 — Working MVP**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
-- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation and safe user-level install/removal. Plasma runtime validation pending.**
-- Tests: **10 static validator tests passed in C0005; five installer tests passed in an isolated Python harness in C0006. A combined 15-test run, CI and Plasma runtime validation remain pending.**
+- Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, and passing GitHub Actions static-validation workflow. Plasma runtime validation pending.**
+- Tests: **All 15 desktop unit tests passed in GitHub Actions; both static validators and Node.js dock-template syntax check passed. Plasma runtime validation remains pending.**
 - Contract status: **Desktop consumer review accepted on issue #9; AEGIS-06 and PILOT-08 agreement pending.**
 
 ## Completion history
@@ -26,6 +26,7 @@
 | 4 | NOVA-02-C0004 | Native dock template | Added an opt-in Plasma panel template using Kickoff and Icons-only Task Manager; existing panels remain untouched. | `desktop/panel-template/` commits `5230a39`, `0d78480`, `ca18545`; desktop README `6646f3a`; log `42ed1a5`. |
 | 5 | NOVA-02-C0005 | Panel-template validation and contract review | Added static panel-template validator and five tests, documented checks, marked test harness implemented, and accepted the current task-event envelope proposal from the desktop consumer perspective. | Validator `555dcba`; tests `fcdde46`; desktop README `f9b6b0a`; panel README `379f188`; task contract `c4a28a2`; phase plan `59af341`; issue #9 comment `6531531667`. |
 | 6 | NOVA-02-C0006 | Safe dock installation and recovery | Added a no-sudo user-level installer and marker-checked removal; five installer tests passed in an isolated harness. | Installer `1619313`; tests `e9ee1d2`; panel README `2471aa6`; desktop README `e3ee575`. |
+| 7 | NOVA-02-C0007 | Desktop CI | Added GitHub Actions static validation and verified 15 unit tests, both validators and Node.js syntax check pass in hosted CI. | Workflow `c75ddc3`; desktop README `c5fb91b`; phase plan `47cfaf5`; Actions run [41116394507](https://github.com/otta-komban/TuskerOS/actions/runs/41116394507); log `e574252`. |
 
 ## Open coordination requests
 
