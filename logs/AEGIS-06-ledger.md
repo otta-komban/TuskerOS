@@ -129,5 +129,7 @@
 - **Structural verification:** Updated schema parsed as JSON; both required keys and nullable property types confirmed. No Draft 2020-12 meta-schema, format assertion, fixture-to-schema or producer test is claimed.
 - **Remaining blockers:** SEC-SCHEMA-001 approval binding remains unresolved; NEXUS-07 issue #17 has no owner response; runtime-owner compatibility review and producer tests remain pending.
 - **Branch comparison:** 71 commits ahead and 4 behind `main` (diverged); no merge, rebase, cherry-pick or force-push.
-- **Commits:** Schema `106b1b72c6787b44faa1ef2b9c2b7119b5e6a0fa`; audit `32c8358ff09be684d1fc2e72bb2e5fcc3abd290f`; checklist `97f88e719e7525fbd8585851bbeadc1a161dc007`; JSONL `a38a8ff64ccebe77e59600b71f7efa1ba7998e18`.
+- **Commits:** Schema `106b1b72c6787b44faa1ef2b9c2b7119b5e6a0fa`; audit `32c8358ff09be684d1fc2e72bb2e5fcc3abd290f`; checklist `97f88e719e7525fbd8585851bbeadc1a161dc007` (follow-up checklist verification commit recorded below); JSONL `a38a8ff64ccebe77e59600b71f7efa1ba7998e18`.
 - **Verification limits:** Draft artifact structural check only; no runtime implementation, privileged operation or executable security test was performed.
+
+- **Checklist verification commit:** `3ddc59598ee2beefe346a5d9ddc86ba464b62209` confirms SEC-SCHEMA-002 is checked complete; SEC-SCHEMA-001 remains open.
