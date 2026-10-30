@@ -61,3 +61,25 @@ This module has no DNF/Flatpak/pipx integration, no token-signature verifier,
 no authorization authority, no transaction state store and no rollback
 executor. Do not treat a preview or a claims-valid result as permission to
 execute. The adapter remains blocked on AEGIS-06 and PHOENIX-10 agreement.
+
+
+## Transaction lifecycle state machine
+
+`marketplace/tools/transaction_state.py` provides a pure transition validator
+for the future adapter. The permitted path is:
+
+`prepared → approval_verified → revalidated → execution_started → committed`
+
+A running transaction may instead end as `rolled_back` or
+`rollback_failed`; stale snapshots, rejection and cancellation are terminal
+before execution. Execution cannot begin directly from a prepared preview.
+Approval verification requires an external verification reference, fresh
+snapshot revalidation must match the reviewed digest, and execution start
+requires a package-manager lock reference. Terminal states cannot transition
+again.
+
+This state machine validates declared evidence fields; it does not authenticate
+them, acquire locks, execute package operations, or prove that a package
+manager committed/rolled back. Only the trusted adapter may emit these events
+after the corresponding external action has succeeded. State schema:
+`marketplace/schemas/package-transaction-state.schema.json`.
