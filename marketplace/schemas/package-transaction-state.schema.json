@@ -4,13 +4,85 @@
   "title": "TuskerOS Package Transaction State",
   "type": "object",
   "additionalProperties": false,
-  "required": ["transaction_id", "state", "plan_digest", "snapshot_digest", "history", "terminal"],
+  "required": [
+    "transaction_id",
+    "state",
+    "plan_digest",
+    "snapshot_digest",
+    "history",
+    "terminal"
+  ],
   "properties": {
-    "transaction_id": {"type": "string", "minLength": 1},
-    "state": {"enum": ["prepared", "approval_verified", "revalidated", "execution_started", "committed", "rolled_back", "rollback_failed", "stale", "rejected", "cancelled"]},
-    "plan_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "snapshot_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "history": {"type": "array", "items": {"type": "object", "required": ["from", "event", "evidence"], "properties": {"from": {"type": "string"}, "event": {"type": "string"}, "evidence": {"type": "object"}}}},
-    "terminal": {"type": "boolean"}
+    "transaction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "prepared",
+        "approval_verified",
+        "revalidated",
+        "execution_started",
+        "committed",
+        "rolled_back",
+        "rollback_failed",
+        "stale",
+        "rejected",
+        "cancelled"
+      ]
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "snapshot_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "event",
+          "evidence"
+        ],
+        "properties": {
+          "from": {
+            "enum": [
+              "prepared",
+              "approval_verified",
+              "revalidated",
+              "execution_started"
+            ]
+          },
+          "event": {
+            "enum": [
+              "approval_verified",
+              "revalidated",
+              "execution_started",
+              "committed",
+              "rolled_back",
+              "rollback_failed",
+              "stale",
+              "rejected",
+              "cancelled"
+            ]
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "terminal": {
+      "type": "boolean"
+    }
   }
 }
