@@ -153,3 +153,13 @@
 - [ ] Publish compatibility and API version policy.
 - [ ] Publish unresolved risk register and maintenance handover.
 - [ ] Obtain release sign-off with reproducible test evidence.
+
+
+### C0015 — AEGIS approval/consume semantic closure
+
+- [x] Record that approval resumes only through a fresh AEGIS ALLOW and new authorization_ref after exact-proposal/current-context re-evaluation.
+- [x] Record that the broker consumes authorization_ref, never approval_request_id; prior unconsumed references are invalidated on re-issue.
+- [x] Record typed consume outcomes and zero-dispatch behavior for every non-CONSUMED outcome.
+- [x] Record required pre-dispatch audit fail-closed semantics and reconciliation requirements for ALREADY_CONSUMED / CONSUME_OUTCOME_UNKNOWN.
+- [ ] Obtain NEXUS strict authorization_context, trusted peer injection, atomic consume transport and durable execution reconciliation contract.
+- [ ] Implement and execute cross-layer authorization conformance tests; no implementation/test pass is claimed.
