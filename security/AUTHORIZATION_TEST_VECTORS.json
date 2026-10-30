@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1.0",
-  "purpose": "Language-neutral authorization lifecycle and broker conformance fixtures; expected outcomes only, not executed test evidence.",
+  "purpose": "Language-neutral authorization lifecycle and broker conformance fixtures; expected outcomes only, not executed test evidence. C0013 adds approval-handoff and typed consume-outcome cases; expected outcomes only.",
   "execution_rule": "A rejected, denied, expired, invalidated, replayed or ambiguous authorization must produce zero privileged handler invocations.",
   "cases": [
     {
@@ -171,6 +171,74 @@
       "expected_state": "CONSUMED",
       "result": "UNKNOWN",
       "retry": "reconcile_before_retry"
+    },
+    {
+      "id": "AUTH-017",
+      "state": "PENDING",
+      "event": "approval_transition_then_policy_re_evaluation_succeeds",
+      "expected_state": "APPROVED",
+      "policy_decision": "ALLOW",
+      "authorization_ref": "fresh_opaque_reference",
+      "approval_request_id_accepted_by_broker": false,
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-018",
+      "state": "PENDING",
+      "event": "approval_transition_then_policy_re_evaluation_detects_binding_change",
+      "expected_state": "INVALIDATED",
+      "policy_decision": "no_ALLOW",
+      "authorization_ref": null,
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-019",
+      "state": "APPROVED",
+      "event": "broker_attempts_consume_with_approval_request_id",
+      "expected_state": "APPROVED",
+      "result": "BINDING_MISMATCH",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-020",
+      "state": "APPROVED",
+      "event": "fresh_authorization_ref_consumed_and_audit_committed_atomically",
+      "expected_state": "CONSUMED",
+      "result": "CONSUMED",
+      "consumption_id": "unique",
+      "grant_issued": true,
+      "handler_calls": 1
+    },
+    {
+      "id": "AUTH-021",
+      "state": "APPROVED",
+      "event": "required_pre_dispatch_audit_commit_fails_during_consume",
+      "expected_state": "APPROVED",
+      "result": "AUDIT_UNAVAILABLE",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-022",
+      "state": "CONSUMED",
+      "event": "consume_response_lost_before_client_confirmation",
+      "expected_state": "CONSUMED",
+      "result": "CONSUME_OUTCOME_UNKNOWN",
+      "reconciliation": "same_consumption_no_duplicate_dispatch",
+      "grant_issued": false,
+      "handler_calls": 0
+    },
+    {
+      "id": "AUTH-023",
+      "state": "APPROVED",
+      "event": "second_consume_after_first_success",
+      "expected_state": "CONSUMED",
+      "result": "ALREADY_CONSUMED",
+      "grant_issued": false,
+      "handler_calls": 0
     }
   ]
 }
