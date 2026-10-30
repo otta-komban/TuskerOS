@@ -63,3 +63,12 @@ ATLAS-01: Fedora storage tooling/package ownership, broker packaging boundary, a
 Only read-only inventory/preflight prototyping may begin after NEXUS-07 confirms those interfaces. Destructive implementation remains blocked until NEXUS-07 and AEGIS-06 publish compatible reviewed contracts and authorization tests.
 
 No ISO build, VM boot, Anaconda install, Secure Boot test or installer contract test is claimed. This is a planned test specification, not execution evidence.
+
+## Coordination follow-up (2026-10-31)
+
+After reviewing the current owner drafts, PHOENIX-10 posted explicit decision requests:
+- NEXUS-07 issue #3 comment 6531617901: canonical storage identity/re-resolution, registered read-only inventory/preflight schemas, typed partition-plan representation, unknown-outcome status/evidence query, and authoritative health/preflight schemas.
+- AEGIS-06 issue #4 comment 6531618606: canonical partition-plan/resource digest binding, one-time authorization-reference consumption, installer risk classification, pre-execution audit/fail-closed behavior, and release signing/key lifecycle ownership.
+- ATLAS-01 issue #2 remains open for the current Fedora Forge KIWI clone URL, immutable Fedora 44 ref, profile path and exact build wrapper. No replacement source is assumed.
+
+These are requests for owner decisions, not accepted contracts. The implementation gates in this document remain unchanged.
