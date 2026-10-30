@@ -78,6 +78,8 @@ def transition_transaction(
         or history_value[-1].get("event") != current
     ):
         raise TransactionStateError("history must end with the current transaction state")
+    if not history_value and current != "prepared":
+        raise TransactionStateError("a transaction without history must start in prepared state")
     expected_source = "prepared"
     for index, item in enumerate(history_value):
         if not isinstance(item, Mapping) or set(item) != {"from", "event", "evidence"}:
