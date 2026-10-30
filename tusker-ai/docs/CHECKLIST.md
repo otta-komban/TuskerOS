@@ -30,7 +30,7 @@ This is the agent-specific execution checklist derived from the TuskerOS Ten-Age
   - [ ] Provider discovery and capability reporting.
   - [ ] Define adapter lifecycle state machine and process ownership.
   - [ ] Specify deterministic provider adapter conformance suite (see PROVIDER-CONFORMANCE.md).
-  - [x] Publish language-neutral inference event JSON Schema and synthetic valid trace fixture; executable tests authored but not yet run.
+  - [x] Publish language-neutral inference event JSON Schema and synthetic valid trace fixture; schema and trace tests pass in GitHub Actions run 41117411271.
   - [ ] Model inventory and manifest validation.
   - [ ] Inference request, streaming events and structured errors.
   - [ ] Cancellation, timeout, load/unload and health checks.
@@ -99,5 +99,5 @@ This is the agent-specific execution checklist derived from the TuskerOS Ten-Age
 ### Contract validation automation
 
 - [x] Add isolated GitHub Actions job for model-manifest and inference-event schema/fixture tests.
-- [ ] Observe a successful CI run on this branch or a pull request before marking schema validation gate passed.
-- [ ] Execute the test suite locally or in CI and record the actual result; authored tests are not a pass.
+- [x] Observe successful CI runs on this branch: 41116139411 (baseline) and 41117411271 (expanded manifest negative cases).
+- [x] Execute the test suite in CI; run 41117411271 passed on commit af3bd90ee30f060e588d96a13427c7e77db1a3f1.
