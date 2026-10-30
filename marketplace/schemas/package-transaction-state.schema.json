@@ -42,27 +42,408 @@
     "history": {
       "type": "array",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "from",
-          "event",
-          "evidence"
-        ],
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "prepared"
+              },
+              "event": {
+                "const": "approval_verified"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "approval_id",
+                  "verification_ref",
+                  "authority"
+                ],
+                "properties": {
+                  "approval_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "verification_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "authority": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "prepared"
+              },
+              "event": {
+                "const": "cancelled"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "reason_code"
+                ],
+                "properties": {
+                  "reason_code": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "approval_verified"
+              },
+              "event": {
+                "const": "revalidated"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "snapshot_digest"
+                ],
+                "properties": {
+                  "snapshot_digest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "approval_verified"
+              },
+              "event": {
+                "const": "rejected"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "reason_code"
+                ],
+                "properties": {
+                  "reason_code": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "approval_verified"
+              },
+              "event": {
+                "const": "cancelled"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "reason_code"
+                ],
+                "properties": {
+                  "reason_code": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "revalidated"
+              },
+              "event": {
+                "const": "execution_started"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "lock_ref"
+                ],
+                "properties": {
+                  "lock_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "revalidated"
+              },
+              "event": {
+                "const": "stale"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "observed_snapshot_digest"
+                ],
+                "properties": {
+                  "observed_snapshot_digest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "revalidated"
+              },
+              "event": {
+                "const": "cancelled"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "reason_code"
+                ],
+                "properties": {
+                  "reason_code": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "execution_started"
+              },
+              "event": {
+                "const": "committed"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "result_ref"
+                ],
+                "properties": {
+                  "result_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "execution_started"
+              },
+              "event": {
+                "const": "rolled_back"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "result_ref"
+                ],
+                "properties": {
+                  "result_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "event",
+              "evidence"
+            ],
+            "properties": {
+              "from": {
+                "const": "execution_started"
+              },
+              "event": {
+                "const": "rollback_failed"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "result_ref"
+                ],
+                "properties": {
+                  "result_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "terminal": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
         "properties": {
-          "from": {
+          "state": {
+            "const": "prepared"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "history": {
+            "maxItems": 0
+          },
+          "terminal": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
             "enum": [
-              "prepared",
               "approval_verified",
               "revalidated",
               "execution_started"
             ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "history": {
+            "minItems": 1
           },
-          "event": {
+          "terminal": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
             "enum": [
-              "approval_verified",
-              "revalidated",
-              "execution_started",
               "committed",
               "rolled_back",
               "rollback_failed",
@@ -70,19 +451,22 @@
               "rejected",
               "cancelled"
             ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "history": {
+            "minItems": 1
           },
-          "evidence": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string",
-              "minLength": 1
-            }
+          "terminal": {
+            "const": true
           }
         }
       }
-    },
-    "terminal": {
-      "type": "boolean"
     }
-  }
+  ]
 }
