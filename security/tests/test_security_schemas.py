@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas"
 AUDIT_SCHEMA = json.loads((SCHEMA_DIR / "audit-event.schema.json").read_text())
 APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json").read_text())
+AUDIT_V020_SCHEMA = json.loads((SCHEMA_DIR / "audit-event-0.2.0.schema.json").read_text())
 
 VALID_EVENT = {
     "schema_version": "0.1.0",
@@ -67,6 +68,17 @@ def audit_validator():
 
 def approval_validator():
     return make_validator(APPROVAL_SCHEMA)
+
+
+def audit_v020_validator():
+    return make_validator(AUDIT_V020_SCHEMA)
+
+
+def valid_audit_v020_event():
+    event = json.loads(json.dumps(VALID_EVENT))
+    event["schema_version"] = "0.2.0"
+    event["registry_version"] = "registry-2026-10-31.1"
+    return event
 
 
 def test_all_security_schemas_are_valid_draft_2020_12_schemas():
@@ -178,3 +190,60 @@ def test_approval_request_v010_is_not_accepted_by_v020_schema():
     request = json.loads(json.dumps(VALID_APPROVAL))
     request["schema_version"] = "0.1.0"
     assert list(approval_validator().iter_errors(request))
+
+
+
+def test_audit_event_v020_candidate_accepts_required_versioned_fields():
+    event = valid_audit_v020_event()
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+def test_audit_event_v020_candidate_accepts_explicit_null_executor_and_reason():
+    event = valid_audit_v020_event()
+    event["executor_id"] = None
+    event["reason_code"] = None
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+@pytest.mark.parametrize("field", ["registry_version", "executor_id", "reason_code"])
+def test_audit_event_v020_candidate_requires_minimum_keys(field):
+    event = valid_audit_v020_event()
+    del event[field]
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("registry_version", None),
+        ("registry_version", ""),
+        ("registry_version", "r" * 129),
+        ("executor_id", 42),
+        ("reason_code", {}),
+    ],
+)
+def test_audit_event_v020_candidate_rejects_invalid_minimum_values(field, value):
+    event = valid_audit_v020_event()
+    event[field] = value
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+@pytest.mark.parametrize("status", ["denied", "failure"])
+def test_audit_event_v020_candidate_requires_reason_for_denial_and_failure(status):
+    event = valid_audit_v020_event()
+    event["result_status"] = status
+    event["reason_code"] = None
+    assert list(audit_v020_validator().iter_errors(event))
+    event["reason_code"] = "POLICY_DENY_DEFAULT"
+    assert list(audit_v020_validator().iter_errors(event)) == []
+
+
+def test_audit_event_v020_candidate_rejects_v010_envelope():
+    event = valid_audit_v020_event()
+    event["schema_version"] = "0.1.0"
+    assert list(audit_v020_validator().iter_errors(event))
+
+
+def test_audit_event_v010_schema_rejects_v020_envelope():
+    event = valid_audit_v020_event()
+    assert list(audit_validator().iter_errors(event))
