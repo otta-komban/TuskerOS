@@ -57,7 +57,7 @@ Two actionable schema/prose coverage gaps were found. SEC-SCHEMA-002 has now bee
 - The suite checks that every current security schema is a valid Draft 2020-12 schema and exercises audit-event examples with correlated IDs and explicit null correlation.
 - Negative cases cover omitted `task_id`/`step_id`, invalid types, malformed UUID/date-time/digest values, invalid enums and unexpected properties.
 - Added isolated test dependencies in `security/requirements-test.txt` and GitHub Actions workflow `.github/workflows/security-contracts.yml`.
-- Workflow run [41126223487](https://github.com/otta-komban/TuskerOS/actions/runs/41126223487) was queued when this update was written. No test pass is claimed until the run completes.
+- Workflow run [41126223487](https://github.com/otta-komban/TuskerOS/actions/runs/41126223487) completed successfully: 17 tests passed in 0.21s on Python 3.12.15. The job installed the isolated dependencies, checked all five security schemas with Draft 2020-12 meta-schema validation, and passed the audit-event positive/negative cases.
 - This validates schemas and sample event envelopes only; it does not test a real audit producer, persistence integrity, or privileged runtime behavior.
 
 
