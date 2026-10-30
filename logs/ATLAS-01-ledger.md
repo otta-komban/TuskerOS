@@ -13,10 +13,7 @@ Current verified count: 8
 | 4 | ATLAS-01-C0004 | P1 | implementation | partial | `tools/atlas/poc-preflight.sh` (`bash -n` passed); `image/kiwi/README.md`; commit `2bc4301ee4c078926ed45ede224225833eb37025` |
 | 5 | ATLAS-01-C0005 | P1 | implementation | partial | `os/PACKAGE-MANIFEST.md`, `os/package-manifest.csv`, `tools/atlas/resolve-package-manifest.py`, `os/DBUS-SERVICE-PACKAGING.md`; Python syntax and manifest parser smoke tests passed; resolver not run against Fedora repos; commit `da9974d54e9235cc57453c80085a6c7f71921d14` |
 | 6 | ATLAS-01-C0006 | P1 | implementation | partial | `image/kiwi/config.xml`, `os/FEDORA-44-KDE-PACKAGE-CANDIDATES.md`, refreshed `os/BASE-SYSTEM-CONTRACTS.md`; XML well-formedness checks passed; no KIWI build or DNF resolution; commit `620c4df0c3dfdc055e9193fedb50d480e932a25d` |
-
 | 7 | ATLAS-01-C0007 | P1 | implementation | partial | Resolver rejects cross-repository ambiguity and incomplete manifest metadata; added focused unit tests (not executed); commits `757e09c`, `9c26ba5`, `2b92e9b` |
-
-Counts include only actual assistant responses. Never backfill or fabricate entries.
 | 8 | ATLAS-01-C0008 | P1 | validation | partial | Fixed hyphenated resolver import; nine focused helper/manifest tests passed in isolated harness; no DNF5 run; commit `362615c` |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
