@@ -26,8 +26,8 @@ At C0007, the existing JSONL file contained only the C0006 record even though th
 - Completion count: 9/100 (assistant responses, not tool calls).
 - Draft contract: `theme-studio/contracts/preview-rendering-contract.md`.
 - Schemas: `theme-studio/schema/preview-render-request.schema.json` and `theme-studio/schema/preview-adapter-capabilities.schema.json`.
-- Tests: `theme-studio/tests/test_preview_contract.py` (5 schema tests authored; CI pending).
+- Tests: `theme-studio/tests/test_preview_contract.py` (5 schema tests authored; CI run 41116174120 succeeded).
 - Preview request carries only semantic tokens and opaque asset IDs; no paths or executable content. It requires `preview_only: true`, bounded remaining TTL, allowlisted surfaces/namespaces, and rejects unknown/apply fields.
 - No KDE adapter, IPC transport, asset broker, desktop settings mutation, apply or rollback was implemented.
 - NOVA-02 must review target Plasma/Qt versions, IPC/authentication, MVP surfaces and asset brokering. Draft is not an approved integration API.
-- Current CI status must be verified from the workflow run before claiming tests pass.
+- CI run 41116174120: validate-theme-packs job and all steps succeeded; the job summary does not expose the test count. NOVA-02 review requested in issue #30.
