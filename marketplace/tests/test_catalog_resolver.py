@@ -151,6 +151,47 @@ class CatalogResolverTests(unittest.TestCase):
                 dependency_constraints={"org.tuskeros.apps.demo": {}},
             )
 
+    def test_constraints_from_multiple_parents_are_intersected(self):
+        root = self.candidate("1.0.0")
+        root["package"]["id"] = "org.tuskeros.apps.root"
+        left = self.candidate("1.0.0")
+        left["package"]["id"] = "org.tuskeros.apps.left"
+        right = self.candidate("1.0.0")
+        right["package"]["id"] = "org.tuskeros.apps.right"
+        lib = self.candidate("1.8.0")
+        lib["package"]["id"] = "org.tuskeros.libs.shared"
+        lib_new = self.candidate("2.2.0")
+        lib_new["package"]["id"] = "org.tuskeros.libs.shared"
+        graph = {
+            "org.tuskeros.apps.root": ["org.tuskeros.apps.left", "org.tuskeros.apps.right"],
+            "org.tuskeros.apps.left": ["org.tuskeros.libs.shared"],
+            "org.tuskeros.apps.right": ["org.tuskeros.libs.shared"],
+            "org.tuskeros.libs.shared": [],
+        }
+        constraints = {
+            "org.tuskeros.apps.root": {
+                "org.tuskeros.apps.left": ">=1.0.0",
+                "org.tuskeros.apps.right": ">=1.0.0",
+            },
+            "org.tuskeros.apps.left": {"org.tuskeros.libs.shared": ">=1.5.0"},
+            "org.tuskeros.apps.right": {"org.tuskeros.libs.shared": "<2.0.0"},
+        }
+        plan = resolve_catalog_plan(
+            ["org.tuskeros.apps.root"], [root, left, right, lib, lib_new],
+            graph, "0.5.0", "1.2.0", dependency_constraints=constraints,
+        )
+        self.assertEqual(plan["releases"]["org.tuskeros.libs.shared"]["release"]["version"], "1.8.0")
+
+    def test_malformed_dependency_constraint_is_rejected(self):
+        with self.assertRaisesRegex(CatalogResolutionError, "invalid dependency version constraint"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [],
+                {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0",
+                dependency_constraints={"org.tuskeros.apps.demo": {
+                    "org.tuskeros.libs.core": "latest"
+                }},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
