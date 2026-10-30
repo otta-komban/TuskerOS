@@ -1,0 +1,42 @@
+name: Tusker AI contract tests
+
+on:
+  push:
+    paths:
+      - "tusker-ai/schemas/**"
+      - "tusker-ai/tests/**"
+      - "tusker-ai/requirements-test.txt"
+      - ".github/workflows/tusker-ai-contracts.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "tusker-ai/schemas/**"
+      - "tusker-ai/tests/**"
+      - "tusker-ai/requirements-test.txt"
+      - ".github/workflows/tusker-ai-contracts.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tusker-ai-contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract-tests:
+    name: Validate model manifests and inference events
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tusker-ai/requirements-test.txt
+      - name: Install isolated test dependencies
+        run: python -m pip install -r tusker-ai/requirements-test.txt
+      - name: Run schema and trace tests
+        run: python -m pytest -q tusker-ai/tests
