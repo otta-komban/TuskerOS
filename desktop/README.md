@@ -65,7 +65,7 @@ python -m unittest discover -s desktop/tests -v
 node --check desktop/panel-template/contents/layout.js
 ```
 
-The panel-template validator checks the layout-template service metadata, required native launcher/task-manager widgets, bottom-panel intent and absence of selected destructive panel operations. These are static checks only: they do not establish that the installed Plasma build accepts the metadata or widget IDs. CI integration and runtime validation remain pending.
+The panel-template validator checks the layout-template service metadata, required native launcher/task-manager widgets, bottom-panel intent and absence of selected destructive panel operations. These are static checks only: they do not establish that the installed Plasma build accepts the metadata or widget IDs. Automated static CI is implemented; Fedora/Plasma runtime validation remains pending.
 
 ## Initial source references
 
@@ -77,7 +77,7 @@ The panel-template validator checks the layout-template service metadata, requir
 
 ## Current status
 
-This is an architecture baseline, not a working shell implementation. The repository currently contains only its license on this branch. Build, runtime, accessibility and packaging claims remain unverified until an executable foundation and test environment exist.
+This remains an incremental desktop foundation, not a complete shell replacement. The branch contains a minimal Plasma applet, an opt-in native dock template, dependency-free static validators, safe user-level template installation/removal, and a passing GitHub Actions static-validation workflow. Fedora/Plasma runtime, accessibility and packaging claims remain unverified. See [the Fedora/Plasma runtime validation runbook](validation/FEDORA-PLASMA-RUNTIME.md).
 
 ## Optional native dock template
 
@@ -106,6 +106,11 @@ Installer unit tests cover installation, no-overwrite, symlink refusal, marked r
 
 ## Automated desktop CI
 
-The `.github/workflows/desktop-validation.yml` workflow runs on desktop-related pushes to `02-desktop-shell`, pull requests targeting `main`, and manual dispatch. It runs the full desktop unittest discovery suite, both static package/template validators, and `node --check` for the panel layout script.
+The `.github/workflows/desktop-validation.yml` workflow runs on desktop-related pushes to `02-desktop-shell`, pull requests targeting `main`, and manual dispatch. It runs the full desktop unittest discovery suite, both static package/template validators, and `node --check` for the panel layout script. The first hosted run passed all 15 unit tests and all validation steps; this does not exercise a Plasma session.
 
 The workflow uses GitHub-hosted Ubuntu with Python 3.12 and Node.js 22, requests read-only repository contents permission, and does not start a Plasma session or claim runtime validation. Check the Actions run for the actual result; workflow creation alone is not a passing CI result.
+
+
+## Fedora / Plasma runtime validation
+
+ATLAS-01 has proposed Fedora 44 / Plasma 6.6.4 / Wayland-first as the provisional target. The exact RPM package set remains to be resolved from the chosen Fedora repository snapshot. Follow [the Fedora/Plasma runtime validation runbook](validation/FEDORA-PLASMA-RUNTIME.md) for package discovery, Qt 6 QML lint, isolated applet checks, a real Wayland-session test and rollback evidence. The runbook is a plan only; no Fedora runtime test is claimed.
