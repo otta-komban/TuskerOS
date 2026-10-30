@@ -52,6 +52,19 @@ Deliver a premium, responsive, accessible KDE Plasma desktop that remains fully 
 
 No shared contract is considered implemented until its owner has agreed to a versioned interface.
 
+## Static validation and tests
+
+A dependency-free package validator checks the minimum Plasma 6 package metadata and QML entry-point declarations. It is not a substitute for `qmllint`, `kpackagetool6`, or a real Plasma Wayland session.
+
+From the repository root:
+
+```sh
+python desktop/tools/validate_plasmoid.py desktop/plasmoid/package
+python -m unittest discover -s desktop/tests -v
+```
+
+The unit tests cover valid metadata, malformed JSON, incorrect package structure, a non-Plasma-6 minimum version, and a missing `PlasmoidItem` root. Run these checks in the target development environment and retain the output in the completion log. CI integration remains pending.
+
 ## Initial source references
 
 - [Plasma QML API](https://develop.kde.org/docs/plasma/widget/plasma-qml-api/)
