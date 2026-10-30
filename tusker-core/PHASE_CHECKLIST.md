@@ -163,3 +163,12 @@
 - [x] Record required pre-dispatch audit fail-closed semantics and reconciliation requirements for ALREADY_CONSUMED / CONSUME_OUTCOME_UNKNOWN.
 - [ ] Obtain NEXUS strict authorization_context, trusted peer injection, atomic consume transport and durable execution reconciliation contract.
 - [ ] Implement and execute cross-layer authorization conformance tests; no implementation/test pass is claimed.
+
+
+### C0016 — NEXUS result mapping helper
+
+- [x] Add a pure, fail-closed Core helper for mapping NEXUS result statuses to lifecycle actions.
+- [x] Add unit tests for all seven NEXUS statuses, verification gating, cancellation confirmation and unknown outcomes.
+- [x] Remove an accidental duplicate idempotency-boundary test definition from the schema test suite.
+- [ ] Wire result mapping into the transactional Core scheduler/state machine (P2; service/runtime implementation pending).
+- [ ] Execute the Core test suite in the project environment and verify CI; not yet run in this work cycle.
