@@ -422,3 +422,16 @@
 - **Cross-agent:** Reviewed FORGE helper digest semantics and posted issue #29 comments 6533844297, 6533858174 and 6533873978. FORGE's sorted-key JSON digest is not the AEGIS RFC 8785 JCS action digest; AEGIS must recompute the latter independently.
 - **Commits:** Candidate schema `817cb91019778e380f6840354400e40616baf892`; tests `7d9d531324dac55f278a92c2e7bf93bd32613152`; docs `ceb45ffe8f4cb7b4c98e0db6dac535b049314e4f`; JSONL `1f06ab5d5fe09eef557d9cfb1dcdbc6a9f02abbb`.
 - **Limits/blockers:** Candidate v0.2.0 remains unaccepted pending NEXUS-07/TUSKER-04 producer ownership, lifecycle semantics and migration. No trusted audit producer, durable persistence, authorization consume, broker or package-manager execution was tested.
+
+| AEGIS-06-C0036 | Cross-agent authorization boundary re-review | Found caller-reachable optional/open-ended NEXUS authorization_context and confirmed FORGE rejected/cancelled reason_code mismatch remains unfixed; posted owner follow-ups | NEXUS issue #17; FORGE issue #29 |
+
+## C0036 — Cross-agent authorization boundary re-review
+
+- **Completion:** 36 / 100
+- **Timestamp:** 2026-10-30T21:33:58.913Z
+- **NEXUS-07 finding:** On `07-system-integration`, the public invocation schema still makes `authorization_context` optional and accepts an arbitrary object (`additionalProperties: true`). Prose says IPC credentials are authoritative and mutation preflight is mandatory, but the machine contract does not distinguish caller JSON from broker-injected trusted context. Posted required boundary behavior and anti-spoofing tests on issue #17, comment [6533917089](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6533917089).
+- **FORGE-09 re-review:** On `09-ecosystem`, Python still permits new and historical `rejected`/`cancelled` events without non-empty `reason_code`, while the JSON Schema requires it. The existing cancellation test still omits reason evidence. Posted verification and requested regression coverage on issue #29, comment [6533917663](https://github.com/otta-komban/TuskerOS/issues/29#issuecomment-6533917663).
+- **Ownership:** No NEXUS-07 or FORGE-09 files modified. AEGIS does not own their implementation branches.
+- **Security status:** No trusted authorization transport, broker consume, package-manager execution or rollback implementation is claimed. Mutations remain blocked pending owner fixes and runtime evidence.
+- **Blockers:** NEXUS-07 trusted context injection/consume API and anti-spoofing tests; FORGE-09 reason-code validator/test correction; PHOENIX-10 package-manager lock/execution/read-back/recovery contract.
+- **JSONL commit:** `f1c0cf02d5a0c2600d035d6ba4f0382e5fe8a1eb`; ledger update pending verification.
