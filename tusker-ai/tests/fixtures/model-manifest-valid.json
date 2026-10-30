@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1.0",
+  "artifact_id": "example.publisher-model-q4_k_m",
+  "publisher": "Example Publisher",
+  "source": "https://example.invalid/models/example-model",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "format": "gguf",
+  "files": [
+    {
+      "filename": "model-q4_k_m.gguf",
+      "size_bytes": 1234567890,
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "quantization": "Q4_K_M"
+    }
+  ],
+  "model": {
+    "architecture": "example-architecture",
+    "parameter_count": 7000000000,
+    "context_length": 8192,
+    "modalities": [
+      "text"
+    ],
+    "tokenizer": null,
+    "chat_template": null
+  },
+  "license": {
+    "code_license": null,
+    "weights_license": "UNREVIEWED-EXAMPLE",
+    "license_text_uri": null,
+    "redistribution": "unknown",
+    "commercial_use": "unknown",
+    "review_status": "not_reviewed",
+    "review_notes": "Synthetic fixture only; not a real model or license determination."
+  },
+  "requirements": {
+    "minimum_ram_bytes": null,
+    "recommended_ram_bytes": null,
+    "minimum_vram_bytes": null,
+    "recommended_vram_bytes": null,
+    "minimum_storage_bytes": 1234567890,
+    "cpu_instruction_sets": [],
+    "runtime_compatibility": []
+  },
+  "provenance": {
+    "retrieved_at": "2026-01-01T00:00:00Z",
+    "retrieved_from": "https://example.invalid/models/example",
+    "digest_verified": false,
+    "verification_method": null,
+    "signature_verified": null
+  },
+  "review": {
+    "catalog_status": "draft",
+    "reviewed_at": null,
+    "reviewer": null,
+    "notes": "Synthetic schema test fixture; must never be published as a catalog entry."
+  }
+}
