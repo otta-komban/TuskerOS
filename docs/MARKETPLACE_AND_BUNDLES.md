@@ -127,3 +127,5 @@ Lifecycle records now validate lowercase SHA-256 plan/snapshot digests, terminal
 
 
 The validator also verifies history continuity from the initial `prepared` state, checks required evidence on historical transitions, and requires a valid differing observed snapshot digest for a `stale` event. A malformed or discontinuous lifecycle history is rejected rather than repaired silently.
+
+The lifecycle validator also rejects history-free records unless their initial state is `prepared`; persisted non-initial states must carry a continuous transition history.
