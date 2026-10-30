@@ -32,7 +32,7 @@
 
 ### P2 — Foundation
 - [x] Add initial SDK schema and validator skeleton.
-- [ ] Add automated positive/negative validator tests.
+- [ ] Add automated positive/negative validator tests (added; execution pending).
 - [ ] Add marketplace catalog fixtures and package metadata model.
 - [ ] Add dependency graph resolver and install-plan preview.
 - [ ] Add bundle manifest schema and catalog skeleton.
@@ -67,4 +67,4 @@
 ## Notes
 - Branch inspection confirmed `LICENSE` is present. `README.md` was not found at the branch root.
 - Manifest and permission vocabulary are provisional. The sample is metadata-only and is not represented as a runnable sandboxed extension.
-- No automated tests have yet been run in a TuskerOS checkout; validation evidence will be recorded only after execution.
+- Automated unittest coverage was added in `sdk/tests/test_validate_manifest.py`; tests have not yet been executed in a TuskerOS checkout. The sample remains metadata-only and is not a live runtime extension. Cross-agent contract review is tracked in https://github.com/otta-komban/TuskerOS/issues/7.
