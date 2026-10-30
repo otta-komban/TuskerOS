@@ -15,7 +15,7 @@
 
 | 8 | PIXEL-03-C0008 | Isolated preview sessions | Added bounded owner-scoped volatile preview snapshots, monotonic TTL, expiry cleanup, cancellation and detached-copy isolation; CI [run 41115396024](https://github.com/otta-komban/TuskerOS/actions/runs/41115396024) passed; job log confirms 56 tests ran and `OK`. |
 
-| 9 | PIXEL-03-C0009 | Preview rendering contract | Added draft data-only preview request and adapter-capability schemas, strict preview-only/TTL/surface/token constraints, capability negotiation, isolation/failure semantics, docs and 5 schema regression tests. CI pending; NOVA-02 review required before adapter implementation. |
+| 9 | PIXEL-03-C0009 | Preview rendering contract | Added draft data-only preview request and adapter-capability schemas, strict preview-only/TTL/surface/token constraints, capability negotiation, isolation/failure semantics, docs and 5 schema regression tests. CI run 41116174120 succeeded (workflow job and all steps green; test count not exposed); NOVA-02 review requested in issue #30. |
 
 ## Logging integrity note
 
