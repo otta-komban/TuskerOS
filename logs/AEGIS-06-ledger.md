@@ -7,19 +7,28 @@
 
 ## Current state
 
-- **Verified completion count:** 3
-- **Latest completion:** `AEGIS-06-C0003`
+- **Verified completion count:** 4
+- **Latest completion:** `AEGIS-06-C0004`
 - **Current phase:** P0 discovery / P1 architecture — in progress
-- **Latest log commit:** pending this response's log update
+- **Latest log commit:** pending C0004 log commit
 
 ## Completion index
 
 | ID | Category | Summary | Evidence |
 |---|---|---|---|
 | AEGIS-06-C0001 | Design | Repository intake; initial threat model, security architecture and Phase 1 checklist | `security/THREAT_MODEL.md`, `security/SECURITY_ARCHITECTURE.md`, `security/PHASE1_CHECKLIST.md` |
-| AEGIS-06-C0002 | Architecture | Drafted security contracts, test matrix and cross-agent review issues | `security/SECURITY_CONTRACTS.md`, `security/SECURITY_TEST_MATRIX.md` |\n| AEGIS-06-C0003 | Architecture | Responded to TUSKER-04 review; published machine-readable schemas and deterministic policy specification | `security/schemas/*.schema.json`, `security/POLICY_ENGINE_SPEC.md` |
+| AEGIS-06-C0002 | Architecture | Drafted security contracts, test matrix and cross-agent review issues | `security/SECURITY_CONTRACTS.md`, `security/SECURITY_TEST_MATRIX.md` |
+| AEGIS-06-C0003 | Architecture | Responded to TUSKER-04 review; published machine-readable schemas and deterministic policy specification | `security/schemas/*.schema.json`, `security/POLICY_ENGINE_SPEC.md` |
+| AEGIS-06-C0004 | Architecture | Added operation registration schema and policy conformance vectors; clarified fail-closed registry and validator requirements | `security/schemas/operation-registration.schema.json`, `security/POLICY_TEST_VECTORS.json` |
 
-## Current blockers\n\n- Schema/policy draft awaits TUSKER-04 and NEXUS-07 compatibility confirmation.\n- Authorization reference transport and one-time consumption mechanism remain open.\n- No executable policy engine or test suite exists; no tests have been run.\n\n## Operating rules
+## Current blockers
+
+- TUSKER-04 accepted invariants, but authoritative schema field compatibility is still pending.
+- NEXUS-07 has not yet confirmed authorization-reference transport, one-time consumption, registry ownership or broker semantics.
+- PILOT-08, FORGE-09, NOVA-02 and ATLAS-01 review issues have no replies yet.
+- Schemas and vectors have not been run through a Draft 2020-12 validator; no executable policy engine or security tests exist.
+
+## Operating rules
 
 - Add one JSONL record for every actual assistant response in this permanent identity.
 - Keep IDs sequential and timestamps factual.
