@@ -1,3 +1,4 @@
+import copy
 import json
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas"
 AUDIT_SCHEMA = json.loads((SCHEMA_DIR / "audit-event.schema.json").read_text())
+APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json"))
 
 VALID_EVENT = {
     "schema_version": "0.1.0",
@@ -29,11 +31,6 @@ VALID_EVENT = {
     "reason_code": None,
     "correlation_id": "corr-123",
 }
-
-
-APPROVAL_SCHEMA = json.loads(
-    (SCHEMA_DIR / "approval-request.schema.json").read_text()
-)
 
 VALID_APPROVAL = {
     "schema_version": "0.2.0",
@@ -60,71 +57,17 @@ VALID_APPROVAL = {
 }
 
 
-def approval_validator():
-    Draft202012Validator.check_schema(APPROVAL_SCHEMA)
-    return Draft202012Validator(
-        APPROVAL_SCHEMA,
-        format_checker=FormatChecker(),
-    )
-
-
-def test_valid_approval_request_with_all_bindings_is_valid():
-    assert list(approval_validator().iter_errors(VALID_APPROVAL)) == []
-
-
-@pytest.mark.parametrize(
-    "field",
-    [
-        "session_binding",
-        "device_binding",
-        "registry_version",
-        "resource_scope",
-        "precondition_digest",
-    ],
-)
-def test_approval_binding_members_cannot_be_omitted(field):
-    request = json.loads(json.dumps(VALID_APPROVAL))
-    del request["binding"][field]
-    assert list(approval_validator().iter_errors(request))
-
-
-@pytest.mark.parametrize(
-    "field,value",
-    [
-        ("session_binding", None),
-        ("device_binding", None),
-        ("registry_version", ""),
-        ("resource_scope", []),
-        ("precondition_digest", "sha256:bad"),
-    ],
-)
-def test_invalid_approval_binding_values_are_rejected(field, value):
-    request = json.loads(json.dumps(VALID_APPROVAL))
-    request["binding"][field] = value
-    assert list(approval_validator().iter_errors(request))
-
-
-def test_duplicate_resource_scope_is_rejected():
-    request = json.loads(json.dumps(VALID_APPROVAL))
-    request["binding"]["resource_scope"] = [
-        "settings:display",
-        "settings:display",
-    ]
-    assert list(approval_validator().iter_errors(request))
-
-
-def test_approval_request_rejects_unknown_fields():
-    request = json.loads(json.dumps(VALID_APPROVAL))
-    request["binding"]["untrusted_identity"] = "root"
-    assert list(approval_validator().iter_errors(request))
+def validator_for(schema):
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
 def audit_validator():
-    Draft202012Validator.check_schema(AUDIT_SCHEMA)
-    return Draft202012Validator(
-        AUDIT_SCHEMA,
-        format_checker=FormatChecker(),
-    )
+    return validator_for(AUDIT_SCHEMA)
+
+
+def approval_validator():
+    return validator_for(APPROVAL_SCHEMA)
 
 
 def test_all_security_schemas_are_valid_draft_2020_12_schemas():
@@ -173,43 +116,6 @@ def test_invalid_audit_event_fields_are_rejected(mutation):
     assert list(audit_validator().iter_errors(event))
 
 
-APPROVAL_SCHEMA = json.loads(
-    (SCHEMA_DIR / "approval-request.schema.json").read_text()
-)
-
-VALID_APPROVAL = {
-    "schema_version": "0.2.0",
-    "approval_request_id": "123e4567-e89b-12d3-a456-426614174010",
-    "proposal_id": "123e4567-e89b-12d3-a456-426614174011",
-    "action_id": "system.storage.install",
-    "action_digest": "sha256:" + "c" * 64,
-    "principal_binding": "sha256:" + "d" * 64,
-    "binding": {
-        "session_binding": "sha256:" + "e" * 64,
-        "device_binding": "sha256:" + "f" * 64,
-        "registry_version": "registry-2026-10-31.1",
-        "resource_scope": ["disk:wwn-0x5000c500aabbccdd"],
-        "precondition_digest": "sha256:" + "1" * 64,
-    },
-    "policy_version": "0.1.0",
-    "risk_class": "R4",
-    "summary": "Install TuskerOS",
-    "target": "Selected system disk",
-    "impact": "Partitions and data on the selected disk may be replaced",
-    "reversible": False,
-    "created_at": "2026-10-31T00:00:00Z",
-    "expires_at": "2026-10-31T00:02:00Z",
-}
-
-
-def approval_validator():
-    Draft202012Validator.check_schema(APPROVAL_SCHEMA)
-    return Draft202012Validator(
-        APPROVAL_SCHEMA,
-        format_checker=FormatChecker(),
-    )
-
-
 def test_approval_request_v020_with_complete_bindings_is_valid():
     assert list(approval_validator().iter_errors(VALID_APPROVAL)) == []
 
@@ -225,28 +131,44 @@ def test_approval_request_v020_with_complete_bindings_is_valid():
     ],
 )
 def test_approval_binding_members_cannot_be_omitted(field):
-    request = json.loads(json.dumps(VALID_APPROVAL))
+    request = copy.deepcopy(VALID_APPROVAL)
     del request["binding"][field]
     assert list(approval_validator().iter_errors(request))
 
 
 @pytest.mark.parametrize(
-    "mutation",
+    "field,value",
     [
-        {"session_binding": "sha256:bad"},
-        {"device_binding": "sha256:bad"},
-        {"precondition_digest": "sha256:bad"},
-        {"resource_scope": []},
-        {"resource_scope": ["disk:one", "disk:one"]},
+        ("session_binding", None),
+        ("device_binding", None),
+        ("registry_version", ""),
+        ("resource_scope", []),
+        ("precondition_digest", "sha256:bad"),
     ],
 )
-def test_invalid_approval_binding_values_are_rejected(mutation):
-    request = json.loads(json.dumps(VALID_APPROVAL))
-    request["binding"].update(mutation)
+def test_invalid_approval_binding_values_are_rejected(field, value):
+    request = copy.deepcopy(VALID_APPROVAL)
+    request["binding"][field] = value
     assert list(approval_validator().iter_errors(request))
 
 
+def test_duplicate_resource_scope_is_rejected():
+    request = copy.deepcopy(VALID_APPROVAL)
+    request["binding"]["resource_scope"] = ["settings:display", "settings:display"]
+    assert list(approval_validator().iter_errors(request))
+
+
+def test_approval_request_rejects_unknown_nested_and_top_level_fields():
+    nested = copy.deepcopy(VALID_APPROVAL)
+    nested["binding"]["untrusted_identity"] = "root"
+    assert list(approval_validator().iter_errors(nested))
+
+    top_level = copy.deepcopy(VALID_APPROVAL)
+    top_level["caller_principal"] = "root"
+    assert list(approval_validator().iter_errors(top_level))
+
+
 def test_approval_request_v010_is_not_accepted_by_v020_schema():
-    request = json.loads(json.dumps(VALID_APPROVAL))
+    request = copy.deepcopy(VALID_APPROVAL)
     request["schema_version"] = "0.1.0"
     assert list(approval_validator().iter_errors(request))
