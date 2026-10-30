@@ -5,6 +5,7 @@ on:
     branches: [04-tusker-core]
     paths:
       - "tusker-core/schemas/**"
+      - "tusker-core/adapters/**"
       - "tusker-core/tests/**"
       - "tusker-core/requirements-dev.txt"
       - ".github/workflows/core-contract-schemas.yml"
