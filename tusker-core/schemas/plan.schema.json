@@ -95,7 +95,9 @@
               "string",
               "null"
             ],
-            "maxLength": 256
+            "maxLength": 128,
+            "minLength": 16,
+            "description": "When present, must meet the NEXUS invocation contract's 16–128 character bounds. Every mutating operation requires a non-null key; mutation eligibility is enforced by the descriptor-aware adapter, not this shape schema."
           },
           "state": {
             "enum": [
