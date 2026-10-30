@@ -111,3 +111,10 @@ The fake-provider suite is a prerequisite for real-provider testing. Real-provid
 - Unsupported and unknown behaviors are surfaced to TUSKER-04 without false capability claims.
 - AEGIS-06 approves process ownership, cancellation escalation, logging and bind checks.
 - TUSKER-04 approves request/event/error semantics before facade freeze.
+
+
+## 9. Machine-readable event envelope
+
+The JSON Schema at `tusker-ai/schemas/inference-event.schema.json` defines the common request ID, monotonic sequence field, RFC 3339 timestamp and typed payload for each event kind. The accompanying synthetic trace at `tusker-ai/tests/fixtures/inference-events-valid.json` demonstrates a successful started → text_delta → usage → completed stream. It is a contract fixture, not a provider observation.
+
+The schema validates individual event shape; trace-level rules (single start, exactly one terminal event, terminal-last ordering, stable request ID and increasing sequence) are separate assertions in `tusker-ai/tests/test_inference_event_schema.py`. Adapters must still enforce stream ordering at runtime. A valid JSON event is untrusted model/provider data and is never permission to execute a tool. Run with the isolated test requirements in `tusker-ai/requirements-test.txt`; execution status is recorded only after an actual test run.
