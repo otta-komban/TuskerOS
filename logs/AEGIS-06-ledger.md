@@ -7,10 +7,10 @@
 
 ## Current state
 
-- **Verified completion count:** 33
-- **Latest completion:** `AEGIS-06-C0033`
+- **Verified completion count:** 34
+- **Latest completion:** `AEGIS-06-C0034`
 - **Current phase:** P1 architecture / verification design — integration review; NEXUS-07 broker decisions pending
-- **Latest log commit:** `35868247af47d537d30176273220f168db6c5254`
+- **Latest log commit:** `0cc05be23a1e76d36b6084fd72fdf291e7b6a0d8`
 
 ## Completion index
 
@@ -49,6 +49,7 @@
 | AEGIS-06-C0031 | upstream-and-runtime-integration-review | Verified the current security branch is 214 commits ahead of main with zero behind, inspected NEXUS-07's authorization-boundary note and confirmed no executable broker/IPC implementation is present; recorded the refreshed evidence. | Current GitHub comparison main...06-security-gatekeeper reports 214 ahead / 0 behind, status ahead; main is the merge base. No merge, rebase, cherry-pick or force-push was performed in this response.; Inspected recursive tree of 07-system-integration at a0cc0a74242070135b6b7937bd7605c7861fe7d8; the only matching security/broker/auth/IPC path is system-integration/AUTHORIZATION_BOUNDARY.md. |
 | AEGIS-06-C0032 | cross-agent-security-code-review | Reviewed FORGE-09 package transaction lifecycle validator against its JSON Schema and identified a Python/schema mismatch: rejected/cancelled transitions and historical entries can omit reason_code in Python although schema requires it; posted actionable finding on issue #29. | Inspected marketplace/tools/transaction_state.py on 09-ecosystem at blob 9df73ddb85f3b9c3838e4445898ba43adc4c98ca.; Inspected marketplace/schemas/package-transaction-state.schema.json at blob 73a5d109f4c120af3a44d2cbd31dd661ebefe914; four legal rejected/cancelled history variants require reason_code. |
 | AEGIS-06-C0033 | installer-security-contract-review | Published AEGIS security decisions for PHOENIX-10 destructive installer authorization and release-artifact trust, including exact plan/snapshot binding, R4 approval, one-time consume, fail-closed audit and signing-key requirements. | Reviewed security/AUTHORIZATION_LIFECYCLE.md, security/OPERATION_REGISTRY.md, security/BROKER_CONTRACT.md and security/SECURITY_ARCHITECTURE.md against PHOENIX-10 issue #4.; Posted installer-specific decision on issue #4, comment 6533817824: canonical RFC 8785 JCS + SHA-256 binding over typed partition plan/resources and trusted principal/session/device, registry/policy and precondition snapshot context; mutable device paths alone are not stable identity. |
+| AEGIS-06-C0034 | release-trust-proposal-reconciliation | Reconciled TUF and detached OpenPGP proposals as alternative trust envelopes; TUF preferred for a maintained update/release channel, with final choice and key custody reserved for project release maintainers. | security/INSTALLER-RELEASE-TRUST-DECISION.md; PHOENIX-10 issue #4 comment 6533883399; main synchronization merge 092d3c46f323c545c9d463c627f5e66d771442f2 |
 
 ## C0007 — Privileged operations release gate
 
@@ -394,3 +395,16 @@
 - **Verification:** Workflow run 41130846710, job 124321040365, passed 97 schema tests in 2.08s on Python 3.12. No installer, release-signing, broker, audit-persistence or privileged runtime integration tested.
 - **Blockers:** NEXUS-07 runtime API/transport and atomic consume; ATLAS-01 verifier package confirmation; PHOENIX-10 installer/storage preflight and release trust implementation/testing.
 - **JSONL update commit:** `35868247af47d537d30176273220f168db6c5254`; ledger update commit pending.
+
+## C0034 — Release-trust proposal reconciliation
+
+- **Completion:** 34 / 100
+- **Timestamp:** 2026-10-30T21:31:09Z
+- **Deliverable:** Updated `security/INSTALLER-RELEASE-TRUST-DECISION.md` to reconcile two parallel AEGIS release-signature proposals.
+- **Decision:** TUF root/targets/snapshot/timestamp metadata is preferred for a maintained update/release channel. A detached OpenPGP signature over a canonical manifest remains a simpler offline-only alternative. These are alternative trust envelopes, not two mandatory signatures to stack.
+- **Common evidence:** Both models must bind artifact digest/size, release/version/architecture, source/build identity, Fedora repository snapshot, package NEVRAs, SBOM and provenance. Offline verification, protected root custody, delegated-key rotation/revocation and anti-rollback remain mandatory.
+- **Coordination:** Posted clarification on PHOENIX-10 issue #4, comment 6533883399. The earlier C0033 OpenPGP proposal remains the alternative; no project-level trust format or key custodian has been selected.
+- **Synchronization:** Main history was integrated using two-parent merge commit `092d3c46f323c545c9d463c627f5e66d771442f2`; comparison at this checkpoint reported 225 ahead / 0 behind.
+- **Verification limits:** Documentation and coordination only. No tests, signing infrastructure, offline verifier, installer execution, broker runtime or privileged operation was implemented or tested.
+- **Commits:** Decision `b89a013e8f02119e1500629f9e2202ec3a1e1e7c`; reconciliation `3a7b5ddd5b1181b10e684d4f188f8456cdba78eb`; JSONL `0cc05be23a1e76d36b6084fd72fdf291e7b6a0d8`.
+- **Blockers:** Project release maintainers must choose the trust model and name key custodians; ATLAS-01 must confirm Fedora verifier packaging; PHOENIX-10 must implement offline verification. NEXUS-07 broker transport/identity/atomic consume and SEC-SCHEMA-006 audit lifecycle agreement remain open.
