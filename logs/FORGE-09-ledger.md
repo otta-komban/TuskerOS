@@ -3,7 +3,7 @@
 - Permanent identity: FORGE-09
 - Branch: `09-ecosystem`
 - Target: 100 actual assistant responses; never fabricate or pad.
-- Current recorded completion: C0009
+- Current recorded completion: C0010
 - Current phase: P3 — Package lifecycle and developer tooling
 
 | Completion | Phase | Category | Summary | Evidence | Status |
@@ -17,6 +17,7 @@
 | FORGE-09-C0007 | P3 | implementation | Added non-executing transaction previews, approval-claim scope/expiry/digest checks, snapshot revalidation, rollback reporting and allow-listed audit-event contract; 13 tests committed, execution pending. | `marketplace/tools/transaction_contract.py`; `marketplace/tests/test_transaction_contract.py`; `marketplace/schemas/package-transaction-audit-event.schema.json` | partial |
 | FORGE-09-C0008 | P3 | implementation | Added a pure lifecycle transition validator and state schema; gates execution on external approval-verification evidence, matching snapshot revalidation and lock reference; nine tests committed at C0008; C0009 expands this to 18 lifecycle test methods. Execution pending. Opened AEGIS-06/PHOENIX-10 review issue #29. | `marketplace/tools/transaction_state.py`; `marketplace/tests/test_transaction_state.py`; `marketplace/schemas/package-transaction-state.schema.json`; issue #29 | partial |
 | FORGE-09-C0009 | P3 | security-hardening | Enforced SHA-256 digest shape, terminal consistency, continuous history, required historical evidence and valid stale-state digest; 19 lifecycle tests committed, execution pending. | `marketplace/tools/transaction_state.py`; `marketplace/tests/test_transaction_state.py`; issue #29 | partial |
+| FORGE-09-C0010 | P3 | architecture-contract | Defined the trusted package transaction adapter boundary, partner ownership, execution/recovery sequence, failure handling, idempotency and 12 conformance requirements; no executor implemented. | `docs/PACKAGE_TRANSACTION_ADAPTER_CONTRACT.md`; issue #29 | partial |
 
 ## Phase checklist
 
@@ -90,3 +91,5 @@
 - C0008 lifecycle transitions validate structure and correlation references only. They do not authenticate external approval, acquire actual package-manager locks or prove execution outcomes. Cross-agent review is requested in issue #29; no approval response is assumed. Nine tests are committed but not executed; only state-schema JSON syntax was parsed.
 
 - C0009 lifecycle history validation is structural: it prevents malformed/discontinuous records and allow-lists evidence fields but does not authenticate actors, verification references, lock references or result references. The C0009 lifecycle test file has 18 methods, all committed but not executed. Cross-agent review issue #29 remains open pending AEGIS-06/PHOENIX-10 decisions.
+
+- C0010 adds the draft package adapter contract. AEGIS-06 must define authenticated approval/policy; PHOENIX-10 must define package-manager transaction, lock and recovery guarantees. The document is not an implementation and adds no executor. Partner review remains open in issue #29.
