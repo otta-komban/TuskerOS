@@ -11,6 +11,7 @@ import platform
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 EXPECTED_RELEASE = "44"
@@ -23,6 +24,31 @@ QUERY_FORMAT = "%{name}-%{epoch}:%{version}-%{release}.%{arch}\t%{repoid}"
 def run(command: list[str]) -> str:
     completed = subprocess.run(command, check=True, text=True, capture_output=True)
     return completed.stdout.strip()
+
+
+def write_json_atomic(path: Path, payload: dict[str, object]) -> None:
+    """Write JSON beside the destination, then atomically replace it."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as stream:
+            temporary_path = Path(stream.name)
+            json.dump(payload, stream, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def fedora_release() -> str:
@@ -160,8 +186,7 @@ def main() -> int:
         "packages": resolved,
         "note": "Repository evidence is captured, but this file does not snapshot repository metadata or RPM payloads.",
     }
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    write_json_atomic(args.output, result)
     print(f"Resolved {len(resolved)} package/repository records to {args.output}")
     return 0
 
