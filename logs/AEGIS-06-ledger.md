@@ -16,6 +16,10 @@
 
 | AEGIS-06-C0026 | Security branch sync and verification | Rechecked main divergence, NEXUS-07 issue #17 and candidate audit-event v0.2.0 CI; preserved branch isolation and recorded outstanding runtime-owner blockers | Branch comparison; issue #17 comments; Actions run 41129041995 (54 passed) |
 
+| AEGIS-06-C0027 | Integration security review | Reviewed FORGE-09 package transaction approval/rollback boundary and supplied AEGIS security decisions | Issue #29 comment 6533750815 |
+| AEGIS-06-C0028 | Security schema regression coverage | Added 13 negative registry-unavailable lifecycle cases; CI passed 67 tests | Actions run 41130628432; test commit `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8` |
+| AEGIS-06-C0029 | Audit lifecycle schema coverage | Identified SEC-SCHEMA-006 and documented missing candidate audit lifecycle event types; requested NEXUS-07/TUSKER-04 decisions | `security/SCHEMA_CONSISTENCY_AUDIT.md`; issue #17 comment 6533766184 |
+
 
 | ID | Category | Summary | Evidence |
 | AEGIS-06-C0001 | Design | Repository intake; initial threat model, security architecture and Phase 1 checklist | `security/THREAT_MODEL.md`, `security/SECURITY_ARCHITECTURE.md`, `security/PHASE1_CHECKLIST.md` |
@@ -360,3 +364,29 @@
 - **Tests:** Added 13 parametrized negative cases for all post-request lifecycle event classes when registry status is unavailable. GitHub Actions run 41130628432 passed **67 tests in 0.58s** (job 124320290914).
 - **Commits:** tests `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8`; divergence review `245199912928623bfce0fda96a1d57fd81530af6`; test matrix `5687436de2a0819c3b0e297959f368932d901159`; checklist `17f774bc8375b38fabb177f857399264894f3c3b`; JSONL `843591a971d7ee105d5da78d5a21f193d279f7f3`.
 - **Limits:** Candidate v0.2.0 only; active v0.1.0 unchanged. No trusted registry producer, audit persistence, broker IPC or privileged runtime tested.
+
+
+## C0027 — FORGE-09 package transaction security review
+
+- **Completion:** 27 / 100
+- **Decision:** Package operations must bind the exact transaction, canonical package/action/version/source plan, installed-state snapshot digest, principal/session/device, operation, policy/registry versions, expiry and one-time consume. Broker peer identity must be independently authenticated; durable pre-dispatch audit is required; rollback/compensation is separately authorized; post-dispatch disconnect is UNKNOWN and requires read-back reconciliation.
+- **Coordination:** AEGIS decision posted on issue #29 (comment 6533750815).
+- **Blockers:** NEXUS-07 broker transport/peer identity/consume API and PHOENIX-10 package-manager locking, execution, read-back and recovery guarantees. No package execution or rollback implementation claimed.
+
+## C0028 — Registry-unavailable lifecycle regression coverage
+
+- **Completion:** 28 / 100
+- **Changes:** Added 13 negative candidate-schema cases for post-request event types with `registry_status=unavailable`; refreshed main divergence evidence and security test matrix/checklist.
+- **CI:** GitHub Actions run 41130628432 passed **67 tests in 0.58s** on commit `ee192889a0bc38ac7c8d5e4b89b11e489953c2d8`. Schema-only validation; no trusted registry producer, persistence, broker IPC or privileged runtime.
+- **Blocker:** NEXUS-07/TUSKER-04 owner acceptance and producer integration remain pending.
+
+## C0029 — Candidate audit-event lifecycle coverage gap (SEC-SCHEMA-006)
+
+- **Completion:** 29 / 100
+- **Timestamp:** 2026-10-30T21:25:44.069Z
+- **Finding:** The normative lifecycle requires presentation, dismissal, invalidation, revocation, consume-accepted/rejected and reconciliation audit records. Candidate v0.2.0 has explicit types for only part of this lifecycle.
+- **Changes:** Added SEC-SCHEMA-006 to `security/SCHEMA_CONSISTENCY_AUDIT.md`; proposed AUD-SCHEMA-031–036 to `security/SECURITY_TEST_MATRIX.md`; added owner-review gate to `security/PHASE1_CHECKLIST.md`.
+- **Coordination:** Requested canonical event names, result mappings, trusted producer ownership and correlation requirements on NEXUS-07 issue #17 (comment 6533766184).
+- **Verification:** Static cross-document comparison only. Proposed cases are not implemented or executed; no CI/runtime conformance claimed. Active v0.1.0 and candidate v0.2.0 schemas unchanged.
+- **Commits:** audit `3423f692c637f23231d73664cae7d829ac211e81`; matrix `63957f57f04a0673f0e78c3e4c855b6ee78e04fe`; checklist `c14d8db23e689dd578f999a961405197f60fff79`; JSONL `81023a6bcea9399bd86ef89edfc0112b2c51df95`.
+- **Blocker:** NEXUS-07/TUSKER-04 owner agreement and producer-level lifecycle tests remain pending.
