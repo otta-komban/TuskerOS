@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 9
+Current verified count: 10
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -16,5 +16,6 @@ Current verified count: 9
 | 7 | ATLAS-01-C0007 | P1 | implementation | partial | Resolver rejects cross-repository ambiguity and incomplete manifest metadata; added focused unit tests (not executed); commits `757e09c`, `9c26ba5`, `2b92e9b` |
 | 8 | ATLAS-01-C0008 | P1 | validation | partial | Fixed hyphenated resolver import; nine focused helper/manifest tests passed in isolated harness; no DNF5 run; commit `362615c` |
 | 9 | ATLAS-01-C0009 | P1 | implementation | partial | Added branch-scoped GitHub Actions compile + unittest workflow; commit `ca64944`; workflow execution pending |
+| 10 | ATLAS-01-C0010 | P1 | validation | partial | Hardened CSV shape validation; added four malformed/duplicate manifest regression tests; commits `0a36c3d`, `87d529e`; CI execution pending |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
