@@ -74,6 +74,6 @@
 - [x] Publish draft approval-request schema v0.2.0 with required session/device, registry-version, resource-scope and precondition-digest bindings for SEC-SCHEMA-001; runtime-owner acceptance remains pending.
 - [ ] Obtain NEXUS-07/TUSKER-04/PILOT-08/ATLAS-01 acceptance of binding provenance, v0.1.0-to-v0.2.0 migration and consume-time comparison.
 - [x] Add automated Draft 2020-12 meta-schema checks and audit-event positive/negative envelope tests; CI run 41126223487 passed (17 tests).
-- [x] Add positive/negative approval-request v0.2.0 binding-envelope cases to `security/tests/test_security_schemas.py`; CI run 41126585567 passed (32 tests).
+- [x] Add positive/negative approval-request v0.2.0 binding-envelope cases, reject caller-supplied principal fields, and deduplicate schema loading in `security/tests/test_security_schemas.py`; branch CI run 41127219083 passed (33 tests).
 - [ ] Confirm approval-binding producer/UI/authority semantics, including trusted digest derivation and canonical resource normalization; schema-only validation is insufficient.  
 
