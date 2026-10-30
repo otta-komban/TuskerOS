@@ -56,7 +56,6 @@
           "type": "string"
         }
       },
-      "additionalProperties": true
     },
     "started": {
       "allOf": [
