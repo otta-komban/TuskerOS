@@ -69,5 +69,6 @@
 - [x] Review `main`-only divergence commits and document findings in `security/MAIN_BRANCH_DIVERGENCE_REVIEW.md`.
 - [ ] Obtain NEXUS-07 authorization/broker implementation decisions before freezing privileged runtime contracts.  
 - [x] Publish `security/BROKER_INTEGRATION_DECISIONS.md` with proposed (not accepted) defaults for authorization evidence, atomic consume, registry ownership, IPC identity and UNKNOWN/idempotency.  
-- [ ] Resolve SEC-SCHEMA-001 approval binding fields/versioning in `security/SCHEMA_CONSISTENCY_AUDIT.md`; obtain runtime-owner compatibility review.
+- [x] Draft a versioned v0.2.0 `approval_binding` envelope proposal for SEC-SCHEMA-001 in `security/SCHEMA_CONSISTENCY_AUDIT.md`; active v0.1.0 schema remains unchanged.
+- [ ] Obtain NEXUS-07/TUSKER-04/PILOT-08/ATLAS-01 acceptance of binding provenance and consume-time comparison; then publish candidate schema and positive/negative fixtures.
 - [x] Add automated Draft 2020-12 schema and audit-event envelope tests, including positive correlated/null fixtures and negative required-field/type/format cases; CI run 41126223487 passed (17 tests). Producer integration tests remain open.
