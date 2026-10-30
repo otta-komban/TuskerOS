@@ -61,6 +61,20 @@ class ContractSchemaTests(unittest.TestCase):
         candidate.pop("origin", None)
         self.assertTrue(list(self.validators["task-event"].iter_errors(candidate)))
 
+
+    def test_idempotency_key_matches_nexus_length_bounds(self):
+        validator = self.validators["plan"]
+        for length in (16, 128):
+            with self.subTest(valid_length=length):
+                candidate = copy.deepcopy(self.examples["plan"])
+                candidate["steps"][0]["idempotency_key"] = "k" * length
+                self.assertEqual(list(validator.iter_errors(candidate)), [])
+        for length in (15, 129):
+            with self.subTest(invalid_length=length):
+                candidate = copy.deepcopy(self.examples["plan"])
+                candidate["steps"][0]["idempotency_key"] = "k" * length
+                self.assertTrue(list(validator.iter_errors(candidate)))
+
     def test_terminal_cancelled_event_is_valid(self):
         candidate = copy.deepcopy(self.examples["task-event"])
         candidate["type"] = "task.cancelled"
