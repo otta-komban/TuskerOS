@@ -76,7 +76,7 @@ Proposed requirements for all Tusker-owned system services:
 
 No actual service unit or service account name is defined here; the owning agent must supply exact identifiers.
 
-## 7. D-Bus and desktop-session boundaries
+## 7. D-Bus and desktop-session boundaries\n\nFedora KDE 44 is the provisional desktop baseline. Fedora's KDE 44 release notes report Plasma 6.6.4 and introduce Plasma Setup plus Plasma Login Manager for fresh installs. Use a Wayland-first validation target. Do not assume SDDM or an X11 session fallback without confirming the actual Fedora 44 package/service availability. Resolve Qt 6 and KDE Frameworks 6 package NEVRAs from the selected Fedora 44 repository metadata at build time and record them in the build manifest. NOVA-02 owns session UX and exact desktop dependency requests; ATLAS-01 owns the resolved Fedora package composition. Source: https://fedoramagazine.org/whats-new-in-fedora-kde-plasma-desktop-44/
 
 - NOVA-02 owns Plasma shell, desktop UI and user-session integration.
 - NEXUS-07 owns system capability discovery and typed system service APIs.
