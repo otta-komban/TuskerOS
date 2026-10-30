@@ -33,6 +33,29 @@ def test_invalid_manifest_variants_are_rejected(mutate):
     assert list(VALIDATOR.iter_errors(candidate))
 
 
+@pytest.mark.parametrize("field", [
+    "schema_version", "artifact_id", "publisher", "source", "revision",
+    "format", "files", "model", "license", "provenance", "review",
+])
+def test_missing_required_top_level_field_is_rejected(field):
+    candidate = deepcopy(FIXTURE)
+    del candidate[field]
+    assert list(VALIDATOR.iter_errors(candidate))
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda value: value["model"].pop("context_length"),
+    lambda value: value["files"][0].pop("sha256"),
+    lambda value: value["provenance"].update(retrieved_at="yesterday"),
+    lambda value: value["provenance"].update(retrieved_from="not a URI"),
+    lambda value: value["requirements"].update(minimum_ram_bytes=-1),
+])
+def test_invalid_nested_manifest_fields_are_rejected(mutate):
+    candidate = deepcopy(FIXTURE)
+    mutate(candidate)
+    assert list(VALIDATOR.iter_errors(candidate))
+
+
 def test_invalid_uri_format_is_rejected():
     candidate = deepcopy(FIXTURE)
     candidate["source"] = "not a URI"
