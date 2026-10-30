@@ -201,3 +201,16 @@ These cases are proposed from SEC-SCHEMA-006. They are not implemented or execut
 | POL-DEC-004 | Any | Reject unknown top-level caller authority claims | Negative |
 
 Automated schema tests added in `security/tests/test_security_schemas.py`. These validate the policy-decision JSON Schema only; they do not prove that a trusted policy engine minted the reference, that a broker validates it, or that one-time consumption is atomic. CI run 41136304088 is the current validation run; its result is pending at the time of this entry.
+
+## Remote audit identity-binding cases — candidate audit-event v0.2.0
+
+| ID | Scenario | Expected result | Coverage |
+|---|---|---|---|
+| AUD-REMOTE-001 | Remote policy event omits both device/session bindings | Reject | `test_audit_event_v020_remote_origin_requires_device_and_session_bindings` |
+| AUD-REMOTE-002 | Remote event includes both correctly formatted SHA-256 bindings | Accept | `test_audit_event_v020_remote_origin_accepts_both_binding_digests` |
+| AUD-REMOTE-003 | Remote event omits either binding independently | Reject | `test_audit_event_v020_remote_origin_requires_each_binding` |
+| AUD-REMOTE-004 | Either binding is empty, null, non-string, uppercase, malformed or wrong-length | Reject | `test_audit_event_v020_remote_binding_digest_format_is_strict` |
+| AUD-REMOTE-005 | Local/extension/system event supplies either remote binding | Reject | `test_audit_event_v020_non_remote_origin_rejects_remote_bindings` |
+| AUD-REMOTE-006 | Remote event includes raw `device_id` or `session_id` instead of only digests | Reject | `test_audit_event_v020_rejects_raw_remote_identity_fields` |
+
+These cases validate the candidate envelope only. They do not prove that a trusted remote adapter derives the digests correctly, that a producer persists them, or that a live policy/broker path enforces the binding. The active v0.1.0 schema remains unchanged; v0.2.0 producer migration remains gated on NEXUS-07/TUSKER-04 agreement.
