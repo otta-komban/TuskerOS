@@ -1079,3 +1079,19 @@ def test_policy_rejects_truthy_non_boolean_argument_validator(callback_result):
     result = engine.evaluate(proposal, context, registry, "registry-1")
     assert result.status == "DENY"
     assert result.reason_code == "POLICY_INVALID_ARGUMENTS"
+
+
+def test_security_database_refuses_hard_link_without_chmod_or_writes(tmp_path):
+    import stat
+
+    target = tmp_path / "shared.db"
+    target.write_bytes(b"preserve external file")
+    target.chmod(0o644)
+    path = tmp_path / "security.db"
+    path.hardlink_to(target)
+
+    with pytest.raises(SecurityStoreError, match="must not have hard links"):
+        SecurityStore(path, audit_key=KEY)
+
+    assert target.read_bytes() == b"preserve external file"
+    assert stat.S_IMODE(target.stat().st_mode) == 0o644
