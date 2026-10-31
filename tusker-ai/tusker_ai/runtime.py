@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+import math
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Mapping, Sequence
 from typing import Iterable
 
 from .providers.base import InferenceProvider
@@ -27,18 +29,28 @@ class InferenceRuntime:
         acquired = self._slots.acquire(blocking=False)
         if not acquired:
             raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Inference capacity is currently exhausted", retryable=True)
-        available = self._available_memory_bytes()
-        if self.limits.minimum_available_memory_bytes and (available is None or available < self.limits.minimum_available_memory_bytes):
-            self._slots.release()
-            raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Available memory is below the configured safety reserve", retryable=True)
         start = time.monotonic()
         terminal = False
         started = False
         previous_sequence = -1
         previous_timestamp = None
         try:
+            available = self._available_memory_bytes()
+            if self.limits.minimum_available_memory_bytes and (available is None or available < self.limits.minimum_available_memory_bytes):
+                raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Available memory is below the configured safety reserve", retryable=True)
             _LOG.info("inference_started", extra={"request_id": request.request_id, "provider_id": self.provider.provider_id, "model_id": request.model})
             for event in self.provider.infer(request, token):
+                if (
+                    not isinstance(event, InferenceEvent)
+                    or not isinstance(event.request_id, str)
+                    or isinstance(event.sequence, bool)
+                    or not isinstance(event.sequence, int)
+                    or event.sequence < 0
+                    or not isinstance(event.event_type, str)
+                    or not isinstance(event.payload, Mapping)
+                    or not isinstance(event.timestamp, str)
+                ):
+                    raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned a malformed inference event")
                 if terminal:
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider emitted an event after a terminal event")
                 if time.monotonic() - start > min(request.timeout_seconds, self.limits.request_timeout_seconds):
@@ -59,6 +71,7 @@ class InferenceRuntime:
                 except (AttributeError, TypeError, ValueError):
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid or regressing event timestamp") from None
                 previous_timestamp = event_time
+                self._validate_event_payload(event)
                 if not started and event.event_type != "started":
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider stream did not begin with a started event")
                 if event.event_type == "started":
@@ -78,6 +91,36 @@ class InferenceRuntime:
         finally:
             _LOG.info("inference_finished", extra={"request_id": request.request_id, "elapsed_ms": int((time.monotonic() - start) * 1000)})
             self._slots.release()
+
+    @staticmethod
+    def _validate_event_payload(event: InferenceEvent) -> None:
+        payload = event.payload
+        valid = True
+        if event.event_type == "text_delta":
+            delta = payload.get("delta")
+            valid = isinstance(delta, str) and bool(delta)
+        elif event.event_type == "completed":
+            reason = payload.get("finish_reason")
+            valid = reason is None or (
+                isinstance(reason, str)
+                and reason in {"stop", "output_limit", "tool_calls", "cancelled", "provider_specific", "unknown"}
+            )
+        elif event.event_type == "usage":
+            for key in ("input_tokens", "output_tokens"):
+                value = payload.get(key)
+                if value is not None and (
+                    isinstance(value, bool) or not isinstance(value, int) or value < 0
+                ):
+                    valid = False
+                    break
+        elif event.event_type == "cancelled":
+            reason = payload.get("reason")
+            valid = reason is None or isinstance(reason, str)
+        if not valid:
+            raise TuskerRuntimeError(
+                RuntimeErrorCode.PROVIDER_DISCONNECTED,
+                "Provider returned a malformed inference event payload",
+            )
 
     @staticmethod
     def _available_memory_bytes() -> int | None:
@@ -101,15 +144,51 @@ class InferenceRuntime:
         return host_available
 
     def _validate(self, request: InferenceRequest) -> None:
-        if not request.request_id or len(request.request_id) > 128 or not request.model:
-            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request identifier and model are required")
-        if not request.messages or any(not isinstance(m, dict) for m in request.messages):
+        if not isinstance(request, InferenceRequest):
+            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "A typed inference request is required")
+        if (
+            not isinstance(request.request_id, str)
+            or not request.request_id.strip()
+            or len(request.request_id) > 128
+            or not isinstance(request.model, str)
+            or not request.model.strip()
+            or len(request.model) > 256
+        ):
+            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request identifier and model must be non-empty bounded strings")
+        if (
+            not isinstance(request.messages, Sequence)
+            or isinstance(request.messages, (str, bytes, bytearray))
+            or not request.messages
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "At least one typed message is required")
-        if sum(len(str(m.get("content", ""))) for m in request.messages) > self.limits.max_input_characters:
-            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Input exceeds the configured size limit")
-        if not 1 <= request.max_output_tokens <= self.limits.max_output_tokens:
+        allowed_roles = {"system", "developer", "user", "assistant", "tool"}
+        total_characters = 0
+        for message in request.messages:
+            if not isinstance(message, Mapping):
+                raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Each message must be an object")
+            role = message.get("role")
+            content = message.get("content")
+            if not isinstance(role, str) or role not in allowed_roles or not isinstance(content, str):
+                raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Each message requires a supported role and string content")
+            total_characters += len(content)
+            if total_characters > self.limits.max_input_characters:
+                raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Input exceeds the configured size limit")
+        if (
+            isinstance(request.max_output_tokens, bool)
+            or not isinstance(request.max_output_tokens, int)
+            or not 1 <= request.max_output_tokens <= self.limits.max_output_tokens
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Output token limit is outside the configured bound")
-        if not 1 <= request.context_limit <= self.limits.max_context_tokens:
+        if (
+            isinstance(request.context_limit, bool)
+            or not isinstance(request.context_limit, int)
+            or not 1 <= request.context_limit <= self.limits.max_context_tokens
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Context limit is outside the configured bound")
-        if not 0 < request.timeout_seconds <= self.limits.request_timeout_seconds:
+        if (
+            isinstance(request.timeout_seconds, bool)
+            or not isinstance(request.timeout_seconds, (int, float))
+            or (isinstance(request.timeout_seconds, float) and not math.isfinite(request.timeout_seconds))
+            or not 0 < request.timeout_seconds <= self.limits.request_timeout_seconds
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request timeout is outside the configured bound")

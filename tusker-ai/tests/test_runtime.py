@@ -37,9 +37,68 @@ class RuntimeTests(unittest.TestCase):
         values.update(kwargs)
         return InferenceRequest(**values)
 
+    def test_runtime_limits_reject_invalid_types_and_non_finite_timeout(self):
+        invalid = (
+            {"max_concurrent_requests": True},
+            {"max_input_characters": 1.5},
+            {"max_output_tokens": False},
+            {"max_context_tokens": "4096"},
+            {"minimum_available_memory_bytes": -0.5},
+            {"minimum_available_memory_bytes": True},
+            {"request_timeout_seconds": True},
+            {"request_timeout_seconds": float("nan")},
+            {"request_timeout_seconds": float("inf")},
+            {"request_timeout_seconds": float("-inf")},
+            {"request_timeout_seconds": 0},
+        )
+        for changes in invalid:
+            with self.subTest(changes=changes):
+                with self.assertRaises(ValueError):
+                    RuntimeLimits(**changes)
+
+    def test_runtime_limits_accept_finite_positive_timeout(self):
+        self.assertEqual(RuntimeLimits(request_timeout_seconds=0.5).request_timeout_seconds, 0.5)
+        self.assertEqual(RuntimeLimits(request_timeout_seconds=10).request_timeout_seconds, 10)
+
     def test_successful_stream_has_one_terminal(self):
         events = list(InferenceRuntime(FakeProvider()).infer(self.request()))
         self.assertEqual([e.event_type for e in events], ["started", "text_delta", "completed"])
+
+    def test_rejects_malformed_request_fields_before_provider(self):
+        class TrackingProvider(FakeProvider):
+            calls = 0
+            def infer(self, request, cancellation):
+                self.calls += 1
+                yield from super().infer(request, cancellation)
+
+        cases = (
+            {"messages": "not-a-message-list"},
+            {"messages": [{"role": "root", "content": "hello"}]},
+            {"messages": [{"role": "user", "content": ["not", "text"]}]},
+            {"messages": [{"role": 7, "content": "hello"}]},
+            {"model": " "},
+            {"model": "m" * 257},
+            {"max_output_tokens": True},
+            {"context_limit": False},
+            {"timeout_seconds": float("nan")},
+            {"timeout_seconds": float("inf")},
+            {"timeout_seconds": True},
+        )
+        for changes in cases:
+            provider = TrackingProvider()
+            with self.subTest(changes=changes):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(provider).infer(self.request(**changes)))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.INVALID_REQUEST)
+                self.assertEqual(provider.calls, 0)
+
+    def test_accepts_all_contract_message_roles(self):
+        messages = [
+            {"role": role, "content": "ok"}
+            for role in ("system", "developer", "user", "assistant", "tool")
+        ]
+        events = list(InferenceRuntime(FakeProvider()).infer(self.request(messages=messages)))
+        self.assertEqual(events[-1].event_type, "completed")
 
     def test_rejects_oversized_input_before_provider(self):
         runtime = InferenceRuntime(FakeProvider(), RuntimeLimits(max_input_characters=3))
@@ -56,6 +115,21 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(TuskerRuntimeError) as ctx:
             list(InferenceRuntime(fake).infer(self.request()))
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_rejects_malformed_provider_event_envelopes(self):
+        malformed_events = (
+            None,
+            InferenceEvent("r1", "zero", "started", {}),
+            InferenceEvent("r1", True, "started", {}),
+            InferenceEvent("r1", 0, "started", []),
+            InferenceEvent("r1", 0, "started", {}, timestamp=[]),
+        )
+        for malformed in malformed_events:
+            fake = FakeProvider([malformed])
+            with self.subTest(event=malformed):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(fake).infer(self.request()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
 
     def test_rejects_cross_request_event(self):
         fake = FakeProvider([InferenceEvent("other", 0, "started", {})])
@@ -132,12 +206,79 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(TuskerRuntimeError):
             list(InferenceRuntime(fake).infer(self.request()))
 
+    def test_memory_probe_exception_releases_concurrency_slot(self):
+        runtime = InferenceRuntime(FakeProvider(), RuntimeLimits(max_concurrent_requests=1))
+        with patch.object(runtime, "_available_memory_bytes", side_effect=OSError("fixture probe failure")):
+            with self.assertRaises(OSError):
+                list(runtime.infer(self.request()))
+        events = list(runtime.infer(self.request()))
+        self.assertEqual(events[-1].event_type, "completed")
+
+    def test_provider_failure_releases_concurrency_slot(self):
+        class FailingProvider(FakeProvider):
+            def infer(self, request, cancellation):
+                if request.request_id == "r1":
+                    yield InferenceEvent(request.request_id, 0, "started", {})
+                    raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "fixture failure")
+                yield InferenceEvent(request.request_id, 0, "started", {})
+                yield InferenceEvent(request.request_id, 1, "completed", {})
+
+        runtime = InferenceRuntime(FailingProvider(), RuntimeLimits(max_concurrent_requests=1))
+        with self.assertRaises(TuskerRuntimeError):
+            list(runtime.infer(self.request()))
+        events = list(runtime.infer(self.request(request_id="after-failure")))
+        self.assertEqual(events[-1].event_type, "completed")
+
+    def test_closing_partial_stream_releases_concurrency_slot(self):
+        runtime = InferenceRuntime(FakeProvider(), RuntimeLimits(max_concurrent_requests=1))
+        stream = runtime.infer(self.request())
+        self.assertEqual(next(iter(stream)).event_type, "started")
+        stream.close()
+        events = list(runtime.infer(self.request()))
+        self.assertEqual(events[-1].event_type, "completed")
+
     def test_cancel_before_dispatch_returns_typed_error_without_start_event(self):
         token = CancellationToken()
         token.cancel()
         with self.assertRaises(TuskerRuntimeError) as ctx:
             list(OllamaProvider().infer(self.request(), token))
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.CANCELLED)
+
+
+    def test_rejects_malformed_text_delta_payloads(self):
+        for payload in ({}, {"delta": None}, {"delta": 7}, {"delta": ""}):
+            provider = FakeProvider([
+                InferenceEvent("r1", 0, "started", {}),
+                InferenceEvent("r1", 1, "text_delta", payload),
+            ])
+            with self.subTest(payload=payload):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(provider).infer(self.request()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_rejects_malformed_usage_and_finish_reason_payloads(self):
+        cases = (
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "usage", {"input_tokens": True})],
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "usage", {"output_tokens": -1})],
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "completed", {"finish_reason": []})],
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "completed", {"finish_reason": "invalid"})],
+        )
+        for events in cases:
+            with self.subTest(events=events):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(FakeProvider(events)).infer(self.request()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_accepts_validated_event_payloads(self):
+        events = [
+            InferenceEvent("r1", 0, "started", {}),
+            InferenceEvent("r1", 1, "text_delta", {"delta": "hello"}),
+            InferenceEvent("r1", 2, "usage", {"input_tokens": 3, "output_tokens": 2}),
+            InferenceEvent("r1", 3, "completed", {"finish_reason": "stop"}),
+        ]
+        result = list(InferenceRuntime(FakeProvider(events)).infer(self.request()))
+        self.assertEqual(result[-1].event_type, "completed")
+
 
 
 if __name__ == "__main__":
