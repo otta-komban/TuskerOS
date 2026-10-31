@@ -31,7 +31,7 @@ def parse_case_rows(markdown: str, prefix: str) -> list[tuple[str, str, str]]:
         if not line.lstrip().startswith("|"):
             continue
         # A backslash-escaped pipe is cell content, not a column delimiter.
-        cells = [cell.strip().replace(r"\\|", "|") for cell in re.split(r"(?<!\\)\\|", line.strip().strip("|"))]
+        cells = [cell.strip().replace(r"\|", "|") for cell in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
         if not cells:
             continue
         if cells[0].startswith(prefix + "-C") and not CASE_ID.fullmatch(cells[0]):
