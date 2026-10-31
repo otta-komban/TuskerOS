@@ -8,12 +8,12 @@
 ## Current state
 
 - **Full historical conversation count:** Unverified
-- **Verified visible-segment completions:** 4 / 100 after this audit response
-- **Historical JSONL records:** 52 (`C0001`–`C0052`); these are not proof of 52 distinct user/assistant pairs
-- **Latest historical record:** `AEGIS-06-C0052`
+- **Verified visible-segment completions:** 5 / 100 after this audit response
+- **Historical JSONL records:** 53 (`C0001`–`C0053`); these are work/response records, not proof of 53 distinct user/assistant pairs
+- **Latest historical record:** `AEGIS-06-C0053`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
-- **Engineering tasks completed:** 42 (separate from assistant responses and commits)
-- **Latest log commit:** `9aa7bd717db7327d53c01a4add28853958599406`
+- **Engineering tasks completed:** 43 (separate from visible conversation completions and commits)
+- **Latest log commit:** `91fc7737172d3f353e22e11327d18bafec01b769`
 
 ## Historical work/response record index (not a verified conversation-completion count)
 
@@ -72,6 +72,8 @@
 | AEGIS-06-C0050 | security-schema-regression-tests | Added positive/negative policy-decision schema coverage for ALLOW, REQUIRE_APPROVAL and DENY authorization-field invariants; CI passed 145 tests. | security/tests/test_security_schemas.py; security/SECURITY_TEST_MATRIX.md; Actions run 41136487180 (145 passed) |
 | AEGIS-06-C0051 | security-schema-regression-tests | Added action-proposal negative tests rejecting caller-supplied identity, origin, decision, approval and authorization authority fields. | Test `c85635f`; CI run 41136489429 (145 passed); JSONL C0051 |
 | AEGIS-06-C0052 | remote-audit-binding-schema-regression | Added negative tests rejecting raw remote device/session identifiers in candidate audit events; documented AUD-REMOTE-001–006; recorded accepted PILOT-08 security decisions. | Test `197f9fc`; matrix `cdb3848`; checklist `7ce99d5`; CI run 41136489429 (145 passed); issue #13 comment 6534607436 |
+
+| AEGIS-06-C0053 | remote-audit-data-minimization-regression | Expanded candidate remote audit-event schema tests to reject raw identifiers, credentials, key/signature/pairing material and task/prompt/completion payload fields; CI passed. | Test `98aff2c`; matrix `7add0ba`; audit `f4d6bcd`; checklist `4fa9e8a`; Actions run 41165765657 success |
 
 ## C0007 — Privileged operations release gate
 
@@ -585,3 +587,17 @@ The previous statement "Verified completion count: 52" was unsupported and is wi
 The transcript directly available in the active conversation shows three complete assistant responses before the current accounting response. Counting this complete response makes **4 directly verified pairs in the visible segment**. This is a verified visible-segment count, not a claim that the entire historical conversation contained only four exchanges. Earlier project-history excerpts show user prompts but do not expose enough paired assistant responses to count them.
 
 Do not backfill missing historical pairs from timestamps, IDs, commits, engineering tasks, or tool calls. The 52 historical JSONL records remain preserved as work/response records pending transcript-level reconciliation. This correction is recorded in this ledger; no separate transcript artifact was available to attach.
+
+
+## C0053 — Remote audit data-minimization regression coverage
+
+- **Visible-segment completion:** 5 / 100. This is the directly verified visible conversation-segment count, not the historical JSONL row count.
+- **Historical work/response record:** C0053 (JSONL now contains 53 unique sequential records C0001–C0053).
+- **Engineering tasks completed:** 43 cumulative (+1 this response).
+- **Changes:** Expanded AUD-REMOTE-006 with 11 explicit forbidden-field cases covering raw device/session identifiers, device public key, session token, authorization/signature material, pairing/private key, and task/prompt/completion payload fields.
+- **Test:** `test_audit_event_v020_rejects_raw_remote_identity_credentials_and_payloads`; commit `98aff2c0b4393e40e3661946d8fd16b59a1a8b1d`.
+- **Coverage matrix:** `7add0ba004c5b827f327773dc1726205bf516756`.
+- **Audit:** `f4d6bcd48fc5cd838a3620b90a7f42eb2e0f9214`.
+- **Checklist:** `4fa9e8a7b9be48890f733bf84fab450950867ad9`.
+- **CI:** [Run 41165765657](https://github.com/otta-komban/TuskerOS/actions/runs/41165765657) completed successfully on the test commit; all validation job steps succeeded.
+- **Limits:** Schema validation only. It does not prove runtime adapter redaction, audit producer behavior, durable audit-store controls, or remote identity derivation. Candidate v0.2.0 producer migration remains pending NEXUS-07/TUSKER-04 agreement; remote approval remains disabled for MVP.
