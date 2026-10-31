@@ -7,6 +7,7 @@ import os
 import re
 import secrets
 import sqlite3
+import stat
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
@@ -44,7 +45,22 @@ class SecurityStore:
         self._audit_key, self._peer_authenticator = audit_key, peer_authenticator
         self._approver_authenticator, self._policy_rechecker = approver_authenticator, policy_rechecker
         self.path = str(database)
-        if self.path != ":memory:": Path(self.path).parent.mkdir(parents=True, exist_ok=True)
+        if self.path != ":memory:":
+            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
+            # Approval bindings, token hashes and audit metadata are security
+            # state. Create/open the database without following a final
+            # symlink and enforce owner-only access before SQLite sees it.
+            flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                fd = os.open(self.path, flags, 0o600)
+                try:
+                    if not stat.S_ISREG(os.fstat(fd).st_mode):
+                        raise SecurityStoreError("security database must be a regular file")
+                    os.fchmod(fd, 0o600)
+                finally:
+                    os.close(fd)
+            except OSError as exc:
+                raise SecurityStoreError("security database could not be opened privately") from exc
         self._db = sqlite3.connect(self.path, timeout=10, isolation_level=None)
         self._db.row_factory = sqlite3.Row
         self._db.execute("PRAGMA foreign_keys=ON")

@@ -900,3 +900,32 @@ def test_issue_authorization_rejects_remote_audit_identity_not_bound_to_approval
         assert len(db.audit_events()) == 2
     finally:
         db.close()
+
+
+def test_security_database_file_is_created_and_reopened_owner_only(tmp_path):
+    import stat
+
+    path = tmp_path / "security.db"
+    db = store(path)
+    try:
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    finally:
+        db.close()
+
+    path.chmod(0o644)
+    db = store(path)
+    try:
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    finally:
+        db.close()
+
+
+def test_security_database_refuses_final_component_symlink(tmp_path):
+    target = tmp_path / "sensitive.db"
+    target.write_bytes(b"not a database")
+    link = tmp_path / "security.db"
+    link.symlink_to(target)
+
+    with pytest.raises(SecurityStoreError, match="could not be opened privately"):
+        SecurityStore(link, audit_key=KEY)
+    assert target.read_bytes() == b"not a database"
