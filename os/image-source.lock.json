@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "https://forge.fedoraproject.org/releng/kiwi-descriptions.git",
+    "ref": "f44",
+    "commit": "dfc49a5a10f69941179fdadd96aa6a5984f7c677",
+    "license": "GPL-3.0-or-later",
+    "description_file": "Fedora.kiwi",
+    "description_blob": "4e6c5a4bf102c28dff9869b230075a695c72c38c",
+    "wrapper_file": "kiwi-build",
+    "wrapper_blob": "7ff247ae6e5a41c88902cbab0042c13a5143e9d7",
+    "kde_profile_file": "teams/kde.xml",
+    "kde_profile_blob": "6424e056ebb08d0b035b171bd571b0177a8dd7a7"
+  },
+  "platform": {
+    "fedora_release": "44",
+    "architecture": "x86_64",
+    "firmware": "uefi"
+  },
+  "artifacts": [
+    {
+      "id": "tusker-live-iso",
+      "image_type": "iso",
+      "image_profile": "KDE-Desktop-Live"
+    },
+    {
+      "id": "tusker-uefi-qcow2",
+      "image_type": "oem",
+      "image_profile": "KDE-Desktop-Disk"
+    }
+  ],
+  "provenance": {
+    "upstream_branch_head_verified": true,
+    "upstream_commit_signature_verified": false,
+    "note": "The Fedora Forge f44 branch and source blob IDs were inspected on 2026-10-31. The upstream commit is not GPG-verified; this lock provides immutable content identity, not an upstream signature claim."
+  }
+}
