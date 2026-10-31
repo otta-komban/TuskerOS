@@ -1049,6 +1049,34 @@ def test_decide_rejects_truthy_non_boolean_approver_authentication(callback_resu
 
 
 @pytest.mark.parametrize("callback_result", [1, "allowed", [], {}])
+def test_issue_authorization_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected audit write failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="injected audit write failure"):
+                db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                    audit_context=audit_for_approval(db, rid), now=NOW)
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs").fetchone()[0] == 0
+        assert len(db.audit_events()) == 2
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("callback_result", [1, "allowed", [], {}])
 def test_issue_authorization_rejects_truthy_non_boolean_policy_recheck(callback_result):
     db = store()
     try:
