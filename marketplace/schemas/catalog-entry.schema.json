@@ -12,11 +12,11 @@
       "type": "object", "additionalProperties": false,
       "required": ["id", "name", "kind", "summary", "license"],
       "properties": {
-        "id": {"type": "string", "minLength": 3},
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
         "name": {"type": "string", "minLength": 1, "maxLength": 80},
         "kind": {"enum": ["extension", "theme", "layout", "workflow", "bundle"]},
         "summary": {"type": "string", "minLength": 1, "maxLength": 280},
-        "description_uri": {"type": "string", "format": "uri"},
+        "description_uri": {"type": "string", "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
         "license": {"type": "string", "minLength": 1, "maxLength": 80},
         "categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 48}},
         "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 32}},
@@ -32,9 +32,9 @@
       "type": "object", "additionalProperties": false,
       "required": ["id", "display_name"],
       "properties": {
-        "id": {"type": "string", "minLength": 2, "maxLength": 64},
+        "id": {"type": "string", "maxLength": 64, "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
         "display_name": {"type": "string", "minLength": 1, "maxLength": 80},
-        "homepage": {"type": "string", "format": "uri"},
+        "homepage": {"type": "string", "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
         "verified": {"type": "boolean"}
       }
     },
@@ -43,12 +43,12 @@
       "required": ["version", "manifest_uri", "artifact_uri", "sha256", "published_at"],
       "properties": {
         "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-([0]|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\\.([0]|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"},
-        "manifest_uri": {"type": "string", "format": "uri"},
-        "artifact_uri": {"type": "string", "pattern": "^https://"},
+        "manifest_uri": {"type": "string", "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
+        "artifact_uri": {"type": "string", "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
         "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-        "signature_uri": {"type": "string", "format": "uri"},
+        "signature_uri": {"type": "string", "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
         "published_at": {"type": "string", "format": "date-time"},
-        "changelog_uri": {"type": "string", "format": "uri"}
+        "changelog_uri": {"type": "string", "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"}
       }
     },
     "compatibility": {
