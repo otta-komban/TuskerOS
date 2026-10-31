@@ -279,7 +279,7 @@ Coordination references:
 - **AEGIS-06:** DEC-AEG-001..007 ACCEPTED; DEC-AEG-008 DEFERRED / DISABLED FOR MVP. The durable requirements are in [REMOTE_DEVICE_SECURITY_CONTRACT.md](https://github.com/otta-komban/TuskerOS/blob/06-security-gatekeeper/security/REMOTE_DEVICE_SECURITY_CONTRACT.md), contract v0.1.0, and [issue #13 comment](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612). This is requirements approval, not implementation or runtime security acceptance.
 - **TUSKER-04:** DEC-TUS-001..004 and DEC-TUS-006..007 remain REVISE; DEC-TUS-005 is DEFERRED (pause/resume excluded from MVP). The source explicitly remains draft v0.1 and not a frozen API: [issue #14](https://github.com/otta-komban/TuskerOS/issues/14#issuecomment-6531700289).
 - **NOVA-02:** no owner-authored UX disposition was present in [issue #15](https://github.com/otta-komban/TuskerOS/issues/15) at this refresh.
-- **NEXUS-07:** security invariants accepted in principle, but transport/API, peer identity injection and final consume integration remain unaccepted/unimplemented: [issue #17 comment](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6540736530).
+- **NEXUS-07:** the five broker security invariants are now explicitly accepted at the semantic level (opaque authorization reference, atomic consume, registry ownership, independent IPC peer authentication, durable idempotency/UNKNOWN reconciliation). The proposed `AF_UNIX SOCK_SEQPACKET` / `SO_PEERCRED` transport is recommendation-only; the concrete transport/API, runtime language, peer-identity injection, authority/store, registry provenance/revocation and shared envelope remain unselected/unapproved. Caller-reachable `authorization_context` and direct smuggling-negative tests remain blockers: [latest issue #17 response](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6546134969).
 - **ATLAS-01 / platform:** OS-protected key storage, service identity, TLS deployment and hardening evidence remain outstanding.
 
 ### Current disposition
@@ -294,3 +294,10 @@ Coordination references:
 Existing PAIR/SESS/NET conformance cases and the validator are documentation-integrity artifacts. No remote runtime feature, runtime security test, or release acceptance is claimed by this refresh.
 
 Coordination references: [issue #13](https://github.com/otta-komban/TuskerOS/issues/13), [issue #14](https://github.com/otta-komban/TuskerOS/issues/14), [issue #15](https://github.com/otta-komban/TuskerOS/issues/15), [issue #17](https://github.com/otta-komban/TuskerOS/issues/17).
+
+
+## C0014 — NEXUS broker-integration readiness refresh (2026-10-31)
+
+NEXUS's latest response resolves the semantic decision questions but not the implementation interface. It does not authorize selecting the recommended IPC transport, choosing a runtime language or durable store, freezing a wire schema, migrating audit v0.2, or enabling handlers. The current blockers remain: Chief Architect/AEGIS approval of the internal consume envelope and transport; named authorization authority and atomic transaction primitive; trusted registry artifact provenance and revocation; agreed task/step correlation with TUSKER; ATLAS service identity and Fedora/systemd/SELinux packaging constraints; direct caller-field smuggling-negative tests and executable zero-handler-call evidence.
+
+**Readiness remains NO-GO for remote runtime and release.** The NEXUS response is design-decision evidence only, not broker implementation or runtime security-test evidence. [Source](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6546134969).
