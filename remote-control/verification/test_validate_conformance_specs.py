@@ -34,17 +34,18 @@ class ParseCaseRowsTests(unittest.TestCase):
             validator.parse_case_rows(markdown, "PAIR")
 
     def test_preserves_escaped_pipe_at_end_of_row_without_closing_delimiter(self):
-        markdown = r"| PAIR-C01 | Condition | Reject with literal pipe \\|" + "\\n"
+        markdown = "| PAIR-C01 | Condition | Reject with literal pipe " + "\\" + "|"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
             [("PAIR-C01", "Condition", "Reject with literal pipe |")],
         )
 
     def test_strips_unescaped_optional_trailing_delimiter_after_backslashes(self):
-        markdown = r"| PAIR-C01 | Condition | Reject with literal backslash \\\\|" + "\\n"
+        slashes = "\\" * 4
+        markdown = "| PAIR-C01 | Condition | Reject with literal backslash " + slashes + "|"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
-            [("PAIR-C01", "Condition", r"Reject with literal backslash \\\\")],
+            [("PAIR-C01", "Condition", "Reject with literal backslash " + slashes)],
         )
 
     def test_preserves_escaped_pipe_inside_cell(self):
