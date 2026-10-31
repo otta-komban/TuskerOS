@@ -54,6 +54,23 @@ class CatalogEntryValidationTests(unittest.TestCase):
         entry["release"]["version"] = "latest"
         self.assertTrue(any("semantic version" in e for e in validate_catalog_entry(entry)))
 
+    def test_semver_rejects_empty_and_leading_zero_prerelease_identifiers(self):
+        for version in ("1.2.3-alpha..1", "1.2.3-alpha.", "1.2.3-01", "1.2.3-0.01"):
+            with self.subTest(version=version):
+                entry = copy.deepcopy(self.fixture)
+                entry["release"]["version"] = version
+                self.assertTrue(any("semantic version" in e for e in validate_catalog_entry(entry)))
+
+    def test_semver_rejects_empty_build_identifiers_but_allows_numeric_leading_zeroes(self):
+        for version in ("1.2.3+build..2", "1.2.3+build."):
+            with self.subTest(version=version):
+                entry = copy.deepcopy(self.fixture)
+                entry["release"]["version"] = version
+                self.assertTrue(any("semantic version" in e for e in validate_catalog_entry(entry)))
+        entry = copy.deepcopy(self.fixture)
+        entry["release"]["version"] = "1.2.3-0.alpha-1+build.01"
+        self.assertEqual(validate_catalog_entry(entry), [])
+
     def test_revoked_state_is_valid_metadata_not_authorized(self):
         entry = copy.deepcopy(self.fixture)
         entry["trust"]["review_status"] = "revoked"
