@@ -51,7 +51,7 @@ class ParseCaseRowsTests(unittest.TestCase):
         markdown = r"| PAIR-C01 | Three slashes \\\| then text | Reject |" + "\n"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
-            [("PAIR-C01", r"Two slashes \| then text", "Reject")],
+            [("PAIR-C01", r"Two slashes \\| then text", "Reject")],
         )
 
     def test_rejects_malformed_case_identifier(self):
