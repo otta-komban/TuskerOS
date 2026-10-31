@@ -124,7 +124,7 @@ Negative authentication tests must assert zero protected-handler calls. Negative
 | Task lifecycle and unknown-outcome reconciliation | TUSKER-04 | DEC-TUS-001..004,006..007 REVISE in draft v0.1 | No task mutation implementation until final contract |
 | Atomic broker consume and dispatch identity | NEXUS-07 / AEGIS-06 / Chief Architect | Unresolved; shared schema change requires approval | No remote privileged invocation or consume API assumptions |
 | Global disable/re-enable UX and visible state | NOVA-02 | DEC-NOV-003 unanswered | No UI/API behavior invented by PILOT |
-| Repository implementation authorization | Admin/coordinator | PR #49 reauthorization evidence not independently verified | No runtime implementation |
+| Branch-isolated implementation authorization | Repository owner / coordinator | Authorized for scoped work on `agent/08-remote-control` by Issue #35 comments 6540346389 and 6540745614; branch-protection state remains unverified | Scoped branch work is permitted; this does not authorize runtime features, merges, or bypass role-specific gates |
 
 ## 6. Explicit exclusions
 
@@ -143,4 +143,4 @@ This proposal does not authorize:
 **Runtime features established:** 0.
 **Release disposition:** NO-GO.
 
-Before implementation, require the repository reauthorization gate, finalized TUSKER Core contract, Chief Architect-approved NEXUS/AEGIS consume boundary, approved implementation design, and a reproducible test harness with zero-dispatch instrumentation. Security acceptance of AEGIS requirements is not evidence that PILOT runtime behavior exists.
+Scoped branch-isolated implementation is authorized by the owner (Issue #35 comments 6540346389 and 6540745614). Before implementing any session/authentication runtime feature, still require the finalized TUSKER Core contract, Chief Architect-approved NEXUS/AEGIS consume boundary, approved implementation design, and a reproducible test harness with zero-dispatch instrumentation. Security acceptance of AEGIS requirements is not evidence that PILOT runtime behavior exists.
