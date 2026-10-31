@@ -26,8 +26,74 @@ class CatalogResolverTests(unittest.TestCase):
         item["compatibility"]["api"] = {"min": api_min, "max": api_max}
         return item
 
+    def test_direct_release_parser_enforces_strict_ascii_semver(self):
+        for value in (
+            "1.2.3-alpha..1", "1.2.3-alpha.", "1.2.3-01",
+            "1.2.3+build..2", "1.2.3+build.", "1.٢.3",
+        ):
+            with self.subTest(value=value):
+                with self.assertRaises(CatalogResolutionError):
+                    parse_release_version(value)
+        self.assertEqual(parse_release_version("1.2.3-0.alpha+build.01"), parse_release_version("1.2.3-0.alpha+build.02"))
+
+    def test_compatibility_parser_rejects_unicode_digits(self):
+        from marketplace.tools.catalog_resolver import parse_compat_version
+        with self.assertRaises(CatalogResolutionError):
+            parse_compat_version("1.٢.3")
+
     def test_release_versions_order_numerically(self):
         self.assertLess(parse_release_version("1.9.0"), parse_release_version("1.10.0"))
+
+    def test_semver_prerelease_precedence_follows_specification(self):
+        versions = (
+            "1.0.0-alpha",
+            "1.0.0-alpha.1",
+            "1.0.0-alpha.beta",
+            "1.0.0-beta",
+            "1.0.0-beta.2",
+            "1.0.0-beta.11",
+            "1.0.0-rc.1",
+            "1.0.0",
+        )
+        parsed = [parse_release_version(value) for value in versions]
+        self.assertEqual(parsed, sorted(parsed))
+
+    def test_dependency_constraint_operators_are_inclusive_or_exclusive_as_named(self):
+        from marketplace.tools.catalog_resolver import satisfies_dependency_constraints
+        self.assertTrue(satisfies_dependency_constraints("1.2.0", [">=1.2.0", "<=1.2.0"]))
+        self.assertFalse(satisfies_dependency_constraints("1.2.0", [">1.2.0"]))
+        self.assertFalse(satisfies_dependency_constraints("1.2.0", ["<1.2.0"]))
+        self.assertTrue(satisfies_dependency_constraints("1.2.1", [">1.2.0", "<2.0.0"]))
+        self.assertTrue(satisfies_dependency_constraints("1.1.9", ["<=1.2.0", ">=1.0.0"]))
+
+    def test_dependency_constraint_rejects_empty_or_malformed_clauses(self):
+        from marketplace.tools.catalog_resolver import parse_dependency_constraint
+        for constraint in ("", ",>=1.0.0", ">=1.0.0,", ">=1.0.0,,<2.0.0", "=>1.0.0"):
+            with self.subTest(constraint=constraint):
+                with self.assertRaises(CatalogResolutionError):
+                    parse_dependency_constraint(constraint)
+
+    def test_constraint_satisfaction_normalizes_malformed_public_inputs(self):
+        from marketplace.tools.catalog_resolver import Version, satisfies_dependency_constraints
+        for version, constraints in (
+            (None, []),
+            ("1.0.0", None),
+            ("1.0.0", ">=1.0.0"),
+            ("1.0.0", 7),
+            (Version(-1, 0, 0), []),
+            (Version(True, 0, 0), []),
+            (Version(1, 0, 0, ("01",)), []),
+            (Version(1, 0, 0, ["alpha"]), []),
+        ):
+            with self.subTest(version=version, constraints=constraints):
+                with self.assertRaises(CatalogResolutionError):
+                    satisfies_dependency_constraints(version, constraints)
+
+    def test_constraint_satisfaction_accepts_valid_version_objects_and_generators(self):
+        from marketplace.tools.catalog_resolver import Version, satisfies_dependency_constraints
+        self.assertTrue(satisfies_dependency_constraints(
+            Version(1, 2, 3, ("alpha",)), (item for item in (">=1.2.3-alpha", "<2.0.0"))
+        ))
 
     def test_prerelease_sorts_before_stable(self):
         self.assertLess(parse_release_version("2.0.0-rc.1"), parse_release_version("2.0.0"))
@@ -40,6 +106,39 @@ class CatalogResolverTests(unittest.TestCase):
             [older, newer, prerelease], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
         )
         self.assertEqual(chosen["release"]["version"], "0.10.0")
+
+    def test_selector_reuses_generator_constraints_for_every_candidate(self):
+        older = self.candidate("1.5.0")
+        newer = self.candidate("2.5.0")
+        chosen = select_catalog_release(
+            [older, newer], "org.tuskeros.examples.hello", "0.5.0", "1.2.0",
+            version_constraints=(item for item in ("<2.0.0",)),
+        )
+        self.assertEqual(chosen["release"]["version"], "1.5.0")
+
+    def test_selector_rejects_malformed_public_collections_and_flags(self):
+        valid = self.candidate("1.0.0")
+        for candidates, package_id, constraints, prerelease in (
+            ("not-a-list", "org.tuskeros.examples.hello", (), False),
+            ({"entry": valid}, "org.tuskeros.examples.hello", (), False),
+            ([valid], "", (), False),
+            ([valid], "org.tuskeros.examples.hello", ">=1.0.0", False),
+            ([valid], "org.tuskeros.examples.hello", {}, False),
+            ([valid], "org.tuskeros.examples.hello", (), "yes"),
+            ([None], "org.tuskeros.examples.hello", (), False),
+        ):
+            with self.subTest(candidates=candidates, package_id=package_id):
+                with self.assertRaises(CatalogResolutionError):
+                    select_catalog_release(
+                        candidates, package_id, "0.5.0", "1.2.0",
+                        version_constraints=constraints, include_prerelease=prerelease,
+                    )
+
+    def test_selector_rejects_invalid_target_versions_even_without_candidates(self):
+        with self.assertRaises(CatalogResolutionError):
+            select_catalog_release(
+                [], "org.tuskeros.examples.hello", "not-a-version", "1.2.0"
+            )
 
     def test_excludes_incompatible_release(self):
         candidate = self.candidate("1.0.0", os_min="1.0.0", os_max="1.x")
@@ -73,6 +172,32 @@ class CatalogResolverTests(unittest.TestCase):
                 [a, b], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
             )
 
+    def test_revoked_release_is_never_selected(self):
+        candidate = self.candidate("1.0.0")
+        candidate["trust"]["review_status"] = "revoked"
+        with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+            select_catalog_release(
+                [candidate], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
+            )
+
+    def test_revoked_signature_is_never_selected(self):
+        candidate = self.candidate("1.0.0")
+        candidate["trust"]["signature_status"] = "revoked"
+        with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+            select_catalog_release(
+                [candidate], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
+            )
+
+    def test_rejected_and_quarantined_releases_are_excluded(self):
+        for status in ("rejected", "quarantined"):
+            with self.subTest(status=status):
+                candidate = self.candidate("1.0.0")
+                candidate["trust"]["review_status"] = status
+                with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+                    select_catalog_release(
+                        [candidate], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
+                    )
+
     def test_invalid_matching_metadata_fails_closed(self):
         candidate = self.candidate("1.0.0")
         candidate["release"]["artifact_uri"] = "http://bad.invalid/file"
@@ -99,6 +224,56 @@ class CatalogResolverTests(unittest.TestCase):
             ["org.tuskeros.libs.core", "org.tuskeros.apps.demo"],
         )
         self.assertEqual(plan["releases"]["org.tuskeros.libs.core"]["release"]["version"], "2.0.0")
+
+    def test_catalog_plan_rejects_malformed_root_inputs(self):
+        for roots in ("org.tuskeros.apps.demo", [["bad"]], None):
+            with self.subTest(roots=roots):
+                with self.assertRaises(CatalogResolutionError):
+                    resolve_catalog_plan(roots, [], {}, "0.5.0", "1.2.0")
+
+    def test_catalog_plan_rejects_malformed_candidate_collection(self):
+        for candidates in ("not-a-candidate-list", {"entry": {}}, None):
+            with self.subTest(candidates=candidates):
+                with self.assertRaises(CatalogResolutionError):
+                    resolve_catalog_plan(
+                        ["org.tuskeros.apps.demo"], candidates,
+                        {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0"
+                    )
+
+    def test_catalog_plan_rejects_non_mapping_dependency_constraints(self):
+        for constraints in ([], "not-a-mapping", None):
+            if constraints is None:
+                continue  # None explicitly means constraints are omitted.
+            with self.subTest(constraints=constraints):
+                with self.assertRaisesRegex(CatalogResolutionError, "dependency_constraints must be a mapping"):
+                    resolve_catalog_plan(
+                        ["org.tuskeros.apps.demo"], [],
+                        {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0",
+                        dependency_constraints=constraints,
+                    )
+
+    def test_catalog_plan_rejects_invalid_constraint_parent_id(self):
+        with self.assertRaisesRegex(CatalogResolutionError, "parent IDs"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [],
+                {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0",
+                dependency_constraints={"": {}},
+            )
+
+    def test_catalog_plan_rejects_malformed_dependency_graph(self):
+        invalid_graphs = (
+            [],
+            {"org.tuskeros.apps.demo": "org.tuskeros.libs.core"},
+            {"org.tuskeros.apps.demo": [None]},
+            {"": []},
+            {"org.tuskeros.apps.demo": None},
+        )
+        for graph in invalid_graphs:
+            with self.subTest(graph=graph):
+                with self.assertRaises(CatalogResolutionError):
+                    resolve_catalog_plan(
+                        ["org.tuskeros.apps.demo"], [], graph, "0.5.0", "1.2.0"
+                    )
 
     def test_missing_candidate_blocks_plan(self):
         with self.assertRaises(CatalogResolutionError):
@@ -181,6 +356,34 @@ class CatalogResolverTests(unittest.TestCase):
             graph, "0.5.0", "1.2.0", dependency_constraints=constraints,
         )
         self.assertEqual(plan["releases"]["org.tuskeros.libs.shared"]["release"]["version"], "1.8.0")
+
+    def test_declared_package_conflict_blocks_resolved_plan(self):
+        app = self.candidate("1.0.0")
+        app["package"]["id"] = "org.tuskeros.apps.demo"
+        app["package"]["conflicts"] = ["org.tuskeros.libs.core"]
+        lib = self.candidate("1.0.0")
+        lib["package"]["id"] = "org.tuskeros.libs.core"
+        with self.assertRaisesRegex(CatalogResolutionError, "package conflict"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [app, lib],
+                {"org.tuskeros.apps.demo": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []},
+                "0.5.0", "1.2.0",
+            )
+
+    def test_conflict_declared_by_either_package_is_enforced(self):
+        root = self.candidate("1.0.0")
+        root["package"]["id"] = "org.tuskeros.apps.root"
+        dependency = self.candidate("1.0.0")
+        dependency["package"]["id"] = "org.tuskeros.libs.core"
+        dependency["package"]["conflicts"] = ["org.tuskeros.apps.root"]
+        with self.assertRaisesRegex(CatalogResolutionError, "package conflict"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.root"], [root, dependency],
+                {"org.tuskeros.apps.root": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []},
+                "0.5.0", "1.2.0",
+            )
 
     def test_malformed_dependency_constraint_is_rejected(self):
         with self.assertRaisesRegex(CatalogResolutionError, "invalid dependency version constraint"):

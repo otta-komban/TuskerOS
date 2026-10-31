@@ -9,19 +9,16 @@ import re
 from dataclasses import dataclass
 from typing import Iterable, Mapping, Any
 
-from marketplace.tools.validate_catalog_entry import validate_catalog_entry
+from marketplace.tools.validate_catalog_entry import SEMVER_RE, validate_catalog_entry
 from sdk.tools.dependency_plan import resolve_install_order, DependencyPlanError
 
 
-_RELEASE_RE = re.compile(
-    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
-    r"(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$"
-)
+# Direct parser calls share the catalog validator's strict ASCII SemVer grammar.
 _COMPAT_RE = re.compile(
-    r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?"
+    r"^(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?(?:\.(0|[1-9][0-9]*))?"
     r"(?:-([0-9A-Za-z.-]+))?$"
 )
-_WILDCARD_RE = re.compile(r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?\.x$")
+_WILDCARD_RE = re.compile(r"^(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?\.x$")
 
 
 class CatalogResolutionError(ValueError):
@@ -79,10 +76,10 @@ def parse_release_version(value: str) -> Version:
     """Parse a strict MAJOR.MINOR.PATCH release version."""
     if not isinstance(value, str):
         raise CatalogResolutionError("release version must be a string")
-    match = _RELEASE_RE.fullmatch(value)
+    match = SEMVER_RE.fullmatch(value)
     if not match:
         raise CatalogResolutionError(f"invalid semantic release version: {value!r}")
-    major, minor, patch, prerelease = match.groups()
+    major, minor, patch, prerelease, _build = match.groups()
     return Version(int(major), int(minor), int(patch), _prerelease_parts(prerelease))
 
 
@@ -147,8 +144,31 @@ def parse_dependency_constraint(value: str) -> tuple[tuple[str, Version], ...]:
 
 def satisfies_dependency_constraints(version: str | Version, constraints: Iterable[str]) -> bool:
     """Return whether a release satisfies every supplied edge constraint."""
-    actual = parse_release_version(version) if isinstance(version, str) else version
-    for constraint in constraints:
+    if isinstance(version, str):
+        actual = parse_release_version(version)
+    elif isinstance(version, Version):
+        if any(
+            isinstance(part, bool) or not isinstance(part, int) or part < 0
+            for part in (version.major, version.minor, version.patch)
+        ):
+            raise CatalogResolutionError("version components must be non-negative integers")
+        if not isinstance(version.prerelease, tuple) or any(
+            not isinstance(part, str)
+            or not re.fullmatch(r"[0-9A-Za-z-]+", part)
+            or (part.isascii() and part.isdigit() and len(part) > 1 and part.startswith("0"))
+            for part in version.prerelease
+        ):
+            raise CatalogResolutionError("version contains invalid prerelease identifiers")
+        actual = version
+    else:
+        raise CatalogResolutionError("version must be a SemVer string or Version")
+    if isinstance(constraints, (str, bytes)):
+        raise CatalogResolutionError("constraints must be an iterable of constraint strings, not text")
+    try:
+        constraint_values = list(constraints)
+    except TypeError as exc:
+        raise CatalogResolutionError("constraints must be an iterable of constraint strings") from exc
+    for constraint in constraint_values:
         for operator, expected in parse_dependency_constraint(constraint):
             comparison = actual._compare(expected)
             if operator == "=" and comparison != 0:
@@ -178,22 +198,58 @@ def select_catalog_release(
     All matching entries must pass structural validation. Equal-precedence
     duplicates are rejected, including releases differing only by build metadata.
     """
+    if not isinstance(package_id, str) or not package_id.strip():
+        raise CatalogResolutionError("package_id must be a non-empty string")
+    if not isinstance(include_prerelease, bool):
+        raise CatalogResolutionError("include_prerelease must be a boolean")
+    # Materialize once: callers may pass a generator, and every candidate must
+    # be checked against the exact same complete constraint set.
+    if isinstance(version_constraints, (str, bytes, Mapping)):
+        raise CatalogResolutionError(
+            "version_constraints must be an iterable of constraint strings, not text or a mapping"
+        )
+    try:
+        constraint_values = tuple(version_constraints)
+    except TypeError as exc:
+        raise CatalogResolutionError("version_constraints must be an iterable") from exc
+    for constraint in constraint_values:
+        parse_dependency_constraint(constraint)
+    if isinstance(candidates, (str, bytes, Mapping)):
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries, not text or a mapping")
+    try:
+        candidate_values = tuple(candidates)
+    except TypeError as exc:
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries") from exc
+    # Reject malformed target versions even when the candidate collection is
+    # empty, so invalid caller input cannot masquerade as an absent release.
+    parse_compat_version(tuskeros_version)
+    parse_compat_version(api_version)
     matching: list[tuple[Version, Mapping[str, Any]]] = []
-    for candidate in candidates:
+    for candidate in candidate_values:
         if not isinstance(candidate, Mapping):
-            continue
+            raise CatalogResolutionError("candidate entries must be mappings")
         package = candidate.get("package")
-        if not isinstance(package, Mapping) or package.get("id") != package_id:
+        if not isinstance(package, Mapping) or not isinstance(package.get("id"), str):
+            raise CatalogResolutionError("candidate package metadata must contain a string package ID")
+        if package.get("id") != package_id:
             continue
         errors = validate_catalog_entry(candidate)
         if errors:
             raise CatalogResolutionError(
                 f"invalid catalog entry for {package_id}: " + "; ".join(errors)
             )
+        # Revocation/rejection is a hard exclusion even during metadata-only
+        # planning. Pending/unverified entries may still be previewed, but this
+        # resolver never treats them as trusted or install-authorized.
+        trust = candidate["trust"]
+        if trust["review_status"] in {"rejected", "quarantined", "revoked"}:
+            continue
+        if trust["signature_status"] in {"invalid", "revoked"}:
+            continue
         version = parse_release_version(candidate["release"]["version"])
         if version.prerelease and not include_prerelease:
             continue
-        if is_compatible(candidate, tuskeros_version, api_version) and satisfies_dependency_constraints(version, version_constraints):
+        if is_compatible(candidate, tuskeros_version, api_version) and satisfies_dependency_constraints(version, constraint_values):
             matching.append((version, candidate))
     if not matching:
         raise CatalogResolutionError(f"no compatible release found for {package_id}")
@@ -222,13 +278,50 @@ def resolve_catalog_plan(
     have exactly one corresponding constraint. Constraints are intersected
     across all parents before selecting each dependency release.
     """
-    root_ids = sorted(set(roots))
-    normalized_dependencies = {package_id: list(children) for package_id, children in dependencies.items()}
+    if isinstance(roots, (str, bytes)):
+        raise CatalogResolutionError("roots must be an iterable of package IDs, not text")
+    try:
+        root_values = list(roots)
+    except TypeError as exc:
+        raise CatalogResolutionError("roots must be an iterable of package IDs") from exc
+    if any(not isinstance(package_id, str) or not package_id.strip() for package_id in root_values):
+        raise CatalogResolutionError("roots must contain only non-empty package ID strings")
+    if not isinstance(dependencies, Mapping):
+        raise CatalogResolutionError("dependencies must be a mapping of package IDs to dependency lists")
+    normalized_dependencies: dict[str, list[str]] = {}
+    for package_id, children in dependencies.items():
+        if not isinstance(package_id, str) or not package_id.strip():
+            raise CatalogResolutionError("dependency graph keys must be non-empty package ID strings")
+        if isinstance(children, (str, bytes)):
+            raise CatalogResolutionError(
+                f"dependencies declared by {package_id} must be an iterable of package IDs, not text"
+            )
+        try:
+            child_ids = list(children)
+        except TypeError as exc:
+            raise CatalogResolutionError(
+                f"dependencies declared by {package_id} must be an iterable of package IDs"
+            ) from exc
+        if any(not isinstance(child, str) or not child.strip() for child in child_ids):
+            raise CatalogResolutionError(
+                f"dependencies declared by {package_id} must contain only non-empty package ID strings"
+            )
+        normalized_dependencies[package_id] = child_ids
+    root_ids = sorted(set(root_values))
     order = resolve_install_order(root_ids, normalized_dependencies)
-    candidate_list = list(candidates)
+    if isinstance(candidates, (str, bytes, Mapping)):
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries, not text or a mapping")
+    try:
+        candidate_list = list(candidates)
+    except TypeError as exc:
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries") from exc
     incoming: dict[str, list[str]] = {package_id: [] for package_id in order}
     if dependency_constraints is not None:
+        if not isinstance(dependency_constraints, Mapping):
+            raise CatalogResolutionError("dependency_constraints must be a mapping")
         for parent, child_constraints in dependency_constraints.items():
+            if not isinstance(parent, str) or not parent.strip():
+                raise CatalogResolutionError("dependency constraint parent IDs must be non-empty strings")
             if parent not in normalized_dependencies:
                 raise CatalogResolutionError(f"constraints supplied for unknown parent: {parent}")
             if not isinstance(child_constraints, Mapping):
@@ -254,6 +347,16 @@ def resolve_catalog_plan(
             include_prerelease=include_prerelease,
             version_constraints=incoming.get(package_id, ()),
         )
+    # Conflict declarations are advisory metadata until resolution. Treat either
+    # side's declaration as sufficient and fail closed before returning a plan.
+    selected_ids = set(selected)
+    for package_id, entry in selected.items():
+        conflicts = entry.get("package", {}).get("conflicts", [])
+        overlap = sorted(set(conflicts) & selected_ids)
+        if overlap:
+            raise CatalogResolutionError(
+                f"package conflict: {package_id} conflicts with {', '.join(overlap)}"
+            )
     return {"order": order, "releases": selected}
 
 

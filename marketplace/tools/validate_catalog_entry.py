@@ -9,19 +9,34 @@ from __future__ import annotations
 import json
 import re
 import sys
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{1,127}$")
 SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
-SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
+# RFC 3339 date-time syntax; calendar validity is checked by datetime below.
+DATE_TIME_RE = re.compile(
+    r"^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])[Tt]"
+    r"([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
+    r"(\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+)
+# Semantic Versioning 2.0.0: prerelease identifiers cannot be empty or
+# numeric with leading zeroes; build identifiers may contain leading zeroes.
+_PRE_ID = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+_BUILD_ID = r"[0-9A-Za-z-]+"
+SEMVER_RE = re.compile(
+    r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+    rf"(?:-({_PRE_ID}(?:\.{_PRE_ID})*))?"
+    rf"(?:\+({_BUILD_ID}(?:\.{_BUILD_ID})*))?$"
+)
 KINDS = {"extension", "theme", "layout", "workflow", "bundle"}
 REVIEW = {"pending", "approved", "rejected", "quarantined", "revoked"}
 SIGNATURE = {"unverified", "valid", "invalid", "revoked"}
 
 TOP = {"catalog_version", "package", "publisher", "release", "compatibility", "trust", "community"}
-PACKAGE = {"id", "name", "kind", "summary", "description_uri", "license", "categories", "tags"}
+PACKAGE = {"id", "name", "kind", "summary", "description_uri", "license", "categories", "tags", "conflicts"}
 PUBLISHER = {"id", "display_name", "homepage", "verified"}
 RELEASE = {"version", "manifest_uri", "artifact_uri", "sha256", "signature_uri", "published_at", "changelog_uri"}
 COMPAT = {"tuskeros", "api"}
@@ -51,20 +66,33 @@ def _text(value: object, path: str, errors: list[str], *, maximum: int = 512) ->
 def _https(value: object, path: str, errors: list[str]) -> None:
     if not _text(value, path, errors):
         return
-    parsed = urlsplit(value)
-    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+    if any(character.isspace() or unicodedata.category(character) == "Cc" for character in value):
+        errors.append(f"{path}: URL must not contain whitespace or control characters")
+        return
+    try:
+        parsed = urlsplit(value)
+        # Accessing hostname/port also validates malformed bracket and port syntax.
+        hostname = parsed.hostname
+        parsed.port
+    except ValueError:
+        errors.append(f"{path}: malformed URL")
+        return
+    if parsed.scheme != "https" or not parsed.netloc or not hostname or parsed.username or parsed.password:
         errors.append(f"{path}: expected an HTTPS URL without embedded credentials")
 
 
 def _date_time(value: object, path: str, errors: list[str]) -> None:
-    if not _text(value, path, errors):
+    if not _text(value, path, errors, maximum=64):
         return
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if not DATE_TIME_RE.fullmatch(value):
+            raise ValueError("invalid RFC 3339 syntax")
+        normalized = value[:-1] + "+00:00" if value.endswith(("Z", "z")) else value
+        parsed = datetime.fromisoformat(normalized)
         if parsed.tzinfo is None:
             raise ValueError("timezone required")
     except ValueError:
-        errors.append(f"{path}: expected timezone-aware ISO-8601 date-time")
+        errors.append(f"{path}: expected RFC 3339 date-time with explicit timezone")
 
 
 def validate_catalog_entry(entry: object) -> list[str]:
@@ -86,8 +114,18 @@ def validate_catalog_entry(entry: object) -> list[str]:
         for key, limit in (("categories", 48), ("tags", 32)):
             if key in p:
                 values = p[key]
-                if not isinstance(values, list) or any(not isinstance(x, str) or not x.strip() or len(x) > limit for x in values) or len(values) != len(set(values)) if isinstance(values, list) else True:
+                if (not isinstance(values, list)
+                        or any(not isinstance(x, str) or not x.strip() or len(x) > limit for x in values)
+                        or len(values) != len(set(values)) if isinstance(values, list) else True):
                     errors.append(f"$.package.{key}: expected unique non-empty strings (max {limit})")
+        if "conflicts" in p:
+            conflicts = p["conflicts"]
+            if (not isinstance(conflicts, list)
+                    or any(not isinstance(x, str) or not ID_RE.fullmatch(x) for x in conflicts)
+                    or len(conflicts) != len(set(conflicts)) if isinstance(conflicts, list) else True):
+                errors.append("$.package.conflicts: expected unique package identifiers")
+            elif p.get("id") in conflicts:
+                errors.append("$.package.conflicts: package cannot conflict with itself")
         if "description_uri" in p:
             _https(p["description_uri"], "$.package.description_uri", errors)
 

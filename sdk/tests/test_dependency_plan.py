@@ -41,6 +41,71 @@ class DependencyPlanTests(unittest.TestCase):
         with self.assertRaisesRegex(planner.DependencyPlanError, "duplicate dependency"):
             planner.resolve_install_order(["app"], {"app": ["lib", "lib"], "lib": []})
 
+    def test_dependency_declaration_cannot_be_a_string(self):
+        with self.assertRaisesRegex(planner.DependencyPlanError, "not text"):
+            planner.resolve_install_order(["app"], {"app": "library"})
+
+    def test_non_string_or_unhashable_dependency_fails_closed(self):
+        for dependency in (None, {}, 7, ""):
+            with self.subTest(dependency=dependency):
+                with self.assertRaises(planner.DependencyPlanError):
+                    planner.resolve_install_order(["app"], {"app": [dependency]})
+
+    def test_roots_must_be_package_id_strings(self):
+        for roots in ("app", ["app", None], [[]]):
+            with self.subTest(roots=roots):
+                with self.assertRaises(planner.DependencyPlanError):
+                    planner.resolve_install_order(roots, {"app": []})
+
+    def test_deep_dependency_chain_does_not_hit_python_recursion_limit(self):
+        depth = 1500
+        graph = {
+            f"pkg-{index}": ([f"pkg-{index + 1}"] if index + 1 < depth else [])
+            for index in range(depth)
+        }
+        order = planner.resolve_install_order(["pkg-0"], graph)
+        self.assertEqual(len(order), depth)
+        self.assertEqual(order[0], f"pkg-{depth - 1}")
+        self.assertEqual(order[-1], "pkg-0")
+
+    def test_iterative_cycle_error_includes_cycle_path(self):
+        graph = {"a": ["b"], "b": ["c"], "c": ["a"]}
+        with self.assertRaisesRegex(
+            planner.DependencyPlanError, r"dependency cycle: a -> b -> c -> a"
+        ):
+            planner.resolve_install_order(["a"], graph)
+
+    def test_entire_graph_is_validated_even_for_empty_roots(self):
+        invalid_graphs = (
+            {"": []},
+            {"unrelated": "dependency"},
+            {"unrelated": ["missing"]},
+            {"unrelated": ["same", "same"], "same": []},
+        )
+        for graph in invalid_graphs:
+            with self.subTest(graph=graph):
+                with self.assertRaises(planner.DependencyPlanError):
+                    planner.resolve_install_order([], graph)
+
+    def test_disconnected_invalid_graph_entry_blocks_plan(self):
+        graph = {"app": [], "unrelated": [None]}
+        with self.assertRaisesRegex(planner.DependencyPlanError, "non-empty package ID strings"):
+            planner.resolve_install_order(["app"], graph)
+
+    def test_packages_must_be_a_mapping(self):
+        with self.assertRaisesRegex(planner.DependencyPlanError, "mapping"):
+            planner.resolve_install_order(["app"], [("app", [])])
+
+
+    def test_mapping_is_not_accepted_as_package_id_collection(self):
+        for roots, graph in (
+            ({"app": True}, {"app": []}),
+            (["app"], {"app": {"lib": True}, "lib": []}),
+        ):
+            with self.subTest(roots=roots, graph=graph):
+                with self.assertRaisesRegex(planner.DependencyPlanError, "mapping"):
+                    planner.resolve_install_order(roots, graph)
+
 
 if __name__ == "__main__":
     unittest.main()
