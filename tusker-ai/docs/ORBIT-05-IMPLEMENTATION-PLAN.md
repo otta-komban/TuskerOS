@@ -47,11 +47,11 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 
 - Added a provider-level deadline check immediately after each socket read, before parsing or emitting the returned NDJSON frame. This closes a gap where a frame could arrive after the deadline but before a longer socket timeout expired.
 - Added a delayed-frame HTTP fixture and regression test that expects `DEADLINE_EXCEEDED` when the first frame arrives after the request deadline.
-- Branch-head CI is running on code revision `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`; results are pending.
+- GitHub Actions passed on code revision `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`: runtime unit tests run 74, AI contract tests run 97, unified validation run 562, and PHOENIX manifest integrity run 256.
 
 ## Remaining work sequence
 
-1. Keep full runtime/contract/unified validation green as further implementation changes land; all four required workflows passed on the latest code revision.
+1. Keep full runtime/contract/unified validation green as further implementation changes land; all four required workflows passed on revisions `454d10d4ad13f7ab5ddb659866e9727bd8d7854f` and `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`.
 2. Review provider cancellation/deadline behavior and add focused tests for request isolation without terminating the shared daemon.
 3. Verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
 4. Keep model install/remove fail-closed until the approved AEGIS action/session/device/resource/precondition authorization is integrated and tested.
@@ -63,7 +63,7 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - [x] Historical work and Issue #57 reconciled against current main with exact SHAs and no blind history import.
 - [x] Proxy environment and redirect isolation added to the local Ollama adapter with regression tests.
 - [x] Focused HTTP adapter tests and compile checks pass in the isolated local harness.
-- [x] Runtime unit tests, contract/schema tests, unified validation, and PHOENIX manifest integrity passed on code revision `454d10d4ad13f7ab5ddb659866e9727bd8d7854f`.
+- [x] Runtime unit tests, contract/schema tests, unified validation, and PHOENIX manifest integrity passed on code revisions `454d10d4ad13f7ab5ddb659866e9727bd8d7854f` and `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`.
 - [ ] Any model install/remove path remains deny-by-default unless exact AEGIS authorization is integrated and tested.
 - [ ] Resource limits distinguish admission control from enforced process isolation; live cancellation is tested without killing a shared daemon.
 - [ ] Live inference report includes model digest, provider version, host metadata and reproducible command output, or is explicitly NOT RUN.
