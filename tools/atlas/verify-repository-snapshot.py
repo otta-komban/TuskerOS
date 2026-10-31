@@ -73,6 +73,9 @@ def parse_repomd(data: bytes) -> tuple[str, str, str, str]:
 
 def primary_metadata_url(repomd_url: str, href: str) -> str:
     # Fedora repomd.xml lives under repodata/, while href is relative to repo root.
+    parsed_href = urllib.parse.urlparse(href)
+    if href.startswith("//") or parsed_href.scheme or parsed_href.netloc:
+        raise RuntimeError(f"primary metadata URL escaped its HTTPS repository origin: {href}")
     resolved = urllib.parse.urljoin(repomd_url, "../" + href)
     source = urllib.parse.urlparse(repomd_url)
     target = urllib.parse.urlparse(resolved)
