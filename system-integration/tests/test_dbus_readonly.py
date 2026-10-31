@@ -329,6 +329,22 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(str(caught.exception), "invalid bus response")
 
+
+    async def test_excessively_nested_json_response_is_sanitized(self):
+        nested = b"[" * 1100 + b"0" + b"]" * 1100
+        process = FakeProcess(
+            stdout=b'{"type":"s","data":[' + nested + b"]}"
+        )
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "invalid bus response")
+
     async def test_subprocess_startup_failure_is_sanitized(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
