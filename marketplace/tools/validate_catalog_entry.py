@@ -175,12 +175,17 @@ def validate_catalog_entry(entry: object) -> list[str]:
         c = entry["community"]
         if _keys(c, COMMUNITY, set(), "$.community", errors):
             rating = c.get("rating_average")
-            if rating is not None and (isinstance(rating, bool) or not isinstance(rating, (int, float)) or not 0 <= rating <= 5):
+            if "rating_average" in c and (
+                isinstance(rating, bool)
+                or not isinstance(rating, (int, float))
+                or not 0 <= rating <= 5
+            ):
                 errors.append("$.community.rating_average: expected number from 0 to 5")
             for key in ("rating_count", "download_count"):
-                val = c.get(key)
-                if val is not None and (isinstance(val, bool) or not isinstance(val, int) or val < 0):
-                    errors.append(f"$.community.{key}: expected non-negative integer")
+                if key in c:
+                    val = c[key]
+                    if isinstance(val, bool) or not isinstance(val, int) or val < 0:
+                        errors.append(f"$.community.{key}: expected non-negative integer")
     return errors
 
 
