@@ -257,6 +257,15 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, "version"):
             self.engine.replay(task_id)
 
+    def test_replay_rejects_non_integer_snapshot_version(self):
+        task_id = self.task["task_id"]
+        for malformed in (True, 1.0, "1"):
+            with self.subTest(version=malformed):
+                self.store._tasks[task_id]["version"] = malformed
+                with self.assertRaisesRegex(LifecycleError, "version does not match event stream"):
+                    self.engine.replay(task_id)
+        self.store._tasks[task_id]["version"] = 1
+
     def test_replay_is_contiguous_and_never_executes(self):
         self.move("planning")
         replay = self.engine.replay("00000000-0000-4000-8000-000000000001")
