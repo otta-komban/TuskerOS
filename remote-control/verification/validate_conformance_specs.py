@@ -30,8 +30,13 @@ def parse_case_rows(markdown: str, prefix: str) -> list[tuple[str, str, str]]:
     for line_number, line in enumerate(markdown.splitlines(), 1):
         if not line.lstrip().startswith("|"):
             continue
-        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if not cells or not CASE_ID.fullmatch(cells[0]):
+        # A backslash-escaped pipe is cell content, not a column delimiter.
+        cells = [cell.strip().replace(r"\\|", "|") for cell in re.split(r"(?<!\\)\\|", line.strip().strip("|"))]
+        if not cells:
+            continue
+        if cells[0].startswith(prefix + "-C") and not CASE_ID.fullmatch(cells[0]):
+            raise SpecError(f"{prefix}: line {line_number}: malformed case ID {cells[0]!r}")
+        if not CASE_ID.fullmatch(cells[0]):
             continue
         if not cells[0].startswith(prefix + "-"):
             continue
@@ -48,7 +53,13 @@ def validate_spec(markdown: str, prefix: str, expected_count: int) -> list[str]:
     """Validate uniqueness, contiguous numbering, and complete assertions."""
     cases = parse_case_rows(markdown, prefix)
     ids = [case[0] for case in cases]
-    duplicates = sorted({case_id for case_id in ids if ids.count(case_id) > 1})
+    seen: set[str] = set()
+    duplicates_set: set[str] = set()
+    for case_id in ids:
+        if case_id in seen:
+            duplicates_set.add(case_id)
+        seen.add(case_id)
+    duplicates = sorted(duplicates_set)
     if duplicates:
         raise SpecError(f"{prefix}: duplicate case IDs: {', '.join(duplicates)}")
     expected = [f"{prefix}-C{number:02d}" for number in range(1, expected_count + 1)]
