@@ -92,6 +92,36 @@ def test_policy_deny_default_allow_read_require_approval_and_deny_r5():
     assert decision.risk_class == "R4"
 
 
+@pytest.mark.parametrize("resource_declarations", [
+    [{"kind": "system", "access_modes": ["read"]},
+     {"kind": "system", "access_modes": ["read", "modify"]}],
+    [{"kind": "system", "access_modes": ["read", "execute", "execute"]}],
+    [{"kind": "system", "access_modes": ["read", "shell"]}],
+    [{"kind": "system", "access_modes": []}],
+    [{"kind": "system", "access_modes": ["read"], "unexpected": True}],
+])
+def test_malformed_or_ambiguous_registry_resource_policy_is_denied(resource_declarations):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "allowed_principal_classes": ["user"], "resources": resource_declarations,
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: True, argument_validator=lambda a, x: True,
+        resource_resolver=lambda resources: list(resources),
+        precondition_verifier=lambda p, r: D4)
+    decision = engine.evaluate(proposal, context, registry, "registry-1")
+    assert decision.status == "DENY"
+    assert decision.reason_code == "POLICY_REGISTRY_INVALID"
+
+
 def test_resource_resolver_cannot_drop_add_or_widen_resources():
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
         "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",

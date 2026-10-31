@@ -103,9 +103,25 @@ class PolicyEngine:
                 return deny("POLICY_SCOPE_EXCEEDED")
             resources = proposal["resources"]
             if len(resources) > 128: return deny("POLICY_SCOPE_EXCEEDED")
-            allowed = {item["kind"]: set(item["access_modes"]) for item in entry["resources"]
-                       if isinstance(item, Mapping) and isinstance(item.get("kind"), str)
-                       and isinstance(item.get("access_modes"), list)}
+            # Registry resource declarations are security policy, not best-effort
+            # hints. Reject malformed or ambiguous declarations rather than
+            # silently dropping entries or allowing duplicate kinds to overwrite.
+            allowed = {}
+            for declaration in entry["resources"]:
+                if (not isinstance(declaration, Mapping)
+                    or set(declaration) != {"kind", "access_modes"}
+                    or not isinstance(declaration.get("kind"), str)
+                    or not 1 <= len(declaration["kind"]) <= 64
+                    or not isinstance(declaration.get("access_modes"), list)
+                    or not declaration["access_modes"]
+                    or declaration["kind"] in allowed
+                    or any(not isinstance(mode, str) or mode not in _ACCESS
+                           for mode in declaration["access_modes"])
+                    or len(declaration["access_modes"]) != len(set(declaration["access_modes"]))):
+                    return deny("POLICY_REGISTRY_INVALID")
+                allowed[declaration["kind"]] = set(declaration["access_modes"])
+            if not allowed:
+                return deny("POLICY_REGISTRY_INVALID")
             normalized, seen = ([], set())
             for resource in resources:
                 if not isinstance(resource, Mapping) or set(resource) != {"kind", "id", "access"}:
