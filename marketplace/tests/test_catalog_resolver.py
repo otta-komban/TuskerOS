@@ -26,6 +26,21 @@ class CatalogResolverTests(unittest.TestCase):
         item["compatibility"]["api"] = {"min": api_min, "max": api_max}
         return item
 
+    def test_direct_release_parser_enforces_strict_ascii_semver(self):
+        for value in (
+            "1.2.3-alpha..1", "1.2.3-alpha.", "1.2.3-01",
+            "1.2.3+build..2", "1.2.3+build.", "1.٢.3",
+        ):
+            with self.subTest(value=value):
+                with self.assertRaises(CatalogResolutionError):
+                    parse_release_version(value)
+        self.assertEqual(parse_release_version("1.2.3-0.alpha+build.01"), parse_release_version("1.2.3-0.alpha+build.02"))
+
+    def test_compatibility_parser_rejects_unicode_digits(self):
+        from marketplace.tools.catalog_resolver import parse_compat_version
+        with self.assertRaises(CatalogResolutionError):
+            parse_compat_version("1.٢.3")
+
     def test_release_versions_order_numerically(self):
         self.assertLess(parse_release_version("1.9.0"), parse_release_version("1.10.0"))
 
