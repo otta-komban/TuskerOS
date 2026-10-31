@@ -197,5 +197,43 @@ class ManifestSnapshotBindingTests(unittest.TestCase):
 
 
 
+
+class LocalSnapshotVerificationTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.repository = self.root / "fedora"
+        (self.repository / "repodata").mkdir(parents=True)
+        (self.repository / "repodata" / "repomd.xml").write_bytes(REPOMD)
+        (self.repository / "repodata" / "primary.xml.gz").write_bytes(PRIMARY)
+        digest = hashlib.sha256(REPOMD).hexdigest()
+        self.indexed = {
+            "fedora": {
+                "repomd_sha256": digest,
+                "revision": "20261031",
+                "primary_href": "repodata/primary.xml.gz",
+                "primary_sha256": hashlib.sha256(PRIMARY).hexdigest(),
+            }
+        }
+
+    def test_local_snapshot_accepts_exact_metadata(self):
+        MODULE.verify_local_snapshot(self.root, self.indexed)
+
+    def test_local_snapshot_rejects_changed_repomd(self):
+        (self.repository / "repodata" / "repomd.xml").write_bytes(REPOMD + b"changed")
+        with self.assertRaisesRegex(RuntimeError, "local repomd.xml SHA-256 differs"):
+            MODULE.verify_local_snapshot(self.root, self.indexed)
+
+    def test_local_snapshot_rejects_changed_primary_payload(self):
+        (self.repository / "repodata" / "primary.xml.gz").write_bytes(b"changed")
+        with self.assertRaisesRegex(RuntimeError, "local primary metadata SHA-256 differs"):
+            MODULE.verify_local_snapshot(self.root, self.indexed)
+
+    def test_local_snapshot_rejects_missing_repository(self):
+        with self.assertRaises((RuntimeError, FileNotFoundError)):
+            MODULE.verify_local_snapshot(self.root / "missing", self.indexed)
+
+
 if __name__ == "__main__":
     unittest.main()
