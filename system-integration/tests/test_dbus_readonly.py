@@ -62,6 +62,29 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         gate.assert_awaited_once_with("system.bus.names.read")
         adapter._call.assert_awaited_once_with("ListNames")
 
+    async def test_snapshot_authorizes_each_read_independently(self):
+        gate = AsyncMock(return_value=True)
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock(
+            side_effect=[
+                "0123456789abcdef0123456789abcdef",
+                ["org.freedesktop.DBus", ":1.42"],
+            ]
+        )
+
+        snapshot = await adapter.snapshot()
+
+        self.assertEqual(snapshot.bus_id, "0123456789abcdef0123456789abcdef")
+        self.assertEqual(snapshot.names, ("org.freedesktop.DBus", ":1.42"))
+        self.assertEqual(
+            [call.args for call in gate.await_args_list],
+            [("system.bus.id.read",), ("system.bus.names.read",)],
+        )
+        self.assertEqual(
+            [call.args for call in adapter._call.await_args_list],
+            [("GetId",), ("ListNames",)],
+        )
+
     async def test_missing_authorization_gate_fails_closed(self):
         adapter = ReadOnlySystemBusAdapter(None)
         adapter._call = AsyncMock()
@@ -213,6 +236,13 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
             await adapter.health(),
             {"state": "degraded", "reason": "authorization_unavailable"},
         )
+
+    async def test_health_propagates_cancellation(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(side_effect=asyncio.CancelledError())
+
+        with self.assertRaises(asyncio.CancelledError):
+            await adapter.health()
 
     async def test_health_reports_degraded_when_bus_fails(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
