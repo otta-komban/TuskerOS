@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import socket
+import time
 from typing import Iterable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -30,7 +31,8 @@ class OllamaProvider:
         self._read_timeout = read_timeout
 
     def capabilities(self) -> ProviderCapabilities:
-        # Do not advertise support until a pinned live Ollama version passes conformance.
+        # Do not advertise a provider capability as supported until a pinned live
+        # Ollama version has passed the corresponding conformance case.
         return ProviderCapabilities()
 
     def version(self) -> str | None:
@@ -63,14 +65,23 @@ class OllamaProvider:
             method="POST",
         )
         seq = 0
+        deadline = time.monotonic() + request.timeout_seconds
         try:
             with urlopen(req, timeout=min(request.timeout_seconds, self._read_timeout)) as response:
                 yield InferenceEvent(request.request_id, seq, "started", {"provider_id": self.provider_id, "model_id": request.model})
                 seq += 1
-                for raw_line in response:
+                while True:
                     if cancellation.cancelled:
                         yield InferenceEvent(request.request_id, seq, "cancelled", {"reason": "caller_cancelled"})
                         return
+                    try:
+                        raw_line = response.readline()
+                    except socket.timeout:
+                        if time.monotonic() >= deadline:
+                            raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
+                        continue
+                    if not raw_line:
+                        break
                     if not raw_line.strip():
                         continue
                     try:
@@ -98,4 +109,6 @@ class OllamaProvider:
             code = RuntimeErrorCode.MODEL_NOT_FOUND if exc.code == 404 else RuntimeErrorCode.PROVIDER_UNAVAILABLE
             raise TuskerRuntimeError(code, "Local inference provider rejected the request") from None
         except (URLError, socket.timeout, TimeoutError, OSError):
-            raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Local inference provider is unavailable or timed out", retryable=True) from None
+            if time.monotonic() >= deadline:
+                raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
+            raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Local inference provider is unavailable", retryable=True) from None
