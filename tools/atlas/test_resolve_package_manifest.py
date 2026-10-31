@@ -275,6 +275,9 @@ class ResolverCliTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.manifest = self.root / "manifest.csv"
         self.output = self.root / "nested" / "resolution.json"
+        self.snapshot_root = self.root / "snapshot"
+        (self.snapshot_root / "fedora" / "repodata").mkdir(parents=True)
+        (self.snapshot_root / "fedora" / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
         self.manifest.write_text(
             "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_repository_url,upstream_url\n"
             "base-core,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash,https://www.gnu.org/software/bash/\n",
@@ -291,6 +294,7 @@ class ResolverCliTests(unittest.TestCase):
                 "resolve-package-manifest.py",
                 "--manifest", str(self.manifest),
                 "--output", str(self.output),
+                "--snapshot-root", str(self.snapshot_root),
             ]),
         ):
             return RESOLVER.main()
@@ -347,6 +351,36 @@ class ResolverCliTests(unittest.TestCase):
         self.assertEqual(json.loads(self.output.read_text(encoding="utf-8")), {"old": True})
         self.assertEqual(list(self.output.parent.iterdir()), [self.output])
 
+
+
+
+class LocalSnapshotRepositoryTests(unittest.TestCase):
+    def test_snapshot_args_select_only_local_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repo = root / "fedora"
+            (repo / "repodata").mkdir(parents=True)
+            (repo / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
+            args = RESOLVER.snapshot_repo_args(root, {"fedora"})
+            self.assertEqual(len(args), 3)
+            self.assertTrue(args[0].startswith("--repofrompath=fedora,file://"))
+            self.assertIn("--setopt=fedora.gpgcheck=1", args)
+            self.assertIn("--repo=fedora", args)
+
+    def test_snapshot_args_reject_missing_local_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, "missing repodata/repomd.xml"):
+                RESOLVER.snapshot_repo_args(Path(directory), {"fedora"})
+
+    def test_snapshot_args_reject_invalid_repository_id(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, "Invalid repository ID"):
+                RESOLVER.snapshot_repo_args(Path(directory), {"../fedora"})
+
+    def test_snapshot_args_reject_empty_repository_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, "No package repositories"):
+                RESOLVER.snapshot_repo_args(Path(directory), set())
 
 
 if __name__ == "__main__":
