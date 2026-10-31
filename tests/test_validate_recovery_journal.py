@@ -2,7 +2,8 @@
 import unittest
 
 from scripts.validate_recovery_journal import (
-    GENESIS_CHECKSUM, JournalValidationError, parse_jsonl, record_checksum,
+    GENESIS_CHECKSUM, MAX_JOURNAL_BYTES, MAX_RECORDS, MAX_RECORD_BYTES,
+    JournalValidationError, parse_jsonl, record_checksum,
     replay_eligibility, seal_record, validate_journal,
 )
 
@@ -105,6 +106,31 @@ class RecoveryJournalTests(unittest.TestCase):
         eligible, _ = replay_eligibility(
             record, preconditions_verified=True, authorization_current=True)
         self.assertFalse(eligible)
+
+
+    def test_parser_enforces_total_size_limit(self):
+        with self.assertRaisesRegex(JournalValidationError, "maximum size"):
+            parse_jsonl(" " * (MAX_JOURNAL_BYTES + 1))
+
+    def test_parser_enforces_record_size_limit(self):
+        oversized = '{"payload":"' + ("x" * MAX_RECORD_BYTES) + '"}'
+        with self.assertRaisesRegex(JournalValidationError, "record exceeds"):
+            parse_jsonl(oversized)
+
+    def test_parser_enforces_record_count_limit(self):
+        with self.assertRaisesRegex(JournalValidationError, "maximum record count"):
+            parse_jsonl("{}\\n" * (MAX_RECORDS + 1))
+
+    def test_validator_bounds_iterable_record_count(self):
+        report = validate_journal({} for _ in range(MAX_RECORDS + 1))
+        self.assertFalse(report.valid)
+        self.assertEqual(report.record_count, MAX_RECORDS)
+        self.assertTrue(any("maximum record count" in e for e in report.errors))
+
+    def test_validator_rejects_non_iterable_input(self):
+        report = validate_journal(None)
+        self.assertFalse(report.valid)
+        self.assertIn("journal records must be iterable", report.errors)
 
 
 if __name__ == "__main__":
