@@ -42,7 +42,7 @@ class QueryResultTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "ambiguous NEVRA"):
             parse_query_matches(
                 "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\thttps://www.gnu.org/software/bash/\n"
-                "bash-0:5.2.27-1.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.27-1.fc44.src.rpm\n"
+                "bash-0:5.2.27-1.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.27-1.fc44.src.rpm\thttps://www.gnu.org/software/bash/\n"
             )
 
     def test_malformed_query_row_is_rejected(self):
@@ -131,7 +131,11 @@ class PinVerificationTests(unittest.TestCase):
 
     def test_source_rpm_mismatch_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "does not match pinned value"):
-            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "wrong-5.2.26-3.fc44.src.rpm")
+            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "wrong-5.2.26-3.fc44.src.rpm", "https://www.gnu.org/software/bash/")
+
+    def test_upstream_url_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned value"):
+            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm", "https://example.invalid/bash")
 
 
 class ManifestTests(unittest.TestCase):
