@@ -153,6 +153,26 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AdapterError):
             await adapter.list_names()
 
+    async def test_malformed_bus_name_grammar_is_rejected(self):
+        invalid_names = (
+            "single", "org..service", ".org.service", "org.service.",
+            "org.1service", "org.service name", "org.sérvice", "org:service.name",
+            ":1", ":.42", ":1..42", "::1.42",
+        )
+        for name in invalid_names:
+            with self.subTest(name=name):
+                adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+                adapter._call = AsyncMock(return_value=[name])
+                with self.assertRaises(AdapterError):
+                    await adapter.list_names()
+
+    async def test_duplicate_bus_names_are_rejected(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=["org.example.Service", "org.example.Service"])
+
+        with self.assertRaises(AdapterError):
+            await adapter.list_names()
+
     async def test_health_reports_degraded_when_authorization_unavailable(self):
         adapter = ReadOnlySystemBusAdapter(None)
 
