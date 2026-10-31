@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+import math
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Mapping, Sequence
 from typing import Iterable
 
 from .providers.base import InferenceProvider
@@ -100,15 +102,51 @@ class InferenceRuntime:
         return host_available
 
     def _validate(self, request: InferenceRequest) -> None:
-        if not request.request_id or len(request.request_id) > 128 or not request.model:
-            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request identifier and model are required")
-        if not request.messages or any(not isinstance(m, dict) for m in request.messages):
+        if not isinstance(request, InferenceRequest):
+            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "A typed inference request is required")
+        if (
+            not isinstance(request.request_id, str)
+            or not request.request_id.strip()
+            or len(request.request_id) > 128
+            or not isinstance(request.model, str)
+            or not request.model.strip()
+            or len(request.model) > 256
+        ):
+            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request identifier and model must be non-empty bounded strings")
+        if (
+            not isinstance(request.messages, Sequence)
+            or isinstance(request.messages, (str, bytes, bytearray))
+            or not request.messages
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "At least one typed message is required")
-        if sum(len(str(m.get("content", ""))) for m in request.messages) > self.limits.max_input_characters:
-            raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Input exceeds the configured size limit")
-        if not 1 <= request.max_output_tokens <= self.limits.max_output_tokens:
+        allowed_roles = {"system", "developer", "user", "assistant", "tool"}
+        total_characters = 0
+        for message in request.messages:
+            if not isinstance(message, Mapping):
+                raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Each message must be an object")
+            role = message.get("role")
+            content = message.get("content")
+            if not isinstance(role, str) or role not in allowed_roles or not isinstance(content, str):
+                raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Each message requires a supported role and string content")
+            total_characters += len(content)
+            if total_characters > self.limits.max_input_characters:
+                raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Input exceeds the configured size limit")
+        if (
+            isinstance(request.max_output_tokens, bool)
+            or not isinstance(request.max_output_tokens, int)
+            or not 1 <= request.max_output_tokens <= self.limits.max_output_tokens
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Output token limit is outside the configured bound")
-        if not 1 <= request.context_limit <= self.limits.max_context_tokens:
+        if (
+            isinstance(request.context_limit, bool)
+            or not isinstance(request.context_limit, int)
+            or not 1 <= request.context_limit <= self.limits.max_context_tokens
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Context limit is outside the configured bound")
-        if not 0 < request.timeout_seconds <= self.limits.request_timeout_seconds:
+        if (
+            isinstance(request.timeout_seconds, bool)
+            or not isinstance(request.timeout_seconds, (int, float))
+            or not math.isfinite(request.timeout_seconds)
+            or not 0 < request.timeout_seconds <= self.limits.request_timeout_seconds
+        ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request timeout is outside the configured bound")
