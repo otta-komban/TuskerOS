@@ -715,3 +715,14 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - Re-fetched branch `06-security-gatekeeper` at `07e0e09524f1db97aaf841f0435811522758c072`; live comparison is **346 ahead / 0 behind** `main`. No merge or rebase performed.
 - Re-fetched issue #17 comments. No NEXUS-07 owner response has resolved authorization evidence transport, atomic consume, registry ownership, broker peer identity, or UNKNOWN/idempotency behavior.
 - No source changes or tests in this revalidation. Privileged execution remains blocked pending NEXUS-owned implementation and executable positive/negative evidence.
+
+
+## C0063 — one-response/one-completion correction
+
+- **Authoritative response completions:** **15 / 100** (+1 for this completed assistant response). Rule: one complete assistant response to one user message equals exactly one completion.
+- **Previous verified counter:** C0062 recorded 14/100; this response advances it once to 15/100.
+- **Engineering tasks completed:** **49** cumulative (+0). Bookkeeping does not count as an engineering task.
+- **Historical JSONL work records:** **63** (C0001–C0063). This count is not the completion counter.
+- **Corrections retained for audit:** C0056–C0060 contain superseded/invalid completion figures; C0061 established 13, C0062 established 14, and this C0063 record establishes 15. Never derive completions from engineering tasks, commits, tool calls, or JSONL row count.
+- **Transcript scope:** The attached `6-Security.txt` is a single C0011 excerpt, not a full transcript. Therefore 15 is the verified project response counter carried forward from C0062, not a claim that every historical project chat has been independently reconstructed.
+- **JSONL commit:** a65e18bfc1159387c62b35df1ed1ebb2aaaf343a
