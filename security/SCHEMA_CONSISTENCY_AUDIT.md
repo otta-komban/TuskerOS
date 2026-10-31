@@ -190,3 +190,12 @@ The candidate audit-event v0.2.0 schema already uses `additionalProperties: fals
 Updated `security/tests/test_security_schemas.py` with parametrized `test_audit_event_v020_rejects_raw_remote_identity_credentials_and_payloads` (11 cases), and updated AUD-REMOTE-006 in `security/SECURITY_TEST_MATRIX.md`. The test commit `98aff2c0b4393e40e3661946d8fd16b59a1a8b1d` triggered GitHub Actions run [41165765657](https://github.com/otta-komban/TuskerOS/actions/runs/41165765657), which completed successfully; its validation job and all steps report success.
 
 **Scope limit:** this demonstrates schema rejection of these fields, not that a live remote adapter redacts them, that audit producers persist only approved data, or that the audit store enforces access control/integrity. Candidate v0.2.0 remains unapproved for producer migration pending NEXUS-07/TUSKER-04 agreement; remote approval remains disabled for MVP.
+
+
+## SEC-SCHEMA-007 — Policy-decision constraints object is underspecified
+
+Reviewed `security/schemas/policy-decision.schema.json` against `security/SECURITY_CONTRACTS.md` section 4. The schema declares `constraints` only as `{"type":"object"}`: it has no declared properties, value types, size bounds, or `additionalProperties: false`. Consequently, arbitrary nested keys and values are accepted even though the security contract describes this field as carrying narrow execution constraints.
+
+**Risk / ambiguity:** a producer can serialize an unknown constraint that a consumer silently ignores, or different consumers can interpret the same untyped object differently. The current sources do not define a canonical constraint vocabulary, so AEGIS must not invent one in a compatibility-sensitive schema change.
+
+**Required resolution:** define the bounded constraint vocabulary and semantics with policy-engine and broker owners; then type each property, bound values, set `additionalProperties: false`, and add positive/negative schema and consumer tests. Until then, consumers must not treat an unrecognized constraint as permission to broaden execution. Tracked in [issue #31](https://github.com/otta-komban/TuskerOS/issues/31). No schema change was made and no runtime consumer behavior was tested.
