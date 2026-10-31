@@ -65,8 +65,18 @@ def _text(value: object, path: str, errors: list[str], *, maximum: int = 512) ->
 def _https(value: object, path: str, errors: list[str]) -> None:
     if not _text(value, path, errors):
         return
-    parsed = urlsplit(value)
-    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+    if any(character.isspace() or ord(character) < 32 for character in value):
+        errors.append(f"{path}: URL must not contain whitespace or control characters")
+        return
+    try:
+        parsed = urlsplit(value)
+        # Accessing hostname/port also validates malformed bracket and port syntax.
+        hostname = parsed.hostname
+        parsed.port
+    except ValueError:
+        errors.append(f"{path}: malformed URL")
+        return
+    if parsed.scheme != "https" or not parsed.netloc or not hostname or parsed.username or parsed.password:
         errors.append(f"{path}: expected an HTTPS URL without embedded credentials")
 
 
