@@ -79,6 +79,11 @@ class ParseCaseRowsTests(unittest.TestCase):
         with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
             validator.parse_case_rows(markdown, "PAIR")
 
+    def test_rejects_case_identifier_from_another_specification(self):
+        markdown = "| SESS-C01 | Wrong specification | Reject |" + "\n"
+        with self.assertRaisesRegex(validator.SpecError, "belongs to another specification"):
+            validator.parse_case_rows(markdown, "PAIR")
+
 
 class ValidateSpecTests(unittest.TestCase):
     def test_accepts_contiguous_case_ids(self):
@@ -149,7 +154,7 @@ class RepositoryValidationTests(unittest.TestCase):
                 spec_path.parent.mkdir(parents=True, exist_ok=True)
                 spec_path.write_text(
                     "".join(
-                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\\n"
+                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\n"
                         for number in range(1, case_count + 1)
                     ),
                     encoding="utf-8",
