@@ -710,3 +710,25 @@ def test_audit_rejects_non_utc_or_timezone_naive_timestamps(timestamp):
         assert db.audit_events() == []
     finally:
         db.close()
+
+
+@pytest.mark.parametrize("overrides", [
+    {"event_type": []},
+    {"origin": {}},
+    {"risk_class": []},
+    {"result_status": {}},
+    {"registry_status": []},
+    {"transaction_id": {"unbounded": "nested"}, "snapshot_digest": D4},
+    {"device_binding": [], "origin": "remote", "session_binding": D2},
+    {"session_binding": {}, "origin": "remote", "device_binding": D3},
+])
+def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
+    db = store()
+    try:
+        event = audit()
+        event.update(overrides)
+        with pytest.raises(SecurityStoreError):
+            db._audit(event)
+        assert db.audit_events() == []
+    finally:
+        db.close()

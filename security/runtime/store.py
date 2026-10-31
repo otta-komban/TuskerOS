@@ -97,6 +97,30 @@ class SecurityStore:
                     "result_status", "correlation_id", "task_id", "step_id", "registry_version", "executor_id",
                     "reason_code", "registry_status"}
         if not required.issubset(safe): raise SecurityStoreError("audit event missing required v0.2.0 fields")
+        string_limits = {
+            "event_type": 64, "origin": 16, "operation_id": 160, "risk_class": 2,
+            "policy_version": 64, "result_status": 16, "correlation_id": 128,
+            "registry_status": 16,
+        }
+        optional_string_limits = {
+            "task_id": 128, "step_id": 128, "executor_id": 128,
+            "reason_code": 96, "registry_version": 128, "transaction_id": 128,
+        }
+        for field, maximum in string_limits.items():
+            value = safe[field]
+            if not isinstance(value, str) or not 1 <= len(value) <= maximum:
+                raise SecurityStoreError("invalid audit event field: " + field)
+        for field, maximum in optional_string_limits.items():
+            value = safe.get(field)
+            if value is not None and (not isinstance(value, str) or not 1 <= len(value) <= maximum):
+                raise SecurityStoreError("invalid optional audit event field: " + field)
+        if safe["decision_id"] is not None and not isinstance(safe["decision_id"], str):
+            raise SecurityStoreError("invalid audit decision identifier")
+        if safe.get("approval_request_id") is not None and not isinstance(safe["approval_request_id"], str):
+            raise SecurityStoreError("invalid approval reference")
+        for field in ("device_binding", "session_binding"):
+            if field in safe and not isinstance(safe[field], str):
+                raise SecurityStoreError("invalid remote identity binding")
         statuses = {"requested":"accepted", "authorized":"success", "started":"pending", "succeeded":"success",
                     "failed":"failure", "cancellation_requested":"accepted", "cancelled":"cancelled",
                     "outcome_unknown":"unknown", "compensation_started":"pending", "compensation_verified":"success",
@@ -120,13 +144,6 @@ class SecurityStore:
             or not isinstance(safe["policy_version"], str) or not 1 <= len(safe["policy_version"]) <= 64
             or not isinstance(safe["correlation_id"], str) or not 1 <= len(safe["correlation_id"]) <= 128):
             raise SecurityStoreError("invalid audit correlation fields")
-        for field in ("task_id", "step_id"):
-            if safe[field] is not None and (not isinstance(safe[field], str) or len(safe[field]) > 128):
-                raise SecurityStoreError("invalid task/step audit binding")
-        if safe["executor_id"] is not None and (not isinstance(safe["executor_id"], str) or len(safe["executor_id"]) > 128):
-            raise SecurityStoreError("invalid audit executor")
-        if safe["reason_code"] is not None and (not isinstance(safe["reason_code"], str) or len(safe["reason_code"]) > 96):
-            raise SecurityStoreError("invalid audit reason code")
         if safe.get("approval_request_id") is not None:
             try: uuid.UUID(safe["approval_request_id"])
             except (ValueError, TypeError) as exc: raise SecurityStoreError("invalid approval reference") from exc
