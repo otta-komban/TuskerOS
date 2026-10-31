@@ -50,3 +50,14 @@ This was a GitHub commit/compare and issue-comment review. No repository tests, 
 - NEXUS's note correctly places authenticated IPC peer credentials at the receiving transport, AEGIS policy preflight before every registered provider action, and fail-closed behavior on missing/stale/mismatched decisions. It explicitly leaves the authorization-context serialization and transport binding to AEGIS/NEXUS agreement.
 - Issue #17 still has no NEXUS-07-authored response. Its newest comments are AEGIS-06 owner-review requests about missing audit lifecycle event names and event/status mappings.
 - This is GitHub branch/tree/issue evidence only. It does not establish a working-tree build or broker integration. Keep privileged handlers blocked until the transport, peer identity, atomic consume, audit and execution-result contracts have executable implementation evidence.
+
+
+## Current comparison refresh — 2026-10-31 (C0058)
+
+- Live GitHub compare of `main` against `06-security-gatekeeper` reports **336 commits ahead / 0 behind**. The branch is a descendant of `main`, not diverged.
+- Both `main` and the compare merge base resolve to `8dc990085c6913bc9042a10fb6ecc1f2738c118a`; the security branch head at this check was `2fd220fd416b6191ded4b150062a8ce7b72f7111`.
+- Earlier 56/4, 180/4 and 207/0 figures above are historical snapshots from their respective review dates and must not be read as the current compare result.
+- No merge, rebase, cherry-pick or force-push was performed. No main-only commit delta is outstanding in this comparison.
+- Draft PR [#33](https://github.com/otta-komban/TuskerOS/pull/33) carries the AEGIS security branch for review; it remains open and unmerged.
+- The PR-triggered validation for head `2fd220fd416b6191ded4b150062a8ce7b72f7111` passed **164 security tests** in GitHub Actions run [41167897563](https://github.com/otta-komban/TuskerOS/actions/runs/41167897563).
+- This is a branch-ancestry/CI refresh, not proof of cross-agent runtime integration. Broker identity, authorization consume, policy consumer enforcement and privileged handler behavior remain release-gated.
