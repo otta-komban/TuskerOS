@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc` (ATLAS CI passed 70 tests; unified validation passed all 8 jobs; branch 79 commits ahead / 0 behind `main`)  
+**Latest code/test evidence head:** `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc` (ATLAS CI passed 70 tests; unified validation passed all 8 jobs; branch 82 commits ahead / 0 behind `main`)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -39,8 +39,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Last validated code head: `f763cd56a382a31c6206f42a3ecd402f077bd13d`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
-- Draft remains open for review. PR validation on this exact head passed: unified validation run 41183355869 (8 jobs) and ATLAS resolver run 41183355823 (49 tests plus live Fedora 44 DNF5 and upstream KIWI source-lock checks). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
+- Last validated code head: `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
+- Draft remains open for review. ATLAS run 41185951919 passed 70 tests and live Fedora 44 DNF5 smoke; unified validation run 41185951924 passed all 8 jobs on this exact head. Later changes update only status and completion logs. It is intentionally not merge-ready until package rows are approved, KIWI/DNF consume the frozen repository snapshot, metadata signatures and RPM payload checksums are verified, the image is built, and PHOENIX VM install/boot evidence is available.
 
 ## Evidence
 
