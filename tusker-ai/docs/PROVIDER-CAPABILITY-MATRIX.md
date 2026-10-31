@@ -79,8 +79,8 @@ It is **not** yet a journaled multi-file transaction manager: startup reconcilia
 | Staging and atomic active pointer | Implemented; unit tested |
 | Model cancellation and cleanup | Implemented; unit tested |
 | AEGIS authorization | Fail-closed callback seam only; production policy integration pending |
-| Fake/local HTTP protocol and model-store tests | 27 tests passed locally |
-| Live Ollama conformance / actual inference artifact | Not run / not available |
+| Fake/local HTTP protocol and model-store tests | 29 deterministic runtime, model-store and local HTTP protocol tests passed locally; the 2 opt-in live Ollama tests were not run |
+| Live Ollama conformance / actual inference artifact | Opt-in live test and smoke harness added; not run / no actual inference evidence |
 | Benchmark harness and protocol | Harness implemented; no measurements published |
 
 ## Next steps
