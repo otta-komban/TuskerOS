@@ -98,6 +98,10 @@ class InMemoryLifecycleStore:
             raise LifecycleError("event_id must be a non-empty string")
         if type(task.get("version")) is not int or type(event.get("sequence")) is not int:
             raise LifecycleError("task version and event sequence must be integers")
+        if idempotency_key is not None or idempotency_fingerprint is not None:
+            if (not isinstance(idempotency_key, str) or not idempotency_key
+                    or not isinstance(idempotency_fingerprint, str) or not idempotency_fingerprint):
+                raise LifecycleError("idempotency key and fingerprint must be non-empty strings supplied together")
         with self._lock:
             current = self._tasks.get(task_id)
             if current is None:
@@ -130,6 +134,10 @@ class InMemoryLifecycleStore:
             return deepcopy(self._tasks[task_id])
 
     def idempotent_result(self, task_id: str, key: str, fingerprint: str) -> dict[str, Any] | None:
+        if not isinstance(task_id, str) or not task_id:
+            raise LifecycleError("idempotency task_id must be a non-empty string")
+        if not isinstance(key, str) or not key or not isinstance(fingerprint, str) or not fingerprint:
+            raise LifecycleError("idempotency key and fingerprint must be non-empty strings")
         with self._lock:
             prior = self._idempotency.get((task_id, key))
             if prior is None:
