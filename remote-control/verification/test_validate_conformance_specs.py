@@ -79,6 +79,11 @@ class ParseCaseRowsTests(unittest.TestCase):
         with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
             validator.parse_case_rows(markdown, "PAIR")
 
+    def test_rejects_non_ascii_digits_in_case_identifier(self):
+        markdown = "| PAIR-C٠١ | Non-ASCII digits | Reject |" + "\\n"
+        with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
+            validator.parse_case_rows(markdown, "PAIR")
+
     def test_rejects_case_identifier_from_another_specification(self):
         markdown = "| SESS-C01 | Wrong specification | Reject |" + "\n"
         with self.assertRaisesRegex(validator.SpecError, "belongs to another specification"):
