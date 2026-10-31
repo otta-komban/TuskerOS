@@ -73,6 +73,32 @@ class CatalogResolverTests(unittest.TestCase):
                 [a, b], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
             )
 
+    def test_revoked_release_is_never_selected(self):
+        candidate = self.candidate("1.0.0")
+        candidate["trust"]["review_status"] = "revoked"
+        with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+            select_catalog_release(
+                [candidate], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
+            )
+
+    def test_revoked_signature_is_never_selected(self):
+        candidate = self.candidate("1.0.0")
+        candidate["trust"]["signature_status"] = "revoked"
+        with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+            select_catalog_release(
+                [candidate], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
+            )
+
+    def test_rejected_and_quarantined_releases_are_excluded(self):
+        for status in ("rejected", "quarantined"):
+            with self.subTest(status=status):
+                candidate = self.candidate("1.0.0")
+                candidate["trust"]["review_status"] = status
+                with self.assertRaisesRegex(CatalogResolutionError, "no compatible release"):
+                    select_catalog_release(
+                        [candidate], "org.tuskeros.examples.hello", "0.5.0", "1.2.0"
+                    )
+
     def test_invalid_matching_metadata_fails_closed(self):
         candidate = self.candidate("1.0.0")
         candidate["release"]["artifact_uri"] = "http://bad.invalid/file"
