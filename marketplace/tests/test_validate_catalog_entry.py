@@ -20,6 +20,20 @@ class CatalogEntryValidationTests(unittest.TestCase):
         self.assertEqual(entry["trust"]["review_status"], "pending")
         self.assertEqual(entry["trust"]["signature_status"], "unverified")
 
+    def test_conflict_metadata_accepts_unique_package_ids(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["package"]["conflicts"] = ["org.tuskeros.other.package"]
+        self.assertEqual(validate_catalog_entry(entry), [])
+
+    def test_conflict_metadata_rejects_duplicates_and_self_conflicts(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["package"]["conflicts"] = [
+            "org.tuskeros.other.package", "org.tuskeros.other.package"
+        ]
+        self.assertTrue(any("$.package.conflicts" in e for e in validate_catalog_entry(entry)))
+        entry["package"]["conflicts"] = [entry["package"]["id"]]
+        self.assertTrue(any("cannot conflict with itself" in e for e in validate_catalog_entry(entry)))
+
     def test_unknown_field_fails_closed(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["install_script"] = "do-not-run"
