@@ -162,6 +162,19 @@ class OllamaHttpTests(unittest.TestCase):
             list(OllamaProvider(self.endpoint).infer(request, CancellationToken()))
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.INVALID_REQUEST)
 
+    def test_non_finite_nested_values_are_rejected_before_dispatch(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        for value in (float("nan"), float("inf"), float("-inf")):
+            request = InferenceRequest(
+                "non-finite-json",
+                "fixture",
+                [{"role": "user", "content": "hello", "metadata": {"score": value}}],
+            )
+            with self.subTest(value=value):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(OllamaProvider("http://127.0.0.1:1").infer(request, CancellationToken()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.INVALID_REQUEST)
+
     def test_version_health_stream_and_usage(self):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
         self.assertTrue(provider.health())
