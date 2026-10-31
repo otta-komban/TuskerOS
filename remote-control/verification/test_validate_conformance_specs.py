@@ -321,5 +321,39 @@ class RepositoryValidationTests(unittest.TestCase):
                 validator.validate_repository(Path(temporary_root))
 
 
+    def test_json_cli_aggregates_mixed_specification_failures(self):
+        from contextlib import redirect_stdout
+        import io
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            pair_path = root / validator.SPECS["PAIR"][0]
+            sess_path = root / validator.SPECS["SESS"][0]
+            pair_path.parent.mkdir(parents=True, exist_ok=True)
+            sess_path.parent.mkdir(parents=True, exist_ok=True)
+            pair_path.write_bytes(bytes([255, 254]))
+            sess_path.write_text("", encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = validator.main(["--root", temporary_root, "--json"])
+
+        payload = json.loads(output.getvalue())
+        self.assertEqual(result, 1)
+        self.assertFalse(payload["ok"])
+        error = payload["error"]
+        self.assertIn("PAIR:", error)
+        self.assertIn("utf-8", error.lower())
+        self.assertIn("SESS:", error)
+        self.assertIn("SESS-C01", error)
+        self.assertIn("NET:", error)
+        self.assertIn("specification not found", error)
+        for prefix in ("PAIR", "SESS", "NET"):
+            self.assertNotIn(prefix + ": " + prefix + ":", error)
+        self.assertEqual(payload["scope"], "documentation-integrity-only")
+        self.assertFalse(payload["runtime_security_tested"])
+
+
 if __name__ == "__main__":
     unittest.main()
