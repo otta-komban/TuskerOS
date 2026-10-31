@@ -63,7 +63,7 @@ class SettingsAppTests(unittest.TestCase):
                 self.assertEqual(backend.reset(), {"ok": False})
             self.assertEqual(backend.status(), {"needsRecovery": True})
             self.assertEqual(path.read_text(encoding="utf-8"), original)
-            self.assertEqual(backend.update({"panel": {"icon_size": 64}), {"ok": False})
+            self.assertEqual(backend.update({"panel": {"icon_size": 64}}), {"ok": False})
 
     def test_desktop_launcher_is_installed_entry_point(self):
         descriptor = (APP / "tuskeros-settings.desktop").read_text(encoding="utf-8")
