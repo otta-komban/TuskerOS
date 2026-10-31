@@ -233,6 +233,41 @@ class ManifestTests(unittest.TestCase):
             )
 
 
+
+class OfflineManifestValidationTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.manifest = Path(self.temporary.name) / "manifest.csv"
+        self.manifest.write_text(
+            "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_repository_url,upstream_url\n",
+            encoding="utf-8",
+        )
+
+    def test_header_only_manifest_is_valid_in_validate_only_mode(self):
+        self.assertEqual(read_manifest(self.manifest, require_pins=True, allow_empty=True), [])
+
+    def test_empty_manifest_is_rejected_for_resolution(self):
+        with self.assertRaisesRegex(RuntimeError, "contains no package rows"):
+            read_manifest(self.manifest, require_pins=True)
+
+    def test_validate_only_cli_does_not_require_fedora_or_dnf5(self):
+        with mock.patch("sys.argv", [
+            "resolve-package-manifest.py",
+            "--manifest", str(self.manifest),
+            "--validate-only",
+        ]):
+            self.assertEqual(RESOLVER.main(), 0)
+
+    def test_validate_only_rejects_missing_provenance_columns(self):
+        self.manifest.write_text(
+            "layer,package,owner,required,rationale\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(RuntimeError, "Manifest header"):
+            read_manifest(self.manifest, require_pins=True, allow_empty=True)
+
+
 class ResolverCliTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
