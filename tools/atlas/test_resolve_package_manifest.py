@@ -23,26 +23,26 @@ read_manifest = RESOLVER.read_manifest
 class QueryResultTests(unittest.TestCase):
     def test_single_nevra_and_repository(self):
         result = parse_query_matches(
-            "bash-0:5.2.26-3.fc44.x86_64\tfedora\n"
+            "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\n"
         )
-        self.assertEqual(result, ("bash-0:5.2.26-3.fc44.x86_64", "fedora"))
+        self.assertEqual(result, ("bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm"))
 
     def test_duplicate_identical_rows_are_collapsed(self):
-        row = "bash-0:5.2.26-3.fc44.x86_64\tfedora"
+        row = "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm"
         self.assertEqual(parse_query_matches(f"{row}\n{row}\n"), tuple(row.split("\t")))
 
     def test_same_nevra_from_multiple_repositories_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "ambiguous repository"):
             parse_query_matches(
-                "bash-0:5.2.26-3.fc44.x86_64\tfedora\n"
-                "bash-0:5.2.26-3.fc44.x86_64\tthird-party\n"
+                "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\n"
+                "bash-0:5.2.26-3.fc44.x86_64\tthird-party\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\n"
             )
 
     def test_multiple_nevras_are_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "ambiguous NEVRA"):
             parse_query_matches(
-                "bash-0:5.2.26-3.fc44.x86_64\tfedora\n"
-                "bash-0:5.2.27-1.fc44.x86_64\tfedora\n"
+                "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\n"
+                "bash-0:5.2.27-1.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.27-1.fc44.src.rpm\n"
             )
 
     def test_malformed_query_row_is_rejected(self):
@@ -56,7 +56,7 @@ class QueryResultTests(unittest.TestCase):
     def test_unrequested_package_name_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "outside requested name"):
             parse_query_matches(
-                "bash-completion-0:2.11-1.fc44.noarch\tfedora", "bash"
+                "bash-completion-0:2.11-1.fc44.noarch\tfedora\tGPL-2.0-or-later\tbash-2.11-1.fc44.src.rpm", "bash"
             )
 
     def test_unsupported_architecture_is_rejected(self):
@@ -68,14 +68,14 @@ class QueryResultTests(unittest.TestCase):
 
     def test_nonzero_epoch_is_preserved(self):
         self.assertEqual(
-            parse_query_matches("kernel-core-2:6.12.1-1.fc44.x86_64\tfedora", "kernel-core"),
-            ("kernel-core-2:6.12.1-1.fc44.x86_64", "fedora"),
+            parse_query_matches("kernel-core-2:6.12.1-1.fc44.x86_64\tfedora\tGPL-2.0-only\tkernel-6.12.1-1.fc44.src.rpm", "kernel-core"),
+            ("kernel-core-2:6.12.1-1.fc44.x86_64", "fedora", "GPL-2.0-only", "kernel-6.12.1-1.fc44.src.rpm"),
         )
 
     def test_expected_package_accepts_full_nevra(self):
         self.assertEqual(
             parse_query_matches(
-                "bash-0:5.2.26-3.fc44.x86_64\tfedora", "bash"
+                "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm", "bash"
             ),
             ("bash-0:5.2.26-3.fc44.x86_64", "fedora"),
         )
@@ -112,18 +112,26 @@ class PinnedManifestTests(unittest.TestCase):
 
 class PinVerificationTests(unittest.TestCase):
     def setUp(self):
-        self.row = {"pinned_nevra": "bash-0:5.2.26-3.fc44.x86_64", "repository_id": "fedora"}
+        self.row = {"pinned_nevra": "bash-0:5.2.26-3.fc44.x86_64", "repository_id": "fedora", "rpm_license": "GPL-3.0-or-later", "source_rpm": "bash-5.2.26-3.fc44.src.rpm"}
 
     def test_exact_nevra_and_repository_are_accepted(self):
-        verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora")
+        verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm")
 
     def test_version_or_epoch_mismatch_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "does not match pinned NEVRA"):
-            verify_pin(self.row, "bash-1:5.2.26-3.fc44.x86_64", "fedora")
+            verify_pin(self.row, "bash-1:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm")
 
     def test_repository_mismatch_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "does not match pinned repository"):
-            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "updates")
+            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "updates", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm")
+
+    def test_license_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned value"):
+            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "MIT", "bash-5.2.26-3.fc44.src.rpm")
+
+    def test_source_rpm_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned value"):
+            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "wrong-5.2.26-3.fc44.src.rpm")
 
 
 class ManifestTests(unittest.TestCase):
@@ -213,7 +221,7 @@ class ResolverCliTests(unittest.TestCase):
             return RESOLVER.main()
 
     def test_cli_success_writes_complete_json(self):
-        query = "bash-0:5.2.26-3.fc44.x86_64\tfedora"
+        query = "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm"
         result = self.invoke_cli([
             "enabled repo evidence",
             query,
