@@ -91,9 +91,16 @@ class OllamaProvider:
             "stream": True,
             "options": {"num_predict": request.max_output_tokens, "num_ctx": request.context_limit},
         }
+        try:
+            encoded_payload = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        except (TypeError, ValueError, RecursionError, UnicodeEncodeError):
+            raise TuskerRuntimeError(
+                RuntimeErrorCode.INVALID_REQUEST,
+                "Inference request contains data that cannot be encoded for the local provider",
+            ) from None
         req = Request(
             self._base + "/api/chat",
-            data=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
+            data=encoded_payload,
             headers={"Content-Type": "application/json", "Accept": "application/x-ndjson"},
             method="POST",
         )
