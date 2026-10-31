@@ -253,6 +253,7 @@ class SecurityStore:
         return (
             isinstance(audit_context, Mapping)
             and all(audit_context.get(key) == value for key, value in expected.items())
+            and isinstance(audit_context.get("origin"), str)
             and audit_context.get("origin") in {"local", "remote", "extension", "system"}
             and audit_context.get("registry_status") == "resolved"
         )
