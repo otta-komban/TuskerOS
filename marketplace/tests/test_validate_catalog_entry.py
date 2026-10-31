@@ -35,6 +35,24 @@ class CatalogEntryValidationTests(unittest.TestCase):
         entry["package"]["conflicts"] = [entry["package"]["id"]]
         self.assertTrue(any("cannot conflict with itself" in e for e in validate_catalog_entry(entry)))
 
+    def test_community_metrics_reject_null_values_per_schema(self):
+        for field in ("rating_average", "rating_count", "download_count"):
+            with self.subTest(field=field):
+                entry = copy.deepcopy(self.fixture)
+                entry["community"] = {field: None}
+                self.assertTrue(
+                    any(f"$.community.{field}" in error for error in validate_catalog_entry(entry))
+                )
+
+    def test_community_metrics_accept_schema_valid_values(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["community"] = {
+            "rating_average": 4.5,
+            "rating_count": 12,
+            "download_count": 100,
+        }
+        self.assertEqual(validate_catalog_entry(entry), [])
+
     def test_unknown_field_fails_closed(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["install_script"] = "do-not-run"
