@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "purpose": "Data-driven transition conformance vectors for the FORGE-09 structural lifecycle validator. Evidence values are fixtures, not authenticated proof.",
+  "valid": [
+    {
+      "id": "commit-happy-path",
+      "steps": [
+        {
+          "event": "approval_verified",
+          "evidence": {
+            "approval_id": "approval-1",
+            "verification_ref": "aegis:verification:1",
+            "authority": "aegis"
+          }
+        },
+        {
+          "event": "revalidated",
+          "evidence": {
+            "snapshot_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        },
+        {
+          "event": "execution_started",
+          "evidence": {
+            "lock_ref": "dnf-lock:1"
+          }
+        },
+        {
+          "event": "committed",
+          "evidence": {
+            "result_ref": "dnf-transaction:1"
+          }
+        }
+      ],
+      "final_state": "committed",
+      "terminal": true
+    },
+    {
+      "id": "rollback-success",
+      "steps": [
+        {
+          "event": "approval_verified",
+          "evidence": {
+            "approval_id": "approval-2",
+            "verification_ref": "aegis:verification:2",
+            "authority": "aegis"
+          }
+        },
+        {
+          "event": "revalidated",
+          "evidence": {
+            "snapshot_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        },
+        {
+          "event": "execution_started",
+          "evidence": {
+            "lock_ref": "dnf-lock:2"
+          }
+        },
+        {
+          "event": "rolled_back",
+          "evidence": {
+            "result_ref": "dnf-rollback:2"
+          }
+        }
+      ],
+      "final_state": "rolled_back",
+      "terminal": true
+    },
+    {
+      "id": "snapshot-became-stale",
+      "steps": [
+        {
+          "event": "approval_verified",
+          "evidence": {
+            "approval_id": "approval-3",
+            "verification_ref": "aegis:verification:3",
+            "authority": "aegis"
+          }
+        },
+        {
+          "event": "revalidated",
+          "evidence": {
+            "snapshot_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        },
+        {
+          "event": "stale",
+          "evidence": {
+            "observed_snapshot_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
+        }
+      ],
+      "final_state": "stale",
+      "terminal": true
+    },
+    {
+      "id": "cancel-before-approval",
+      "steps": [
+        {
+          "event": "cancelled",
+          "evidence": {
+            "reason_code": "user_cancelled"
+          }
+        }
+      ],
+      "final_state": "cancelled",
+      "terminal": true
+    },
+    {
+      "id": "reject-after-approval-check",
+      "steps": [
+        {
+          "event": "approval_verified",
+          "evidence": {
+            "approval_id": "approval-4",
+            "verification_ref": "aegis:verification:4",
+            "authority": "aegis"
+          }
+        },
+        {
+          "event": "rejected",
+          "evidence": {
+            "reason_code": "policy_denied"
+          }
+        }
+      ],
+      "final_state": "rejected",
+      "terminal": true
+    }
+  ],
+  "invalid": [
+    {
+      "id": "execution-without-approval",
+      "steps": [
+        {
+          "event": "execution_started",
+          "evidence": {
+            "lock_ref": "lock"
+          }
+        }
+      ]
+    },
+    {
+      "id": "snapshot-mismatch",
+      "steps": [
+        {
+          "event": "approval_verified",
+          "evidence": {
+            "approval_id": "approval-x",
+            "verification_ref": "verify-x",
+            "authority": "aegis"
+          }
+        },
+        {
+          "event": "revalidated",
+          "evidence": {
+            "snapshot_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sensitive-evidence-field",
+      "steps": [
+        {
+          "event": "cancelled",
+          "evidence": {
+            "reason_code": "cancel",
+            "password": "secret"
+          }
+        }
+      ]
+    },
+    {
+      "id": "transition-after-terminal",
+      "steps": [
+        {
+          "event": "cancelled",
+          "evidence": {
+            "reason_code": "cancel"
+          }
+        },
+        {
+          "event": "approval_verified",
+          "evidence": {
+            "approval_id": "approval-x",
+            "verification_ref": "verify-x",
+            "authority": "aegis"
+          }
+        }
+      ]
+    }
+  ]
+}

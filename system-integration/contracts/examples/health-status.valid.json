@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "component": "nexus-system-tools",
+  "version": "0.1.0",
+  "state": "ready",
+  "checked_at": "2026-10-31T00:30:00Z",
+  "last_successful_operation_at": null,
+  "contract_major_versions": {
+    "tool": 1
+  },
+  "dependencies": []
+}

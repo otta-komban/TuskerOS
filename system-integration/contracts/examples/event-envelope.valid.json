@@ -1,0 +1,11 @@
+{
+  "event_version": "1.0",
+  "event_id": "550e8400-e29b-41d4-a716-446655440001",
+  "event_type": "system.device.changed",
+  "occurred_at": "2026-10-31T00:30:00Z",
+  "producer": "nexus-system-tools",
+  "correlation_id": "req-1",
+  "subject_id": "device-inventory",
+  "sequence": 1,
+  "payload": {}
+}

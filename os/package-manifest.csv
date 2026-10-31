@@ -1,0 +1,2 @@
+layer,package,owner,required,rationale
+# Add only owner-reviewed Fedora 44 RPM package names. Keep optional layers out of the default profile.

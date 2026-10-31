@@ -1,0 +1,380 @@
+openapi: 3.1.0
+info:
+  title: TuskerOS Remote Control API
+  version: 0.1.0-draft
+  description: |
+    PILOT-08 proposal only. Not approved for implementation until AEGIS-06,
+    TUSKER-04 and NOVA-02 review the applicable contracts.
+servers:
+  - url: https://localhost
+    description: Local development placeholder; deployment binding is not specified here.
+tags:
+  - name: Pairing
+  - name: Devices
+  - name: Sessions
+  - name: Tasks
+  - name: Approvals
+  - name: Events
+paths:
+  /api/v1/pairing/challenges:
+    post:
+      tags: [Pairing]
+      summary: Create a local-owner-authorized pairing challenge
+      description: Local desktop only; never callable by an unpaired remote client.
+      operationId: createPairingChallenge
+      security: []
+      responses:
+        '201':
+          description: Short-lived challenge created for local display.
+        '401':
+          description: Local owner authentication required.
+        '403':
+          description: Local policy denied pairing.
+  /api/v1/pairing/complete:
+    post:
+      tags: [Pairing]
+      summary: Submit proof for a pending pairing challenge
+      description: Enrollment completes only after explicit local owner confirmation.
+      operationId: completePairing
+      security: []
+      responses:
+        '202':
+          description: Proof accepted; awaiting local confirmation.
+        '400':
+          description: Invalid, expired, or replayed challenge.
+        '409':
+          description: Challenge already consumed or enrollment conflict.
+  /api/v1/devices:
+    get:
+      tags: [Devices]
+      summary: List paired devices
+      operationId: listDevices
+      security:
+        - deviceSession: []
+      responses:
+        '200':
+          description: Authorized device list.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+  /api/v1/devices/{device_id}:
+    delete:
+      tags: [Devices]
+      summary: Revoke a paired device and its sessions
+      operationId: revokeDevice
+      security:
+        - deviceSession: []
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Device and active sessions revoked.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+        '404':
+          description: Device not found.
+  /api/v1/sessions:
+    post:
+      tags: [Sessions]
+      summary: Authenticate a paired device using proof of possession
+      operationId: createSession
+      security: []
+      responses:
+        '201':
+          description: Session issued according to approved session policy.
+        '401':
+          description: Device proof invalid or device revoked.
+        '429':
+          description: Rate limit exceeded.
+  /api/v1/sessions/current:
+    delete:
+      tags: [Sessions]
+      summary: Revoke current session
+      operationId: revokeCurrentSession
+      security:
+        - deviceSession: []
+      responses:
+        '204':
+          description: Current session revoked.
+        '401':
+          description: Invalid or expired session.
+  /api/v1/device/status:
+    get:
+      tags: [Devices]
+      summary: Read a minimal device and remote-connection status projection
+      operationId: getDeviceStatus
+      security:
+        - deviceSession: []
+      responses:
+        '200':
+          description: Authorized status projection.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+  /api/v1/tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks visible to the authenticated owner
+      operationId: listTasks
+      security:
+        - deviceSession: []
+      responses:
+        '200':
+          description: Paginated, authorization-scoped task summaries.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskSummary'
+                  next_cursor:
+                    type: [string, 'null']
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied.
+    post:
+      tags: [Tasks]
+      summary: Submit a bounded task through TUSKER-04
+      description: |
+        Adapter only. The gateway derives principal_ref and origin from the
+        validated session; clients cannot supply trusted identity, role, risk,
+        tool selection or authorization outcomes. The request enters the normal
+        Core task lifecycle. A post-dispatch timeout may require reconciliation
+        and must not trigger a blind non-idempotent retry.
+      operationId: submitTask
+      security:
+        - deviceSession: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSubmission'
+      responses:
+        '202':
+          description: Accepted by Core; acceptance is not a claim that execution completed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+        '400':
+          description: Invalid request or bounded-context validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: AEGIS-06 policy denied.
+        '409':
+          description: Idempotency key reused with a conflicting payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '503':
+          description: Core or policy service unavailable; mutation fails closed unless dispatch status is uncertain.
+  /api/v1/tasks/{task_id}:
+    get:
+      tags: [Tasks]
+      summary: Read an authorized task projection
+      operationId: getTask
+      security:
+        - deviceSession: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authorization-scoped task detail with sensitive fields redacted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSnapshot'
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Policy denied or resource not visible.
+        '404':
+          description: Task not found.
+  /api/v1/events:
+    get:
+      tags: [Events]
+      summary: Authenticated WebSocket event stream
+      description: |
+        Upgrade to WSS. Browser Origin allowlist, authentication, authorization,
+        message/connection limits, session expiry and revocation behavior are
+        mandatory. Events may be duplicated or lost; clients must reconcile
+        using an authoritative task snapshot and a supported sequence cursor.
+        The event schema below is a proposal pending TUSKER-04 and AEGIS-06 review.
+      operationId: connectEvents
+      security:
+        - deviceSession: []
+      responses:
+        '101':
+          description: WebSocket upgrade accepted.
+        '401':
+          description: Invalid or expired session.
+        '403':
+          description: Origin or policy rejected.
+components:
+  securitySchemes:
+    deviceSession:
+      type: http
+      scheme: bearer
+      description: Placeholder only; token/proof-of-possession design pending AEGIS-06.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+  schemas:
+    TaskSubmission:
+      type: object
+      additionalProperties: false
+      required: [schema_version, request_id, user_request]
+      properties:
+        schema_version:
+          type: string
+          const: '1'
+        request_id:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: Request correlation value; server also binds the authenticated actor context.
+        user_request:
+          type: string
+          minLength: 1
+          maxLength: 16000
+        context_refs:
+          type: array
+          maxItems: 32
+          items:
+            type: string
+            maxLength: 512
+          description: Bounded opaque references; Core validates access and meaning.
+      description: |
+        principal_ref and origin are intentionally omitted from client JSON.
+        The trusted adapter derives them from the validated device session.
+        Client JSON cannot set role, risk, tool, policy decision or privileged call.
+    TaskAccepted:
+      type: object
+      required: [task_id, accepted, state, created_at]
+      properties:
+        task_id:
+          type: string
+        accepted:
+          type: boolean
+          const: true
+        state:
+          type: string
+          description: Canonical state enum is owned by TUSKER-04 and remains to be agreed.
+        created_at:
+          type: string
+          format: date-time
+        summary:
+          type: string
+          maxLength: 1024
+          description: Safe status summary; no private prompt, path, output or evidence by default.
+    TaskSummary:
+      type: object
+      required: [task_id, state]
+      properties:
+        task_id:
+          type: string
+        state:
+          type: string
+          description: Canonical state enum is owned by TUSKER-04.
+        summary:
+          type: string
+          maxLength: 1024
+        updated_at:
+          type: string
+          format: date-time
+    TaskSnapshot:
+      allOf:
+        - $ref: '#/components/schemas/TaskSummary'
+        - type: object
+          properties:
+            progress:
+              type: object
+              additionalProperties: true
+              description: Minimal task progress projection; exact fields pending TUSKER-04.
+            event_cursor:
+              type: [string, 'null']
+              description: Opaque cursor for supported event replay/resynchronization.
+    TaskEvent:
+      type: object
+      required: [version, event_id, sequence, occurred_at, type, resource_id]
+      properties:
+        version:
+          type: string
+          const: '1'
+        event_id:
+          type: string
+        sequence:
+          type: integer
+          minimum: 0
+        occurred_at:
+          type: string
+          format: date-time
+        type:
+          type: string
+          description: Event type registry remains pending TUSKER-04 agreement.
+        resource_id:
+          type: string
+        correlation_id:
+          type: [string, 'null']
+        payload:
+          type: object
+          additionalProperties: true
+          description: Minimal authorization-scoped projection; exact event payloads pending owner review.
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+          maxLength: 1024
+        correlation_id:
+          type: [string, 'null']
+        retryable:
+          type: boolean
+        outcome:
+          type: string
+          enum: [known_not_dispatched, accepted, unknown_outcome]
+          description: Unknown outcome requires reconciliation; never blindly retry a non-idempotent mutation.

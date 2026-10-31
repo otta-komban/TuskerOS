@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/theme-preview-adapter-capabilities-1.0.0.json",
+  "title": "TuskerOS Theme Preview Adapter Capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["adapter_id", "protocol_versions", "surfaces", "token_namespaces", "capabilities"],
+  "properties": {
+    "adapter_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
+    "protocol_versions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"}},
+    "surfaces": {"type": "array", "uniqueItems": true, "items": {"enum": ["desktop", "panel", "dock", "launcher", "notifications", "lock_screen", "window_decorations", "widgets", "settings", "quick_settings"]}},
+    "token_namespaces": {"type": "array", "uniqueItems": true, "items": {"enum": ["color", "typography", "spacing", "shape", "shadow", "motion", "surface", "asset"]}},
+    "capabilities": {"type": "object", "additionalProperties": false, "required": ["blur", "transparency", "animation", "dynamic_wallpaper", "lock_screen_theming"], "properties": {"blur": {"type": "boolean"}, "transparency": {"type": "boolean"}, "animation": {"type": "boolean"}, "dynamic_wallpaper": {"type": "boolean"}, "lock_screen_theming": {"type": "boolean"}}}
+  }
+}

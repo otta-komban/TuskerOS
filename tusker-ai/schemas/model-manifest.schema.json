@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.org/schemas/model-manifest-0.1.0.json",
+  "title": "TuskerOS Local Model Artifact Manifest",
+  "description": "Proposed manifest for an immutable, locally managed model artifact. Schema validity does not imply license approval or runtime compatibility.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_id", "publisher", "source", "revision", "format", "files", "model", "license", "provenance", "review"],
+  "properties": {
+    "schema_version": { "const": "0.1.0" },
+    "artifact_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$" },
+    "publisher": { "type": "string", "minLength": 1 },
+    "source": { "type": "string", "format": "uri" },
+    "revision": { "type": "string", "minLength": 1, "description": "Immutable upstream tag, commit, or repository revision; mutable names such as latest are not sufficient." },
+    "format": { "enum": ["gguf", "ollama-managed", "safetensors", "other"] },
+    "files": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["filename", "size_bytes", "sha256"],
+        "properties": {
+          "filename": { "type": "string", "minLength": 1 },
+          "size_bytes": { "type": "integer", "minimum": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+          "quantization": { "type": "string" }
+        }
+      }
+    },
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["architecture", "parameter_count", "context_length", "modalities"],
+      "properties": {
+        "architecture": { "type": "string", "minLength": 1 },
+        "parameter_count": { "type": ["integer", "null"], "minimum": 1 },
+        "context_length": { "type": "integer", "minimum": 1 },
+        "modalities": { "type": "array", "uniqueItems": true, "items": { "enum": ["text", "image", "audio", "video"] } },
+        "tokenizer": { "type": ["string", "null"] },
+        "chat_template": { "type": ["string", "null"] }
+      }
+    },
+    "license": {
+      "type": "object", "additionalProperties": false,
+      "required": ["weights_license", "license_text_uri", "redistribution", "commercial_use", "review_status"],
+      "properties": {
+        "code_license": { "type": ["string", "null"] },
+        "weights_license": { "type": "string", "minLength": 1 },
+        "license_text_uri": { "type": ["string", "null"], "format": "uri" },
+        "redistribution": { "enum": ["allowed", "restricted", "prohibited", "unknown"] },
+        "commercial_use": { "enum": ["allowed", "restricted", "prohibited", "unknown"] },
+        "review_status": { "enum": ["not_reviewed", "review_required", "approved", "rejected"] },
+        "review_notes": { "type": "string" }
+      }
+    },
+    "requirements": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "minimum_ram_bytes": { "type": ["integer", "null"], "minimum": 1 },
+        "recommended_ram_bytes": { "type": ["integer", "null"], "minimum": 1 },
+        "minimum_vram_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "recommended_vram_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "minimum_storage_bytes": { "type": ["integer", "null"], "minimum": 1 },
+        "cpu_instruction_sets": { "type": "array", "items": { "type": "string" } },
+        "runtime_compatibility": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["retrieved_at", "retrieved_from", "digest_verified"],
+      "properties": {
+        "retrieved_at": { "type": "string", "format": "date-time" },
+        "retrieved_from": { "type": "string", "format": "uri" },
+        "digest_verified": { "type": "boolean" },
+        "verification_method": { "type": ["string", "null"] },
+        "signature_verified": { "type": ["boolean", "null"] }
+      }
+    },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["catalog_status", "reviewed_at"],
+      "properties": {
+        "catalog_status": { "enum": ["draft", "candidate", "approved", "deprecated", "blocked"] },
+        "reviewed_at": { "type": ["string", "null"], "format": "date-time" },
+        "reviewer": { "type": ["string", "null"] },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

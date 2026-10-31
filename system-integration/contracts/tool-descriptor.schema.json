@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tuskeros.invalid/system-integration/tool-descriptor-1.0.schema.json",
+  "title": "TuskerOS Tool Descriptor",
+  "description": "Provisional catalogue metadata for one typed tool operation. Authorization policy and principal claims remain AEGIS-06-owned.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "descriptor_version",
+    "name",
+    "version",
+    "description",
+    "input_schema_ref",
+    "output_schema_ref",
+    "risk",
+    "privilege",
+    "side_effects",
+    "preconditions",
+    "postconditions",
+    "timeout_ms",
+    "idempotency",
+    "cancellation",
+    "rollback",
+    "required_capabilities",
+    "availability",
+    "provider"
+  ],
+  "properties": {
+    "descriptor_version": {
+      "const": "1.0"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$",
+      "maxLength": 128
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "input_schema_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "output_schema_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "risk": {
+      "enum": [
+        "read_only",
+        "low",
+        "moderate",
+        "high",
+        "destructive"
+      ]
+    },
+    "privilege": {
+      "enum": [
+        "user",
+        "elevated"
+      ]
+    },
+    "side_effects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "uniqueItems": true
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "postconditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "timeout_ms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default",
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "default": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300000
+        },
+        "minimum": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300000
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300000
+        }
+      }
+    },
+    "idempotency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported",
+        "scope"
+      ],
+      "properties": {
+        "supported": {
+          "type": "boolean"
+        },
+        "scope": {
+          "enum": [
+            "none",
+            "request",
+            "task",
+            "resource",
+            "global"
+          ]
+        }
+      }
+    },
+    "cancellation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported",
+        "semantics"
+      ],
+      "properties": {
+        "supported": {
+          "type": "boolean"
+        },
+        "semantics": {
+          "enum": [
+            "not_supported",
+            "best_effort",
+            "confirmed"
+          ]
+        }
+      }
+    },
+    "rollback": {
+      "enum": [
+        "supported",
+        "best_effort",
+        "not_supported"
+      ]
+    },
+    "required_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+      },
+      "uniqueItems": true
+    },
+    "availability": {
+      "enum": [
+        "available",
+        "unavailable",
+        "degraded",
+        "experimental"
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "activation"
+      ],
+      "properties": {
+        "component": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,62}$"
+        },
+        "activation": {
+          "enum": [
+            "in_process",
+            "on_demand",
+            "user_service",
+            "system_service"
+          ]
+        }
+      }
+    },
+    "authorization_policy_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Opaque reference to AEGIS-owned policy metadata; not an authorization decision or caller identity."
+    }
+  }
+}

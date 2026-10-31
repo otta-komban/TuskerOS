@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/installed-package-state-1.0.0.json",
+  "title": "TuskerOS Installed Package Ownership Snapshot",
+  "description": "Local ownership bookkeeping input for dry-run removal planning; not an install authorization record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state_version", "packages"],
+  "properties": {
+    "state_version": {"const": 1},
+    "packages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["package_id", "version", "owners", "dependencies"],
+        "properties": {
+          "package_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "version": {"type": "string", "minLength": 1, "maxLength": 128},
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "id"],
+              "properties": {
+                "kind": {"enum": ["bundle", "extension", "user", "system"]},
+                "id": {"type": "string", "minLength": 1, "maxLength": 128}
+              }
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1, "maxLength": 128}
+          }
+        }
+      }
+    }
+  }
+}

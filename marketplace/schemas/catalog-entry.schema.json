@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/marketplace-catalog-entry-1.0.0.json",
+  "title": "TuskerOS Marketplace Catalog Entry",
+  "description": "Public discovery metadata. Trust decisions require separately verified signatures and policy checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["catalog_version", "package", "publisher", "release", "compatibility", "trust"],
+  "properties": {
+    "catalog_version": {"const": 1},
+    "package": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "kind", "summary", "license"],
+      "properties": {
+        "id": {"type": "string", "minLength": 3},
+        "name": {"type": "string", "minLength": 1, "maxLength": 80},
+        "kind": {"enum": ["extension", "theme", "layout", "workflow", "bundle"]},
+        "summary": {"type": "string", "minLength": 1, "maxLength": 280},
+        "description_uri": {"type": "string", "format": "uri"},
+        "license": {"type": "string", "minLength": 1, "maxLength": 80},
+        "categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "maxLength": 48}},
+        "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "maxLength": 32}}
+      }
+    },
+    "publisher": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "display_name"],
+      "properties": {
+        "id": {"type": "string", "minLength": 2, "maxLength": 64},
+        "display_name": {"type": "string", "minLength": 1, "maxLength": 80},
+        "homepage": {"type": "string", "format": "uri"},
+        "verified": {"type": "boolean"}
+      }
+    },
+    "release": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "manifest_uri", "artifact_uri", "sha256", "published_at"],
+      "properties": {
+        "version": {"type": "string"},
+        "manifest_uri": {"type": "string", "format": "uri"},
+        "artifact_uri": {"type": "string", "pattern": "^https://"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "signature_uri": {"type": "string", "format": "uri"},
+        "published_at": {"type": "string", "format": "date-time"},
+        "changelog_uri": {"type": "string", "format": "uri"}
+      }
+    },
+    "compatibility": {
+      "type": "object", "additionalProperties": false, "required": ["tuskeros", "api"],
+      "properties": {
+        "tuskeros": {"type": "object", "required": ["min", "max"], "properties": {"min": {"type": "string"}, "max": {"type": "string"}}},
+        "api": {"type": "object", "required": ["min", "max"], "properties": {"min": {"type": "string"}, "max": {"type": "string"}}}
+      }
+    },
+    "trust": {
+      "type": "object", "additionalProperties": false, "required": ["review_status", "signature_status"],
+      "properties": {
+        "review_status": {"enum": ["pending", "approved", "rejected", "quarantined", "revoked"]},
+        "signature_status": {"enum": ["unverified", "valid", "invalid", "revoked"]},
+        "reviewed_at": {"type": "string", "format": "date-time"},
+        "review_policy_version": {"type": "string"}
+      }
+    },
+    "community": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "rating_average": {"type": "number", "minimum": 0, "maximum": 5},
+        "rating_count": {"type": "integer", "minimum": 0},
+        "download_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

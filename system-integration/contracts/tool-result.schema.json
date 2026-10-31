@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tuskeros.invalid/system-integration/tool-result-1.0.schema.json",
+  "title": "TuskerOS Tool Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "operation_id",
+    "status",
+    "result",
+    "postcondition",
+    "side_effects",
+    "timing",
+    "error",
+    "task_id",
+    "step_id",
+    "correlation_id",
+    "cancellation",
+    "evidence_refs"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "rejected",
+        "needs_approval",
+        "running",
+        "cancelled",
+        "failed",
+        "unknown_outcome"
+      ]
+    },
+    "result": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "postcondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "details"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "verified",
+            "not_verified",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    },
+    "side_effects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duration_ms"
+      ],
+      "properties": {
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "error": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "properties": {
+            "code": {
+              "enum": [
+                "INVALID_ARGUMENT",
+                "UNSUPPORTED_VERSION",
+                "NOT_FOUND",
+                "PERMISSION_DENIED",
+                "APPROVAL_REQUIRED",
+                "PRECONDITION_FAILED",
+                "CONFLICT",
+                "TIMED_OUT",
+                "CANCELLED",
+                "UNAVAILABLE",
+                "UNSUPPORTED_OPERATION",
+                "POSTCONDITION_FAILED",
+                "INTERNAL_ERROR"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "retryable": {
+              "type": "boolean"
+            },
+            "correlation_id": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        }
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "step_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "cancellation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_state",
+        "operation_state"
+      ],
+      "properties": {
+        "request_state": {
+          "enum": [
+            "not_requested",
+            "received",
+            "rejected",
+            "accepted"
+          ]
+        },
+        "operation_state": {
+          "enum": [
+            "running",
+            "stopped",
+            "completed",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    }
+  }
+}

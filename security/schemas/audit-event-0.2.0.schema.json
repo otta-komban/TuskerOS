@@ -1,0 +1,667 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/audit-event-0.2.0.json",
+  "title": "TuskerOS Security Audit Event v0.2.0 (candidate)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "timestamp_utc",
+    "event_type",
+    "principal_binding",
+    "origin",
+    "proposal_id",
+    "decision_id",
+    "operation_id",
+    "risk_class",
+    "policy_version",
+    "action_digest",
+    "result_status",
+    "correlation_id",
+    "task_id",
+    "step_id",
+    "registry_version",
+    "executor_id",
+    "reason_code",
+    "registry_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "event_type": {
+      "enum": [
+        "requested",
+        "authorized",
+        "started",
+        "succeeded",
+        "failed",
+        "cancellation_requested",
+        "cancelled",
+        "outcome_unknown",
+        "compensation_started",
+        "compensation_verified",
+        "compensation_failed",
+        "approval_granted",
+        "approval_denied",
+        "approval_expired",
+        "policy_denied"
+      ]
+    },
+    "principal_binding": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "origin": {
+      "enum": [
+        "local",
+        "remote",
+        "extension",
+        "system"
+      ]
+    },
+    "task_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "step_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "proposal_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "decision_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "risk_class": {
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ]
+    },
+    "policy_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "approval_request_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "executor_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "result_status": {
+      "enum": [
+        "accepted",
+        "denied",
+        "pending",
+        "success",
+        "failure",
+        "unknown",
+        "cancelled"
+      ]
+    },
+    "reason_code": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 96
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "registry_version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "registry_status": {
+      "enum": [
+        "resolved",
+        "unavailable"
+      ]
+    },
+    "transaction_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "snapshot_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "device_binding": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Digest of the registered remote device public-key thumbprint; required when origin is remote."
+    },
+    "session_binding": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Digest of the random server-side remote session identifier; required when origin is remote."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "registry_status": {
+            "const": "resolved"
+          }
+        },
+        "required": [
+          "registry_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "registry_version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "registry_status": {
+            "const": "unavailable"
+          }
+        },
+        "required": [
+          "registry_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "registry_version": {
+            "type": "null"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "event_type": {
+                "const": "requested"
+              },
+              "result_status": {
+                "const": "accepted"
+              },
+              "reason_code": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "event_type",
+              "result_status",
+              "reason_code"
+            ]
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "policy_denied"
+              },
+              "result_status": {
+                "const": "denied"
+              },
+              "reason_code": {
+                "const": "POLICY_REGISTRY_UNAVAILABLE"
+              }
+            },
+            "required": [
+              "event_type",
+              "result_status",
+              "reason_code"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "result_status": {
+            "enum": [
+              "denied",
+              "failure"
+            ]
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "requested"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "authorized"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "success"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "started"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "pending"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "succeeded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "success"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "failure"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "cancellation_requested"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "outcome_unknown"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "unknown"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "compensation_started"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "pending"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "compensation_verified"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "success"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "compensation_failed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "failure"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval_granted"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval_denied"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval_expired"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "policy_denied"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "result_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "remote"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "required": [
+          "device_binding",
+          "session_binding"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "device_binding"
+              ]
+            },
+            {
+              "required": [
+                "session_binding"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "dependentRequired": {
+    "transaction_id": [
+      "snapshot_digest"
+    ],
+    "snapshot_digest": [
+      "transaction_id"
+    ]
+  }
+}
