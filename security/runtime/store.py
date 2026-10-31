@@ -308,6 +308,35 @@ class SecurityStore:
             if not peer_matches:
                 self._db.execute("ROLLBACK")
                 return ConsumeResult("CALLER_UNAUTHORIZED")
+            # Audit correlation is part of the authorization binding. Never let
+            # the broker caller attach a valid consume to a different proposal,
+            # principal, operation, policy, registry, or resource snapshot.
+            expected_audit = {
+                "principal_binding": row["principal_binding"],
+                "proposal_id": row["proposal_id"],
+                "operation_id": row["broker_operation_id"],
+                "risk_class": row["risk_class"],
+                "policy_version": row["policy_version"],
+                "action_digest": row["action_digest"],
+                "task_id": row["task_id"],
+                "step_id": row["step_id"],
+                "registry_version": binding.get("registry_version"),
+                "registry_status": "resolved",
+            }
+            if (not isinstance(audit_context, Mapping)
+                or any(audit_context.get(key) != value for key, value in expected_audit.items())
+                or peer.get("origin") not in {"local", "remote", "extension", "system"}
+                or audit_context.get("origin") != peer.get("origin")):
+                self._db.execute("ROLLBACK")
+                return ConsumeResult("BINDING_MISMATCH")
+            if peer["origin"] == "remote":
+                if (audit_context.get("device_binding") != peer.get("device_binding")
+                    or audit_context.get("session_binding") != peer.get("session_binding")):
+                    self._db.execute("ROLLBACK")
+                    return ConsumeResult("BINDING_MISMATCH")
+            elif "device_binding" in audit_context or "session_binding" in audit_context:
+                self._db.execute("ROLLBACK")
+                return ConsumeResult("BINDING_MISMATCH")
             if row["ref_state"] == "CONSUMED":
                 cid = row["consumption_id"]
                 self._audit({**audit_context, "event_type":"policy_denied", "result_status":"denied",
