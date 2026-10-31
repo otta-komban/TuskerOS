@@ -185,12 +185,12 @@ The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86
 
 | ATLAS-01-FB-035 | 2026-10-31T08:08:14Z | `.github/workflows/atlas-package-resolver.yml` | Added CI fetch/verification of the pinned Fedora KIWI commit and three source blobs. Run 41183352032 passed 49 tests, live Fedora 44 DNF5 smoke and source lock verification; unified run 41183355869 passed all 8 jobs. | `f763cd56a382a31c6206f42a3ecd402f077bd13d` |
 
-**Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
+**Engineering status:** local immutable repository staging and KIWI overlay consumption are implemented and covered by CI. Owner-approved package inventory, a full Fedora repository sync, actual ISO/QCOW2 creation, repeat-build checksum comparison and VM validation remain open. These engineering subtasks are not coordinator response completions.
 
 ## Next actions
 
-1. Obtain reviewed package rows and dependency ownership confirmation from NOVA-02/NEXUS-07.
-2. Add immutable repository snapshot acquisition and digest verification before calling the image pipeline reproducible.
-3. Run current resolver/image-lock CI on the latest branch head.
-4. Run the build on a disposable Fedora 44 x86_64 builder, then execute PHOENIX's QEMU/UEFI ISO, QCOW2 and installer smoke matrix.
-5. Record artifact checksums and VM evidence without promoting untested Secure Boot or hardware claims.
+1. Obtain reviewed package rows and dependency ownership confirmation from NOVA-02/NEXUS-07; do not invent a package set.
+2. Capture approved Fedora 44 fedora/updates repository endpoints into the snapshot lock, review the Fedora signing-key identity, and extend the lock to cover all required metadata and RPM payload checksums.
+3. Run a full DNF5 reposync on a disposable Fedora 44 x86_64 builder and validate the local-only resolver and KIWI overlay against the actual snapshot.
+4. Execute the KIWI ISO and OEM/QCOW2 build, record artifact SHA-256 manifests, and perform a second build comparison.
+5. Run PHOENIX's QEMU/UEFI ISO, QCOW2 and installer smoke matrix; do not promote untested Secure Boot or hardware claims.
