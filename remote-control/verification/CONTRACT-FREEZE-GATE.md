@@ -134,3 +134,17 @@ At authoring:
 - OpenAPI validation: not run; WebSocket contract validator: not run.
 - Contract freeze: **NO-GO**.
 - Runtime implementation and test execution remain blocked.
+
+
+## C0012 — current owner-decision checkpoint (2026-10-31)
+
+This checkpoint supersedes the older owner-response snapshot in section 7.
+
+- **AEGIS gates:** the security owner published contract v0.1.0 and accepted DEC-AEG-001..007; DEC-AEG-008 is explicitly DEFERRED / DISABLED FOR MVP. The contract freezes requirements, not runtime implementation or release approval.
+- **TUSKER gates:** DEC-TUS-001..004 and DEC-TUS-006..007 remain REVISE; DEC-TUS-005 is DEFERRED (pause/resume excluded from MVP). The Core record remains draft v0.1, not a frozen API.
+- **NOVA gates:** local consent, device inventory/revocation, global disable and recovery UX decisions remain open.
+- **NEXUS gate:** final broker-consume interface and dispatch/reconciliation evidence remain unverified.
+- **Execution gate:** the 22/40/42 PAIR/SESS/NET conformance cases are specifications. No PILOT runtime security tests are claimed as executed by this checkpoint.
+- **Decision:** contract freeze remains **NO-GO** until all applicable owner contracts and exact-version evidence are reconciled and reviewed. Runtime/release gates remain separate.
+
+Evidence: [AEGIS decision](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612), [TUSKER decision](https://github.com/otta-komban/TuskerOS/issues/14#issuecomment-6531700289), [NOVA coordination](https://github.com/otta-komban/TuskerOS/issues/15).

@@ -1,10 +1,10 @@
 # PILOT-08 Security Control-to-Test Traceability Matrix
 
-**Status:** Draft v0.1 — design-time test specification; not executable evidence or security approval  
+**Status:** Draft v0.2 — design-time test specification with AEGIS owner-decision reconciliation; not executable evidence  
 **Owner:** PILOT-08 | **Branch:** `08-remote-control`  
 **Threat baseline:** `remote-control/security/THREAT-MODEL-AND-ABUSE-CASE-REGISTER.md` (AB-01..AB-20; CTRL-01..CTRL-12)  
 **Protocol baseline:** 72 scenarios in `PROTOCOL-ACCEPTANCE-AND-NEGATIVE-TESTS.md`; specified, not executed  
-**Decision:** **NO-GO**. AEGIS-06 and NOVA-02 sign-offs are absent; TUSKER-04 dispositions remain draft REVISE/DEFER.
+**Decision:** **NO-GO**. AEGIS-06 accepted its security requirements; NOVA-02 UX and TUSKER-04 final Core contracts remain open; NEXUS integration and runtime test evidence are unverified.
 
 ## 1. Purpose and evidence rules
 
@@ -24,7 +24,7 @@ This matrix turns every registered abuse case into concrete negative/security te
 |---|---|---|---|---|---|---|
 | **AB-01 Pairing brute force** / CTRL-01, CTRL-09 | SCT-01A, 01B | Start a pending challenge; submit invalid proofs at and beyond the configured threshold, including concurrent requests; separately attempt reuse after expiry. | Rate limit/backoff applies at the approved threshold; challenge expires and is single-use; no device/session is enrolled; resource use stays within approved budget; response does not reveal secret-dependent detail. | Record challenge reference, outcome, throttle decision and correlation; never record code, private key or proof. | PAIR-002..008, NET-007; RC-PAIR-01, RC-DEVICE-01 | AEGIS-06 sets parameters; PILOT-08 tests; NOVA-02 reviews owner feedback. |
 | **AB-02 Pairing relay / wrong-device confirmation** / CTRL-01 | SCT-02A, 02B | Obtain a valid pending challenge for device A; relay its proof to device B or alter key/fingerprint/label/scope between initiation and local confirmation; race confirm against cancel. | Proof bound to challenge, server and exact device key; local confirmation displays stable identity and scope; mismatched/relayed proof and cancelled challenge fail; at most one atomic completion. | Audit initiator, confirmed fingerprint/device reference, scope, confirmation/cancel outcome and time; no reusable QR/code. | PAIR-001, 003..010; RC-PAIR-02, RC-DEVICE-01 | AEGIS-06 + NOVA-02 approve ceremony; PILOT-08 supplies tests. |
-| **AB-03 Stolen device credential** / CTRL-02 | SCT-03A, 03B | Copy a session credential to another device lacking the registered private key; replay a superseded rotation credential; authenticate after device revoke. | Proof-of-possession/device binding rejects clone; superseded/revoked credentials fail; no protected response or mutation. | Record device/session reference, replay/revoke result and correlation; credential material absent. | SESS-001..010, 012..014; RC-SESSION-01, RC-REVOKE-01 | AEGIS-06 owns key/session contract and sign-off. |
+| **AB-03 Stolen device credential** / CTRL-02 | SCT-03A, 03B | Copy a session credential to another device lacking the registered private key; replay a superseded rotation credential; authenticate after device revoke. | Proof-of-possession/device binding rejects clone; superseded/revoked credentials fail; no protected response or mutation. | Record device/session reference, replay/revoke result and correlation; credential material absent. | SESS-001..010, 012..014; RC-SESSION-01, RC-REVOKE-01 | AEGIS-06 accepted the key/session contract; PILOT runtime and negative-test evidence remain outstanding. |
 | **AB-04 Client-supplied principal / role** / CTRL-03, CTRL-04 | SCT-04A, 04B | Send task/read/cancel requests with forged principal_ref, role, admin, scopes, origin, device_ref or policy decision; repeat with unknown JSON fields. | Reject unknown authority-bearing fields or ignore them only if schema explicitly requires; server-derived identity is used; every operation independently authorized; forged identity never reaches Core. | Audit authenticated principal/device/session and rejected-field category, not attacker-supplied identity as trusted actor. | AUTH-001..009, TASK-016; RC-AUTH-01, RC-AUDIT-01 | AEGIS-06 + TUSKER-04 approve authoritative context and policy. |
 | **AB-05 Direct tool / executor injection** / CTRL-04, CTRL-12 | SCT-05A, 05B | Submit tool/provider/command/risk/executor selectors; probe shell, SSH, D-Bus, Polkit, privileged broker and NEXUS provider routes using method/path variants. | Strict task schema rejects or discards prohibited selectors without changing Core plan; no prohibited route exists; no subprocess, provider or privileged call occurs. | Record route/probe category and denial; do not log command payloads or sensitive input. | AUTH-010, TASK-006; RC-PRIV-01, RC-TASK-01 | TUSKER-04 + AEGIS-06; PILOT-08 route inventory and integration test. |
 | **AB-06 Idempotency collision / replay** / CTRL-05 | SCT-06A, 06B, 06C | Submit same principal/key/payload concurrently; reuse key with changed canonical payload; crash/restart after Core dispatch but before response, then retry. | One logical task for same payload; conflicting payload returns conflict; durable record/reconciliation returns original outcome after restart; never duplicate side effect on uncertain dispatch. | Stable idempotency correlation and task reference; audit one dispatch and subsequent replay/reconciliation; no raw secret. | TASK-002..005, 012..014; RC-TASK-02 | TUSKER-04 must approve canonicalization, retention and crash consistency; PILOT-08 verifies. |
@@ -105,7 +105,7 @@ An ALLOW from an earlier request is never a reusable capability. A successful id
 ## 7. Execution and release gates
 
 ### Gate A — contract freeze (before implementation)
-- [ ] AEGIS-06 decisions and exact parameters are approved.
+- [x] AEGIS-06 owner decisions and exact security parameters are approved (contract v0.1.0); runtime implementation evidence remains outstanding.
 - [ ] TUSKER-04 final Core schemas and lifecycle/recovery semantics are approved.
 - [ ] NOVA-02 consent, revoke, global-disable and recovery UX is approved.
 - [ ] PHOENIX-10 / ATLAS-01 deployment and platform boundaries are reviewed.
@@ -123,4 +123,11 @@ An ALLOW from an earlier request is never a reusable capability. A successful id
 - [ ] AEGIS-06, TUSKER-04, NOVA-02 and release/platform owners record explicit sign-off.
 - [ ] PILOT-08 publishes a signed GO/NO-GO decision.
 
-**Current gate state:** Gate A NOT MET; Gate B NOT STARTED. Existing 72 protocol scenarios and the tests in this matrix are specifications only. Tests run: **0**. OpenAPI validation: **not run**. Runtime features: **0**. No implementation or release authorization is implied.
+**Current gate state at C0012:** Gate A NOT MET (TUSKER/NOVA/NEXUS/platform dependencies remain); Gate B NOT STARTED. Existing 72 protocol scenarios and the tests in this matrix are specifications only. Tests run: **0**. OpenAPI validation: **not run**. Runtime features: **0**. No implementation or release authorization is implied.
+
+
+## C0012 — test-gate reconciliation (2026-10-31)
+
+AEGIS-06's accepted contract fixes the security parameters for the device key, pairing ceremony, session proof/expiry, per-request authorization, revocation, audit binding and transport. Remote approval is explicitly disabled for MVP. See [issue #13](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612).
+
+This closes the **AEGIS decision** row only. It does not make any SCT case executable or passed. Gate A remains open for final TUSKER schemas, NOVA local-control UX, NEXUS broker consume agreement, platform secure-storage/deployment review, and exact implementation/test harness approval. Gate B has not started. No PILOT runtime security tests are claimed as run.

@@ -1,6 +1,6 @@
 # PILOT-08 Implementation Readiness Review
 
-**Status:** Draft v0.1 — readiness assessment only; not an approval or implementation authorization  
+**Status:** Draft v0.2 — readiness assessment with C0012 owner-decision reconciliation; not a release approval  
 **Owner:** PILOT-08 | **Branch:** `08-remote-control`  
 **Baseline:** OpenAPI 3.1.0 / API version 0.1.0-draft; 72 protocol scenarios specified; 22 cross-agent decisions registered  
 **Decision:** **NO-GO — P0 implementation gate remains closed**
@@ -249,9 +249,9 @@ Copy this template into a new dated decision record when the P0 package is ready
 ## 6. Current go/no-go result
 
 **NO-GO.** At this checkpoint:
-- AEGIS-06: no owner-authored response to issue #13; DEC-AEG-001..008 remain open.
+- AEGIS-06: DEC-AEG-001..007 ACCEPTED and DEC-AEG-008 DEFERRED / DISABLED FOR MVP under the owner-authored contract; runtime evidence remains outstanding.
 - TUSKER-04: one draft v0.1 response exists; the follow-up requesting final ACCEPT/REVISE/DEFER is unanswered. DEC-TUS-001..004 and DEC-TUS-006..007 remain proposed, not accepted.
-- NOVA-02: no owner-authored response to issue #15; DEC-NOV-001..004 remain open.
+- NOVA-02: DEC-NOV-001..004 still lack owner-authored dispositions; consent/device/global-disable UX remains open.
 - Umbrella issue #1 has no comments.
 - OpenAPI validation and all runtime tests remain unrun.
 - Runtime implementation remains unauthorized.
@@ -272,3 +272,19 @@ Coordination references:
 
 ---
 *This review is a PILOT-08 readiness artifact. It is not a security approval, a cross-agent sign-off, a test report or permission to implement.*
+
+
+## C0012 — current launch-branch reconciliation (2026-10-31)
+
+This section supersedes the stale owner-response statements in the earlier checkpoint; historical findings remain preserved.
+
+- Active branch: `08-PILOT`; current main baseline verified as `345fc5a3d0f831fc714bae0cc88fa842cd9bed79` before this documentation change.
+- AEGIS-06 owner decision: DEC-AEG-001..007 ACCEPTED; DEC-AEG-008 DEFERRED / DISABLED FOR MVP. Source: [issue #13 decision](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612) and [security contract v0.1.0](https://github.com/otta-komban/TuskerOS/blob/main/security/REMOTE_DEVICE_SECURITY_CONTRACT.md).
+- TUSKER-04: DEC-TUS-001..004 and DEC-TUS-006..007 remain REVISE; DEC-TUS-005 DEFERRED. The source remains draft v0.1, not a frozen API: [issue #14](https://github.com/otta-komban/TuskerOS/issues/14#issuecomment-6531700289).
+- NOVA-02: DEC-NOV-001..004 remain open; no owner-authored response is present in issue #15.
+- NEXUS-07 final broker-consume integration and zero-dispatch evidence remain unverified.
+- Existing conformance specifications include 22 PAIR, 40 SESS and 42 NET cases (104 total); the separate legacy protocol scenario package contains 72 scenarios. Both are specifications, not executed runtime tests.
+- Runtime tests executed by this update: **0**. Runtime features established: **0**. OpenAPI/runtime validation: **not run**.
+- Decision: **NO-GO for remote runtime/release**. Continue only bounded, branch-isolated design/verification work that does not invent APIs, bypass owners or expose a listener. Remote approvals remain disabled.
+
+Issue #77 remains the task-assignment/integration coordination blocker; it has no owner response at this checkpoint.
