@@ -42,7 +42,7 @@ python remote-control/verification/validate_conformance_specs.py --root /path/to
 
 The result contains `ok`, `scope`, and `runtime_security_tested`. The latter is
 always `false`: a successful result means only that the documentation tables passed
-the structural checks. A validation failure exits with status 1.
+the structural checks. A validation failure (including unreadable files and invalid UTF-8) exits with status 1.
 
 ## Run the validator's unit tests
 
