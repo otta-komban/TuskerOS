@@ -105,3 +105,7 @@ losing caller receives a version/transition conflict, and the event stream and
 snapshot advance together by one. These tests validate local compare-and-swap
 behavior only; a production adapter must pass the same conformance suite using
 its durable transaction boundary.
+
+## Replay event vocabulary
+
+Replay rejects any event whose `type` is absent or outside the Core draft event enum, matching the write-side event-type guard. This is fail-closed validation, not a change to the shared draft schema.

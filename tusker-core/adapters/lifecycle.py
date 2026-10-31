@@ -277,6 +277,9 @@ class LifecycleEngine:
             raise LifecycleError("event stream must begin with task.created in queued state")
         previous_state = "queued"
         for index, event in enumerate(events):
+            event_type = event.get("type")
+            if event_type not in ALLOWED_EVENT_TYPES:
+                raise LifecycleError("event stream contains an unknown event type")
             state = event.get("state")
             if state not in TASK_STATES:
                 raise LifecycleError("event stream contains an unknown task state")
