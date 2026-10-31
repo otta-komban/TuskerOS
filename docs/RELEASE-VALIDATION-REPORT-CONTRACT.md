@@ -44,7 +44,7 @@ The JSON Schema checks field shape and allowed values. A semantic validator must
 7. The finish timestamp is not earlier than the start timestamp; per-check times, when present, fall within the report interval.
 8. Duplicate `check_id` values are rejected unless a future schema version defines explicit attempt identifiers and aggregation rules.
 
-The semantic validator also rejects duplicate JSON object member names at every nesting level. This prevents parser-dependent ambiguity where one consumer uses the first occurrence and another uses the last. The overall-status derivation above is deliberately stricter than JSON Schema's structural constraints. Consumers must not treat a user-supplied `overall_status` or summary counter as authoritative without recomputing it.
+The semantic validator also rejects duplicate JSON object member names at every nesting level and rejects non-standard numeric constants (`NaN`, `Infinity` and `-Infinity`). This prevents parser-dependent ambiguity where one consumer uses the first occurrence and another uses the last, and ensures inputs conform to JSON rather than Python's permissive decoder extensions. The overall-status derivation above is deliberately stricter than JSON Schema's structural constraints. Consumers must not treat a user-supplied `overall_status` or summary counter as authoritative without recomputing it.
 
 ## Promotion use
 
@@ -61,6 +61,7 @@ Do not include secrets, signing private keys, authorization tokens, raw disk ide
 - Reject empty check arrays and zero total counts.
 - Semantic validator rejects mismatched summary counters and incorrect overall status.
 - Semantic validator rejects any check bound to a different manifest digest.
+- Strict JSON parsing rejects duplicate object keys and non-standard numeric constants.
 - Evidence verifier rejects missing references and byte/hash mismatches.
 - Semantic validator rejects reversed timestamps and duplicate check IDs.
 - A blocked or not-run required check must prevent a passed overall status.
