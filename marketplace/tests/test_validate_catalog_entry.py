@@ -108,6 +108,20 @@ class CatalogEntryValidationTests(unittest.TestCase):
                 entry[section][field] = "http://example.invalid/resource"
                 self.assertTrue(any(f"$.{section}.{field}" in e for e in validate_catalog_entry(entry)))
 
+
+    def test_whitespace_only_text_and_oversized_compatibility_ranges_rejected(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["package"]["name"] = "   "
+        self.assertTrue(any("$.package.name" in e for e in validate_catalog_entry(entry)))
+        entry = copy.deepcopy(self.fixture)
+        entry["compatibility"]["api"]["min"] = "x" * 65
+        self.assertTrue(any("$.compatibility.api.min" in e for e in validate_catalog_entry(entry)))
+
+    def test_compatibility_ranges_reject_unknown_fields(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["compatibility"]["api"]["unexpected"] = "1.0"
+        self.assertTrue(any("$.compatibility.api.unexpected" in e for e in validate_catalog_entry(entry)))
+
     def test_duplicate_tags_rejected(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["tags"] = ["same", "same"]
