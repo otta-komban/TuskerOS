@@ -49,6 +49,14 @@ class CatalogResolverTests(unittest.TestCase):
                 with self.assertRaisesRegex(CatalogResolutionError, "max 64"):
                     parse_compat_version(value)
 
+    def test_direct_release_parser_enforces_schema_length_bound(self):
+        from marketplace.tools.catalog_resolver import parse_release_version
+        maximum = "1" * 124 + ".0.0"
+        self.assertEqual(len(maximum), 128)
+        self.assertEqual(parse_release_version(maximum).major, int("1" * 124))
+        with self.assertRaisesRegex(CatalogResolutionError, "max 128"):
+            parse_release_version("1" * 125 + ".0.0")
+
     def test_release_versions_order_numerically(self):
         self.assertLess(parse_release_version("1.9.0"), parse_release_version("1.10.0"))
 
