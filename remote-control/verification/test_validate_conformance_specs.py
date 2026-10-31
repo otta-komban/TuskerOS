@@ -126,7 +126,7 @@ class ValidateSpecTests(unittest.TestCase):
 
     def test_multiple_duplicate_ids_report_all_lines_in_stable_id_order(self):
         markdown = (
-            "| PAIR-C02 | First C02 condition | First C02 assertion |\\n"
+            "| PAIR-C02 | First C02 condition | First C02 assertion |\n"
             "| PAIR-C01 | First C01 condition | First C01 assertion |\\n"
             "| PAIR-C02 | Second C02 condition | Second C02 assertion |\\n"
             "| PAIR-C01 | Second C01 condition | Second C01 assertion |\\n"
