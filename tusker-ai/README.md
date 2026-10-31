@@ -10,7 +10,7 @@ python -m pip install -r requirements-test.txt
 PYTHONPATH=. python -m pytest -q tests
 ```
 
-The suite uses deterministic provider tests, a local HTTP protocol fixture, and mocked download byte streams. It validates request guards, stream invariants, trace redaction, download verification, cancellation cleanup, path policy, and atomic active-pointer replacement. It does **not** prove live Ollama compatibility, hardware resource enforcement, or crash-recovery behavior.
+The suite uses deterministic provider tests, a local HTTP protocol fixture, and mocked download byte streams. It validates request guards, stream invariants, trace redaction, download verification, cancellation cleanup, path policy, atomic active-pointer replacement, and read-only model-store recovery inspection. It does **not** prove live Ollama compatibility, hardware resource enforcement, or automated crash recovery.
 
 ## Optional live Ollama conformance
 
@@ -36,7 +36,8 @@ The endpoint is constrained to loopback. The script sends a fixed, non-sensitive
 ## Security and limits
 
 - Model downloads require explicit consent and an injected authorization callback. The default callback denies; production must bind it to the approved AEGIS policy interface before enabling installation.
-- The initial ModelStore supports one HTTPS file per manifest and requires approved license metadata, a declared size, and SHA-256. It stages privately, verifies bytes, makes the artifact read-only, and atomically replaces an active-revision pointer. It is not yet a crash-journaled multi-file transaction manager and does not implement startup reconciliation or post-activation provider health rollback.
+- The initial ModelStore supports one HTTPS file per manifest and requires approved license metadata, a declared size, and SHA-256. It stages privately, verifies bytes, makes the artifact read-only, and atomically replaces an active-revision pointer.
+- `inspect_recovery()` provides a read-only startup inventory of abandoned staging entries, activation temporary/rollback files, invalid or digest-failing active pointers, orphaned immutable revisions, and unsafe filesystem entries. It deliberately does not delete or rewrite anything. Call it with concurrent installers stopped; automated repair and crash-journaled multi-file transactions are not implemented.
 - Runtime limits cover input size, output/context ceilings, request deadlines, concurrency, and an optional minimum available-memory reserve. The memory reserve is admission control, not a hard cap on a shared Ollama process. Hard process memory/CPU enforcement must be supplied by the packaged service/cgroup boundary (ATLAS integration).
 - Cancellation is request-scoped at the adapter boundary; precise Ollama server cancellation semantics remain unknown until live conformance. The adapter never kills the shared daemon. Reads are bounded by a short socket timeout, so cancellation responsiveness is bounded by provider read behavior.
 - Traces log only request ID, provider/model IDs, sequence, event type and elapsed time. Prompt text, generated deltas, credentials, environment values and raw provider error bodies are excluded.
