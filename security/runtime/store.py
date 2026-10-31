@@ -59,6 +59,10 @@ class SecurityStore:
                 descriptor_stat = os.fstat(database_fd)
                 if not stat.S_ISREG(descriptor_stat.st_mode):
                     raise SecurityStoreError("security database must be a regular file")
+                # A hard link would let another pathname expose or mutate the
+                # same security state. Reject it before chmod or SQLite writes.
+                if descriptor_stat.st_nlink != 1:
+                    raise SecurityStoreError("security database must not have hard links")
                 os.fchmod(database_fd, 0o600)
             except OSError as exc:
                 if database_fd is not None:
@@ -71,6 +75,7 @@ class SecurityStore:
                     descriptor_stat = os.fstat(database_fd)
                     path_stat = os.stat(self.path, follow_symlinks=False)
                     if (not stat.S_ISREG(path_stat.st_mode)
+                            or path_stat.st_nlink != 1
                             or (descriptor_stat.st_dev, descriptor_stat.st_ino)
                             != (path_stat.st_dev, path_stat.st_ino)):
                         self._db.close()
