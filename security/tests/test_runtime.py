@@ -1496,7 +1496,7 @@ def test_consume_commit_failure_is_reconcilable_without_issuing_grant():
         # The injected failure happened before SQLite committed. Reconciliation
         # is authoritative and reports the persisted reference as still ISSUED;
         # the tentative consumption identifier is not disclosed as committed.
-        reconciled = db.reconcile(ref, peer_credentials=PEER)
+        reconciled = db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42})
         assert reconciled.outcome == "ISSUED"
         assert reconciled.consumption_id is None
         assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "APPROVED"
