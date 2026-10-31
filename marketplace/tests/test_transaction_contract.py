@@ -87,5 +87,60 @@ class TransactionContractTests(unittest.TestCase):
                               "a" * 64, "b" * 64, "prepared", {"package_count": -1})
 
 
+    def test_audit_event_requires_lowercase_sha256_digests(self):
+        for field in ("plan_digest", "snapshot_digest"):
+            for invalid in ("not-a-digest", "A" * 64, "a" * 63, "a" * 65):
+                values = {"plan_digest": "a" * 64, "snapshot_digest": "b" * 64}
+                values[field] = invalid
+                with self.subTest(field=field, value=invalid):
+                    with self.assertRaisesRegex(TransactionContractError, "lowercase SHA-256"):
+                        build_audit_event("txn-1", "2026-10-31T12:00:00Z", "user", "previewed",
+                                          values["plan_digest"], values["snapshot_digest"], "ok")
+
+    def test_audit_event_requires_rfc3339_timestamp_with_timezone(self):
+        for invalid in ("2026-10-31", "2026-10-31T12:00:00", "not-a-time",
+                        "2026-02-30T12:00:00Z", "2026-10-31T12:00Z"):
+            with self.subTest(value=invalid):
+                with self.assertRaisesRegex(TransactionContractError, "RFC 3339"):
+                    build_audit_event("txn-1", invalid, "user", "previewed",
+                                      "a" * 64, "b" * 64, "ok")
+
+    def test_audit_event_accepts_rfc3339_utc_and_offset_timestamps(self):
+        for timestamp in ("2026-10-31T12:00:00Z", "2026-10-31t12:00:00+05:30",
+                          "2026-10-31T12:00:00.123-04:00"):
+            with self.subTest(value=timestamp):
+                event = build_audit_event("txn-1", timestamp, "user", "previewed",
+                                          "a" * 64, "b" * 64, "ok")
+                self.assertEqual(event["timestamp"], timestamp)
+
+    def test_audit_detail_types_match_schema(self):
+        invalid_details = (
+            {"package_count": "2"},
+            {"package_count": True},
+            {"duration_ms": 2.5},
+            {"reason_code": 7},
+            {"error_code": False},
+            {"rollback_status": "succeeded"},
+        )
+        for details in invalid_details:
+            with self.subTest(details=details):
+                with self.assertRaises(TransactionContractError):
+                    build_audit_event("txn-1", "2026-10-31T12:00:00Z", "user", "previewed",
+                                      "a" * 64, "b" * 64, "ok", details)
+
+    def test_audit_detail_strings_obey_schema_maximum(self):
+        for key in ("reason_code", "error_code"):
+            with self.subTest(key=key):
+                with self.assertRaisesRegex(TransactionContractError, "too long"):
+                    build_audit_event("txn-1", "2026-10-31T12:00:00Z", "user", "previewed",
+                                      "a" * 64, "b" * 64, "ok", {key: "x" * 129})
+
+    def test_audit_rollback_status_matches_schema_enum(self):
+        event = build_audit_event("txn-1", "2026-10-31T12:00:00Z", "user", "rollback",
+                                  "a" * 64, "b" * 64, "ok",
+                                  {"rollback_status": "rolled_back"})
+        self.assertEqual(event["details"]["rollback_status"], "rolled_back")
+
+
 if __name__ == "__main__":
     unittest.main()
