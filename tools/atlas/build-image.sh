@@ -185,7 +185,7 @@ metadata = {
     "reproducibility_limitations": [
         "Fedora 44 fedora/updates endpoints do not publish repomd.xml.asc at the inspected official URLs; metadata integrity is enforced by the committed repomd digest and every referenced payload SHA-256, not detached metadata signatures",
         "DNF5 and KIWI enforce RPM package signatures using the Fedora 44 primary key; the key fingerprint is not separately recorded in the snapshot lock",
-        "RPM payload checksums are not yet recorded in the package lock",
+        "RPM payload SHA-256 is checked against the package manifest; Fedora signing-key fingerprint is not separately pinned in the repository snapshot lock",
         "Fedora repository metadata and RPM signatures are enforced by DNF5 and KIWI using the Fedora 44 primary key; the trusted key fingerprint is not separately recorded in the repository lock",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
     ],
