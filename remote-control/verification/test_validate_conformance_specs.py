@@ -111,11 +111,11 @@ class ValidateSpecTests(unittest.TestCase):
 
     def test_duplicate_case_diagnostic_includes_all_source_lines(self):
         markdown = (
-            "| PAIR-C01 | First condition | First assertion |\\n"
-            "| PAIR-C01 | Second condition | Second assertion |\\n"
+            "| PAIR-C01 | First condition | First assertion |\n"
+            "| PAIR-C01 | Second condition | Second assertion |\n"
         )
         with self.assertRaisesRegex(
-            validator.SpecError, r"PAIR-C01 \\(lines 1, 2\\)"
+            validator.SpecError, r"PAIR-C01 \(lines 1, 2\)"
         ):
             validator.validate_spec(markdown, "PAIR", 1)
 
