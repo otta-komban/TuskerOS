@@ -24,6 +24,6 @@ Current verified count: 16
 
 | 15 | ATLAS-01-C0015 | P1 | status | recorded | Resumed Fedora base-image work; verified branch comparison, 49-test/8-job CI evidence, pinned KIWI source and still-open NOVA/NEXUS package handoffs; no package rows or build claims added |
 
-| 16 | ATLAS-01-C0016 | P1 | implementation | partial | Added Fedora repository snapshot capture/preflight, manifest snapshot binding, build gate and 20+ regression checks; ATLAS CI run 41185807444 passed 70 tests plus live Fedora 44 DNF5 smoke on `9cc6ebc`; KIWI/DNF snapshot consumption, metadata signatures, RPM checksums and actual image build remain open |
+| 16 | ATLAS-01-C0016 | P1 | implementation | partial | Added Fedora repository snapshot capture/preflight, manifest snapshot binding, build gate and 20+ regression checks; ATLAS CI run 41185951919 passed 70 tests plus live Fedora 44 DNF5 smoke and unified run 41185951924 passed all 8 jobs on `8f594cb`; KIWI/DNF snapshot consumption, metadata signatures, RPM checksums and actual image build remain open |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
