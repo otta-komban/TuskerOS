@@ -148,5 +148,42 @@ class VerificationTests(unittest.TestCase):
                 MODULE.verify_lock(self.lock_path)
 
 
+class ManifestSnapshotBindingTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.manifest = Path(self.temporary.name) / "manifest.csv"
+        self.snapshot_id = f"fedora44/fedora/20261031/{hashlib.sha256(REPOMD).hexdigest()}"
+        self.indexed = {"fedora": {"snapshot_id": self.snapshot_id}}
+
+    def write_manifest(self, repository_id="fedora", snapshot_id=None):
+        snapshot_id = self.snapshot_id if snapshot_id is None else snapshot_id
+        self.manifest.write_text(
+            "layer,package,repository_id,repository_snapshot\\n"
+            f"base,bash,{repository_id},{snapshot_id}\\n",
+            encoding="utf-8",
+        )
+
+    def test_package_row_must_reference_exact_snapshot(self):
+        self.write_manifest()
+        self.assertEqual(MODULE.verify_manifest_snapshot_pins(self.manifest, self.indexed), 1)
+
+    def test_package_row_cannot_reference_unknown_repository(self):
+        self.write_manifest(repository_id="third-party")
+        with self.assertRaisesRegex(RuntimeError, "has no verified snapshot"):
+            MODULE.verify_manifest_snapshot_pins(self.manifest, self.indexed)
+
+    def test_package_row_cannot_reference_different_snapshot(self):
+        self.write_manifest(snapshot_id="fedora44/fedora/latest")
+        with self.assertRaisesRegex(RuntimeError, "does not match verified snapshot"):
+            MODULE.verify_manifest_snapshot_pins(self.manifest, self.indexed)
+
+    def test_empty_package_manifest_is_rejected_for_build(self):
+        self.manifest.write_text("layer,package,repository_id,repository_snapshot\\n", encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "has no rows"):
+            MODULE.verify_manifest_snapshot_pins(self.manifest, self.indexed)
+
+
+
 if __name__ == "__main__":
     unittest.main()
