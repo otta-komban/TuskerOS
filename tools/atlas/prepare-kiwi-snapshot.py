@@ -78,8 +78,11 @@ def prepare_overlay(description_root: Path, snapshot_root: Path, lock_path: Path
         repository_path = (snapshots / repository_id).resolve(strict=True)
         if not repository_path.is_relative_to(snapshots):
             raise RuntimeError(f"{repository_id}: local repository path escapes snapshot root")
-        if not (repository_path / "repodata" / "repomd.xml").is_file():
+        repodata_path = repository_path / "repodata"
+        if not (repodata_path / "repomd.xml").is_file():
             raise RuntimeError(f"{repository_id}: local snapshot lacks repodata/repomd.xml")
+        if not (repodata_path / "repomd.xml.asc").is_file():
+            raise RuntimeError(f"{repository_id}: local snapshot lacks repodata/repomd.xml.asc")
         source.set("path", repository_path.as_uri())
         source.attrib.pop("sourcetype", None)
         output[repository_id] = repository_path.as_uri()
