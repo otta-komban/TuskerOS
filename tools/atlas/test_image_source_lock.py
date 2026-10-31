@@ -16,7 +16,7 @@ class ImageSourceLockTests(unittest.TestCase):
         self.assertEqual(source["ref"], "f44")
         self.assertRegex(source["commit"], r"^[0-9a-f]{40}$")
         self.assertEqual(source["license"], "GPL-3.0-or-later")
-        self.assertFalse(source["commit_signature_verified"])
+        self.assertFalse(LOCK["provenance"]["upstream_commit_signature_verified"])
 
     def test_upstream_files_have_git_blob_identities(self):
         source = LOCK["source"]
