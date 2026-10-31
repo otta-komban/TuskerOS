@@ -105,6 +105,48 @@ def test_create_approval_rejects_mismatched_audit_context(field, value):
         db.close()
 
 
+@pytest.mark.parametrize("overrides", [
+    {"policy_version": 7},
+    {"risk_class": []},
+    {"task_id": 1},
+    {"step_id": {}},
+    {"action_digest": 7},
+    {"principal_binding": 7},
+    {"binding": None},
+    {"audit_context": None},
+    {"expires_at": "2026-10-31T06:02:00Z"},
+    {"now": "2026-10-31T06:00:00Z"},
+    {"action_id": "a" * 161},
+    {"broker_operation_id": "b" * 161},
+])
+def test_create_approval_rejects_malformed_typed_inputs_with_security_error(overrides):
+    db = store()
+    try:
+        proposal_id = str(uuid.uuid4())
+        args = {
+            "action_id": "system.disk.erase",
+            "broker_operation_id": "broker.disk.erase",
+            "action_digest": D4,
+            "proposal_id": proposal_id,
+            "principal_binding": D1,
+            "policy_version": "policy-1",
+            "risk_class": "R3",
+            "task_id": "task-1",
+            "step_id": "step-1",
+            "binding": BINDING,
+            "expires_at": NOW + timedelta(minutes=2),
+            "audit_context": audit(proposal_id=proposal_id),
+            "now": NOW,
+        }
+        args.update(overrides)
+        with pytest.raises(SecurityStoreError):
+            db.create_approval(**args)
+        assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
 def test_jcs_unicode_vectors_and_reject_invalid_subset():
     assert canonical_bytes({"name": "é"}).hex() == "7b226e616d65223a22c3a9227d"
     assert digest({"name": "é"}) == "sha256:2f16b8477146a1b2ba7d6bb7cf7c9979c191cc2838a107dbf5f0d920b4cb3ba1"
