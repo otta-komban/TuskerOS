@@ -36,4 +36,4 @@ Current verified count: 20
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
 
-| 21 | ATLAS-01-C0021 | P1 | implementation | partial | KIWI build outputs now use a collision-resistant per-run directory; each ISO/QCOW2 build target clears stale result/intermediate directories before execution. Two regression tests added. ATLAS run 41197460809 resolver-tests passed 92 tests; unified run 41197460810 passed 8/8. Fedora 44 DNF5 smoke was still in progress at log time; no full reposync/image build. |
+| 21 | ATLAS-01-C0021 | P1 | implementation | partial | KIWI build outputs now use a collision-resistant per-run directory; each ISO/QCOW2 build target clears stale result/intermediate directories before execution. Two regression tests added. ATLAS run 41197460809 passed 92 tests, Fedora 44 DNF5 5.4.3.0 queryformat/RPM-location smoke and pinned-source KIWI overlay integration; unified run 41197460810 passed 8/8. No full reposync/image build. |

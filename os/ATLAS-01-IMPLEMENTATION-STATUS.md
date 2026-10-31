@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `3d2755b88cf94d9fbf20404b19e1555fe94800d8` (ATLAS resolver test job passed 92 tests including build-output isolation regressions; unified validation passed all 8 jobs; Fedora 44 DNF5 smoke was still in progress at log time).  
+**Latest code/test evidence head:** `3d2755b88cf94d9fbf20404b19e1555fe94800d8` (ATLAS CI passed 92 tests, Fedora 44 DNF5 5.4.3.0 queryformat/RPM-location smoke, reposync plugin/key checks and pinned-source KIWI overlay integration; unified validation passed all 8 jobs).  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -41,8 +41,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest code/test head: 3d2755b88cf94d9fbf20404b19e1555fe94800d8; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 173 ahead / 0 behind main.
-- ATLAS run [41197460809](https://github.com/otta-komban/TuskerOS/actions/runs/41197460809): resolver-tests job passed **92 tests**, including the two new output-isolation regressions; Fedora 44 DNF5 smoke was still in progress at log time.
+- Latest code/test head: 3d2755b88cf94d9fbf20404b19e1555fe94800d8; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 175 ahead / 0 behind main.
+- ATLAS run [41197460809](https://github.com/otta-komban/TuskerOS/actions/runs/41197460809): resolver-tests job passed **92 tests**, including the two new output-isolation regressions; Fedora 44 DNF5 5.4.3.0 smoke passed, including a real repoquery result with RPM location.
 - Unified validation [41197460810](https://github.com/otta-komban/TuskerOS/actions/runs/41197460810) passed all 8 jobs on exact code head `3d2755b88cf94d9fbf20404b19e1555fe94800d8`.
 - Build script now allocates a unique `mktemp` run directory and clears each target's prior output/intermediate directories before starting, preventing stale ISO/QCOW2 files from passing artifact existence checks.
 - The package manifest remains empty pending NOVA-02/NEXUS-07. No full reposync or image build has been run.
@@ -114,7 +114,7 @@
 ## Latest build-output isolation hardening
 
 - `build-image.sh` now creates a collision-resistant per-run directory with `mktemp -d`; `build_pair` removes prior ISO/disk bundles and KIWI intermediate directories before building. This prevents stale artifacts from satisfying post-build checks after a retry or timestamp collision.
-- Two static regression tests cover unique run directories and stale-output cleanup. ATLAS resolver test job passed 92 tests; unified validation passed 8/8. Fedora 44 DNF5 smoke was pending at the time of this status update.
+- Two static regression tests cover unique run directories and stale-output cleanup. ATLAS run 41197460809 passed 92 tests, Fedora 44 DNF5 queryformat/RPM-location smoke, reposync plugin/key checks and pinned-source KIWI overlay integration; unified run 41197460810 passed all 8 jobs.
 
 ## Image/build/runtime status
 
