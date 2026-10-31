@@ -18,3 +18,12 @@ Completed a source-level required/nullable/conditional field audit of active aud
 NEXUS-07 clarified event ownership: AEGIS owns approval/presentation/expiry/invalidation/revocation/consume events; NEXUS owns dispatch/provider-operation/execution-reconciliation events; TUSKER owns task/step lifecycle events. NEXUS prefers explicit event types and one reconciliation-completed event with a typed outcome. These are design-level owner statements, not producer implementation evidence or schema migration approval.
 
 **Disposition:** field-level P1.2 source-review subtask complete. Overall P1.2 remains **in progress** pending NOVA-02 presentation/dismissal confirmation, TUSKER-04 correlation/nullability agreement, Chief Architect approval of vocabulary/versioned changes, and producer ownership/timing details. No shared schema or runtime behavior changed; no tests were run. Privileged execution remains blocked.
+
+
+## 11. Legacy security patch review and selective port — 2026-10-31
+
+Reviewed security-relevant patches on divergent legacy branch `06-security-gatekeeper` individually; no merge or blind cherry-pick. Ported broker authorization gate fail-closed checks, audit-chain SQLite-error handling, and strict audit reason-code validation, with focused regression tests. Confirmed the legacy rate-limit denial, hard-link descriptor protection, explicit-boolean verifier checks, and failed-initialization connection cleanup are already present on `06-AEGIS`; did not duplicate them. Rejected a legacy test patch that introduced a duplicate Python test-function name.
+
+**Verification:** GitHub Actions unified validation run `41221036114` completed successfully at exact head `637ffe32738d355d61483b32da0faaafad77df27`; the `Security contract validation` job ran `python -m pytest -q security/tests` and passed. This confirms the security suite on that head; it does not certify a production privileged broker or approve privileged execution.
+
+**Disposition:** selective port complete. Further legacy history remains excluded unless reviewed patch-by-patch. Privileged execution remains blocked pending the cross-agent interface and release-gate evidence.
