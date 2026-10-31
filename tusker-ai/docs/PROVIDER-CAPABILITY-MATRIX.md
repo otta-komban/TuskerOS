@@ -61,7 +61,7 @@ The runtime validates those invariants and keeps prompts, generated text, creden
 
 ### Model-store contract
 
-The proposal requires explicit user consent, bounded staging, safe archive handling, exact file-set/size/digest verification, atomic active-revision replacement, rollback, request cancellation, cleanup containment, and deterministic startup reconciliation. The current implementation supports a single file, verifies size and digest before activation, makes the staged artifact read-only, atomically replaces the active pointer, supports post-install digest re-verification, and blocks active-revision removal.
+The proposal requires explicit user consent, bounded staging, safe archive handling, exact file-set/size/digest verification, atomic active-revision replacement, rollback, request cancellation, cleanup containment, and deterministic startup reconciliation. The current implementation supports a single file, validates HTTPS DNS answers as globally routable, pins the TCP connection to the validated IP while retaining TLS hostname verification, disables environment proxies, validates every redirect, verifies size and digest before activation, makes the staged artifact read-only, atomically replaces the active pointer, supports post-install digest re-verification, and blocks active-revision removal.
 
 It is **not** yet a journaled multi-file transaction manager: startup reconciliation, crash-recovery proof, post-activation provider health rollback, and filesystem durability testing remain open. The managed-root and AEGIS authorization seam also require integration review.
 
@@ -75,7 +75,7 @@ It is **not** yet a journaled multi-file transaction manager: startup reconcilia
 | Runtime timeout, input/output/context bounds and concurrency | Implemented; unit tested |
 | Memory protection | Configurable available-memory admission reserve; not a hard cgroup/process cap |
 | Trace redaction and stream invariants | Implemented; unit tested |
-| Model download and SHA-256 verification | Implemented for one HTTPS file; byte stream currently unit-fixtured |
+| Model download and SHA-256 verification | Implemented for one HTTPS file; digest byte stream uses fixtures; DNS pinning and redirect policy have dedicated unit tests |
 | Staging and atomic active pointer | Implemented; unit tested |
 | Model cancellation and cleanup | Implemented; unit tested |
 | AEGIS authorization | Fail-closed callback seam only; production policy integration pending |
