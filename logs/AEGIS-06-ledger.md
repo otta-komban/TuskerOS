@@ -669,3 +669,17 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Additional commits:** current branch-comparison addendum `81fe136c150fbde212ff8f2116d9cca8963910a1`; schema-audit addendum `c966ba6e7aae51afde44db844f91743dba6ed5fd`.
 - **PR validation:** [Run 41167897563](https://github.com/otta-komban/TuskerOS/actions/runs/41167897563) passed 164 security tests in 3.42s on Python 3.12.
 - **Limits:** Reference-fixture CI is not evidence of production JCS, policy-engine, broker, durable audit or privileged handler behavior. NEXUS-07/TUSKER-04 implementation and end-to-end conformance remain release blockers.
+
+
+## C0059 — NEXUS public authorization-context provenance regression
+
+- **Visible-segment completion:** 11 / 100. This is the directly verified user-message/complete-assistant-response count for this visible segment; historical JSONL rows are not used to infer conversation pairs.
+- **Historical work/response record:** C0059 (JSONL contains 59 unique sequential records C0001–C0059).
+- **Engineering tasks completed:** 49 cumulative (+1 this response).
+- **Finding:** Re-fetched NEXUS-07 branch `07-system-integration` at `a0cc0a74242070135b6b7937bd7605c7861fe7d8`. Its public `system-integration/contracts/tool-invocation.schema.json` still declares optional top-level `authorization_context` as an arbitrary object (`additionalProperties: true`). The test suite lacks explicit caller-authority smuggling cases. This contradicts the earlier C0049 review note that the field had been removed; the prior claim is corrected.
+- **Cross-check:** `AUTHORIZATION_BOUNDARY.md` and `INTERFACE_CONTRACTS.md` describe trusted/opaque context, but the public schema does not encode provenance. No NEXUS runtime implementation or peer-authenticated consume boundary was verified.
+- **Owner coordination:** Posted correction and NEXUS-owned remediation request on [issue #17 comment 6539261475](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6539261475). Requested removal from public caller envelope or an unforgeable out-of-band/internal-only boundary, negative authority-field tests, and a positive authenticated-context adapter test.
+- **Changes:** Added SEC-INT-008 to `security/SCHEMA_CONSISTENCY_AUDIT.md` and `security/PHASE1_CHECKLIST.md`; no NEXUS-owned files changed.
+- **Commits:** audit `c24685980af1c6d35954b07e0d0df7055f138f7d`; checklist `5f8472d11013b097ea14b860046ff82af256c32b`; JSONL `1554cf04060a02d235ae7fd8e4ab82f1ab57552d`.
+- **Tests:** No tests run; this was a cross-branch source/schema review. No peer-credential binding, atomic consume-before-dispatch, or zero-handler-call behavior is claimed.
+- **Limits/blocker:** Provider mutations remain fail-closed pending NEXUS-owned provenance correction and runtime evidence. SEC-INT-008 is open.
