@@ -68,7 +68,7 @@ class QueryResultTests(unittest.TestCase):
     def test_expected_package_accepts_full_nevra(self):
         self.assertEqual(
             parse_query_matches(
-                "bash-0:5.2.26-3.fc44.x86_64\\tfedora", "bash"
+                "bash-0:5.2.26-3.fc44.x86_64\tfedora", "bash"
             ),
             ("bash-0:5.2.26-3.fc44.x86_64", "fedora"),
         )
@@ -76,7 +76,7 @@ class QueryResultTests(unittest.TestCase):
     def test_expected_package_rejects_similarly_prefixed_package(self):
         with self.assertRaisesRegex(RuntimeError, "outside requested name"):
             parse_query_matches(
-                "bash-completion-0:2.11-1.fc44.noarch\\tfedora", "bash"
+                "bash-completion-0:2.11-1.fc44.noarch\tfedora", "bash"
             )
 
 
