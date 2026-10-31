@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `f763cd56a382a31c6206f42a3ecd402f077bd13d` (PR head; 47 commits ahead / 0 behind `main`)  
+**Latest code/test evidence head:** `9cc6ebcd9567b6d1cb7f198bf9f45d7f442da5f4` (ATLAS CI passed 70 tests; branch 76 commits ahead / 0 behind `main`)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -25,6 +25,16 @@
 - Unit tests use mocked DNF5 output on Ubuntu, and a separate Fedora 44 container smoke now validates the real DNF5 queryformat and metadata fields. The production resolver still has not processed an owner-approved non-empty manifest.
 - Changed build metadata so a matching second build is reported as `repeat_build_checksum_comparison: passed`; `reproducible_build_claim` remains `false` until immutable repository metadata and RPM payload checksums are locked.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
+- Added `os/repository-snapshot.lock.json` and `tools/atlas/verify-repository-snapshot.py` to capture and preflight-check Fedora 44 `repomd.xml` plus primary metadata SHA-256 identities. The verifier rejects digest drift, malformed/unsafe metadata paths, non-HTTPS URLs and repository-origin escapes.
+- Added package-manifest snapshot binding: every build package row must reference the exact `snapshot_id` recorded for its repository in the lock.
+- Gated `build-image.sh` on repository snapshot preflight verification and recorded `repository_snapshot_consumed_by_kiwi: false`; this deliberately does not claim the later KIWI/DNF package download is already frozen to those bytes. Metadata signature verification, RPM payload checksums and actual KIWI consumption of an immutable local snapshot remain open.
+
+## Repository snapshot preflight
+
+- Lock: `os/repository-snapshot.lock.json`; it is intentionally empty until NOVA-02/NEXUS-07 approve package inputs and the selected Fedora repository endpoints are reviewed.
+- Capture reviewed endpoints with `python3 tools/atlas/verify-repository-snapshot.py --capture REPO_ID=REPOMD_URL --lock os/repository-snapshot.lock.json`. Repeat `--capture` for each approved repository in one invocation; the command fetches `repomd.xml` and its primary metadata and records SHA-256 identities.
+- Verify the committed lock and manifest pins with `python3 tools/atlas/verify-repository-snapshot.py --lock os/repository-snapshot.lock.json --manifest os/package-manifest.csv`.
+- Current verifier pins `repomd.xml` and primary metadata only, and uses HTTPS transport during capture; it does not verify Fedora GPG signatures or freeze the later KIWI/DNF downloads.
 
 ## Pull request
 
