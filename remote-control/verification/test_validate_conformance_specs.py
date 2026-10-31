@@ -355,5 +355,38 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertFalse(payload["runtime_security_tested"])
 
 
+    def test_text_cli_aggregates_mixed_specification_failures(self):
+        from contextlib import redirect_stderr, redirect_stdout
+        import io
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            pair_path = root / validator.SPECS["PAIR"][0]
+            sess_path = root / validator.SPECS["SESS"][0]
+            pair_path.parent.mkdir(parents=True, exist_ok=True)
+            sess_path.parent.mkdir(parents=True, exist_ok=True)
+            pair_path.write_bytes(bytes([255, 254]))
+            sess_path.write_text("", encoding="utf-8")
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                result = validator.main(["--root", temporary_root])
+
+        diagnostic = stderr.getvalue()
+        self.assertEqual(result, 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("FAIL repository validation failed", diagnostic)
+        self.assertIn("PAIR:", diagnostic)
+        self.assertIn("utf-8", diagnostic.lower())
+        self.assertIn("SESS:", diagnostic)
+        self.assertIn("SESS-C01", diagnostic)
+        self.assertIn("NET:", diagnostic)
+        self.assertIn("specification not found", diagnostic)
+        for prefix in ("PAIR", "SESS", "NET"):
+            self.assertNotIn(prefix + ": " + prefix + ":", diagnostic)
+        self.assertNotIn("Traceback", diagnostic)
+
+
 if __name__ == "__main__":
     unittest.main()
