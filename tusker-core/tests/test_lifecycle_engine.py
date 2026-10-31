@@ -175,6 +175,26 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, "task.created"):
             self.engine.replay(task_id)
 
+    def test_replay_rejects_malformed_event_envelope_fields(self):
+        task_id = self.task["task_id"]
+        event = self.store._events[task_id][0]
+        invalid_fields = (
+            ("schema_version", "1.0.0-draft", "unsupported schema version"),
+            ("occurred_at", None, "invalid occurred_at"),
+            ("correlation_id", [], "invalid correlation_id"),
+            ("correlation_id", "x" * 129, "invalid correlation_id"),
+            ("origin", [], "invalid origin"),
+            ("origin", {"kind": "untrusted"}, "invalid origin"),
+        )
+        original = dict(event)
+        for field, malformed, message in invalid_fields:
+            with self.subTest(field=field, malformed=malformed):
+                event[field] = malformed
+                with self.assertRaisesRegex(LifecycleError, message):
+                    self.engine.replay(task_id)
+                event.clear()
+                event.update(original)
+
     def test_replay_rejects_unknown_event_type(self):
         task_id = self.task["task_id"]
         self.store._events[task_id][0]["type"] = "task.unrecognized"
