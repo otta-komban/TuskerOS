@@ -732,3 +732,19 @@ def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
         assert db.audit_events() == []
     finally:
         db.close()
+
+
+@pytest.mark.parametrize("invalid_decision", [1, 0, "true", "false", None, [], {}])
+def test_decide_rejects_non_boolean_decisions_without_state_change(invalid_decision):
+    db = store()
+    try:
+        rid = approval(db)
+        result = db.decide(rid, approve=invalid_decision, current_binding=BINDING,
+                           approver_credentials={"uid": 1000}, audit_context=audit(), now=NOW)
+        assert result == "INVALID_DECISION"
+        row = db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()
+        assert row["state"] == "PENDING"
+        assert db.audit_events()[0]["event_type"] == "requested"
+        assert len(db.audit_events()) == 1
+    finally:
+        db.close()
