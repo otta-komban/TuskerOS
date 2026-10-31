@@ -149,6 +149,19 @@ class CatalogEntryValidationTests(unittest.TestCase):
         entry["trust"]["reviewed_at"] = "2026-10-31 00:00:00+00:00"
         self.assertTrue(any("$.trust.reviewed_at" in e for e in validate_catalog_entry(entry)))
 
+
+    def test_semver_length_matches_validator_bound(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["release"]["version"] = "1.2.3+" + ("a" * 123)
+        self.assertTrue(any("$.release.version" in e for e in validate_catalog_entry(entry)))
+
+    def test_categories_and_tags_reject_whitespace_only_values(self):
+        for field in ("categories", "tags"):
+            with self.subTest(field=field):
+                entry = copy.deepcopy(self.fixture)
+                entry["package"][field] = ["   "]
+                self.assertTrue(any(f"$.package.{field}" in e for e in validate_catalog_entry(entry)))
+
     def test_duplicate_tags_rejected(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["tags"] = ["same", "same"]
