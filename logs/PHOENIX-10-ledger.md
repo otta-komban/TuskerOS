@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 3  
+Current authorized cohort count: 4  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0012  
+Last completion: PHOENIX-10-C0013  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0013 | P2 | release-report-semantic-validation-hardening | Hardened report digest argument handling and exact integer summary counters; added three regressions, extended PHOENIX CI to run both release validator suites, documented and updated PR #55. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; workflow `.github/workflows/phoenix-release-validation.yml`; CI `41184321235` success; JSONL C0013. |
 | PHOENIX-10-C0012 | P2 | release-evidence-no-follow-hardening | Replaced resolve-then-open evidence hashing with component-by-component no-follow descriptor opens; rejects symlinks, special files and ambiguous path components; added five regression tests and updated PR #55. | `scripts/verify_release_manifest.py`; `tests/test_verify_release_manifest.py`; `docs/PHOENIX-10-RELEASE-VERIFIER.md`; CI `41183117967` 20/20; unified validation `41183117936`; JSONL C0012. |
 | PHOENIX-10-C0011 | P1/P2 | atlas-image-build-handoff-integration | Reconciled the Fedora 44 KIWI/Anaconda POC plan with ATLAS-01's pinned Fedora Forge source lock and build script; recorded exact source/blob identities, profiles, static CI evidence and remaining blockers. No image build or installer acceptance claimed. | `docs/PHOENIX-10-KIWI-POC.md` section 13; ATLAS lock/build/status blobs reviewed; CI run `41181689969` reports 40 static tests; doc commit `a28e8814`; JSONL C0011. |
 | PHOENIX-10-C0010 | P1/P2 | release-verification-audit | Re-verified branch/base, audited the release verifier and install-mode proposal, and confirmed PR #55's dedicated GitHub Actions job completed successfully. Confirmed promotion remains blocked pending AEGIS trust policy; no VM/install/storage runtime acceptance is claimed. | PR #55 head `2c3c7d3d`; run `41181257090`; verifier and installer architecture docs reviewed; JSONL entry C0010. |
@@ -75,3 +76,5 @@ C0009 limitation: the validator assumes schema validation is performed separatel
 C0011 limitation: this response reviewed ATLAS-01 source/build handoff and recorded it in the POC runbook. The cited 40-test CI run is ATLAS-01's reported static validation; PHOENIX-10 did not execute those tests, run KIWI, produce an image, boot a VM, launch Anaconda or perform storage operations. The canonical project-wide completion ledger remains coordinator-owned.
 
 C0012 limitation: GitHub Actions run 41183117967 executed the verifier tests on the PR merge ref; local container execution was unavailable because outbound DNS/network access was unavailable. No image build, VM boot, Anaconda install, storage mutation, cryptographic signature verification or release promotion was performed. The no-follow protection applies to paths below the opened manifest directory; the directory's parent path remains part of the caller's trusted selection.
+
+C0013 limitation: this response hardened semantic validation of release reports and added focused CI coverage only. It does not verify cryptographic signatures, authorize release promotion, build an image, boot/install a VM, exercise recovery runtime or perform storage operations. The unified validation run triggered by the final branch push was still in progress at ledger update time; the PHOENIX-specific run 41184321235 completed successfully.
