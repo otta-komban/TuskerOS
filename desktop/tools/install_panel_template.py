@@ -23,8 +23,12 @@ RENAME_NOREPLACE = 1
 
 
 def default_destination() -> Path:
-    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
-    return data_home / "plasma" / "layout-templates" / PLUGIN_ID
+    """Resolve the XDG data location, ignoring invalid relative environment values."""
+    configured_home = os.environ.get("XDG_DATA_HOME")
+    base = Path(configured_home).expanduser() if configured_home else Path.home() / ".local" / "share"
+    if not base.is_absolute():
+        base = Path.home() / ".local" / "share"
+    return base / "plasma" / "layout-templates" / PLUGIN_ID
 
 
 def _publish_directory_noreplace(source: Path, destination: Path) -> None:
