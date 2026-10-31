@@ -60,11 +60,11 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - Added a 1 MiB maximum NDJSON frame size. The adapter reads at most one byte beyond the limit and rejects oversized frames with a safe `PROVIDER_DISCONNECTED` error.
 - Validate the decoded JSON frame and its `message` member are objects before accessing fields; malformed provider payload shapes now map to the typed provider-disconnected error rather than leaking `AttributeError`.
 - Added regression cases for oversized frames, non-object top-level JSON, and non-object message payloads.
-- CI is pending on code revision `f200ca633bdca9122ea06a406092522fff53f148`.
+- All four GitHub Actions workflows passed on code revision `f200ca633bdca9122ea06a406092522fff53f148`: Runtime Unit Tests run 82, AI contract tests run 107, unified validation run 583, and PHOENIX manifest integrity run 277.
 
 ## Remaining work sequence
 
-1. Keep full runtime/contract/unified validation green as further implementation changes land; all four required workflows passed on revisions `454d10d4ad13f7ab5ddb659866e9727bd8d7854f` and `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`.
+1. Keep full runtime/contract/unified validation green as further implementation changes land; the four required workflows also passed on revisions `454d10d4ad13f7ab5ddb659866e9727bd8d7854f`, `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`, and `f200ca633bdca9122ea06a406092522fff53f148`.
 2. Review provider cancellation/deadline behavior and add focused tests for request isolation without terminating the shared daemon.
 3. Verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
 4. Keep model install/remove fail-closed until the approved AEGIS action/session/device/resource/precondition authorization is integrated and tested.
