@@ -58,6 +58,26 @@ class BusSnapshot:
     names: tuple[str, ...]
 
 
+def _is_valid_bus_name(name: object) -> bool:
+    """Validate the ASCII grammar for well-known and unique D-Bus names."""
+    if not isinstance(name, str) or not name or len(name) > 255:
+        return False
+    unique = name.startswith(":")
+    body = name[1:] if unique else name
+    if ":" in body:
+        return False
+    elements = body.split(".")
+    if len(elements) < 2:
+        return False
+    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+    for element in elements:
+        if not element or any(character not in allowed for character in element):
+            return False
+        if not unique and element[0].isdigit():
+            return False
+    return True
+
+
 class ReadOnlySystemBusAdapter:
     """Read two fixed org.freedesktop.DBus methods after policy authorization."""
 
@@ -107,7 +127,9 @@ class ReadOnlySystemBusAdapter:
         value = await self._call("ListNames")
         if not isinstance(value, list) or len(value) > 1024:
             raise AdapterError("invalid bus names response")
-        if any(not isinstance(name, str) or not name or len(name) > 255 for name in value):
+        if any(not _is_valid_bus_name(name) for name in value):
+            raise AdapterError("invalid bus names response")
+        if len(set(value)) != len(value):
             raise AdapterError("invalid bus names response")
         return tuple(value)
 
