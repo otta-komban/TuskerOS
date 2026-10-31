@@ -149,6 +149,19 @@ class OllamaHttpTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     OllamaProvider(endpoint)
 
+    def test_unserializable_request_is_a_typed_invalid_request(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        cyclic = {}
+        cyclic["self"] = cyclic
+        request = InferenceRequest(
+            "bad-json",
+            "fixture",
+            [{"role": "user", "content": "hello", "extra": cyclic}],
+        )
+        with self.assertRaises(TuskerRuntimeError) as ctx:
+            list(OllamaProvider(self.endpoint).infer(request, CancellationToken()))
+        self.assertEqual(ctx.exception.code, RuntimeErrorCode.INVALID_REQUEST)
+
     def test_version_health_stream_and_usage(self):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
         self.assertTrue(provider.health())
