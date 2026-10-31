@@ -129,9 +129,14 @@ class SecurityStore:
         if safe["event_type"] not in statuses or safe["result_status"] != statuses[safe["event_type"]]:
             raise SecurityStoreError("unsupported audit event or status mismatch")
         if safe["origin"] not in {"local", "remote", "extension", "system"}: raise SecurityStoreError("invalid audit origin")
+        canonical_uuid = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
         try:
-            uuid.UUID(safe["proposal_id"])
-            if safe["decision_id"] is not None: uuid.UUID(safe["decision_id"])
+            if not isinstance(safe["proposal_id"], str) or not re.fullmatch(canonical_uuid, safe["proposal_id"]):
+                raise ValueError("proposal_id must be a canonical lowercase UUID")
+            if safe["decision_id"] is not None and (
+                not isinstance(safe["decision_id"], str) or not re.fullmatch(canonical_uuid, safe["decision_id"])
+            ):
+                raise ValueError("decision_id must be a canonical lowercase UUID")
             timestamp = safe["timestamp_utc"]
             if not isinstance(timestamp, str) or not 1 <= len(timestamp) <= 40:
                 raise ValueError("bounded timestamp string required")
@@ -144,9 +149,11 @@ class SecurityStore:
             or not isinstance(safe["policy_version"], str) or not 1 <= len(safe["policy_version"]) <= 64
             or not isinstance(safe["correlation_id"], str) or not 1 <= len(safe["correlation_id"]) <= 128):
             raise SecurityStoreError("invalid audit correlation fields")
-        if safe.get("approval_request_id") is not None:
-            try: uuid.UUID(safe["approval_request_id"])
-            except (ValueError, TypeError) as exc: raise SecurityStoreError("invalid approval reference") from exc
+        if safe.get("approval_request_id") is not None and (
+            not isinstance(safe["approval_request_id"], str)
+            or not re.fullmatch(canonical_uuid, safe["approval_request_id"])
+        ):
+            raise SecurityStoreError("invalid approval reference")
         if safe["risk_class"] not in {"R0", "R1", "R2", "R3", "R4", "R5"}: raise SecurityStoreError("invalid audit risk class")
         for field in ("principal_binding", "action_digest"):
             if not isinstance(safe[field], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", safe[field]):
@@ -215,8 +222,10 @@ class SecurityStore:
             raise SecurityStoreError("invalid registry binding")
         if any(not isinstance(x, str) or not x or len(x) > 512 for x in binding["resource_scope"]) or len(binding["resource_scope"]) != len(set(binding["resource_scope"])):
             raise SecurityStoreError("invalid canonical resource scope")
-        try: uuid.UUID(proposal_id)
-        except (ValueError, TypeError) as exc: raise SecurityStoreError("invalid proposal UUID") from exc
+        if not isinstance(proposal_id, str) or not re.fullmatch(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", proposal_id
+        ):
+            raise SecurityStoreError("proposal ID must be a canonical lowercase UUID")
         expected_audit = {
             "principal_binding": principal_binding, "proposal_id": proposal_id,
             "operation_id": broker_operation_id, "risk_class": risk_class,
