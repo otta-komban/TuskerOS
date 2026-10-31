@@ -60,14 +60,25 @@ def parse_repomd(data: bytes) -> tuple[str, str, str, str]:
     href = location.attrib.get("href", "")
     if checksum_type != "sha256" or len(checksum_value) != 64 or any(c not in "0123456789abcdef" for c in checksum_value):
         raise RuntimeError("repomd.xml primary checksum must be SHA-256")
-    if not href or href.startswith("/") or ".." in Path(href).parts:
+    decoded_href = urllib.parse.unquote(href)
+    parsed_href = urllib.parse.urlparse(href)
+    if (
+        not href or href.startswith("/") or href.startswith("//") or "\\" in href
+        or parsed_href.scheme or parsed_href.netloc or parsed_href.query or parsed_href.fragment
+        or ".." in Path(decoded_href).parts
+    ):
         raise RuntimeError(f"unsafe primary metadata path in repomd.xml: {href!r}")
     return revision.strip(), href, checksum_value, checksum_type
 
 
 def primary_metadata_url(repomd_url: str, href: str) -> str:
     # Fedora repomd.xml lives under repodata/, while href is relative to repo root.
-    return urllib.parse.urljoin(repomd_url, "../" + href)
+    resolved = urllib.parse.urljoin(repomd_url, "../" + href)
+    source = urllib.parse.urlparse(repomd_url)
+    target = urllib.parse.urlparse(resolved)
+    if target.scheme != "https" or target.netloc != source.netloc:
+        raise RuntimeError(f"primary metadata URL escaped its HTTPS repository origin: {resolved}")
+    return resolved
 
 
 def capture_repository(repository_id: str, repomd_url: str) -> dict[str, str]:
@@ -114,6 +125,8 @@ def validate_lock(payload: object, *, require_repositories: bool = False) -> dic
         if any(not isinstance(entry.get(key), str) or not entry[key].strip() for key in required):
             raise RuntimeError("repository snapshot entry is missing required string fields")
         repo_id = entry["repository_id"]
+        if not repo_id or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-" for c in repo_id):
+            raise RuntimeError(f"invalid repository ID in snapshot lock: {repo_id!r}")
         if repo_id in indexed:
             raise RuntimeError(f"duplicate repository snapshot ID: {repo_id}")
         for key in ("repomd_sha256", "primary_sha256"):
@@ -183,7 +196,7 @@ def main() -> int:
     parser.add_argument("--validate-only", action="store_true", help="validate lock structure without network access")
     parser.add_argument("--manifest", type=Path, help="also require every package row to reference its exact verified repository snapshot")
     parser.add_argument("--capture", action="append", default=[], metavar="REPO_ID=REPOMD_URL",
-                        help="fetch one repository's repomd.xml and primary metadata and append its immutable identity")
+                        help="capture one repository's repomd.xml and primary metadata identity")
     args = parser.parse_args()
     if args.capture:
         entries = []
