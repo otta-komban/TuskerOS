@@ -6,7 +6,7 @@
 **Task:** `PILOT-08-P08-04`
 **Baseline:** `8bf66079f9e021244eda432fa8455e83b59e2165`
 **Security source:** AEGIS-06 `security/REMOTE_DEVICE_SECURITY_CONTRACT.md`, branch `06-security-gatekeeper`, blob `d72feb9d78c81da769c8bca009b721b69bf8032c`
-**Disposition:** NO-GO for listeners, routes, WSS, or deployment changes until repository reauthorization and dependent contracts close.
+**Disposition:** Scoped branch-isolated implementation is authorized by the owner (Issue #35 comments 6540346389 and 6540745614). Listeners, routes, WSS, and deployment changes remain **NO-GO** until dependent contracts, platform/UX decisions, and executable acceptance evidence close.
 
 ## 1. Purpose and scope
 
@@ -130,7 +130,7 @@ For negative tests, assert zero protected-handler/Core/executor calls where reje
 | API/session/authentication implementation | PILOT-08 | Runtime blocked | Reauthorization gate and test harness |
 | Task route and event projection | TUSKER-04 | DEC-TUS-001..004,006..007 remain REVISE/draft | Final versioned Core contract |
 | Final broker consume and authorization context | NEXUS-07 / AEGIS-06 / Chief Architect | Unresolved | Approved trusted context and atomic consume/dispatch contract |
-| Repository authorization | Admin/coordinator | PR #49 gate not independently verified | Verify required checks and branch-protection state; coordinator authorization |
+| Branch-isolated implementation authorization | Repository owner / coordinator | Scoped work authorized by Issue #35 comments 6540346389 and 6540745614; branch-protection state remains unverified | Continue only on assigned branch; no merge/force-push and no waiver of runtime gates |
 
 ## 7. Explicit exclusions
 
@@ -150,4 +150,4 @@ This document does not authorize:
 **Runtime features established:** 0.
 **Release disposition:** NO-GO.
 
-Before implementation, require repository reauthorization, NOVA-02 local exposure/status UX decisions, ATLAS-01 deployment review, final TUSKER Core contract, and the Chief Architect-approved AEGIS/NEXUS consume boundary. AEGIS acceptance of the transport profile is not evidence that the transport service exists or has passed conformance.
+Scoped branch-isolated implementation is authorized by the owner (Issue #35 comments 6540346389 and 6540745614). Before implementing listeners, routes, WSS, or deployment changes, still require NOVA-02 local exposure/status UX decisions, ATLAS-01 deployment review, the final TUSKER Core contract, the Chief Architect-approved AEGIS/NEXUS consume boundary, and executable transport/security acceptance evidence. AEGIS acceptance of the transport profile is not evidence that the transport service exists or has passed conformance.
