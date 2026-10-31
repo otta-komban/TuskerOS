@@ -473,6 +473,21 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ValueError):
                     ReadOnlySystemBusAdapter(AsyncMock(), **{keyword: value})
 
+    def test_output_limit_maximums_are_enforced(self):
+        for keyword, value in (("max_stdout", 1024 * 1024 + 1), ("max_stderr", 256 * 1024 + 1)):
+            with self.subTest(keyword=keyword):
+                with self.assertRaises(ValueError):
+                    ReadOnlySystemBusAdapter(AsyncMock(), **{keyword: value})
+
+    def test_output_limit_maximum_boundaries_are_accepted(self):
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(),
+            max_stdout=1024 * 1024,
+            max_stderr=256 * 1024,
+        )
+        self.assertEqual(adapter._max_stdout, 1024 * 1024)
+        self.assertEqual(adapter._max_stderr, 256 * 1024)
+
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
             ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=31)
