@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from threading import RLock
@@ -352,15 +353,25 @@ class LifecycleEngine:
             if event.get("schema_version") != "0.1.0-draft":
                 raise LifecycleError("event stream contains an unsupported schema version")
             occurred_at = event.get("occurred_at")
+            # JSON Schema format=date-time is RFC 3339, not every spelling
+            # accepted by datetime.fromisoformat (e.g. space separators or
+            # compact offsets). Enforce the wire shape before calendar parsing.
+            rfc3339 = (
+                isinstance(occurred_at, str)
+                and re.fullmatch(
+                    r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+                    r"(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})",
+                    occurred_at,
+                ) is not None
+            )
             try:
                 parsed_timestamp = datetime.fromisoformat(
                     occurred_at.replace("Z", "+00:00")
-                ) if isinstance(occurred_at, str) and "T" in occurred_at else None
+                ) if rfc3339 else None
             except (ValueError, OverflowError):
                 parsed_timestamp = None
             if (parsed_timestamp is None or parsed_timestamp.tzinfo is None
-                    or parsed_timestamp.utcoffset() is None
-                    or len(occurred_at) < 20):
+                    or parsed_timestamp.utcoffset() is None):
                 raise LifecycleError("event stream contains an invalid occurred_at value")
             if not isinstance(event.get("correlation_id"), str) or len(event["correlation_id"]) > 128:
                 raise LifecycleError("event stream contains an invalid correlation_id")
