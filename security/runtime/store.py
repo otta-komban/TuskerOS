@@ -283,8 +283,12 @@ class SecurityStore:
         try: peer = self._peer_authenticator(peer_credentials)
         except Exception: return ConsumeResult("CALLER_UNAUTHORIZED")
         if not isinstance(peer, Mapping) or peer.get("authenticated") is not True: return ConsumeResult("CALLER_UNAUTHORIZED")
-        if not authorization_ref or not isinstance(authorization_ref, str): return ConsumeResult("BINDING_MISMATCH")
-        token_hash = hashlib.sha256(authorization_ref.encode()).hexdigest()
+        if not isinstance(authorization_ref, str) or not 1 <= len(authorization_ref) <= 512:
+            return ConsumeResult("BINDING_MISMATCH")
+        try:
+            token_hash = hashlib.sha256(authorization_ref.encode("utf-8", "strict")).hexdigest()
+        except UnicodeEncodeError:
+            return ConsumeResult("BINDING_MISMATCH")
         try:
             self._transaction()
             row = self._db.execute("""SELECT a.*, r.state AS ref_state, r.expires_at AS ref_expiry,
