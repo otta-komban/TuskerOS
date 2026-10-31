@@ -1,8 +1,12 @@
 """Unit tests for the fail-closed D-Bus provider boundary."""
+import pathlib
+import sys
 import unittest
 from unittest.mock import AsyncMock
 
-from system_integration.adapters.dbus_readonly import (
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+
+from adapters.dbus_readonly import (
     AdapterError,
     AuthorizationDenied,
     ReadOnlySystemBusAdapter,
