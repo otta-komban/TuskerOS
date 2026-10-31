@@ -14,7 +14,7 @@
       "depends_on": [],
       "preconditions": [],
       "expected_postconditions": [
-        "Return current capacity observation"
+        { "description": "Return current capacity observation" }
       ],
       "risk_hint": "read_only",
       "timeout_ms": 10000,
