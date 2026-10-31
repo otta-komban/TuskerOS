@@ -4,7 +4,9 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from desktop.tools import install_panel_template
 from desktop.tools.install_panel_template import MARKER, MARKER_CONTENT, install, uninstall
 
 
@@ -15,8 +17,8 @@ class PanelTemplateInstallerTests(unittest.TestCase):
         root = Path(self.temp.name)
         self.source = root / "source"
         (self.source / "contents").mkdir(parents=True)
-        (self.source / "metadata.desktop").write_text("[Desktop Entry]\nName=Test\n", encoding="utf-8")
-        (self.source / "contents" / "layout.js").write_text("var panel = true;\n", encoding="utf-8")
+        (self.source / "metadata.desktop").write_text("[Desktop Entry]\\nName=Test\\n", encoding="utf-8")
+        (self.source / "contents" / "layout.js").write_text("var panel = true;\\n", encoding="utf-8")
         self.destination = root / "data" / "plasma" / "layout-templates" / "com.tuskeros.desktop.dock"
 
     def test_install_copies_template_and_management_marker(self) -> None:
@@ -43,6 +45,29 @@ class PanelTemplateInstallerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "symlink or special file"):
             install(self.source, self.destination)
         self.assertFalse(self.destination.exists())
+
+    def test_install_does_not_replace_destination_created_during_publish(self) -> None:
+        real_publish = install_panel_template._publish_directory_noreplace
+
+        def create_destination_then_publish(source: Path, destination: Path) -> None:
+            destination.mkdir()
+            sentinel = destination / "created-by-concurrent-process.txt"
+            sentinel.write_text("preserve me", encoding="utf-8")
+            real_publish(source, destination)
+
+        with patch.object(
+            install_panel_template,
+            "_publish_directory_noreplace",
+            side_effect=create_destination_then_publish,
+        ):
+            with self.assertRaises(FileExistsError):
+                install(self.source, self.destination)
+
+        self.assertEqual(
+            (self.destination / "created-by-concurrent-process.txt").read_text(encoding="utf-8"),
+            "preserve me",
+        )
+        self.assertEqual(list(self.destination.parent.glob(".tusker-dock-staging-*")), [])
 
     def test_install_refuses_to_overwrite_existing_directory(self) -> None:
         self.destination.mkdir(parents=True)
