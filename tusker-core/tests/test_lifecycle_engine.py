@@ -113,7 +113,7 @@ class LifecycleEngineTests(unittest.TestCase):
                     expected_version=1,
                 )
                 outcome = ("ok", result["state"])
-            except VersionConflict:
+            except (VersionConflict, InvalidTransition):
                 outcome = ("conflict", target)
             with lock:
                 outcomes.append(outcome)

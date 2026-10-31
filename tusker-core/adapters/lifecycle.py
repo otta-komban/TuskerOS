@@ -162,6 +162,10 @@ class LifecycleEngine:
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
+        # Reject stale callers before validating against a newer state snapshot.
+        # The store repeats this check atomically to close the read/write race.
+        if current["version"] != expected_version:
+            raise VersionConflict(f"expected version {expected_version}, found {current['version']}")
         fingerprint = event_type + ":" + target
         if idempotency_key:
             prior = self.store.idempotent_result(task_id, idempotency_key, fingerprint)
