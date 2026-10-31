@@ -171,6 +171,12 @@ class PolicyEngine:
                     return deny("POLICY_INVALID_ARGUMENTS")
             if not isinstance(proposal["arguments"], dict) or not isinstance(proposal["resources"], list):
                 return deny("POLICY_INVALID_ARGUMENTS")
+            # The proposal schema constrains an optional idempotency key too;
+            # do not validate it only when the selected operation requires one.
+            if "idempotency_key" in proposal:
+                key = proposal["idempotency_key"]
+                if not isinstance(key, str) or not 16 <= len(key) <= 128:
+                    return deny("POLICY_INVALID_ARGUMENTS")
             if self.argument_validator is None or self.resource_resolver is None or self.precondition_verifier is None:
                 return deny("POLICY_DEPENDENCY_UNAVAILABLE")
             matches = [entry for entry in registry if entry.get("action_id") == proposal["action_id"]]
