@@ -369,7 +369,7 @@ class LocalSnapshotRepositoryTests(unittest.TestCase):
 
     def test_snapshot_args_reject_missing_local_repository(self):
         with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaisesRegex(RuntimeError, "missing repodata/repomd.xml"):
+            with self.assertRaisesRegex(RuntimeError, "Local repository snapshot is missing"):
                 RESOLVER.snapshot_repo_args(Path(directory), {"fedora"})
 
     def test_snapshot_args_reject_invalid_repository_id(self):
