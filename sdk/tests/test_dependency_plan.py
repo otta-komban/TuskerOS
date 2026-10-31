@@ -75,6 +75,23 @@ class DependencyPlanTests(unittest.TestCase):
         ):
             planner.resolve_install_order(["a"], graph)
 
+    def test_entire_graph_is_validated_even_for_empty_roots(self):
+        invalid_graphs = (
+            {"": []},
+            {"unrelated": "dependency"},
+            {"unrelated": ["missing"]},
+            {"unrelated": ["same", "same"], "same": []},
+        )
+        for graph in invalid_graphs:
+            with self.subTest(graph=graph):
+                with self.assertRaises(planner.DependencyPlanError):
+                    planner.resolve_install_order([], graph)
+
+    def test_disconnected_invalid_graph_entry_blocks_plan(self):
+        graph = {"app": [], "unrelated": [None]}
+        with self.assertRaisesRegex(planner.DependencyPlanError, "non-empty package ID strings"):
+            planner.resolve_install_order(["app"], graph)
+
     def test_packages_must_be_a_mapping(self):
         with self.assertRaisesRegex(planner.DependencyPlanError, "mapping"):
             planner.resolve_install_order(["app"], [("app", [])])
