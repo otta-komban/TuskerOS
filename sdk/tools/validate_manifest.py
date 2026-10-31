@@ -76,8 +76,8 @@ def validate(data: object) -> list[str]:
                 continue
             if not isinstance(dep["id"], str) or not ID_RE.fullmatch(dep["id"]):
                 errors.append(f"dependencies[{i}].id is invalid")
-            if not isinstance(dep["version"], str) or not dep["version"].strip():
-                errors.append(f"dependencies[{i}].version must be non-empty text")
+            if not isinstance(dep["version"], str) or not dep["version"].strip() or len(dep["version"]) > 512:
+                errors.append(f"dependencies[{i}].version must be non-empty text of at most 512 characters")
             if dep.get("id") in seen:
                 errors.append(f"dependencies contains duplicate id: {dep.get('id')}")
             seen.add(dep.get("id"))
