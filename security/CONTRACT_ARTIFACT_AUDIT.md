@@ -46,3 +46,12 @@ The vectors remain expected outcomes, not executable tests. Before implementatio
 ## Follow-up
 
 NEXUS-07 must identify the runtime language/API and confirm authorization evidence transport, atomic consume, registry loading/handler mapping, IPC peer identity and unknown-outcome/idempotency semantics. Do not resolve these by guessing or by rebasing this branch across unrelated main changes.
+
+
+## Superseding automated validation refresh — 2026-10-31 (C0058)
+
+The initial five-schema structural audit above remains a historical snapshot. The current branch contains **six** `security/schemas/*.schema.json` files, including the separate candidate `audit-event-0.2.0.schema.json` alongside the active audit-event v0.1.0 schema. The candidate is not promoted to active producer wire format.
+
+The current automated pytest suite now runs `Draft202012Validator.check_schema` with a `FormatChecker` over every `*.schema.json` file in the schema directory. On branch head `2fd220fd416b6191ded4b150062a8ce7b72f7111`, the PR-triggered GitHub Actions validation [41167897563](https://github.com/otta-komban/TuskerOS/actions/runs/41167897563) passed **164 tests in 3.42s** on Python 3.12. This updates the earlier “not performed” Draft 2020-12 meta-schema validation status for the current set of six schema files.
+
+**Scope remains limited:** this automated suite checks schema documents and test envelopes; it does not execute a production policy engine, approval authority, broker, audit producer/store, operation registry runtime or privileged handlers. Runtime security acceptance still requires the independent producer/consumer and end-to-end evidence listed in `security/PRIVILEGED_RELEASE_GATE.md`. The RFC 8785 Unicode test checks string-only reference fixtures and is not a production JCS implementation test.
