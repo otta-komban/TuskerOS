@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -10,6 +11,7 @@ AUDIT_SCHEMA = json.loads((SCHEMA_DIR / "audit-event.schema.json").read_text())
 APPROVAL_SCHEMA = json.loads((SCHEMA_DIR / "approval-request.schema.json").read_text())
 POLICY_SCHEMA = json.loads((SCHEMA_DIR / "policy-decision.schema.json").read_text())
 AUDIT_V020_SCHEMA = json.loads((SCHEMA_DIR / "audit-event-0.2.0.schema.json").read_text())
+JCS_UNICODE_VECTORS = json.loads((ROOT / "JCS_UNICODE_TEST_VECTORS.json").read_text())
 
 VALID_EVENT = {
     "schema_version": "0.1.0",
@@ -680,3 +682,24 @@ def test_action_proposal_rejects_unknown_resource_authority_fields():
     proposal["resources"][0]["principal"] = "root"
     assert list(action_proposal_validator().iter_errors(proposal))
 
+
+
+def test_jcs_unicode_reference_vectors_preserve_exact_code_points():
+    # These string-only fixtures pin the RFC 8785 Unicode-preservation rule.
+    # This checks fixture serialization, not a production runtime canonicalizer.
+    encoded_vectors = []
+    for vector in JCS_UNICODE_VECTORS["cases"]:
+        canonical = json.dumps(
+            vector["input"],
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        canonical_bytes = canonical.encode("utf-8")
+        assert canonical_bytes.hex() == vector["canonical_utf8_hex"]
+        assert "sha256:" + hashlib.sha256(canonical_bytes).hexdigest() == vector["sha256"]
+        encoded_vectors.append(canonical_bytes)
+
+    # NFC- and NFD-equivalent text remains byte-distinct under JCS.
+    assert encoded_vectors[0] != encoded_vectors[1]
+    assert JCS_UNICODE_VECTORS["cases"][0]["sha256"] != JCS_UNICODE_VECTORS["cases"][1]["sha256"]
