@@ -293,6 +293,17 @@ class SecurityStore:
             if row is None:
                 self._db.execute("ROLLBACK")
                 return ConsumeResult("BINDING_MISMATCH")
+            # Authenticate the bound principal/session/device before disclosing
+            # any authorization state, including replay/consumption identifiers.
+            binding = json.loads(bytes(row["binding_json"]).decode("utf-8"))
+            peer_matches = (
+                row["principal_binding"] == peer.get("principal_binding")
+                and binding.get("session_binding") == peer.get("session_binding")
+                and binding.get("device_binding") == peer.get("device_binding")
+            )
+            if not peer_matches:
+                self._db.execute("ROLLBACK")
+                return ConsumeResult("CALLER_UNAUTHORIZED")
             if row["ref_state"] == "CONSUMED":
                 cid = row["consumption_id"]
                 self._audit({**audit_context, "event_type":"policy_denied", "result_status":"denied",
@@ -311,10 +322,8 @@ class SecurityStore:
                              "reason_code":"POLICY_AUTHORIZATION_EXPIRED", "timestamp_utc":self._iso(current)})
                 self._db.execute("COMMIT")
                 return ConsumeResult("EXPIRED")
-            binding = json.loads(bytes(row["binding_json"]).decode("utf-8"))
-            peer_matches = row["principal_binding"] == peer.get("principal_binding") and binding["session_binding"] == peer.get("session_binding") and binding["device_binding"] == peer.get("device_binding")
             policy_current = self._policy_rechecker is not None and self._policy_rechecker(row["request_id"], binding, policy_version)
-            exact = row["broker_operation_id"] == operation_id and row["action_digest"] == action_digest and row["policy_version"] == policy_version and policy_current and binding["registry_version"] == registry_version and binding["precondition_digest"] == precondition_digest and binding["resource_scope"] == resource_scope and peer_matches
+            exact = row["broker_operation_id"] == operation_id and row["action_digest"] == action_digest and row["policy_version"] == policy_version and policy_current and binding["registry_version"] == registry_version and binding["precondition_digest"] == precondition_digest and binding["resource_scope"] == resource_scope
             if not exact:
                 self._db.execute("UPDATE approvals SET state='INVALIDATED' WHERE request_id=?", (row["request_id"],))
                 self._db.execute("UPDATE auth_refs SET state='REVOKED' WHERE request_id=? AND state='ISSUED'", (row["request_id"],))
