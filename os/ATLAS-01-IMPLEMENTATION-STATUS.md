@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc` (ATLAS CI passed 70 tests; unified validation passed all 8 jobs)  
+**Latest code/test evidence head:** `63f796d31bd05ca8c0709e6186fcd03d18d19bf8` (ATLAS CI passed 78 tests and Fedora 44 DNF5 smoke; unified validation passed all 8 jobs)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -40,8 +40,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Last validated code head: `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
-- Draft remains open for review. ATLAS run 41185951919 passed 70 tests and live Fedora 44 DNF5 smoke; unified validation run 41185951924 passed all 8 jobs on this exact head. Later changes update only status and completion logs. It is intentionally not merge-ready until package rows are approved, KIWI/DNF consume the frozen repository snapshot, metadata signatures and RPM payload checksums are verified, the image is built, and PHOENIX VM install/boot evidence is available.
+- Latest validated PR head: `63f796d31bd05ca8c0709e6186fcd03d18d19bf8`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`; branch divergence: 97 ahead / 0 behind `main`.
+- Draft remains open for review. ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669) passed 78 tests, manifest/lock checks, upstream KIWI source checks and live Fedora 44 DNF5 smoke; unified validation run [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664) passed all 8 jobs on the exact same head. The PR is not merge-ready until package rows are approved, KIWI consumes the frozen repository snapshot, metadata signatures and RPM payload checksums are verified, the image is built, and PHOENIX VM install/boot evidence is available.
 
 ## Evidence
 
@@ -100,7 +100,13 @@
   - Desktop static validation
 - ATLAS PR workflow: [41182404795](https://github.com/otta-komban/TuskerOS/actions/runs/41182404795), same exact PR head; compile, JSON lock validation, shell syntax and all **45 tests** passed.
 
-### Image/build/runtime status
+### Latest local snapshot validation
+
+- ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669): **78 tests passed**, Fedora 44 DNF5 smoke passed, and upstream KIWI source commit/blob verification passed on `63f796d31bd05ca8c0709e6186fcd03d18d19bf8`.
+- Unified run [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664): **all 8 jobs passed** on the same exact branch head.
+- This validates the local snapshot resolver code and CI contracts; it does not execute a full `dnf5 reposync` of Fedora repositories or a KIWI build.
+
+## Image/build/runtime status
 
 - Image build: **not run**.
 - Reproducibility comparison: **not run**.
