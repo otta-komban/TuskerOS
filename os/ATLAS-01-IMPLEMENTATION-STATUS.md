@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `7c5b9ba6ddc130b8c625ba8af4a17c9ea4e65203` (PR head; 35 commits ahead / 0 behind `main`)  
+**Latest code/test evidence head:** `f56a0df7d07e05bd29e29f0e87f15b3f4dc45973` (PR head; 39 commits ahead / 0 behind `main`)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -21,6 +21,7 @@
 - Added static build-script regression tests for the wrapper's output/export contract. These checks do not execute KIWI.
 - Hardened DNF5 metadata parsing to use `%{full_nevra}` (which preserves epoch 0), `%{repoid}`, `%{license}`, `%{sourcerpm}` and `%{url}`. The resolver compares NEVRA, repository, license, source RPM and upstream URL metadata with the manifest pins. The manifest separately records the Fedora dist-git source repository URL and upstream project URL.
 - The resolver preserves an empty fifth query field and normalizes a missing upstream URL to the explicit `NOASSERTION` sentinel rather than dropping the trailing tab or silently inventing a URL.
+- Added offline `--validate-only` mode: CI validates the real manifest header and provenance columns even while it has zero rows; normal resolution still fails closed on an empty package list.
 - CI's resolver tests use mocked DNF5 command output on Ubuntu; a live Fedora 44 DNF5 repoquery run is still required to validate the exact host CLI and metadata behavior.
 - Changed build metadata so a matching second build is reported as `repeat_build_checksum_comparison: passed`; `reproducible_build_claim` remains `false` until immutable repository metadata and RPM payload checksums are locked.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
@@ -28,8 +29,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Current PR head: `7c5b9ba6ddc130b8c625ba8af4a17c9ea4e65203`; base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
-- Draft remains open for review. PR validation on this exact head passed: unified validation run 41182404765 (8 jobs) and ATLAS resolver run 41182404795 (45 tests). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
+- Current PR head: `f56a0df7d07e05bd29e29f0e87f15b3f4dc45973`; base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
+- Draft remains open for review. PR validation on this exact head passed: unified validation run 41182601497 (8 jobs) and ATLAS resolver run 41182601507 (49 tests). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
 
 ## Evidence
 
@@ -54,9 +55,10 @@
 - Result: **36 tests passed**, exit code 0. JSON and shell syntax checks passed. Four new tests are static build-script contract checks, not image-build tests.
 - Resolver metadata pin run: [41181625107](https://github.com/otta-komban/TuskerOS/actions/runs/41181625107), commit `44bfe6b6350c79d9ab9caec5a0d613983ed5931b`, passed **39 tests** after fixing test fixtures for the expanded DNF5 query format.
 - Latest previous run: [41181689969](https://github.com/otta-komban/TuskerOS/actions/runs/41181689969), commit `81e44a5adfddbc6781c24319b7920de67e3192e2`, passed **40 tests**, JSON validation and shell syntax validation.
-- Current run: [41182178235](https://github.com/otta-komban/TuskerOS/actions/runs/41182178235), commit `1d72c7e40862d8c6cfdf8dd8e7573c9923c639a4`, passed **45 tests**, JSON validation and shell syntax validation.
-- Latest run after metadata-limit disclosure: [41182244823](https://github.com/otta-komban/TuskerOS/actions/runs/41182244823), commit `5bfd033ec71b5c3b8c8aaa9507843f645fb15247`, also passed **45 tests**, JSON validation and shell syntax validation.
-- Exact current command set is unchanged: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
+- Current run: [41182598005](https://github.com/otta-komban/TuskerOS/actions/runs/41182598005), exact PR head `f56a0df7d07e05bd29e29f0e87f15b3f4dc45973`, passed **49 tests**, package-manifest offline validation (0 rows), image-lock JSON validation and shell syntax validation.
+- Current PR unified validation: [41182601497](https://github.com/otta-komban/TuskerOS/actions/runs/41182601497), all 8 jobs passed on the same exact head.
+- Current PR ATLAS validation: [41182601507](https://github.com/otta-komban/TuskerOS/actions/runs/41182601507), all steps passed on the same exact head.
+- Exact current command set: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python tools/atlas/resolve-package-manifest.py --validate-only --manifest os/package-manifest.csv`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Exact latest commands: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Two intermediate CI runs (`41181567432`, `41181595588`) failed because test fixtures still used the old two-column DNF query output / two-argument pin helper after the resolver began validating license and source RPM. Fixtures were corrected; subsequent 39- and 40-test runs passed.
 - One preceding CI iteration (run `41180611540`) failed one newly added source-lock test due to an incorrect test-field lookup; the test was corrected and the next run passed.
@@ -139,6 +141,10 @@ The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86
 | ATLAS-01-FB-027 | 2026-10-31T07:51:30Z | `tools/atlas/test_build_image_script.py` | Added a regression assertion for the source-repository limitation disclosure; run 41182244823 passed 45 tests. | `5bfd033ec71b5c3b8c8aaa9507843f645fb15247` |
 
 | ATLAS-01-FB-028 | 2026-10-31T07:53:29Z | Draft pull request #59 | Opened reviewable draft PR against main with task/base/head, scope, test evidence, contract impact, limitations and no-merge acceptance conditions. PR-head CI subsequently passed. | [PR #59](https://github.com/otta-komban/TuskerOS/pull/59) |
+| ATLAS-01-FB-029 | 2026-10-31T07:56:41Z | `tools/atlas/resolve-package-manifest.py` | Added offline `--validate-only` mode; permits schema-only validation with zero rows while normal resolution still rejects an empty package list. | `458ba169f9a0d723cdc03c88aaf7ad8d4cac44f6` |
+| ATLAS-01-FB-030 | 2026-10-31T07:56:57Z | `tools/atlas/test_resolve_package_manifest.py` | Added empty-manifest schema, production-empty rejection and validate-only CLI tests. Run 41182587372 passed 49 tests. | `873c9f0891284bafe1a64c05263c6d03cf66af1b` |
+| ATLAS-01-FB-031 | 2026-10-31T07:57:04Z | `.github/workflows/atlas-package-resolver.yml` | CI now validates the actual package manifest header/provenance columns. Run 41182598005 passed 49 tests plus manifest, JSON and shell checks; PR unified validation 41182601497 passed all 8 jobs. | `f56a0df7d07e05bd29e29f0e87f15b3f4dc45973` |
+
 **Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
 
 ## Next actions
