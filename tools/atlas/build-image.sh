@@ -97,11 +97,19 @@ build_pair() {
   mkdir -p "$destination/iso" "$destination/disk"
   (
     cd "$UPSTREAM_DIR"
-    ./kiwi-build --kiwi-file=Fedora.kiwi --image-type=iso --image-profile="$ISO_PROFILE" --output-dir "$destination/iso"
-    ./kiwi-build --kiwi-file=Fedora.kiwi --image-type=oem --image-profile="$DISK_PROFILE" --output-dir "$destination/disk"
+    # Fedora's wrapper builds into <output-dir>-build and exports the named
+    # result bundle only when --image-release is provided. Keep this ID fixed
+    # so repeat builds produce identical artifact names.
+    ./kiwi-build --kiwi-file=Fedora.kiwi --image-type=iso --image-profile="$ISO_PROFILE" --image-release=0 --output-dir "$destination/iso"
+    ./kiwi-build --kiwi-file=Fedora.kiwi --image-type=oem --image-profile="$DISK_PROFILE" --image-release=0 --output-dir "$destination/disk"
   )
-  (cd "$destination" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS)
-  [[ -s "$destination/SHA256SUMS" ]] || fail "KIWI produced no files in $destination"
+  # The bundle directories are the deliverables; remove intermediate KIWI
+  # build trees so transient build state cannot enter the reproducibility hash.
+  rm -rf -- "$destination/iso-build" "$destination/disk-build"
+  find "$destination/iso" -maxdepth 1 -type f -name '*.iso' -print -quit | grep -q . || fail "KIWI did not export a live ISO bundle"
+  find "$destination/disk" -maxdepth 1 -type f -name '*.qcow2' -print -quit | grep -q . || fail "KIWI did not export a QCOW2 disk bundle"
+  (cd "$destination" && find iso disk -type f -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS)
+  [[ -s "$destination/SHA256SUMS" ]] || fail "KIWI produced no bundled files in $destination"
 }
 
 build_pair "$RUN_DIR/first"
