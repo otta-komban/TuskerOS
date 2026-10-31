@@ -1,6 +1,7 @@
 import hashlib
 import json
 import tempfile
+
 import unittest
 from pathlib import Path
 
@@ -164,6 +165,55 @@ class ReleaseManifestVerifierTests(unittest.TestCase):
         finally:
             link.unlink(missing_ok=True)
             outside.unlink(missing_ok=True)
+
+
+    def test_symlink_to_file_inside_manifest_directory_is_rejected(self):
+        target = self.root / "real.iso"
+        target.write_bytes(b"synthetic installer bytes")
+        link = self.root / "linked.iso"
+        link.symlink_to(target)
+        self.payload["artifacts"][0]["filename"] = "linked.iso"
+        self._save()
+        result = self._verify()
+        self.assertFalse(result["valid"])
+        self.assertTrue(any("symlinked" in item for item in result["errors"]))
+
+    def test_symlinked_parent_directory_is_rejected(self):
+        target_dir = self.root / "real-dir"
+        target_dir.mkdir()
+        (target_dir / "installer.iso").write_bytes(b"synthetic installer bytes")
+        (self.root / "linked-dir").symlink_to(target_dir, target_is_directory=True)
+        self.payload["artifacts"][0]["filename"] = "linked-dir/installer.iso"
+        self._save()
+        result = self._verify()
+        self.assertFalse(result["valid"])
+        self.assertTrue(any("symlinked" in item for item in result["errors"]))
+
+    def test_non_regular_artifact_is_rejected(self):
+        directory = self.root / "artifact-directory"
+        directory.mkdir()
+        self.payload["artifacts"][0]["filename"] = "artifact-directory"
+        self._save()
+        result = self._verify()
+        self.assertFalse(result["valid"])
+        self.assertTrue(any("regular file" in item for item in result["errors"]))
+
+    def test_empty_path_component_is_rejected(self):
+        self.payload["artifacts"][0]["filename"] = "nested//installer.iso"
+        self._save()
+        result = self._verify()
+        self.assertFalse(result["valid"])
+        self.assertTrue(any("empty components" in item for item in result["errors"]))
+
+    def test_nested_regular_artifact_is_supported(self):
+        nested = self.root / "artifacts"
+        nested.mkdir()
+        (nested / "tusker.iso").write_bytes(b"synthetic installer bytes")
+        self.payload["artifacts"][0]["filename"] = "artifacts/tusker.iso"
+        self._save()
+        result = self._verify()
+        self.assertTrue(result["valid"], result["errors"])
+        self.assertFalse(result["promotion_ready"])
 
     def test_architecture_mismatch_fails(self):
         self.payload["artifacts"][0]["architecture"] = "aarch64"
