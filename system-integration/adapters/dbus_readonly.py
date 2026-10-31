@@ -162,7 +162,8 @@ class ReadOnlySystemBusAdapter:
             raise AdapterError("bus call failed")
         try:
             payload = json.loads(stdout.decode("utf-8"))
-            if not isinstance(payload, dict) or payload.get("type") != "s":
+            expected_signature = "s" if method == "GetId" else "as"
+            if not isinstance(payload, dict) or payload.get("type") != expected_signature:
                 raise ValueError("unexpected signature")
             data = payload.get("data")
             if not isinstance(data, list) or len(data) != 1:
