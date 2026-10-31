@@ -57,7 +57,7 @@
           "type": "string",
           "maxLength": 512,
           "format": "uri",
-          "pattern": "^https://[^/@]+(?:/|$)"
+          "pattern": "^https://[^\\s/@]+(?:/[^\\s]*)?$"
         },
         "license": {
           "type": "string",
@@ -119,7 +119,7 @@
           "type": "string",
           "maxLength": 512,
           "format": "uri",
-          "pattern": "^https://[^/@]+(?:/|$)"
+          "pattern": "^https://[^\\s/@]+(?:/[^\\s]*)?$"
         },
         "verified": {
           "type": "boolean"
@@ -146,13 +146,13 @@
           "type": "string",
           "maxLength": 512,
           "format": "uri",
-          "pattern": "^https://[^/@]+(?:/|$)"
+          "pattern": "^https://[^\\s/@]+(?:/[^\\s]*)?$"
         },
         "artifact_uri": {
           "type": "string",
           "maxLength": 512,
           "format": "uri",
-          "pattern": "^https://[^/@]+(?:/|$)"
+          "pattern": "^https://[^\\s/@]+(?:/[^\\s]*)?$"
         },
         "sha256": {
           "type": "string",
@@ -162,7 +162,7 @@
           "type": "string",
           "maxLength": 512,
           "format": "uri",
-          "pattern": "^https://[^/@]+(?:/|$)"
+          "pattern": "^https://[^\\s/@]+(?:/[^\\s]*)?$"
         },
         "published_at": {
           "type": "string",
@@ -174,7 +174,7 @@
           "type": "string",
           "maxLength": 512,
           "format": "uri",
-          "pattern": "^https://[^/@]+(?:/|$)"
+          "pattern": "^https://[^\\s/@]+(?:/[^\\s]*)?$"
         }
       }
     },
