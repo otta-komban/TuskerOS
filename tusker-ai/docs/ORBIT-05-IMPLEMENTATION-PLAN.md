@@ -163,3 +163,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added a regression using circular nested message data and asserted the typed error code.
 - Commits: `25ec82136315466b4e476c3300e18d9c1fd01497` (provider), `4b84dae22590c422280dfcf10d686399e832daa9` (tests).
 - Latest-head CI pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 15 — runtime event payload validation
+
+- Tightened the provider-neutral runtime boundary beyond event-envelope validation: text deltas must carry a non-empty string, usage counters must be non-negative integers (excluding booleans), completion finish reasons must be strings from the contract vocabulary, and cancellation reasons must be strings when supplied.
+- Malformed payloads are converted to a safe `PROVIDER_DISCONNECTED` error before the event is exposed to consumers. No shared contract or schema was changed.
+- Added regressions for missing/wrong/empty text deltas, boolean/negative usage counts, malformed and unknown finish reasons, plus a valid text/usage/completion sequence.
+- Runtime and test commits: `0051d46c0b50c88f2b6a1af8c496c53029f3b654`, `0d0ce3f2926d751e9c866dc7e974df4a6b3cae19`.
+- Latest-head CI verification is pending. Live Ollama remains NOT RUN.
