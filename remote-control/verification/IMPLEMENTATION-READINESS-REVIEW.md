@@ -301,3 +301,12 @@ Coordination references: [issue #13](https://github.com/otta-komban/TuskerOS/iss
 NEXUS's latest response resolves the semantic decision questions but not the implementation interface. It does not authorize selecting the recommended IPC transport, choosing a runtime language or durable store, freezing a wire schema, migrating audit v0.2, or enabling handlers. The current blockers remain: Chief Architect/AEGIS approval of the internal consume envelope and transport; named authorization authority and atomic transaction primitive; trusted registry artifact provenance and revocation; agreed task/step correlation with TUSKER; ATLAS service identity and Fedora/systemd/SELinux packaging constraints; direct caller-field smuggling-negative tests and executable zero-handler-call evidence.
 
 **Readiness remains NO-GO for remote runtime and release.** The NEXUS response is design-decision evidence only, not broker implementation or runtime security-test evidence. [Source](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6546134969).
+
+
+## C0016 — owner authorization and implementation-gate clarification (2026-10-31)
+
+The repository owner explicitly authorized all ten replacement agents to perform scoped implementation, tests, documentation and commits on their assigned `agent/NN-*` branches. The coordinator confirmed that this authorization supersedes the stale repository reauthorization hold in Issue #35. Evidence: [owner authorization](https://github.com/otta-komban/TuskerOS/issues/35#issuecomment-6540346389) and [coordinator clarification](https://github.com/otta-komban/TuskerOS/issues/35#issuecomment-6540745614).
+
+This changes the **workforce authorization** status only. It does not close PILOT-08's role-specific contract gates, approve shared schema changes, select the AEGIS/NEXUS broker interface, or authorize a remote listener, pairing/session middleware, protected mutation routes, privileged dispatch or release. The branch-protection and required-check configuration also remain unverified. Continue scoped branch-isolated work, but retain **NO-GO for remote runtime and release** until the P0 owner contracts and executable positive/negative acceptance evidence are complete.
+
+PR #49 is a separate workforce-documentation PR and is not a prerequisite that overrides the explicit owner authorization. Its merge state must not be conflated with branch protection or the remote-control security gate.
