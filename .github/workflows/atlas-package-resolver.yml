@@ -167,11 +167,12 @@ jobs:
               text=True,
               capture_output=True,
           ).stdout
-          nevra, repo, license_expression, source_rpm, upstream_url = module.parse_query_matches(output, "bash")
+          nevra, repo, license_expression, source_rpm, upstream_url, location = module.parse_query_matches(output, "bash")
           assert nevra.startswith("bash-0:"), nevra
           assert repo, "DNF5 did not return a repository ID"
           assert license_expression, "DNF5 did not return an RPM license"
           assert source_rpm.endswith(".src.rpm"), source_rpm
+          assert location and not location.startswith("/"), location
           assert upstream_url == "NOASSERTION" or upstream_url.startswith("https://"), upstream_url
-          print(f"Validated Fedora 44 DNF5 metadata: {nevra} from {repo}; source RPM {source_rpm}")
+          print(f"Validated Fedora 44 DNF5 metadata: {nevra} from {repo}; source RPM {source_rpm}; RPM location {location}")
           PY
