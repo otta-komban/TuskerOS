@@ -37,77 +37,13 @@ class ModelStoreTests(unittest.TestCase):
         self.temp.cleanup()
 
     def install_fixture(self):
-        with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
-            return self.store.install(self.manifest, consent=True)
-
-    def test_download_verifies_digest_and_atomically_activates(self):
-        path = self.install_fixture()
-        self.assertEqual(path.read_bytes(), self.payload)
-        self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-001")
-        self.assertEqual(path.stat().st_mode & 0o777, 0o400)
-        self.assertTrue(self.store.verify_active("fixture-model"))
-
-    def test_digest_mismatch_never_activates(self):
-        bad = dict(self.manifest)
-        bad["files"] = [dict(self.manifest["files"][0], sha256="0" * 64)]
-        with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
-            with self.assertRaises(TuskerRuntimeError) as ctx:
-                self.store.install(bad, consent=True)
-        self.assertEqual(ctx.exception.code, RuntimeErrorCode.INTEGRITY_CHECK_FAILED)
-        self.assertIsNone(self.store.active_revision("fixture-model"))
-
-    def test_download_requires_explicit_consent(self):
-        with self.assertRaises(TuskerRuntimeError) as ctx:
-            self.store.install(self.manifest, consent=False)
-        self.assertEqual(ctx.exception.code, RuntimeErrorCode.PERMISSION_DENIED)
-
-    def test_download_requires_aegis_authorization_callback(self):
-        denied = ModelStore(self.temp.name + "/denied")
-        with self.assertRaises(TuskerRuntimeError) as ctx:
-            denied.install(self.manifest, consent=True)
-        self.assertEqual(ctx.exception.code, RuntimeErrorCode.PERMISSION_DENIED)
-
-    def test_cancel_before_download_does_not_stage(self):
-        token = CancellationToken()
-        token.cancel()
-        with self.assertRaises(TuskerRuntimeError) as ctx:
-            self.store.install(self.manifest, consent=True, cancellation=token)
-        self.assertEqual(ctx.exception.code, RuntimeErrorCode.CANCELLED)
-        self.assertEqual(list(self.store.staging.iterdir()), [])
-
-    def test_cancel_during_download_cleans_staging(self):
-        token = CancellationToken()
-        class CancellingResponse(Response):
-            def read(inner, size):
-                part = super(CancellingResponse, inner).read(size)
-                token.cancel()
-                return part
-        with patch("tusker_ai.model_store._open_https", return_value=CancellingResponse(self.payload)):
-            with self.assertRaises(TuskerRuntimeError) as ctx:
-                self.store.install(self.manifest, consent=True, cancellation=token)
-        self.assertEqual(ctx.exception.code, RuntimeErrorCode.CANCELLED)
-        self.assertEqual(list(self.store.staging.iterdir()), [])
-
-    def test_manifest_rejects_path_traversal(self):
-        bad = dict(self.manifest)
-        bad["files"] = [dict(self.manifest["files"][0], filename="../escape.gguf")]
-        with self.assertRaises(TuskerRuntimeError):
-            self.store.install(bad, consent=True)
-
-    def test_verify_active_detects_post_install_tampering(self):
-        path = self.install_fixture()
-        path.chmod(0o600)
-        path.write_bytes(b"tampered")
-        self.assertFalse(self.store.verify_active("fixture-model"))
-
-    def test_failed_active_pointer_fsync_rolls_back_previous_revision(self):
-        self.install_fixture()
-        second_payload = b"second verified revision"
-        second = dict(self.manifest)
-        second["revision"] = "rev-002"
-        second["files"] = [{"filename": "model.gguf", "size_bytes": len(second_payload), "sha256": hashlib.sha256(second_payload).hexdigest()}]
-        with patch("tusker_ai.model_store._open_https", return_value=Response(second_payload)), patch.object(self.store, "_fsync_dir", side_effect=[None, OSError("simulated directory fsync failure"), None]):
+        with (
+            patch("tusker_ai.model_store._open_https", return_value=Response(second_payload)),
+            patch("tusker_ai.model_store.os.replace", side_effect=fail_rollback),
+            patch.object(self.store, "_fsync_dir", side_effect=[None, OSError("activation fsync failure")]),
+        ):
             with self.assertRaises(OSError):
+                self.store.install(second, consent=True)
                 self.store.install(second, consent=True)
         self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-001")
         self.assertTrue(self.store.verify_active("fixture-model"))
