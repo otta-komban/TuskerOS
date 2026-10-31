@@ -101,6 +101,28 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         )
         adapter._call.assert_awaited_once_with("GetId")
 
+    async def test_snapshot_does_not_return_partial_result_when_names_read_fails(self):
+        gate = AsyncMock(return_value=True)
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock(
+            side_effect=[
+                "0123456789abcdef0123456789abcdef",
+                AdapterError("bus call failed"),
+            ]
+        )
+
+        with self.assertRaisesRegex(AdapterError, "bus call failed"):
+            await adapter.snapshot()
+
+        self.assertEqual(
+            [call.args for call in gate.await_args_list],
+            [("system.bus.id.read",), ("system.bus.names.read",)],
+        )
+        self.assertEqual(
+            [call.args for call in adapter._call.await_args_list],
+            [("GetId",), ("ListNames",)],
+        )
+
     async def test_missing_authorization_gate_fails_closed(self):
         adapter = ReadOnlySystemBusAdapter(None)
         adapter._call = AsyncMock()
