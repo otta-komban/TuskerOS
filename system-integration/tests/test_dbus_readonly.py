@@ -519,8 +519,17 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_process_kill_failure_does_not_escape_cleanup_boundary(self):
         class KillFailureProcess(FakeProcess):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.terminated = False
+
             def kill(self):
                 raise RuntimeError("private kill detail")
+
+            def terminate(self):
+                self.terminated = True
+                self.returncode = -15
+                self._exited.set()
 
         process = KillFailureProcess(
             stdout=b"x" * 129,
@@ -539,6 +548,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(str(caught.exception), "bus response exceeded output limit")
         self.assertNotIn("private kill detail", str(caught.exception))
+        self.assertTrue(process.terminated)
         self.assertEqual(process.wait.await_count, 2)
 
     async def test_process_wait_failure_does_not_escape_cleanup_boundary(self):
