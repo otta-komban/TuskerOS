@@ -176,6 +176,27 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(caught.exception), "bus response exceeded output limit")
         self.assertTrue(process.killed)
 
+    async def test_cancellation_kills_running_subprocess(self):
+        process = FakeProcess(returncode=None)
+        spawned = asyncio.Event()
+
+        async def spawn(*args, **kwargs):
+            spawned.set()
+            return process
+
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=spawn,
+        ):
+            call = asyncio.create_task(adapter._call("GetId"))
+            await asyncio.wait_for(spawned.wait(), timeout=1)
+            call.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await call
+
+        self.assertTrue(process.killed)
+
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
             ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=31)
