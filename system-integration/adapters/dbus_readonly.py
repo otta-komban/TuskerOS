@@ -72,11 +72,12 @@ def _is_valid_bus_name(name: object) -> bool:
     if len(elements) < 2:
         return False
     allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
-    for index, element in enumerate(elements):
+    for element in elements:
         if not element or any(character not in allowed for character in element):
             return False
-        if unique and index == 0 and not element[0].isdigit():
-            return False
+        # The D-Bus grammar permits digit-leading elements in unique names,
+        # but forbids them in well-known names. Do not impose an extra
+        # first-element restriction on unique connection names.
         if not unique and element[0].isdigit():
             return False
     return True
