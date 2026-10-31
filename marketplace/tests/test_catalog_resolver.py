@@ -170,6 +170,27 @@ class CatalogResolverTests(unittest.TestCase):
         )
         self.assertEqual(plan["releases"]["org.tuskeros.libs.core"]["release"]["version"], "2.0.0")
 
+    def test_catalog_plan_rejects_malformed_root_inputs(self):
+        for roots in ("org.tuskeros.apps.demo", [["bad"]], None):
+            with self.subTest(roots=roots):
+                with self.assertRaises(CatalogResolutionError):
+                    resolve_catalog_plan(roots, [], {}, "0.5.0", "1.2.0")
+
+    def test_catalog_plan_rejects_malformed_dependency_graph(self):
+        invalid_graphs = (
+            [],
+            {"org.tuskeros.apps.demo": "org.tuskeros.libs.core"},
+            {"org.tuskeros.apps.demo": [None]},
+            {"": []},
+            {"org.tuskeros.apps.demo": None},
+        )
+        for graph in invalid_graphs:
+            with self.subTest(graph=graph):
+                with self.assertRaises(CatalogResolutionError):
+                    resolve_catalog_plan(
+                        ["org.tuskeros.apps.demo"], [], graph, "0.5.0", "1.2.0"
+                    )
+
     def test_missing_candidate_blocks_plan(self):
         with self.assertRaises(CatalogResolutionError):
             resolve_catalog_plan(
