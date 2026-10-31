@@ -9,7 +9,7 @@
 
 - **Full historical conversation count:** Unverified
 - **Verified visible-segment completions:** 7 / 100 after this audit response
-- **Historical JSONL records:** 55 (`C0001`–`C0055`); these are work/response records, not proof of 54 distinct user/assistant pairs
+- **Historical JSONL records:** 55 (`C0001`–`C0055`); these are work/response records, not proof of 55 distinct user/assistant pairs
 - **Latest historical record:** `AEGIS-06-C0055`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
 - **Engineering tasks completed:** 45 (separate from visible conversation completions and commits)
