@@ -137,7 +137,7 @@ def parse_query_matches(
     """Return one unambiguous NEVRA/repository/license/source-RPM/upstream-URL tuple."""
     # Preserve a trailing tab: an RPM with no upstream URL has an empty
     # fifth field, which is normalized to the explicit NOASSERTION sentinel.
-    matches = {line.rstrip("\\r\\n") for line in output.splitlines() if line.strip()}
+    matches = {line.rstrip("\r\n") for line in output.splitlines() if line.strip()}
     if not matches:
         raise RuntimeError("no available match")
     parsed: set[tuple[str, str, str, str, str]] = set()
