@@ -653,9 +653,9 @@ class RepositoryValidationTests(unittest.TestCase):
 
     def test_crlf_input_preserves_rows_and_duplicate_source_line_numbers(self):
         markdown = (
-            "| PAIR-C01 | First condition | First assertion |\\r\\n"
-            "\\r\\n"
-            "| PAIR-C01 | Second condition | Second assertion |\\r\\n"
+            "| PAIR-C01 | First condition | First assertion |\r\n"
+            "\r\n"
+            "| PAIR-C01 | Second condition | Second assertion |\r\n"
         )
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
