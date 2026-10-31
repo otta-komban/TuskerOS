@@ -159,8 +159,8 @@ class ManifestSnapshotBindingTests(unittest.TestCase):
     def write_manifest(self, repository_id="fedora", snapshot_id=None):
         snapshot_id = self.snapshot_id if snapshot_id is None else snapshot_id
         self.manifest.write_text(
-            "layer,package,repository_id,repository_snapshot\\n"
-            f"base,bash,{repository_id},{snapshot_id}\\n",
+            "layer,package,repository_id,repository_snapshot\n"
+            f"base,bash,{repository_id},{snapshot_id}\n",
             encoding="utf-8",
         )
 
@@ -179,7 +179,7 @@ class ManifestSnapshotBindingTests(unittest.TestCase):
             MODULE.verify_manifest_snapshot_pins(self.manifest, self.indexed)
 
     def test_empty_package_manifest_is_rejected_for_build(self):
-        self.manifest.write_text("layer,package,repository_id,repository_snapshot\\n", encoding="utf-8")
+        self.manifest.write_text("layer,package,repository_id,repository_snapshot\n", encoding="utf-8")
         with self.assertRaisesRegex(RuntimeError, "has no rows"):
             MODULE.verify_manifest_snapshot_pins(self.manifest, self.indexed)
 
