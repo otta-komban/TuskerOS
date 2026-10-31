@@ -326,6 +326,30 @@ class SecurityStore:
             if row is None or row["state"] != "APPROVED":
                 self._db.execute("ROLLBACK")
                 raise SecurityStoreError("approval is not approved")
+            approval_binding = json.loads(bytes(row["binding_json"]).decode("utf-8"))
+            expected_audit = {
+                "principal_binding": row["principal_binding"],
+                "proposal_id": row["proposal_id"],
+                "operation_id": row["broker_operation_id"],
+                "risk_class": row["risk_class"],
+                "policy_version": row["policy_version"],
+                "action_digest": row["action_digest"],
+                "task_id": row["task_id"],
+                "step_id": row["step_id"],
+                "registry_version": approval_binding["registry_version"],
+                "registry_status": "resolved",
+            }
+            audit_matches = self._audit_context_matches(audit_context, expected_audit)
+            if audit_matches and audit_context["origin"] == "remote":
+                audit_matches = (
+                    audit_context.get("device_binding") == approval_binding["device_binding"]
+                    and audit_context.get("session_binding") == approval_binding["session_binding"]
+                )
+            elif audit_matches:
+                audit_matches = "device_binding" not in audit_context and "session_binding" not in audit_context
+            if not audit_matches:
+                self._db.execute("ROLLBACK")
+                raise SecurityStoreError("authorization audit context does not match authority binding")
             if self._policy_rechecker is None or not self._policy_rechecker(request_id, current_binding, current_policy_version):
                 self._db.execute("UPDATE approvals SET state='INVALIDATED' WHERE request_id=?", (request_id,))
                 self._audit({**audit_context, "event_type":"policy_denied", "approval_request_id":request_id,
