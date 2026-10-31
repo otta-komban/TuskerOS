@@ -54,7 +54,7 @@ def decide_and_issue(db):
     assert db.decide(rid, approve=True, current_binding=BINDING, approver_credentials={"uid": 1000},
                      audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
     return db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
-                                  audit_context=audit(), now=NOW)
+                                  audit_context=audit_for_approval(db, rid), now=NOW)
 
 def audit_for_ref(db, ref):
     try:
@@ -851,5 +851,52 @@ def test_create_approval_rejects_noncanonical_proposal_uuid():
                 audit_context=audit(), now=NOW)
         assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
         assert db.audit_events() == []
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("field,value", [
+    ("principal_binding", D4), ("proposal_id", str(uuid.uuid4())),
+    ("operation_id", "broker.other.op"), ("risk_class", "R4"),
+    ("policy_version", "policy-2"), ("action_digest", D3),
+    ("task_id", "other-task"), ("step_id", "other-step"),
+    ("registry_version", "registry-2"), ("registry_status", "unavailable"),
+])
+def test_issue_authorization_rejects_mismatched_audit_context_without_state_change(field, value):
+    db = store()
+    try:
+        rid = approval(db)
+        context = audit_for_approval(db, rid)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=context, now=NOW) == "APPROVED"
+        context = audit_for_approval(db, rid)
+        context[field] = value
+        with pytest.raises(SecurityStoreError, match="audit context does not match"):
+            db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                audit_context=context, now=NOW)
+        row = db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()
+        assert row["state"] == "APPROVED"
+        assert db._db.execute("SELECT COUNT(*) AS n FROM auth_refs").fetchone()["n"] == 0
+        assert len(db.audit_events()) == 2
+    finally:
+        db.close()
+
+
+def test_issue_authorization_rejects_remote_audit_identity_not_bound_to_approval():
+    db = store()
+    try:
+        rid = approval(db)
+        context = audit_for_approval(db, rid)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=context, now=NOW) == "APPROVED"
+        context = audit_for_approval(db, rid)
+        context.update(origin="remote", device_binding=D4, session_binding=D2)
+        with pytest.raises(SecurityStoreError, match="audit context does not match"):
+            db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                audit_context=context, now=NOW)
+        row = db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()
+        assert row["state"] == "APPROVED"
+        assert db._db.execute("SELECT COUNT(*) AS n FROM auth_refs").fetchone()["n"] == 0
+        assert len(db.audit_events()) == 2
     finally:
         db.close()
