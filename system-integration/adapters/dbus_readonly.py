@@ -279,3 +279,7 @@ class ReadOnlySystemBusAdapter:
             await asyncio.wait_for(process.wait(), timeout=1.0)
         except asyncio.TimeoutError:
             pass
+        except Exception:
+            # Cleanup must not replace the sanitized adapter failure that
+            # triggered termination (for example, a failed wait operation).
+            pass
