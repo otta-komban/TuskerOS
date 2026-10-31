@@ -7,12 +7,12 @@
 
 Each line is one JSON object containing exactly:
 
-- `sequence`: positive integer, contiguous from 1
+- `sequence`: positive integer, contiguous from 1; the first record must be `planned`
 - `operation_id`: non-empty operation identity, constant within one journal
 - `state`: one of `planned`, `prepared`, `executing`, `interrupted`, `succeeded`, `failed`, `cancelled`
-- `idempotent`: boolean declaration; not proof of idempotency
+- `idempotent`: boolean declaration that must remain constant throughout the operation journal; not proof of idempotency
 - `previous_checksum`: prior record checksum, or 64 zeroes for the first record
-- `checksum`: SHA-256 of the other fields serialized with this module's deterministic JSON encoding
+- `checksum`: 64 lowercase hexadecimal characters encoding SHA-256 of the other fields serialized with this module's deterministic JSON encoding
 
 The checksum is an accidental-corruption/tamper-evidence chain only. It is not keyed, signed, authenticated, or equivalent to RFC 8785 JCS. A malicious writer able to rewrite the journal can recompute it. The journal must not be trusted as authorization evidence.
 
@@ -38,4 +38,4 @@ The local parser rejects journals larger than 4 MiB, more than 10,000 records, o
 
 ## Validation scope and limitations
 
-The validator checks required/extra fields, strict JSONL parsing, contiguous and unique sequence numbers, stable operation identity, allowed state transitions, previous-checksum linkage, and per-record checksums. It rejects blank/truncated JSONL records and non-standard JSON constants. It does not provide durable writes, locking, fsync, atomic append, concurrent-writer protection, signatures, anti-rollback, trusted timestamps, secret handling, or crash-consistent persistence. Those concerns require cross-agent contract review before integration.
+The validator checks required/extra fields, strict JSONL parsing, contiguous and unique sequence numbers, a `planned` initial state, stable operation identity and idempotency declaration, allowed state transitions, lowercase SHA-256 field encoding, previous-checksum linkage, and per-record checksums. It rejects blank/truncated JSONL records and non-standard JSON constants. It does not provide durable writes, locking, fsync, atomic append, concurrent-writer protection, signatures, anti-rollback, trusted timestamps, secret handling, or crash-consistent persistence. Those concerns require cross-agent contract review before integration.
