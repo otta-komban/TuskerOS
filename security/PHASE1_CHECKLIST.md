@@ -122,3 +122,6 @@
 
 
 - [x] **JCS-UNICODE-001 — RFC 8785 correction:** removed generic NFC rewriting of parsed JSON strings; exact Unicode code-point preservation is now required; added composed/decomposed UTF-8 + SHA-256 reference vectors and a pytest fixture regression. Runtime canonicalizer conformance and invalid-surrogate handling remain release gates; no production JCS implementation is claimed.
+
+
+- [ ] **SEC-INT-008 — NEXUS public authorization-context provenance regression:** current `07-system-integration` head `a0cc0a74242070135b6b7937bd7605c7861fe7d8` still exposes optional top-level `authorization_context` with `additionalProperties: true` in the public invocation schema, contrary to prior C0049 review note. NEXUS owner follow-up posted on issue #17 comment 6539261475. Require caller-authority negative tests and authenticated internal-context positive test; no NEXUS code changed or tests run. Keep provider mutations fail-closed pending peer binding and atomic consume-before-dispatch evidence.
