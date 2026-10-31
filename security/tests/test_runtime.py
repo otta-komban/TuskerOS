@@ -1278,3 +1278,41 @@ def test_security_database_closes_connection_when_initialization_fails(tmp_path,
     assert len(opened) == 1
     with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
         opened[0].execute("SELECT 1")
+
+
+@pytest.mark.parametrize("failing_dependency", [
+    "identity_verifier", "registry_verifier", "argument_validator",
+    "resource_resolver", "precondition_verifier",
+])
+def test_policy_fails_closed_when_trusted_dependency_raises(failing_dependency):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("dependency failure")
+
+    dependencies = {
+        "identity_verifier": lambda c: c.get("authenticated") is True,
+        "registry_verifier": lambda r, v: bool(r) and v == "registry-1",
+        "argument_validator": lambda a, x: True,
+        "resource_resolver": lambda resources: list(resources),
+        "precondition_verifier": lambda p, r: D4,
+    }
+    dependencies[failing_dependency] = fail
+    engine = PolicyEngine("policy-1", **dependencies)
+    decision = engine.evaluate(proposal, context, registry, "registry-1")
+    assert decision.status == "DENY"
+    assert decision.reason_code == "POLICY_INTERNAL_ERROR"
