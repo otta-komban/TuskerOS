@@ -745,16 +745,6 @@ def test_audit_rejects_non_utc_or_timezone_naive_timestamps(timestamp):
         db.close()
 
 
-@pytest.mark.parametrize("overrides", [
-    {"event_type": []},
-    {"origin": {}},
-    {"risk_class": []},
-    {"result_status": {}},
-    {"registry_status": []},
-    {"transaction_id": {"unbounded": "nested"}, "snapshot_digest": D4},
-    {"device_binding": [], "origin": "remote", "session_binding": D2},
-    {"session_binding": {}, "origin": "remote", "device_binding": D3},
-])
 def test_audit_rejects_free_form_reason_codes():
     db = store()
     try:
@@ -765,6 +755,16 @@ def test_audit_rejects_free_form_reason_codes():
         db.close()
 
 
+@pytest.mark.parametrize("overrides", [
+    {"event_type": []},
+    {"origin": {}},
+    {"risk_class": []},
+    {"result_status": {}},
+    {"registry_status": []},
+    {"transaction_id": {"unbounded": "nested"}, "snapshot_digest": D4},
+    {"device_binding": [], "origin": "remote", "session_binding": D2},
+    {"session_binding": {}, "origin": "remote", "device_binding": D3},
+])
 def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
     db = store()
     try:
