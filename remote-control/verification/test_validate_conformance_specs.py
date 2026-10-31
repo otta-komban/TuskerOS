@@ -188,11 +188,11 @@ class ParseCaseRowsTests(unittest.TestCase):
 
     def test_crlf_fenced_examples_are_ignored_without_shifting_source_lines(self):
         markdown = (
-            "| PAIR-C01 | Actual row before fence | Assertion |\\r\\n"
-            "```markdown\\r\\n"
-            "| PAIR-C01 | Fenced duplicate example | Ignored |\\r\\n"
-            "```\\r\\n"
-            "| PAIR-C01 | Actual duplicate after fence | Assertion |\\r\\n"
+            "| PAIR-C01 | Actual row before fence | Assertion |\r\n"
+            "```markdown\r\n"
+            "| PAIR-C01 | Fenced duplicate example | Ignored |\r\n"
+            "```\r\n"
+            "| PAIR-C01 | Actual duplicate after fence | Assertion |\r\n"
         )
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
