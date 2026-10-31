@@ -60,12 +60,44 @@ def split_table_cells(line: str) -> list[str]:
     return cells
 
 
+def _iter_table_rows(markdown: str) -> Iterable[tuple[int, str]]:
+    """Yield pipe-table rows outside fenced and indented Markdown code blocks."""
+    fence_char: str | None = None
+    fence_size = 0
+    for line_number, line in enumerate(markdown.splitlines(), 1):
+        stripped = line.lstrip(" ")
+        indent = len(line) - len(stripped)
+
+        if fence_char is not None:
+            if indent <= 3 and stripped:
+                marker = stripped[0]
+                run = len(stripped) - len(stripped.lstrip(marker)) if marker in "`~" else 0
+                if marker == fence_char and run >= fence_size and not stripped[run:].strip():
+                    fence_char = None
+                    fence_size = 0
+            continue
+
+        # CommonMark indented code blocks must not contribute example rows.
+        if indent >= 4 or line.startswith("\\t"):
+            continue
+
+        if indent <= 3 and stripped and stripped[0] in "`~":
+            marker = stripped[0]
+            run = len(stripped) - len(stripped.lstrip(marker))
+            info = stripped[run:]
+            if run >= 3 and (marker != "`" or "`" not in info):
+                fence_char = marker
+                fence_size = run
+                continue
+
+        if line.lstrip().startswith("|"):
+            yield line_number, line
+
+
 def parse_case_rows(markdown: str, prefix: str) -> list[tuple[str, str, str]]:
     """Return (case id, condition, assertion) tuples from pipe-table rows."""
     cases: list[tuple[str, str, str]] = []
-    for line_number, line in enumerate(markdown.splitlines(), 1):
-        if not line.lstrip().startswith("|"):
-            continue
+    for line_number, line in _iter_table_rows(markdown):
         cells = split_table_cells(line)
         if not cells:
             continue
@@ -91,9 +123,7 @@ def validate_spec(markdown: str, prefix: str, expected_count: int) -> list[str]:
     cases = parse_case_rows(markdown, prefix)
     ids = [case[0] for case in cases]
     lines_by_id: dict[str, list[int]] = {}
-    for line_number, line in enumerate(markdown.splitlines(), 1):
-        if not line.lstrip().startswith("|"):
-            continue
+    for line_number, line in _iter_table_rows(markdown):
         cells = split_table_cells(line)
         if cells and CASE_ID.fullmatch(cells[0]) and cells[0].startswith(prefix + "-"):
             lines_by_id.setdefault(cells[0], []).append(line_number)
