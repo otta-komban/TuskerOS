@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema.exceptions import SchemaError
 
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "release-manifest.schema.json"
 REQUIRED_TESTS = ("uefi_boot", "secure_boot", "desktop_smoke", "install", "recovery")
@@ -45,7 +46,7 @@ def _safe_local_file(root: Path, reference: str, label: str, errors: list[str]) 
         return None
     parsed = urlsplit(reference)
     candidate = Path(reference)
-    if (parsed.scheme or parsed.netloc or parsed.query or parsed.fragment):
+    if parsed.scheme or parsed.netloc or parsed.query or parsed.fragment:
         errors.append(f"{label}: only local relative paths are supported by this verifier")
         return None
     if "\\" in reference or candidate.is_absolute() or any(part in ("..", "") for part in candidate.parts):
@@ -93,7 +94,7 @@ def verify_release_manifest(manifest_path: Path, schema_path: Path = SCHEMA_PATH
             errors.append(f"schema {location}: {error.message}")
         if not errors:
             checks.append({"id": "schema", "status": "passed"})
-    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError, SchemaError) as exc:
         errors.append(f"schema: cannot load or validate schema: {exc}")
         return {"valid": False, "promotion_ready": False, "errors": errors, "warnings": warnings, "checks": checks}
 
