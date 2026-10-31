@@ -65,8 +65,9 @@ def _iter_table_rows(markdown: str) -> Iterable[tuple[int, str]]:
     fence_char: str | None = None
     fence_size = 0
     for line_number, line in enumerate(markdown.splitlines(), 1):
-        stripped = line.lstrip(" ")
-        indent = len(line) - len(stripped)
+        expanded = line.expandtabs(4)
+        stripped = expanded.lstrip(" ")
+        indent = len(expanded) - len(stripped)
 
         if fence_char is not None:
             if indent <= 3 and stripped:
