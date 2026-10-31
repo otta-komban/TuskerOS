@@ -1,5 +1,6 @@
 """Deterministic deny-by-default policy evaluation; no execution side effects."""
 from __future__ import annotations
+import copy
 import re
 import uuid
 from dataclasses import dataclass
@@ -135,13 +136,13 @@ class PolicyEngine:
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
             if any(not isinstance(item, Mapping) for item in registry):
                 return deny("POLICY_REGISTRY_INVALID")
-            if self.registry_verifier(registry, registry_version) is not True:
+            if self.registry_verifier(copy.deepcopy(registry), registry_version) is not True:
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
             # Validate every signed registry entry before selecting an action. A malformed
             # unrelated entry invalidates the registry as a whole; lookup must not hide it.
             if any(not _valid_registry_entry(item) for item in registry):
                 return deny("POLICY_REGISTRY_INVALID")
-            if self.identity_verifier is None or self.identity_verifier(context) is not True:
+            if self.identity_verifier is None or self.identity_verifier(copy.deepcopy(context)) is not True:
                 return deny("POLICY_UNKNOWN_PRINCIPAL")
             for field in ("principal_binding", "session_binding", "device_binding"):
                 if not isinstance(context.get(field), str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", context[field]):
@@ -207,7 +208,7 @@ class PolicyEngine:
             if len(canonical_bytes(proposal)) > max_input: return deny("POLICY_INPUT_LIMIT")
             # Bound the serialized proposal before passing attacker-controlled
             # arguments to an injected schema validator.
-            if self.argument_validator(proposal["action_id"], proposal["arguments"]) is not True:
+            if self.argument_validator(proposal["action_id"], copy.deepcopy(proposal["arguments"])) is not True:
                 return deny("POLICY_INVALID_ARGUMENTS")
             if origin not in entry["allowed_origins"] or principal_class not in entry["allowed_principal_classes"]:
                 return deny("POLICY_SCOPE_EXCEEDED")
@@ -273,7 +274,7 @@ class PolicyEngine:
             if sorted(resolved_modes) != requested_modes or len(keys) != len(set(keys)):
                 return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
             normalized = resolved
-            precondition_digest = self.precondition_verifier(proposal, resolved)
+            precondition_digest = self.precondition_verifier(copy.deepcopy(proposal), copy.deepcopy(resolved))
             if not isinstance(precondition_digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", precondition_digest):
                 return deny("POLICY_PRECONDITION_FAILED")
             mutating = any(item["access"] != "read" for item in normalized)
