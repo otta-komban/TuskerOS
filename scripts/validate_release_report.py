@@ -20,6 +20,24 @@ STATUSES = {"passed", "failed", "blocked", "not_run"}
 OVERALL = {"passed", "failed", "blocked", "incomplete"}
 
 
+class DuplicateJSONKeyError(ValueError):
+    """Raised when a JSON object repeats a member name."""
+
+
+def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise DuplicateJSONKeyError(f"duplicate JSON object key: {key!r}")
+        result[key] = value
+    return result
+
+
+def strict_json_loads(data: str) -> Any:
+    """Parse JSON while rejecting duplicate object member names at every depth."""
+    return json.loads(data, object_pairs_hook=_unique_object)
+
+
 def parse_utc(value: Any, field: str, errors: list[str]) -> datetime | None:
     if not isinstance(value, str) or not value.endswith("Z"):
         errors.append(f"{field}: expected an RFC 3339 UTC timestamp ending in Z")
@@ -138,9 +156,12 @@ def main() -> int:
     parser.add_argument("--expected-manifest-digest", help="optional SHA-256 of the manifest being checked")
     args = parser.parse_args()
     try:
-        report = json.loads(args.report.read_text(encoding="utf-8"))
+        report = strict_json_loads(args.report.read_text(encoding="utf-8"))
     except OSError as exc:
         print(f"cannot read report: {exc}", file=sys.stderr)
+        return 2
+    except DuplicateJSONKeyError as exc:
+        print(f"invalid JSON: {exc}", file=sys.stderr)
         return 2
     except json.JSONDecodeError as exc:
         print(f"invalid JSON: {exc}", file=sys.stderr)
