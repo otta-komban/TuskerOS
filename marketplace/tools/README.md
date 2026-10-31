@@ -27,7 +27,9 @@ including dependencies. Preserve all other owner records when a package is
 shared. Packages with user/system ownership cannot be selected as the removal
 owner, and packages required by any retained package (including transitive
 dependencies) remain in the keep list. Missing package references and
-ambiguous ownership state fail closed.
+ambiguous ownership state fail closed. The installed-state validator also enforces
+the schema's 128-character maximum for package IDs, versions, dependency IDs,
+and owner IDs.
 
 
 ## Package transaction contract (preview only)
