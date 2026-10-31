@@ -172,7 +172,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         invalid_names = (
             "single", "org..service", ".org.service", "org.service.",
             "org.1service", "org.service name", "org.sérvice", "org:service.name",
-            ":1", ":.42", ":1..42", "::1.42", ":abc.foo", ":_private.7",
+            ":1", ":.42", ":1..42", "::1.42",
         )
         for name in invalid_names:
             with self.subTest(name=name):
@@ -180,6 +180,13 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
                 adapter._call = AsyncMock(return_value=[name])
                 with self.assertRaises(AdapterError):
                     await adapter.list_names()
+
+    async def test_unique_bus_name_elements_may_begin_with_letters_or_digits(self):
+        names = [":abc.foo", ":1.42", ":foo.1", ":_private.7"]
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=names)
+
+        self.assertEqual(await adapter.list_names(), tuple(names))
 
     async def test_duplicate_bus_names_are_rejected(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
