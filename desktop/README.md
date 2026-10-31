@@ -22,6 +22,15 @@ the actual QML window with Qt's offscreen platform; this is a real Qt/QML
 runtime smoke test, not just a source-string check. See [settings UI](settings/README.md)
 and [settings persistence contract](config/README.md).
 
+## Session integration
+
+The desktop session entry point is documented in [session integration](session/README.md).
+It provides a standard Wayland session descriptor and a thin direct-exec
+wrapper around stock Plasma. Fedora 44 KDE is transitioning to Plasma Login
+Manager rather than assuming SDDM; custom-session discovery and launch under
+the exact target PLM build remain unverified release gates. No display-manager
+compatibility is claimed by the headless unit suite.
+
 Schema-v0 and unversioned preferences migrate to v1 through the same atomic
 mode-0600 writer. Migration reads only bounded regular files and rejects
 symlinks, duplicate keys and unsupported future versions without rewriting

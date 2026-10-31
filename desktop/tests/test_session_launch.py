@@ -18,7 +18,7 @@ class SessionLaunchTests(unittest.TestCase):
         self.executable = Path("/usr/bin/startplasma-wayland")
         self.available = lambda path: path == self.executable
 
-    def test_session_descriptor_targets_packaged_launcher(self) -> None:
+    def test_wayland_session_descriptor_targets_packaged_launcher(self) -> None:
         descriptor = Path(__file__).resolve().parents[1] / "session" / "tuskeros-wayland.desktop"
         metadata = configparser.ConfigParser(interpolation=None)
         metadata.read(descriptor, encoding="utf-8")
@@ -27,6 +27,8 @@ class SessionLaunchTests(unittest.TestCase):
         self.assertEqual(entry["TryExec"], entry["Exec"])
         self.assertEqual(entry["Type"], "Application")
         self.assertIn("KDE", entry["DesktopNames"])
+        self.assertEqual(entry["Name"], "TuskerOS (Plasma Wayland)")
+        self.assertNotIn("X-SDDM", entry)
 
     def test_environment_declares_wayland_plasma_and_preserves_login_context(self) -> None:
         source = {"HOME": "/home/tester", "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus"}
