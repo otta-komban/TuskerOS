@@ -62,7 +62,7 @@ class QueryResultTests(unittest.TestCase):
     def test_unsupported_architecture_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "unsupported architecture"):
             parse_query_matches(
-                "bash-0:5.2.26-3.fc44.aarch64\tfedora", "bash"
+                "bash-0:5.2.26-3.fc44.aarch64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm", "bash"
             )
 
 
@@ -77,13 +77,13 @@ class QueryResultTests(unittest.TestCase):
             parse_query_matches(
                 "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm", "bash"
             ),
-            ("bash-0:5.2.26-3.fc44.x86_64", "fedora"),
+            ("bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm"),
         )
 
     def test_expected_package_rejects_similarly_prefixed_package(self):
         with self.assertRaisesRegex(RuntimeError, "outside requested name"):
             parse_query_matches(
-                "bash-completion-0:2.11-1.fc44.noarch\tfedora", "bash"
+                "bash-completion-0:2.11-1.fc44.noarch\tfedora\tGPL-2.0-or-later\tbash-2.11-1.fc44.src.rpm", "bash"
             )
 
 
@@ -118,11 +118,11 @@ class PinVerificationTests(unittest.TestCase):
         verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm")
 
     def test_version_or_epoch_mismatch_is_rejected(self):
-        with self.assertRaisesRegex(RuntimeError, "does not match pinned NEVRA"):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned value"):
             verify_pin(self.row, "bash-1:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm")
 
     def test_repository_mismatch_is_rejected(self):
-        with self.assertRaisesRegex(RuntimeError, "does not match pinned repository"):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned value"):
             verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "updates", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm")
 
     def test_license_mismatch_is_rejected(self):
@@ -248,6 +248,12 @@ class ResolverCliTests(unittest.TestCase):
                 "enabled repo evidence",
                 failure,
             ])
+        self.assertFalse(self.output.exists())
+
+    def test_repository_info_failure_does_not_create_output(self):
+        failure = __import__("subprocess").CalledProcessError(1, ["dnf5", "repo", "info"])
+        with self.assertRaises(__import__("subprocess").CalledProcessError):
+            self.invoke_cli([failure])
         self.assertFalse(self.output.exists())
 
     def test_atomic_writer_replaces_existing_file_with_valid_json(self):
