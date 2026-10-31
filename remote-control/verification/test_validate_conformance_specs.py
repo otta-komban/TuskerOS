@@ -490,5 +490,34 @@ class RepositoryValidationTests(unittest.TestCase):
                         self.assertIn("NET: specification not found", stderr.getvalue())
 
 
+    def test_text_cli_success_labels_documentation_only_scope(self):
+        from contextlib import redirect_stdout
+        import io
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            for prefix, (relative_path, case_count) in validator.SPECS.items():
+                spec_path = root / relative_path
+                spec_path.parent.mkdir(parents=True, exist_ok=True)
+                spec_path.write_text(
+                    "".join(
+                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\\n"
+                        for number in range(1, case_count + 1)
+                    ),
+                    encoding="utf-8",
+                )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = validator.main(["--root", temporary_root])
+
+        rendered = output.getvalue()
+        self.assertEqual(result, 0)
+        for prefix, case_count in (("PAIR", 22), ("SESS", 40), ("NET", 42)):
+            self.assertIn(f"PASS {prefix}: {case_count} unique, contiguous cases validated", rendered)
+        self.assertIn("documentation integrity only", rendered)
+        self.assertIn("no runtime security behavior was tested", rendered)
+
+
 if __name__ == "__main__":
     unittest.main()
