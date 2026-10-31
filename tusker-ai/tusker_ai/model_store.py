@@ -43,8 +43,6 @@ def _resolve_public_address(host: str, port: int) -> str:
         raise ValueError("model source host could not be safely resolved") from None
     if not addresses or any(not address.is_global for address in addresses):
         raise ValueError("model source must resolve only to globally routable addresses")
-    # The selected IP is used for the TCP connection; TLS still authenticates
-    # the original hostname via SNI and certificate hostname verification.
     return str(sorted(addresses, key=lambda address: (address.version, int(address)))[0])
 
 
@@ -215,6 +213,77 @@ class ModelStore:
             if stage.exists() and not stage.is_symlink():
                 shutil.rmtree(stage)
             raise
+
+    def inspect_recovery(self) -> Mapping:
+        """Return a read-only inventory of interrupted transactions and model-store anomalies.
+
+        This deliberately does not delete staging data, rewrite active pointers, or prune
+        immutable revisions. A caller must stop concurrent installers before interpreting
+        this snapshot as a startup-recovery decision.
+        """
+        report = {
+            "staging_entries": [],
+            "activation_temporary_files": [],
+            "active_pointers": [],
+            "orphan_revisions": [],
+            "unsafe_entries": [],
+        }
+
+        for entry in sorted(self.staging.iterdir(), key=lambda item: item.name):
+            if entry.is_symlink():
+                report["unsafe_entries"].append({"area": "staging", "name": entry.name, "reason": "symlink"})
+            elif entry.is_dir():
+                report["staging_entries"].append(entry.name)
+            else:
+                report["unsafe_entries"].append({"area": "staging", "name": entry.name, "reason": "not_directory"})
+
+        active_revisions: dict[str, str] = {}
+        for entry in sorted(self.active.iterdir(), key=lambda item: item.name):
+            if entry.is_symlink():
+                report["unsafe_entries"].append({"area": "active", "name": entry.name, "reason": "symlink"})
+                continue
+            if entry.name.startswith(".") and entry.suffix in {".tmp", ".rollback"}:
+                if entry.is_file():
+                    report["activation_temporary_files"].append(entry.name)
+                else:
+                    report["unsafe_entries"].append({"area": "active", "name": entry.name, "reason": "temporary_not_file"})
+                continue
+            if entry.suffix != ".json":
+                report["unsafe_entries"].append({"area": "active", "name": entry.name, "reason": "unexpected_entry"})
+                continue
+            artifact_id = entry.stem
+            if not _ARTIFACT_ID.fullmatch(artifact_id):
+                report["unsafe_entries"].append({"area": "active", "name": entry.name, "reason": "invalid_artifact_id"})
+                continue
+            record = self.active_revision(artifact_id)
+            if record is None:
+                state = "invalid_pointer"
+            elif not self.verify_active(artifact_id):
+                state = "integrity_check_failed"
+            else:
+                state = "valid"
+                active_revisions[artifact_id] = record["revision"]
+            report["active_pointers"].append({"artifact_id": artifact_id, "state": state})
+
+        for artifact in sorted(self.models.iterdir(), key=lambda item: item.name):
+            if artifact.is_symlink() or not artifact.is_dir() or not _ARTIFACT_ID.fullmatch(artifact.name):
+                report["unsafe_entries"].append({"area": "models", "name": artifact.name, "reason": "unsafe_artifact_entry"})
+                continue
+            for revision in sorted(artifact.iterdir(), key=lambda item: item.name):
+                if revision.is_symlink() or not revision.is_dir() or not _REVISION.fullmatch(revision.name):
+                    report["unsafe_entries"].append({"area": f"models/{artifact.name}", "name": revision.name, "reason": "unsafe_revision_entry"})
+                    continue
+                if active_revisions.get(artifact.name) != revision.name:
+                    report["orphan_revisions"].append(f"{artifact.name}/{revision.name}")
+
+        report["requires_operator_review"] = any((
+            report["staging_entries"],
+            report["activation_temporary_files"],
+            report["active_pointers"] and any(item["state"] != "valid" for item in report["active_pointers"]),
+            report["orphan_revisions"],
+            report["unsafe_entries"],
+        ))
+        return report
 
     def active_revision(self, artifact_id: str) -> Mapping | None:
         if not _ARTIFACT_ID.fullmatch(artifact_id):
