@@ -1,6 +1,7 @@
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from desktop.config.controller import SettingsController
 
@@ -50,6 +51,19 @@ class SettingsAppTests(unittest.TestCase):
             update = backend.update({"panel": {"icon_size": 64}})
             self.assertTrue(update["ok"])
             self.assertEqual(update["settings"]["panel"]["icon_size"], 64)
+
+    @unittest.skipIf(SettingsBackend is None, "PySide6 is installed in the Qt runtime CI job")
+    def test_backend_reset_failure_keeps_recovery_mode_and_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "desktop.json"
+            original = '{"panel":{"edge":"unsafe"}}'
+            path.write_text(original, encoding="utf-8")
+            backend = SettingsBackend(SettingsController(path))
+            with patch("desktop.config.controller.save_settings", side_effect=OSError("disk full")):
+                self.assertEqual(backend.reset(), {"ok": False})
+            self.assertEqual(backend.status(), {"needsRecovery": True})
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+            self.assertEqual(backend.update({"panel": {"icon_size": 64}), {"ok": False})
 
     def test_desktop_launcher_is_installed_entry_point(self):
         descriptor = (APP / "tuskeros-settings.desktop").read_text(encoding="utf-8")
