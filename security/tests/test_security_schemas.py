@@ -523,10 +523,25 @@ VALID_ALLOW_DECISION = {
     "action_digest": "sha256:" + "2" * 64,
     "principal_binding": "sha256:" + "3" * 64,
     "evaluated_at": "2026-10-31T00:00:00Z",
+    "constraints": {},
     "expires_at": "2026-10-31T00:02:00Z",
     "approval_request_id": None,
     "authorization_ref": "opaque-authorization-reference",
 }
+
+
+def test_policy_decision_constraints_must_be_present_and_empty():
+    decision = dict(VALID_ALLOW_DECISION)
+    assert list(policy_validator().iter_errors(decision)) == []
+    del decision["constraints"]
+    assert list(policy_validator().iter_errors(decision))
+
+
+@pytest.mark.parametrize("constraints", [{"unknown": True}, {"timeout_ms": 1000}, {"resource_scope": ["system:*"]}])
+def test_policy_decision_rejects_non_empty_constraints(constraints):
+    decision = dict(VALID_ALLOW_DECISION)
+    decision["constraints"] = constraints
+    assert list(policy_validator().iter_errors(decision))
 
 
 def test_policy_decision_allow_requires_expiry_and_authorization_reference():
