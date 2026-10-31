@@ -30,6 +30,15 @@ python tusker-ai/scripts/ollama-smoke.py --model MODEL_ID --repeats 5 --output o
 
 The harness sends a fixed non-sensitive prompt, checks for a fixed response marker, and stores metadata plus an output hash only. It does not persist prompts or generated text. `TUSKER_MODEL_SHA256` is optional and must only be set to an independently verified digest. The current portable harness does not probe GPU metadata; the report marks that limitation.
 
+## Optional live conformance command
+
+```sh
+cd tusker-ai
+TUSKER_OLLAMA_MODEL=MODEL_ID PYTHONPATH=. python -m pytest -q tests/test_ollama_live.py -v
+```
+
+The live test checks a real streamed completion and a two-request cancellation-isolation scenario. It must run against a pinned, identified provider version. A skipped test is not evidence of conformance.
+
 ## Run record
 
 Include run ID, UTC timestamp, non-identifying host alias, full environment, runtime, artifact digest, configuration, workload, prompt/output token counts, cold/warm state, load seconds, TTFT, prompt rate, generation tokens/s, peak RSS, peak dedicated VRAM, available-RAM delta, thermal/power observations, exit/error state, raw log reference and notes.
