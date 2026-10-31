@@ -583,5 +583,33 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(self.store.get(self.task["task_id"])["version"], 4)
 
 
+    def test_create_task_rejects_non_mapping_origin(self):
+        for origin in ([], "local", 7, True):
+            with self.subTest(origin=origin):
+                with self.assertRaisesRegex(LifecycleError, "origin must be a mapping"):
+                    self.engine.create_task(
+                        "00000000-0000-4000-8000-000000000002",
+                        "00000000-0000-4000-8000-000000000003",
+                        origin=origin,
+                    )
+        self.assertEqual(self.store.get("00000000-0000-4000-8000-000000000002"), None)
+
+    def test_replay_rejects_malformed_task_id_before_store_access(self):
+        original_get = self.store.get
+        calls = []
+        def tracking_get(task_id):
+            calls.append(task_id)
+            return original_get(task_id)
+        self.store.get = tracking_get
+        try:
+            for task_id in (None, [], {}, ""):
+                with self.subTest(task_id=task_id):
+                    with self.assertRaisesRegex(LifecycleError, "task_id must be a non-empty string"):
+                        self.engine.replay(task_id)
+        finally:
+            self.store.get = original_get
+        self.assertEqual(calls, [])
+
+
 if __name__ == "__main__":
     unittest.main()
