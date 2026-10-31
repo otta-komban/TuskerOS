@@ -9,11 +9,16 @@ ApplicationWindow {
     color: palette.window
     property var preferences: ({})
     property string saveError: ""
+    function announceError(message) {
+        if (message.length > 0)
+            Accessible.announce(message, Accessible.Assertive)
+    }
     function reloadPreferences() {
         preferences = settingsBackend.read()
-        saveError = settingsBackend.status().needsRecovery
-            ? qsTr("Your settings file needs recovery. Restore defaults before editing.")
-            : ""
+        if (settingsBackend.status().needsRecovery)
+            saveError = qsTr("Your settings file needs recovery. Restore defaults before editing.")
+        else
+            saveError = ""
     }
     function persist(path, value) {
         let patch = ({}), cursor = patch, parts = path.split(".")
@@ -21,8 +26,9 @@ ApplicationWindow {
         cursor[parts[parts.length-1]] = value
         let response = settingsBackend.update(patch)
         if (!response || !response.ok) {
-            saveError = qsTr("Could not save settings. Your previous preferences are unchanged.")
             reloadPreferences()
+            saveError = qsTr("Could not save settings. Your previous preferences are unchanged.")
+            announceError(saveError)
             return
         }
         preferences = response.settings
@@ -85,7 +91,8 @@ ApplicationWindow {
                 }
             }
             Label { visible: saveError.length>0; text: saveError; color: palette.brightText
-                wrapMode: Text.Wrap; Accessible.live: Accessible.Assertive; Layout.fillWidth: true }
+                wrapMode: Text.Wrap; Accessible.name: saveError; Accessible.role: Accessible.AlertMessage
+                Layout.fillWidth: true }
             RowLayout {
                 Layout.fillWidth: true
                 Button { text: qsTr("Restore defaults…"); Accessible.name: qsTr("Restore default desktop preferences")
@@ -105,7 +112,10 @@ ApplicationWindow {
         onAccepted: {
             let response = settingsBackend.reset()
             if (response && response.ok) { preferences=response.settings; saveError="" }
-            else saveError=qsTr("Could not restore defaults. Your previous preferences are unchanged.")
+            else {
+                saveError=qsTr("Could not restore defaults. Your previous preferences are unchanged.")
+                announceError(saveError)
+            }
         }
     }
 }
