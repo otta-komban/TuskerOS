@@ -23,6 +23,8 @@ _PATH: Final[str] = "/org/freedesktop/DBus"
 _INTERFACE: Final[str] = "org.freedesktop.DBus"
 _MAX_STDOUT: Final[int] = 16 * 1024
 _MAX_STDERR: Final[int] = 4 * 1024
+_MAX_ALLOWED_STDOUT: Final[int] = 1024 * 1024
+_MAX_ALLOWED_STDERR: Final[int] = 256 * 1024
 
 
 def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -106,6 +108,8 @@ class ReadOnlySystemBusAdapter:
             raise ValueError("output limits must be integers")
         if max_stdout < 128 or max_stderr < 128:
             raise ValueError("output limits are too small")
+        if max_stdout > _MAX_ALLOWED_STDOUT or max_stderr > _MAX_ALLOWED_STDERR:
+            raise ValueError("output limits exceed safe maximums")
         self._authorization_gate = authorization_gate
         self._timeout = timeout_seconds
         self._max_stdout = max_stdout
