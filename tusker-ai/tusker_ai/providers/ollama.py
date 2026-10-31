@@ -87,9 +87,15 @@ class OllamaProvider:
                     try:
                         raw_line = response.readline()
                     except socket.timeout:
+                        if cancellation.cancelled:
+                            yield InferenceEvent(request.request_id, seq, "cancelled", {"reason": "caller_cancelled"})
+                            return
                         if time.monotonic() >= deadline:
                             raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
                         continue
+                    if cancellation.cancelled:
+                        yield InferenceEvent(request.request_id, seq, "cancelled", {"reason": "caller_cancelled"})
+                        return
                     if time.monotonic() >= deadline:
                         raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
                     if not raw_line:
