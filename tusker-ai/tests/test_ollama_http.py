@@ -25,7 +25,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200); self.send_header("Content-Type", "application/x-ndjson"); self.end_headers()
         try:
             for index, chunk in enumerate(chunks):
-                if request.get("model") == "late-frame" and index == 0:
+                if request.get("model") in {"late-frame", "cancel-frame"} and index == 0:
                     time.sleep(0.08)
                 self.wfile.write((json.dumps(chunk) + "\n").encode()); self.wfile.flush()
                 if request.get("model") == "slow" and index == 0:
@@ -99,6 +99,19 @@ class OllamaHttpTests(unittest.TestCase):
         self.assertEqual([e.event_type for e in events], ["started", "text_delta", "text_delta", "usage", "completed"])
         self.assertEqual(events[1].payload["delta"] + events[2].payload["delta"], "Tusker runtime")
         self.assertEqual(events[3].payload["output_tokens"], 2)
+
+    def test_cancellation_while_waiting_for_frame_discards_that_frame(self):
+        provider = OllamaProvider(self.endpoint, read_timeout=0.5)
+        cancellation = CancellationToken()
+        timer = threading.Timer(0.03, cancellation.cancel)
+        req = InferenceRequest("cancel-frame", "cancel-frame", [{"role": "user", "content": "hello"}], timeout_seconds=1)
+        timer.start()
+        try:
+            events = list(provider.infer(req, cancellation))
+        finally:
+            timer.cancel()
+        self.assertEqual([event.event_type for event in events], ["started", "cancelled"])
+        self.assertEqual(events[-1].payload["reason"], "caller_cancelled")
 
     def test_cancellation_during_stream_is_request_scoped(self):
         provider = OllamaProvider(self.endpoint, read_timeout=0.05)
