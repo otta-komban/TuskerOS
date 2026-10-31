@@ -143,19 +143,19 @@ class ParseCaseRowsTests(unittest.TestCase):
 
     def test_fence_closing_length_and_unclosed_fence(self):
         markdown = (
-            "| PAIR-C01 | Outside first | Reject |\\n"
-            "````markdown\\n"
-            "| PAIR-C01 | Inside long fence | Ignored |\\n"
-            "```\\n"
-            "| PAIR-C01 | Still inside after short fence | Ignored |\\n"
-            "````\\n"
-            "| PAIR-C01 | Outside after matching close | Reject |\\n"
-            "~~~text\\n"
-            "| PAIR-C01 | Inside tilde fence | Ignored |\\n"
-            "~~~~\\n"
-            "| PAIR-C01 | Outside after longer tilde close | Reject |\\n"
-            "```python\\n"
-            "| PAIR-C01 | Inside unclosed fence | Ignored |\\n"
+            "| PAIR-C01 | Outside first | Reject |\n"
+            "````markdown\n"
+            "| PAIR-C01 | Inside long fence | Ignored |\n"
+            "```\n"
+            "| PAIR-C01 | Still inside after short fence | Ignored |\n"
+            "````\n"
+            "| PAIR-C01 | Outside after matching close | Reject |\n"
+            "~~~text\n"
+            "| PAIR-C01 | Inside tilde fence | Ignored |\n"
+            "~~~~\n"
+            "| PAIR-C01 | Outside after longer tilde close | Reject |\n"
+            "```python\n"
+            "| PAIR-C01 | Inside unclosed fence | Ignored |\n"
         )
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
@@ -169,13 +169,13 @@ class ParseCaseRowsTests(unittest.TestCase):
 
     def test_fences_allow_three_space_indent_and_trailing_close_whitespace(self):
         markdown = (
-            "| PAIR-C01 | Before fence | Reject |\\n"
-            "   ```markdown   \\n"
-            "| PAIR-C01 | Fenced example | Ignored |\\n"
-            "   ```   \\n"
-            "| PAIR-C01 | After fence | Reject |\\n"
-            "    ```markdown\\n"
-            "| PAIR-C01 | Indented code, not a fence | Ignored |\\n"
+            "| PAIR-C01 | Before fence | Reject |\n"
+            "   ```markdown   \n"
+            "| PAIR-C01 | Fenced example | Ignored |\n"
+            "   ```   \n"
+            "| PAIR-C01 | After fence | Reject |\n"
+            "    ```markdown\n"
+            "    | PAIR-C01 | Indented code, not a fence | Ignored |\n"
         )
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
