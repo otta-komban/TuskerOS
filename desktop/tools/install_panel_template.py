@@ -26,7 +26,8 @@ def default_destination() -> Path:
 def _validate_source_entry(path: Path, totals: list[int]) -> None:
     """Reject links/special files and bound the amount of data copied."""
     try:
-        mode = path.lstat().st_mode
+        info = path.lstat()
+        mode = info.st_mode
     except OSError as exc:
         raise ValueError(f"cannot inspect panel template source entry: {path}: {exc}") from exc
 
@@ -43,16 +44,11 @@ def _validate_source_entry(path: Path, totals: list[int]) -> None:
         raise ValueError(f"panel template source contains a symlink or special file: {path}")
 
     totals[0] += 1
-    totals[1] += mode_size(path, mode)
+    totals[1] += info.st_size
     if totals[0] > MAX_SOURCE_FILES:
         raise ValueError(f"panel template source exceeds {MAX_SOURCE_FILES} files")
     if totals[1] > MAX_SOURCE_BYTES:
         raise ValueError(f"panel template source exceeds {MAX_SOURCE_BYTES} bytes")
-
-
-def mode_size(path: Path, mode: int) -> int:
-    # lstat was used above, so this size is from the same non-following metadata.
-    return path.lstat().st_size
 
 
 def install(source: Path, destination: Path) -> None:
