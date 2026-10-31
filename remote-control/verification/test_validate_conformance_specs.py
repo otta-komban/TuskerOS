@@ -34,7 +34,7 @@ class ParseCaseRowsTests(unittest.TestCase):
             validator.parse_case_rows(markdown, "PAIR")
 
     def test_preserves_escaped_pipe_inside_cell(self):
-        markdown = r"| PAIR-C01 | Condition with \\| literal pipe | Reject safely |" + "\\n"
+        markdown = "| PAIR-C01 | Condition with \\| literal pipe | Reject safely |\\n"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
             [("PAIR-C01", "Condition with | literal pipe", "Reject safely")],
