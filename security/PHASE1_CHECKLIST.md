@@ -114,3 +114,6 @@
 
 
 - [ ] **SEC-SCHEMA-007 — Policy-decision constraints vocabulary:** `policy-decision.schema.json` currently accepts any nested object under `constraints`; define the bounded typed vocabulary with policy-engine/broker owners, reject unknown keys, and add schema plus consumer fail-closed tests. Tracked in issue #31. No schema change or runtime behavior claimed.
+
+- [x] **SEC-SCHEMA-007 interim fail-closed contract:** documented that producers emit only an empty `constraints` object and consumers reject non-empty/unsupported constraint data until policy-engine and broker owners ratify a bounded vocabulary; added POL-CON-001–006 acceptance criteria. This is documentation/contract hardening only. The active schema still permits arbitrary nested constraints, consumer enforcement is unverified, and SEC-SCHEMA-007 remains open pending owner agreement and executable tests.
+
