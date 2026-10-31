@@ -8,12 +8,12 @@
 ## Current state
 
 - **Full historical conversation count:** Unverified
-- **Verified visible-segment completions:** 6 / 100 after this audit response
-- **Historical JSONL records:** 54 (`C0001`–`C0054`); these are work/response records, not proof of 54 distinct user/assistant pairs
-- **Latest historical record:** `AEGIS-06-C0054`
+- **Verified visible-segment completions:** 7 / 100 after this audit response
+- **Historical JSONL records:** 55 (`C0001`–`C0055`); these are work/response records, not proof of 54 distinct user/assistant pairs
+- **Latest historical record:** `AEGIS-06-C0055`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
-- **Engineering tasks completed:** 44 (separate from visible conversation completions and commits)
-- **Latest log commit:** `31489be1423d1cc369fe28a8e1e81d2f8b756526`
+- **Engineering tasks completed:** 45 (separate from visible conversation completions and commits)
+- **Latest log commit:** `8227ce79ec905782291139c338e8c881ff2670d6`
 
 ## Historical work/response record index (not a verified conversation-completion count)
 
@@ -613,3 +613,13 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Tracking:** SEC-SCHEMA-007 opened as [issue #31](https://github.com/otta-komban/TuskerOS/issues/31); audit and checklist updated.
 - **Commits:** audit `bb85601f3c64a61f56bdacfddb9f5454fbd2c5c0`; checklist `276dfd1ccd372eb3a8d874795c6654a8b20c9c02`; JSONL `31489be1423d1cc369fe28a8e1e81d2f8b756526`.
 - **Limits:** No schema change was made pending policy-engine/broker agreement on a canonical vocabulary. No runtime consumer behavior was tested; consumers must fail closed on unknown constraints.
+## C0055 — Interim fail-closed policy-constraints contract
+
+- **Visible-segment completion:** 7 / 100. This counts the current verified user-message/complete-assistant-response pair; historical log rows are not used to infer missing pairs.
+- **Historical work/response record:** C0055 (JSONL now contains 55 unique sequential records C0001–C0055).
+- **Engineering tasks completed:** 45 cumulative (+1 this response).
+- **Contract mitigation:** `security/SECURITY_CONTRACTS.md` and `security/POLICY_ENGINE_SPEC.md` now require producers to emit `constraints: {}` only until a bounded vocabulary is approved; consumers must reject non-empty/malformed/unsupported constraints and must not silently ignore or broaden scope.
+- **Acceptance criteria:** Added POL-CON-001–006 in `security/SECURITY_TEST_MATRIX.md`, explicitly marked pending implementation/owner agreement; updated `security/PHASE1_CHECKLIST.md`.
+- **Owner coordination:** [Issue #31 comment 6538612949](https://github.com/otta-komban/TuskerOS/issues/31#issuecomment-6538612949) requests policy-engine/broker confirmation of the interim rule, versioned vocabulary, bounds and consumer-test ownership.
+- **Commits:** contracts `d69c3f7b64d7942a229f39f33f87e4bf88638bbb`; policy spec `751e17c360ee3d604a50da1f8c4e5ecef24c2310`; test matrix `d706fe4f8875e7c2efd3ef800fabb9c3d134a741`; checklist `23ba3ee48a8bdd2f3a8a87a41234dbc97dc0a717`; JSONL `8227ce79ec905782291139c338e8c881ff2670d6`.
+- **Limits:** No active schema or runtime code was changed. No consumer/runtime test was run. SEC-SCHEMA-007 remains open until owners ratify the vocabulary and implement/test enforcement.
