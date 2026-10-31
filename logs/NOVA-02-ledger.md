@@ -8,8 +8,8 @@
 
 ## Current state
 
-- Actual assistant responses recorded: **14 / 100**
-- Last recorded completion: **NOVA-02-C0014**
+- Actual assistant responses recorded: **15 / 100**
+- Last recorded completion: **NOVA-02-C0015**
 - Current phase: **P2 — Foundation / P3 — Working MVP**
 - Branch baseline: `8c463dcec409fc9354b2adcb9b51a722d7c97fe5`
 - Latest implementation: **Minimal Plasma 6 applet foundation; opt-in dock template with static validation, safe user-level install/removal, passing GitHub Actions static-validation workflow, Fedora/Plasma runtime-validation runbook, and a hardened schema-v1 desktop settings foundation with a tested recovery CLI and a JSON Schema Draft 2020-12 artifact guarded by consistency tests, with strict duplicate-key JSON parsing and crash-durable atomic writes (file plus parent-directory fsync). Plasma runtime and UI integration remain pending.**
@@ -34,6 +34,7 @@
 | 12 | NOVA-02-C0012 | Desktop settings machine-readable schema | Published a JSON Schema Draft 2020-12 artifact for schema v1 and added four consistency tests to prevent drift from Python runtime defaults, keys and constraints. Hosted CI passed all 36 desktop tests, both validators and Node.js syntax check. | Schema `1b1b82c`; tests `aadb761`; config README `39d9c3e`; phase plan `1c32fbc`; Actions run [41126921990](https://github.com/otta-komban/TuskerOS/actions/runs/41126921990). |
 | 13 | NOVA-02-C0013 | Desktop settings duplicate-key hardening | Rejects duplicate JSON object keys at all depths and falls back to safe defaults; added two regression tests. Hosted CI passed all 38 desktop tests, both validators and Node.js syntax check. | Settings `bd4d6dc`; tests `7b9ea5d`; config README `96bef0c`; phase plan `8a42c77`; Actions run [41127975090](https://github.com/otta-komban/TuskerOS/actions/runs/41127975090). |
 | 14 | NOVA-02-C0014 | Desktop settings persistence hardening | Fsyncs the parent directory after atomic settings replacement and keeps temporary file descriptors context-managed on failure; regression tests cover both fsync calls, descriptor closure and temporary-file cleanup. Merged latest main history with no overlapping path conflicts. Hosted CI passed all 40 desktop tests, both static validators and Node.js syntax. | Merge `5ffebeb`; settings `58e6287`; tests `5a0f88d`; config README `67b5e49`; phase plan `c73ef9d`; Actions run [41130866403](https://github.com/otta-komban/TuskerOS/actions/runs/41130866403). |
+| 15 | NOVA-02-C0015 | Completion accounting and response protocol | Reconciled the one-completion-per-assistant-response rule; verified 14 existing sequential JSONL entries and recorded this administrative response as C0015. No engineering task was completed and engineering-task totals remain unchanged. | JSONL record `NOVA-02-C0015`; branch head before this logging update: `fa164f11f5f85fc01ddf44b9e2313a7ae8dd3d0b`; no engineering implementation claimed. |
 
 ## Open coordination requests
 
