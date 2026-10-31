@@ -100,6 +100,12 @@ def _matches_range(version: Version, minimum: str, maximum: str) -> bool:
     lower = parse_compat_version(minimum)
     if version < lower:
         return False
+    # Wildcard maxima bypass parse_compat_version(), so enforce the same
+    # schema bound before the wildcard path performs integer conversion.
+    if isinstance(maximum, str) and len(maximum) > 64:
+        raise CatalogResolutionError(
+            "compatibility version must be a non-empty string (max 64 characters)"
+        )
     wildcard = _WILDCARD_RE.fullmatch(maximum) if isinstance(maximum, str) else None
     if wildcard:
         major, minor = wildcard.groups()
