@@ -1555,3 +1555,34 @@ def test_broker_gate_returns_detached_immutable_grant():
     assert response.grant["resource_scope"] == ("disk:wwn-123",)
     with pytest.raises(TypeError):
         response.grant["operation_id"] = "broker.attacker.action"
+
+
+def test_broker_gate_rejects_malformed_request_before_authority_call():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+
+    class Authority:
+        calls = 0
+
+        def consume(self, *args, **kwargs):
+            self.calls += 1
+            raise AssertionError("malformed request reached authority")
+
+    authority = Authority()
+    gate = BrokerAuthorizationGate(authority)
+    valid = dict(
+        authorization_ref="opaque-token", broker_operation_id="broker.disk.erase",
+        action_digest=D4, policy_version="policy-1", canonical_resource_scope=("disk:wwn-123",),
+        registry_version="registry-1", precondition_digest=D4,
+        peer_credentials={"uid": 1000, "pid": 42},
+    )
+    for field, value in (
+        ("broker_operation_id", "BROKER.DISK.ERASE"),
+        ("action_digest", "not-a-digest"),
+        ("canonical_resource_scope", "disk:wwn-123"),
+        ("canonical_resource_scope", ("disk:wwn-123", "disk:wwn-123")),
+        ("precondition_digest", "not-a-digest"),
+    ):
+        request = BrokerAuthorizationRequest(**{**valid, field: value})
+        response = gate.authorize(request, {})
+        assert response.outcome == "BINDING_MISMATCH"
+    assert authority.calls == 0
