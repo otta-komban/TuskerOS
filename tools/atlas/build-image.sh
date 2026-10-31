@@ -4,6 +4,8 @@ set -Eeuo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOCK="${ROOT}/os/image-source.lock.json"
 MANIFEST="${ROOT}/os/package-manifest.csv"
+SNAPSHOT_LOCK="${ROOT}/os/repository-snapshot.lock.json"
+SNAPSHOT_VERIFIER="${ROOT}/tools/atlas/verify-repository-snapshot.py"
 RESOLVER="${ROOT}/tools/atlas/resolve-package-manifest.py"
 BUILD_ROOT="${ROOT}/build/atlas"
 OUTPUT_ROOT="${ROOT}/dist"
@@ -33,6 +35,8 @@ require_command() { command -v "$1" >/dev/null 2>&1 || fail "required command no
 for cmd in git python3 dnf5 kiwi-ng sha256sum rpm; do require_command "$cmd"; done
 [[ -f "$LOCK" ]] || fail "source lock is missing: $LOCK"
 [[ -f "$MANIFEST" ]] || fail "package manifest is missing: $MANIFEST"
+[[ -f "$SNAPSHOT_LOCK" ]] || fail "repository snapshot lock is missing: $SNAPSHOT_LOCK"
+[[ -f "$SNAPSHOT_VERIFIER" ]] || fail "repository snapshot verifier is missing: $SNAPSHOT_VERIFIER"
 
 # Validate lock shape and expose only fixed, reviewed build inputs.
 eval "$(python3 - "$LOCK" <<'PY'
@@ -80,6 +84,10 @@ for pair in "$DESCRIPTION_FILE:$DESCRIPTION_BLOB" "$WRAPPER_FILE:$WRAPPER_BLOB" 
   actual="$(git -C "$UPSTREAM_DIR" rev-parse "HEAD:$path")"
   [[ "$actual" == "$expected" ]] || fail "upstream source blob mismatch for $path: $actual"
 done
+
+# Verify immutable repomd.xml and primary metadata bytes before package resolution.
+# An empty lock intentionally fails production verification until approved repo snapshots are captured.
+python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK"
 
 # The resolver is read-only and fails closed on an empty manifest or repository failure.
 python3 "$RESOLVER" --manifest "$MANIFEST" --output "$BUILD_ROOT/package-resolution.json"
