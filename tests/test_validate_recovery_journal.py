@@ -186,6 +186,17 @@ class RecoveryJournalTests(unittest.TestCase):
         self.assertFalse(report.valid)
         self.assertIn("journal records must be iterable", report.errors)
 
+    def test_validator_reports_iterator_runtime_failure(self):
+        def broken_records():
+            yield chain(["planned"])[0]
+            raise RuntimeError("fixture iterator failure")
+
+        report = validate_journal(broken_records())
+        self.assertFalse(report.valid)
+        self.assertEqual(report.record_count, 0)
+        self.assertTrue(any("journal iteration failed: RuntimeError" in e
+                            for e in report.errors))
+
 
 if __name__ == "__main__":
     unittest.main()
