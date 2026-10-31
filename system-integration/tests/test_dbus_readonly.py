@@ -125,9 +125,9 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         gate.assert_awaited_once_with("system.bus.id.read")
         adapter._call.assert_not_awaited()
 
-    async def test_bus_id_over_maximum_length_is_rejected(self):
+    async def test_bus_id_with_invalid_length_is_rejected(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
-        adapter._call = AsyncMock(return_value="b" * 129)
+        adapter._call = AsyncMock(return_value="b" * 33)
 
         with self.assertRaises(AdapterError):
             await adapter.get_bus_id()
