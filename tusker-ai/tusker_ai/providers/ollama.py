@@ -147,7 +147,7 @@ class OllamaProvider:
                         continue
                     try:
                         chunk = json.loads(raw_line)
-                    except (UnicodeDecodeError, json.JSONDecodeError):
+                    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
                         raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame") from None
                     if not isinstance(chunk, dict):
                         raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
