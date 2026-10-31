@@ -7,6 +7,7 @@ validate runtime behavior, freeze shared contracts, or grant implementation appr
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -125,14 +126,37 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2],
                         help="TuskerOS repository root (defaults to this script's repository)")
+    parser.add_argument("--json", action="store_true",
+                        help="emit a machine-readable result (success or failure) as JSON")
     args = parser.parse_args(argv)
     try:
-        for result in validate_repository(args.root):
-            print("PASS " + result)
+        results = validate_repository(args.root)
     except (OSError, SpecError) as exc:
-        print(f"FAIL {exc}", file=sys.stderr)
+        if args.json:
+            print(json.dumps({
+                "ok": False,
+                "error": str(exc),
+                "scope": "documentation-integrity-only",
+                "runtime_security_tested": False,
+            }, sort_keys=True))
+        else:
+            print(f"FAIL {exc}", file=sys.stderr)
         return 1
-    print("NOTE: documentation integrity only; no runtime security behavior was tested.")
+
+    if args.json:
+        print(json.dumps({
+            "ok": True,
+            "scope": "documentation-integrity-only",
+            "runtime_security_tested": False,
+            "specifications": [
+                {"prefix": prefix, "path": relative_path, "case_count": expected_count}
+                for prefix, (relative_path, expected_count) in SPECS.items()
+            ],
+        }, sort_keys=True))
+    else:
+        for result in results:
+            print("PASS " + result)
+        print("NOTE: documentation integrity only; no runtime security behavior was tested.")
     return 0
 
 
