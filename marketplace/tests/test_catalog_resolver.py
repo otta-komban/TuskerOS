@@ -160,6 +160,12 @@ class CatalogResolverTests(unittest.TestCase):
         self.assertTrue(is_compatible(candidate, "1.99.99", "1.2.0"))
         self.assertFalse(is_compatible(candidate, "2.0.0", "1.2.0"))
 
+    def test_wildcard_maximum_obeys_compatibility_length_bound(self):
+        oversized = "9" * 63 + ".x"
+        candidate = self.candidate("1.0.0", os_min="1.0.0", os_max=oversized)
+        with self.assertRaisesRegex(CatalogResolutionError, "max 64"):
+            is_compatible(candidate, "1.0.0", "1.2.0")
+
     def test_prerelease_opt_in(self):
         candidate = self.candidate("0.12.0-rc.1")
         with self.assertRaises(CatalogResolutionError):
