@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `a951a70a1ad07a282731db5283a193f69a6e05ae` (ATLAS CI passed 86 tests, Fedora 44 DNF5 smoke and actual pinned-source local KIWI overlay integration; unified validation passed all 8 jobs). Follow-up full-metadata-payload verification is in progress.  
+**Latest code/test evidence head:** `e72238d60d58877565690dea27def37abfd1c76e` (ATLAS CI passed 85 tests, Fedora 44 DNF5 smoke, pinned-source local KIWI overlay integration and full repomd payload checksum validation; unified validation is pending for this exact head).  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -41,8 +41,9 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest validated PR head: a951a70a1ad07a282731db5283a193f69a6e05ae; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165.
-- Draft remains open for review. ATLAS run [41191712051](https://github.com/otta-komban/TuskerOS/actions/runs/41191712051) passed **86 tests**, the Fedora 44 DNF5 smoke, reposync-plugin/key availability checks, and an integration smoke that cloned the exact pinned Fedora 44 source and successfully rewrote its actual repository include to local snapshot paths with RPM package signature checks enabled. Unified validation [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054) passed all 8 jobs on the exact same code head. These checks validate overlay generation, not a full reposync or image build. The PR remains non-mergeable until package approvals, a full build, RPM payload checksum locking and PHOENIX VM install/boot evidence are complete.
+- Latest implementation head: e72238d60d58877565690dea27def37abfd1c76e; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165.
+- ATLAS run [41192287443](https://github.com/otta-komban/TuskerOS/actions/runs/41192287443) passed **85 tests**, Fedora 44 DNF5 smoke, reposync plugin/key checks, and the actual pinned-source local KIWI overlay integration. The test suite also verifies every metadata payload referenced by repomd.xml against its SHA-256. Unified validation [41192287352](https://github.com/otta-komban/TuskerOS/actions/runs/41192287352) is still pending; the preceding code head a951a70a1ad07a282731db5283a193f69a6e05ae had all 8 unified jobs pass in [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054).
+- Fedora's inspected official fedora/updates endpoints do not publish repomd.xml.asc; metadata is content-pinned rather than detached-signature verified. RPM package signatures remain enabled. No full reposync or image build has been run.
 
 ## Evidence
 
@@ -103,9 +104,9 @@
 
 ### Latest repository snapshot and KIWI overlay validation
 
-- ATLAS run [41191712051](https://github.com/otta-komban/TuskerOS/actions/runs/41191712051): **86 unit tests passed**; Fedora 44 DNF5 query smoke passed; the DNF5 reposync plugin and Fedora 44 primary key were present; the integration step cloned pinned commit dfc49a5a10f69941179fdadd96aa6a5984f7c677, exercised the real Fedora repositories/core.xml symlink and verified both fedora and updates become local file:// sources with KIWI RPM package signature checks enabled.
-- Unified validation run [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054): **all 8 jobs passed** on the same code head a951a70a1ad07a282731db5283a193f69a6e05ae.
-- This integration smoke uses fixture repository metadata; it does not perform a full DNF5 reposync or execute KIWI image creation. No ISO/QCOW2 build, repeat-build checksum comparison or VM boot is claimed.
+- ATLAS run [41192287443](https://github.com/otta-komban/TuskerOS/actions/runs/41192287443): **85 unit tests passed**; Fedora 44 DNF5 query smoke, reposync plugin/key availability and pinned-source KIWI overlay integration all passed. The verifier now checks every repomd-referenced metadata payload SHA-256, not only primary metadata.
+- Unified validation [41192287352](https://github.com/otta-komban/TuskerOS/actions/runs/41192287352) is pending for the exact e72238d code head. The immediately preceding overlay implementation head passed all 8 jobs in [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054).
+- Fedora 44 fedora/updates repomd.xml.asc endpoints return 404, so metadata detached-signature verification is not claimed. RPM package signatures are checked with the Fedora 44 primary key. The latest CI uses fixture repository metadata; no full DNF5 reposync, KIWI build, repeat-build comparison or VM boot has been performed.
 
 ## Image/build/runtime status
 
