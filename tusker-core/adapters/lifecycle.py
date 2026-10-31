@@ -179,6 +179,10 @@ class LifecycleEngine:
         return event
 
     def create_task(self, task_id: str, request_id: str, origin: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        if not isinstance(task_id, str) or not isinstance(request_id, str):
+            raise LifecycleError("task_id and request_id must be UUID strings")
+        if origin is not None and not isinstance(origin, Mapping):
+            raise LifecycleError("origin must be a mapping when supplied")
         try:
             UUID(task_id)
             UUID(request_id)
@@ -311,6 +315,8 @@ class LifecycleEngine:
 
     def replay(self, task_id: str) -> dict[str, Any]:
         """Validate and return the event stream; never dispatch/re-execute operations."""
+        if not isinstance(task_id, str) or not task_id:
+            raise LifecycleError("task_id must be a non-empty string")
         task = self.store.get(task_id)
         if task is None:
             raise LifecycleError(f"unknown task: {task_id}")
