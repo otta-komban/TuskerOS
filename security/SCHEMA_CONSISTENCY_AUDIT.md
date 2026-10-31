@@ -198,7 +198,7 @@ Reviewed `security/schemas/policy-decision.schema.json` against `security/SECURI
 
 **Risk / ambiguity:** a producer can serialize an unknown constraint that a consumer silently ignores, or different consumers can interpret the same untyped object differently. The current sources do not define a canonical constraint vocabulary, so AEGIS must not invent one in a compatibility-sensitive schema change.
 
-**Required resolution:** define the bounded constraint vocabulary and semantics with policy-engine and broker owners; then type each property, bound values, set `additionalProperties: false`, and add positive/negative schema and consumer tests. Until then, consumers must not treat an unrecognized constraint as permission to broaden execution. Tracked in [issue #31](https://github.com/otta-komban/TuskerOS/issues/31). No schema change was made and no runtime consumer behavior was tested.
+**Current status / required resolution:** the schema-level interim restriction is implemented and covered by envelope tests; the earlier statement that arbitrary objects are accepted is superseded. Policy-engine and broker owners must still define a bounded, versioned non-empty vocabulary if constraints are needed, then add typed bounds and consumer tests. Until then, producers emit `{}` and consumers independently reject non-empty or unsupported values; unknown constraints must never broaden execution. Tracked in [issue #31](https://github.com/otta-komban/TuskerOS/issues/31). No runtime consumer behavior was tested.
 
 
 ## SEC-SCHEMA-007 — interim constraints schema enforcement
