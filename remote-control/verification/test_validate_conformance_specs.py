@@ -51,17 +51,17 @@ class ParseCaseRowsTests(unittest.TestCase):
     def test_terminal_pipe_uses_backslash_parity_for_one_through_six_slashes(self):
         for slash_count in range(1, 7):
             with self.subTest(slash_count=slash_count):
-                slashes = "\\\\" * slash_count
-                markdown = "| PAIR-C01 | terminal " + slashes + "|"
+                slashes = "\\" * slash_count
+                markdown = "| PAIR-C01 | Condition | terminal " + slashes + "|"
                 if slash_count % 2:
-                    expected_value = "terminal " + ("\\\\" * (slash_count - 1)) + "|"
+                    expected_value = "terminal " + ("\\" * (slash_count - 1)) + "|"
                 else:
                     expected_value = "terminal " + slashes
                 self.assertEqual(
                     validator.parse_case_rows(markdown, "PAIR"),
-                    [("PAIR-C01", "Condition", expected_value)]
-                    if False else validator.parse_case_rows(markdown, "PAIR"),
+                    [("PAIR-C01", "Condition", expected_value)],
                 )
+
     def test_preserves_escaped_pipe_inside_cell(self):
         markdown = r"| PAIR-C01 | Condition with \| literal pipe | Reject safely |" + "\n"
         self.assertEqual(
