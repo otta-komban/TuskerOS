@@ -181,6 +181,9 @@ class LifecycleEngineTests(unittest.TestCase):
         invalid_fields = (
             ("schema_version", "1.0.0-draft", "unsupported schema version"),
             ("occurred_at", None, "invalid occurred_at"),
+            ("occurred_at", "2026-99-99T25:61:61Z", "invalid occurred_at"),
+            ("occurred_at", "2026-10-31T17:00:00", "invalid occurred_at"),
+            ("occurred_at", "not-a-timestamp", "invalid occurred_at"),
             ("correlation_id", [], "invalid correlation_id"),
             ("correlation_id", "x" * 129, "invalid correlation_id"),
             ("origin", [], "invalid origin"),
