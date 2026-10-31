@@ -27,16 +27,15 @@ class InferenceRuntime:
         acquired = self._slots.acquire(blocking=False)
         if not acquired:
             raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Inference capacity is currently exhausted", retryable=True)
-        available = self._available_memory_bytes()
-        if self.limits.minimum_available_memory_bytes and (available is None or available < self.limits.minimum_available_memory_bytes):
-            self._slots.release()
-            raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Available memory is below the configured safety reserve", retryable=True)
         start = time.monotonic()
         terminal = False
         started = False
         previous_sequence = -1
         previous_timestamp = None
         try:
+            available = self._available_memory_bytes()
+            if self.limits.minimum_available_memory_bytes and (available is None or available < self.limits.minimum_available_memory_bytes):
+                raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Available memory is below the configured safety reserve", retryable=True)
             _LOG.info("inference_started", extra={"request_id": request.request_id, "provider_id": self.provider.provider_id, "model_id": request.model})
             for event in self.provider.infer(request, token):
                 if terminal:
