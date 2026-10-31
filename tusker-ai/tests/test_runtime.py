@@ -93,6 +93,21 @@ class RuntimeTests(unittest.TestCase):
             list(InferenceRuntime(fake).infer(self.request()))
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
 
+    def test_rejects_malformed_provider_event_envelopes(self):
+        malformed_events = (
+            None,
+            InferenceEvent("r1", "zero", "started", {}),
+            InferenceEvent("r1", True, "started", {}),
+            InferenceEvent("r1", 0, "started", []),
+            InferenceEvent("r1", 0, "started", {}, timestamp=[]),
+        )
+        for malformed in malformed_events:
+            fake = FakeProvider([malformed])
+            with self.subTest(event=malformed):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(fake).infer(self.request()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
     def test_rejects_cross_request_event(self):
         fake = FakeProvider([InferenceEvent("other", 0, "started", {})])
         with self.assertRaises(TuskerRuntimeError):
