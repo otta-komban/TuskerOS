@@ -20,3 +20,5 @@ The catalog plan resolver validates root IDs and the complete supplied dependenc
 
 
 Catalog JSON Schema patterns use an explicit end-of-input guard after their anchors. This prevents regex engines that treat `$` as matching before a final line terminator from accepting identifiers, versions, digests, timestamps or URLs with a trailing newline; the Python validator continues to enforce full-string matches.
+
+The public dependency-constraint predicate validates direct `Version` objects and constraint iterables before comparison. Invalid component values, malformed prerelease tuples, text passed as the constraint collection, and non-iterable inputs raise `CatalogResolutionError` rather than leaking attribute or type errors.
