@@ -10,7 +10,7 @@ Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
-| PHOENIX-10-C0021 | P2 | recovery-journal-state-and-digest-invariants | Require `planned` initial state, stable idempotency declaration and lowercase SHA-256 encodings; regression tests added; CI pending. | validator, tests, docs; commits `6873234f`, `07a5e757`, `99b89182`; PR #55. |
+| PHOENIX-10-C0021 | P2 | recovery-journal-state-and-digest-invariants | Require `planned` initial state, stable idempotency declaration and lowercase SHA-256 encodings; regression tests added; PHOENIX CI `41187263494` passed. | validator, tests, docs; commits `6873234f`, `07a5e757`, `99b89182`; PR #55. |
 | PHOENIX-10-C0020 | P2 | recovery-journal-resource-bounds | Added 4 MiB / 64 KiB / 10,000-record input bounds and bounded iterable validation; fixed the JSONL boundary test fixture; CI `41186648724` passed. | `scripts/validate_recovery_journal.py`; tests; docs; PR #55. |
 | PHOENIX-10-C0019 | P2 | read-only-recovery-journal-validation | Added strict read-only journal validation, state transitions, checksum-chain checks and advisory replay gates; PHOENIX CI `41186199820` passed. | `scripts/validate_recovery_journal.py`; `tests/test_validate_recovery_journal.py`; `docs/RECOVERY-JOURNAL-VALIDATION.md`; workflow; PR #55. |
 | PHOENIX-10-C0018 | P2 | installer-jcs-unicode-conformance | Corrected stale NFC digest rule; added AEGIS Unicode reference-vector tests and CI coverage; PHOENIX CI 41185982568 passed. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; `tests/test_installer_jcs_unicode_vectors.py`; workflow; PR #55. |
