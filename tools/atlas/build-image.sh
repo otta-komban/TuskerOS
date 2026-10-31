@@ -185,7 +185,7 @@ metadata = {
     "reproducibility_limitations": [
         "DNF5 reposync, package resolution and KIWI repository_gpgcheck/package_gpgcheck consume verified local repository copies with Fedora signing keys",
         "RPM payload checksums are not yet recorded in the package lock",
-        "Fedora repository metadata signatures are not yet verified against Fedora signing keys",
+        "Fedora repository metadata and RPM signatures are enforced by DNF5 and KIWI using the Fedora 44 primary key; the trusted key fingerprint is not separately recorded in the repository lock",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
     ],
     "artifact_checksums": "SHA256SUMS"
