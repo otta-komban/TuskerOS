@@ -517,6 +517,30 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(caught.exception), "bus response exceeded output limit")
         self.assertTrue(process.killed)
 
+    async def test_process_kill_failure_does_not_escape_cleanup_boundary(self):
+        class KillFailureProcess(FakeProcess):
+            def kill(self):
+                raise RuntimeError("private kill detail")
+
+        process = KillFailureProcess(
+            stdout=b"x" * 129,
+            returncode=None,
+        )
+        process.wait = AsyncMock(return_value=-9)
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), max_stdout=128
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus response exceeded output limit")
+        self.assertNotIn("private kill detail", str(caught.exception))
+        process.wait.assert_awaited_once()
+
     async def test_process_wait_failure_does_not_escape_cleanup_boundary(self):
         process = FakeProcess(returncode=None)
         process.wait = AsyncMock(side_effect=[RuntimeError("private wait detail"), -9])
