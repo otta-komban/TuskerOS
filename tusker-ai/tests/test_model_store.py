@@ -98,6 +98,19 @@ class ModelStoreTests(unittest.TestCase):
         path.write_bytes(b"tampered")
         self.assertFalse(self.store.verify_active("fixture-model"))
 
+    def test_failed_active_pointer_fsync_rolls_back_previous_revision(self):
+        with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
+            self.store.install(self.manifest, consent=True)
+        second_payload = b"second verified revision"
+        second = dict(self.manifest)
+        second["revision"] = "rev-002"
+        second["files"] = [{"filename": "model.gguf", "size_bytes": len(second_payload), "sha256": hashlib.sha256(second_payload).hexdigest()}]
+        with patch("tusker_ai.model_store._open_https", return_value=Response(second_payload)), patch.object(self.store, "_fsync_dir", side_effect=[None, OSError("simulated directory fsync failure"), None]):
+            with self.assertRaises(OSError):
+                self.store.install(second, consent=True)
+        self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-001")
+        self.assertTrue(self.store.verify_active("fixture-model"))
+
     def test_active_revision_cannot_be_removed(self):
         with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
             self.store.install(self.manifest, consent=True)
