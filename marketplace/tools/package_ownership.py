@@ -18,9 +18,11 @@ OWNER_KINDS = {"bundle", "extension", "user", "system"}
 REMOVABLE_OWNER_KINDS = {"bundle", "extension"}
 
 
-def _non_empty_text(value: object, field: str) -> str:
-    if not isinstance(value, str) or not value.strip():
-        raise OwnershipPlanError(f"{field} must be a non-empty string")
+def _non_empty_text(value: object, field: str, *, maximum: int = 128) -> str:
+    if not isinstance(value, str) or not value.strip() or len(value) > maximum:
+        raise OwnershipPlanError(
+            f"{field} must be a non-empty string (max {maximum} characters)"
+        )
     return value
 
 
