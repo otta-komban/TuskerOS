@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import stat
 import sys
 from pathlib import Path
 from typing import Any
@@ -39,41 +41,69 @@ def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object)
 
 
-def _safe_local_file(root: Path, reference: str, label: str, errors: list[str]) -> Path | None:
-    """Resolve a manifest-relative local file without URI, traversal, or symlink escape."""
+def _sha256_confined(root: Path, reference: str, label: str, errors: list[str]) -> tuple[int, str] | None:
+    """Hash a regular manifest-relative file without following symlinks.
+
+    Resolve each path component relative to an already-open directory descriptor.
+    O_NOFOLLOW is applied to both directory and final-file opens, closing the
+    validation/open race in a resolve-then-open path check.
+    """
     if not isinstance(reference, str) or not reference:
         errors.append(f"{label}: expected a non-empty manifest-relative path")
         return None
     parsed = urlsplit(reference)
-    candidate = Path(reference)
     if parsed.scheme or parsed.netloc or parsed.query or parsed.fragment:
         errors.append(f"{label}: only local relative paths are supported by this verifier")
         return None
-    if "\\" in reference or candidate.is_absolute() or any(part in ("..", "") for part in candidate.parts):
-        errors.append(f"{label}: absolute paths and parent traversal are not allowed")
+    parts = reference.split("/")
+    if (
+        "\\" in reference
+        or Path(reference).is_absolute()
+        or any(part in ("", ".", "..") for part in parts)
+    ):
+        errors.append(f"{label}: absolute paths, empty components, dot components and parent traversal are not allowed")
         return None
+    required_flags = ("O_NOFOLLOW", "O_DIRECTORY")
+    if any(not hasattr(os, flag) for flag in required_flags):
+        errors.append(f"{label}: platform lacks safe no-follow directory open support")
+        return None
+
+    base_flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    directory_flags = base_flags | os.O_DIRECTORY | os.O_NOFOLLOW
+    directory_fds: list[int] = []
+    file_fd: int | None = None
     try:
-        resolved_root = root.resolve(strict=True)
-        resolved = (resolved_root / candidate).resolve(strict=True)
-        resolved.relative_to(resolved_root)
-    except (OSError, ValueError):
-        errors.append(f"{label}: file is missing or resolves outside the manifest directory")
+        directory_fds.append(os.open(root, directory_flags))
+        for component in parts[:-1]:
+            directory_fds.append(
+                os.open(component, directory_flags, dir_fd=directory_fds[-1])
+            )
+        file_fd = os.open(
+            parts[-1],
+            base_flags | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0),
+            dir_fd=directory_fds[-1],
+        )
+        if not stat.S_ISREG(os.fstat(file_fd).st_mode):
+            errors.append(f"{label}: expected a regular file; symlinks and special files are rejected")
+            return None
+        digest = hashlib.sha256()
+        size = 0
+        with os.fdopen(file_fd, "rb") as stream:
+            file_fd = None
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                size += len(chunk)
+                digest.update(chunk)
+        return size, digest.hexdigest()
+    except OSError as exc:
+        errors.append(
+            f"{label}: file is missing, symlinked, non-regular, or resolves outside the manifest directory ({exc.strerror})"
+        )
         return None
-    if not resolved.is_file():
-        errors.append(f"{label}: expected a regular file")
-        return None
-    return resolved
-
-
-def _sha256(path: Path) -> tuple[int, str]:
-    digest = hashlib.sha256()
-    size = 0
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            size += len(chunk)
-            digest.update(chunk)
-    return size, digest.hexdigest()
-
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        for directory_fd in reversed(directory_fds):
+            os.close(directory_fd)
 
 def verify_release_manifest(manifest_path: Path, schema_path: Path = SCHEMA_PATH) -> dict[str, Any]:
     errors: list[str] = []
@@ -108,9 +138,9 @@ def verify_release_manifest(manifest_path: Path, schema_path: Path = SCHEMA_PATH
 
     for field in ("sbom", "provenance"):
         evidence = manifest[field]
-        path = _safe_local_file(root, evidence["uri"], field, errors)
-        if path is not None:
-            _, actual = _sha256(path)
+        actual_file = _sha256_confined(root, evidence["uri"], field, errors)
+        if actual_file is not None:
+            _, actual = actual_file
             if actual != evidence["sha256"]:
                 errors.append(f"{field}: SHA-256 does not match referenced bytes")
             else:
@@ -129,9 +159,9 @@ def verify_release_manifest(manifest_path: Path, schema_path: Path = SCHEMA_PATH
         if artifact["architecture"] != platform_arch:
             errors.append(f"{prefix}.architecture: does not match platform architecture")
 
-        path = _safe_local_file(root, filename, f"{prefix}.filename", errors)
-        if path is not None:
-            actual_size, actual_digest = _sha256(path)
+        actual_file = _sha256_confined(root, filename, f"{prefix}.filename", errors)
+        if actual_file is not None:
+            actual_size, actual_digest = actual_file
             if actual_size != artifact["size_bytes"]:
                 errors.append(f"{prefix}.size_bytes: expected {artifact['size_bytes']}, found {actual_size}")
             if actual_digest != artifact["sha256"]:
@@ -141,9 +171,9 @@ def verify_release_manifest(manifest_path: Path, schema_path: Path = SCHEMA_PATH
 
         signature = artifact.get("signature")
         if signature is not None:
-            sig_path = _safe_local_file(root, signature["uri"], f"{prefix}.signature", errors)
-            if sig_path is not None:
-                _, actual_signature_digest = _sha256(sig_path)
+            actual_signature_file = _sha256_confined(root, signature["uri"], f"{prefix}.signature", errors)
+            if actual_signature_file is not None:
+                _, actual_signature_digest = actual_signature_file
                 if actual_signature_digest != signature["sha256"]:
                     errors.append(f"{prefix}.signature: SHA-256 does not match signature-file bytes")
                 else:
