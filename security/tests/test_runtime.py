@@ -1007,3 +1007,19 @@ def test_consume_rejects_truthy_non_boolean_policy_recheck(callback_result):
         assert db.audit_events()[-1]["reason_code"] == "POLICY_BINDING_MISMATCH"
     finally:
         db.close()
+
+
+def test_security_database_refuses_hard_link_without_chmod_or_writes(tmp_path):
+    import stat
+
+    target = tmp_path / "shared.db"
+    target.write_bytes(b"preserve external file")
+    target.chmod(0o644)
+    path = tmp_path / "security.db"
+    path.hardlink_to(target)
+
+    with pytest.raises(SecurityStoreError, match="must not have hard links"):
+        SecurityStore(path, audit_key=KEY)
+
+    assert target.read_bytes() == b"preserve external file"
+    assert stat.S_IMODE(target.stat().st_mode) == 0o644
