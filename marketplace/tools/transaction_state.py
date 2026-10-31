@@ -100,6 +100,8 @@ def transition_transaction(
             raise TransactionStateError(f"history[{index}].evidence is invalid")
         if set(item_evidence) - EVIDENCE_KEYS.get(target, set()):
             raise TransactionStateError(f"history[{index}] contains unsupported evidence")
+        if target in {"rejected", "cancelled"} and not item_evidence.get("reason_code", "").strip():
+            raise TransactionStateError(f"history[{index}] {target} requires a non-empty reason_code")
         if target == "approval_verified" and not {"approval_id", "verification_ref", "authority"}.issubset(item_evidence):
             raise TransactionStateError(f"history[{index}] lacks approval verification evidence")
         if target == "revalidated" and item_evidence.get("snapshot_digest") != transaction["snapshot_digest"]:
@@ -126,6 +128,8 @@ def transition_transaction(
         raise TransactionStateError("evidence must map text keys to non-empty text values")
     if set(evidence) - EVIDENCE_KEYS.get(event, set()):
         raise TransactionStateError("evidence contains unsupported or sensitive fields")
+    if event in {"rejected", "cancelled"} and not evidence.get("reason_code", "").strip():
+        raise TransactionStateError(f"{event} requires a non-empty reason_code")
     if event == "approval_verified" and not {
         "approval_id", "verification_ref", "authority"
     }.issubset(evidence):
