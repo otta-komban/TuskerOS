@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 14
+Current verified count: 15
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -21,5 +21,7 @@ Current verified count: 14
 | 12 | ATLAS-01-C0012 | P1 | implementation | partial | Atomic JSON output; mocked CLI and atomic-write coverage; CI run 41117170559 passed compilation and all 18 tests; commits ee0beae, 9a35b95, a7d8a99, 1463b9c; Fedora DNF5 runtime still pending |
 | 13 | ATLAS-01-C0013 | P1 | status | recorded | Adopted compact progress dashboard; record reconciled into JSONL during C0014; no code change |
 | 14 | ATLAS-01-C0014 | P1 | implementation | partial | DNF5 resolver now rejects package-name mismatches and unsupported architectures; two regression tests; docs updated; CI runs 41124667670 and 41124688115 queued at check; Fedora DNF5 runtime pending; commits ace17cd, 415f1a7, ba5395e, 61534cd, ff8afe9, 5b90ee1, e670627; final CI run 41124925504 queued |
+
+| 15 | ATLAS-01-C0015 | P1 | status | recorded | Resumed Fedora base-image work; verified branch comparison, 49-test/8-job CI evidence, pinned KIWI source and still-open NOVA/NEXUS package handoffs; no package rows or build claims added |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
