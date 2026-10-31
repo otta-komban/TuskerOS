@@ -78,7 +78,7 @@ class OllamaProvider:
                     return None
                 value = data.get("version")
                 return value if isinstance(value, str) and value else None
-        except (OSError, URLError, HTTPError, socket.timeout, json.JSONDecodeError, UnicodeDecodeError):
+        except (OSError, URLError, HTTPError, socket.timeout, json.JSONDecodeError, UnicodeDecodeError, RecursionError):
             return None
 
     def health(self) -> bool:
