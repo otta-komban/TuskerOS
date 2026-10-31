@@ -208,8 +208,12 @@ class ReadOnlySystemBusAdapter:
                 parse_constant=_reject_json_constant,
             )
             expected_signature = "s" if method == "GetId" else "as"
-            if not isinstance(payload, dict) or payload.get("type") != expected_signature:
-                raise ValueError("unexpected signature")
+            if (
+                not isinstance(payload, dict)
+                or set(payload) != {"type", "data"}
+                or payload.get("type") != expected_signature
+            ):
+                raise ValueError("unexpected response envelope")
             data = payload.get("data")
             if not isinstance(data, list) or len(data) != 1:
                 raise ValueError("unexpected result shape")
