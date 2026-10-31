@@ -188,6 +188,8 @@ class ModelStore:
             data = json.loads(pointer.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return None
+        if not isinstance(data, dict):
+            return None
         revision = data.get("revision")
         filename = data.get("filename")
         if data.get("artifact_id") != artifact_id or not isinstance(revision, str) or not _REVISION.fullmatch(revision):
