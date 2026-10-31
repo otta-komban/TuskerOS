@@ -49,6 +49,19 @@ class SettingsControllerTests(unittest.TestCase):
         self.assertEqual(controller.reset(), DEFAULT_SETTINGS)
         self.assertEqual(json.loads(self.path.read_text()), DEFAULT_SETTINGS)
 
+    def test_parser_accepted_nesting_that_breaks_migration_enters_recovery(self):
+        # This depth is accepted by json.loads but can exceed deepcopy's
+        # recursion budget while the migration layer clones the document.
+        original = '{"a":' * 500 + "0" + "}" * 500
+        json.loads(original)
+        self.path.write_text(original)
+        controller = SettingsController(self.path)
+        self.assertTrue(controller.load_errors)
+        self.assertIn("migration limit", " ".join(controller.load_errors))
+        self.assertEqual(self.path.read_text(), original)
+        with self.assertRaisesRegex(ValueError, "restore defaults"):
+            controller.update({"panel": {"icon_size": 64}})
+
     def test_corrupt_input_is_not_echoed_in_errors(self):
         self.path.write_text('{"token":"do-not-print"}')
         controller=SettingsController(self.path)
