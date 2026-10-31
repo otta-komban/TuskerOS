@@ -120,6 +120,28 @@ class SettingsTests(unittest.TestCase):
             save_settings(self.path, {"panel": {"icon_size": 64}})
         self.assertEqual(fsync.call_count, 2)
 
+    def test_directory_fsync_failure_restores_previous_settings(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        original = '{"panel":{"icon_size":72}}\\n'
+        self.path.write_text(original, encoding="utf-8")
+        real_fsync = os.fsync
+        calls = 0
+
+        def fail_directory_sync_once(descriptor: int) -> None:
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError("simulated directory sync failure")
+            real_fsync(descriptor)
+
+        with patch("desktop.config.settings.os.fsync", side_effect=fail_directory_sync_once):
+            with self.assertRaisesRegex(OSError, "directory sync failure"):
+                save_settings(self.path, {"panel": {"icon_size": 64}})
+
+        self.assertEqual(self.path.read_text(encoding="utf-8"), original)
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.backup.*")), [])
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.*")), [])
+
     def test_save_closes_temporary_file_when_file_fsync_fails(self) -> None:
         descriptors: list[int] = []
 
