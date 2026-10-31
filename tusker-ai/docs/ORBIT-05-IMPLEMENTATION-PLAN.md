@@ -181,3 +181,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added regressions for NaN, positive infinity and negative infinity using an unreachable loopback port to ensure serialization fails first.
 - Provider and test commits: `3f99557877708de1ba94d093687252d7eba3368d`, `b5964137144499d8e1bbd3d870b90a60be91bdb1`.
 - Latest-head CI verification is pending. Live Ollama remains NOT RUN.
+
+
+## Iteration 17 — bounded serialized provider requests
+
+- Added a 4 MiB cap on the serialized Ollama chat request body. The runtime's character limit counts message content; extra message metadata can otherwise inflate the actual JSON body well beyond that limit.
+- Oversized serialized requests now fail as safe `INVALID_REQUEST` errors before opening an HTTP connection. This bounds bytes sent to the local provider without changing the shared request schema.
+- Added a regression with small message content and oversized metadata against an unreachable loopback endpoint, proving the size check wins before network dispatch.
+- Provider and test commits: recorded in the ORBIT-05 iteration 17 evidence log.
+- Live Ollama remains NOT RUN.
