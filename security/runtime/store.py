@@ -180,6 +180,16 @@ class SecurityStore:
     def _transaction(self) -> None:
         self._db.execute("BEGIN IMMEDIATE")
 
+    @staticmethod
+    def _audit_context_matches(audit_context: Mapping[str, Any], expected: Mapping[str, Any]) -> bool:
+        """Require lifecycle audit correlation to match the authority record."""
+        return (
+            isinstance(audit_context, Mapping)
+            and all(audit_context.get(key) == value for key, value in expected.items())
+            and audit_context.get("origin") in {"local", "remote", "extension", "system"}
+            and audit_context.get("registry_status") == "resolved"
+        )
+
     def create_approval(self, *, action_id: str, broker_operation_id: str, action_digest: str,
                         proposal_id: str, principal_binding: str, policy_version: str, risk_class: str,
                         task_id: str, step_id: str, binding: Mapping[str, Any], expires_at: datetime,
@@ -207,6 +217,15 @@ class SecurityStore:
             raise SecurityStoreError("invalid canonical resource scope")
         try: uuid.UUID(proposal_id)
         except (ValueError, TypeError) as exc: raise SecurityStoreError("invalid proposal UUID") from exc
+        expected_audit = {
+            "principal_binding": principal_binding, "proposal_id": proposal_id,
+            "operation_id": broker_operation_id, "risk_class": risk_class,
+            "policy_version": policy_version, "action_digest": action_digest,
+            "task_id": task_id, "step_id": step_id,
+            "registry_version": binding["registry_version"], "registry_status": "resolved",
+        }
+        if not self._audit_context_matches(audit_context, expected_audit):
+            raise SecurityStoreError("approval audit context does not match authority binding")
         request_id = str(uuid.uuid4())
         try:
             self._transaction()
