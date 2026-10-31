@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `1d72c7e40862d8c6cfdf8dd8e7573c9923c639a4` (branch comparison refreshed after this milestone)  
+**Latest code/test evidence head:** `5bfd033ec71b5c3b8c8aaa9507843f645fb15247`  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -21,6 +21,7 @@
 - Added static build-script regression tests for the wrapper's output/export contract. These checks do not execute KIWI.
 - Hardened DNF5 metadata parsing to use `%{full_nevra}` (which preserves epoch 0), `%{repoid}`, `%{license}`, `%{sourcerpm}` and `%{url}`. The resolver compares NEVRA, repository, license, source RPM and upstream URL metadata with the manifest pins. The manifest separately records the Fedora dist-git source repository URL and upstream project URL.
 - The resolver preserves an empty fifth query field and normalizes a missing upstream URL to the explicit `NOASSERTION` sentinel rather than dropping the trailing tab or silently inventing a URL.
+- CI's resolver tests use mocked DNF5 command output on Ubuntu; a live Fedora 44 DNF5 repoquery run is still required to validate the exact host CLI and metadata behavior.
 - Changed build metadata so a matching second build is reported as `repeat_build_checksum_comparison: passed`; `reproducible_build_claim` remains `false` until immutable repository metadata and RPM payload checksums are locked.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 
@@ -48,6 +49,7 @@
 - Resolver metadata pin run: [41181625107](https://github.com/otta-komban/TuskerOS/actions/runs/41181625107), commit `44bfe6b6350c79d9ab9caec5a0d613983ed5931b`, passed **39 tests** after fixing test fixtures for the expanded DNF5 query format.
 - Latest previous run: [41181689969](https://github.com/otta-komban/TuskerOS/actions/runs/41181689969), commit `81e44a5adfddbc6781c24319b7920de67e3192e2`, passed **40 tests**, JSON validation and shell syntax validation.
 - Current run: [41182178235](https://github.com/otta-komban/TuskerOS/actions/runs/41182178235), commit `1d72c7e40862d8c6cfdf8dd8e7573c9923c639a4`, passed **45 tests**, JSON validation and shell syntax validation.
+- Latest run after metadata-limit disclosure: [41182244823](https://github.com/otta-komban/TuskerOS/actions/runs/41182244823), commit `5bfd033ec71b5c3b8c8aaa9507843f645fb15247`, also passed **45 tests**, JSON validation and shell syntax validation.
 - Exact current command set is unchanged: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Exact latest commands: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Two intermediate CI runs (`41181567432`, `41181595588`) failed because test fixtures still used the old two-column DNF query output / two-argument pin helper after the resolver began validating license and source RPM. Fixtures were corrected; subsequent 39- and 40-test runs passed.
@@ -113,6 +115,9 @@ The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86
 | ATLAS-01-FB-023 | 2026-10-31T07:46:09Z | `tools/atlas/resolve-package-manifest.py` | Added RPM upstream URL query metadata and pin comparison; manifest now separates Fedora source repository URL from upstream project URL. | `1577f1115389887aff5c6e26900d07905ff36a7a` |
 | ATLAS-01-FB-024 | 2026-10-31T07:48:48Z | `tools/atlas/test_resolve_package_manifest.py`, `os/package-manifest.csv` | Expanded provenance fixtures and manifest columns; run 41182076591 passed 41 tests before blank-URL edge-case coverage was added. | `a070f618e1c4a2a720159760ead0cd50417a0f3c`; `666b54929c6ee373947136a8e9fd0b715b3424cc` |
 | ATLAS-01-FB-025 | 2026-10-31T07:50:28Z | `tools/atlas/resolve-package-manifest.py`, `tools/atlas/test_resolve_package_manifest.py` | Preserved empty URL fields, normalized them to `NOASSERTION`, and added source-repository/upstream-URL negative cases. Run 41182178235 passed 45 tests. | `5b0c247b7f4db9c0aff714b6eb9b85d7f24b6fb1`; `368828c5dc1d125257353e2ae4b99f074cb849f9`; `1d72c7e40862d8c6cfdf8dd8e7573c9923c639a4` |
+
+| ATLAS-01-FB-026 | 2026-10-31T07:51:21Z | `tools/atlas/build-image.sh` | Build metadata now explicitly lists the unverified Fedora dist-git source URL limitation; run 41182234800 passed 45 tests. | `67c027879f3f7f77dc9a7a86c97e38799c31baf6` |
+| ATLAS-01-FB-027 | 2026-10-31T07:51:30Z | `tools/atlas/test_build_image_script.py` | Added a regression assertion for the source-repository limitation disclosure; run 41182244823 passed 45 tests. | `5bfd033ec71b5c3b8c8aaa9507843f645fb15247` |
 
 **Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
 
