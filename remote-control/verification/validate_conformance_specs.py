@@ -129,7 +129,10 @@ def validate_repository(root: Path) -> list[str]:
                 raise SpecError(f"specification not found: {relative_path}")
             ids = validate_spec(path.read_text(encoding="utf-8"), prefix, expected_count)
         except (OSError, UnicodeError, SpecError) as exc:
-            errors.append(f"{prefix}: {exc}")
+            detail = str(exc)
+            if not detail.startswith(prefix + ":"):
+                detail = f"{prefix}: {detail}"
+            errors.append(detail)
             continue
         results.append(f"{prefix}: {len(ids)} unique, contiguous cases validated ({relative_path})")
     if errors:
