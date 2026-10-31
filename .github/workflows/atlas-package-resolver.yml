@@ -138,12 +138,12 @@ jobs:
               for repository in core.findall("repository"):
                   source_node = repository.find("source")
                   assert source_node.attrib["path"].startswith("file://"), source_node.attrib
-                  assert repository.attrib["repository_gpgcheck"] == "true"
+                  assert "repository_gpgcheck" not in repository.attrib
                   assert repository.attrib["package_gpgcheck"] == "true"
                   signing_key = Path(source_node.find("signing").attrib["key"].removeprefix("file://"))
                   assert signing_key.is_file(), signing_key
                   assert "$releasever" not in str(signing_key)
-              print("Pinned Fedora 44 KIWI overlay uses only local snapshots and the installed Fedora signing key")
+              print("Pinned Fedora 44 KIWI overlay uses only local snapshots and enforces RPM package signatures with the installed Fedora signing key")
           PY
       - name: Query real Fedora 44 package metadata and validate DNF5 output
         run: |
