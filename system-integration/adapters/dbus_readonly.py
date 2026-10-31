@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import shutil
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Final
@@ -53,8 +54,21 @@ class ReadOnlySystemBusAdapter:
         max_stdout: int = _MAX_STDOUT,
         max_stderr: int = _MAX_STDERR,
     ) -> None:
-        if timeout_seconds <= 0 or timeout_seconds > 30:
-            raise ValueError("timeout_seconds must be in (0, 30]")
+        if (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, (int, float))
+            or not math.isfinite(timeout_seconds)
+            or timeout_seconds <= 0
+            or timeout_seconds > 30
+        ):
+            raise ValueError("timeout_seconds must be finite and in (0, 30]")
+        if (
+            isinstance(max_stdout, bool)
+            or not isinstance(max_stdout, int)
+            or isinstance(max_stderr, bool)
+            or not isinstance(max_stderr, int)
+        ):
+            raise ValueError("output limits must be integers")
         if max_stdout < 128 or max_stderr < 128:
             raise ValueError("output limits are too small")
         self._authorization_gate = authorization_gate
