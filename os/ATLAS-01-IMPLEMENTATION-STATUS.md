@@ -25,6 +25,12 @@
 - Changed build metadata so a matching second build is reported as `repeat_build_checksum_comparison: passed`; `reproducible_build_claim` remains `false` until immutable repository metadata and RPM payload checksums are locked.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 
+## Pull request
+
+- Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
+- PR head at creation: `ff88d6aa7c09388b70478b6c73c5f720dbe513fe`; base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
+- Draft remains open for review. It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
+
 ## Evidence
 
 ### Resolver CI
