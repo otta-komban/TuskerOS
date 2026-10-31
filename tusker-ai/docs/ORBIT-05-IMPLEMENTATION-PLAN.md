@@ -199,3 +199,11 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added an HTTP fixture that emits multiple sub-limit frames whose aggregate exceeds the ceiling, with a regression asserting the typed failure.
 - Provider commit: `20ecde5bde19bc93ae5c9c2c9f1bda7bf32b54e5`; test commit: `fe2084f7d89ddb9f309d8dbbef894ec3750cdf1f`.
 - Latest-head CI pending. Live Ollama remains NOT RUN.
+
+
+## Iteration 19 — bounded JSON parser failure handling
+
+- Deeply nested provider frames can exceed Python JSON decoder recursion depth even when the frame remains under the byte-size limit. The adapter now catches `RecursionError` alongside malformed JSON/UTF-8 and returns a safe `PROVIDER_DISCONNECTED` runtime error.
+- Added a raw NDJSON fixture containing a deeply nested JSON array and included it in the typed malformed-frame regression.
+- No schema, shared contract, endpoint, or daemon lifecycle behavior changed. Live Ollama remains NOT RUN.
+- Provider and test commits are recorded in the launch JSONL evidence log.
