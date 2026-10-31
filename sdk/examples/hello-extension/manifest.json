@@ -1,0 +1,14 @@
+{
+  "manifest_version": 1,
+  "id": "org.tuskeros.examples.hello",
+  "name": "Hello Tusker",
+  "version": "0.1.0",
+  "description": "A metadata-only starter extension demonstrating the v1 manifest contract.",
+  "publisher": "tuskeros-examples",
+  "license": "Apache-2.0",
+  "kind": "extension",
+  "api": {"min": "1.0", "max": "1.x"},
+  "os": {"min": "0.1.0", "max": "0.x"},
+  "permissions": [],
+  "dependencies": []
+}

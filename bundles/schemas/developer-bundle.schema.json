@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/developer-bundle-1.0.0.json",
+  "title": "TuskerOS Developer Bundle",
+  "description": "Declarative optional development environment; package execution is delegated to the OS package manager.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundle_version", "id", "name", "description", "category", "packages", "compatibility"],
+  "properties": {
+    "bundle_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+\\.[a-z][a-z0-9-]*$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 80},
+    "description": {"type": "string", "minLength": 1, "maxLength": 280},
+    "category": {"enum": ["python", "full-stack", "ai-ml", "systems", "devops", "automation"]},
+    "packages": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["manager", "name"],
+        "properties": {
+          "manager": {"enum": ["dnf", "flatpak", "pipx", "npm", "cargo"]},
+          "name": {"type": "string", "minLength": 1, "maxLength": 128},
+          "version": {"type": "string", "maxLength": 64},
+          "optional": {"type": "boolean"}
+        }
+      }
+    },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "variables": {"type": "object", "additionalProperties": {"type": "string"}},
+        "project_templates": {"type": "array", "items": {"type": "string", "format": "uri"}}
+      }
+    },
+    "compatibility": {
+      "type": "object", "additionalProperties": false, "required": ["tuskeros"],
+      "properties": {"tuskeros": {"type": "object", "required": ["min", "max"], "properties": {"min": {"type": "string"}, "max": {"type": "string"}}}}
+    },
+    "resources": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "estimated_download_mb": {"type": "integer", "minimum": 0},
+        "estimated_disk_mb": {"type": "integer", "minimum": 0},
+        "recommended_ram_mb": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
