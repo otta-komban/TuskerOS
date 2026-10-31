@@ -225,6 +225,17 @@ class RecoveryJournalTests(unittest.TestCase):
         with self.assertRaisesRegex(JournalValidationError, "nesting depth"):
             record_checksum(record)
 
+
+    def test_checksum_enforces_in_memory_record_size_bound(self):
+        record = chain(["planned"])[0]
+        record["extra"] = "x" * (MAX_RECORD_BYTES + 1)
+        with self.assertRaisesRegex(JournalValidationError, "maximum encoded input size"):
+            record_checksum(record)
+        record = chain(["planned"])[0]
+        record["extra"] = "\\u0001" * (MAX_RECORD_BYTES // 2)
+        with self.assertRaisesRegex(JournalValidationError, "maximum size"):
+            record_checksum(record)
+
     def test_checksum_rejects_non_finite_nested_numbers(self):
         record = chain(["planned"])[0]
         record["extra"] = {"nested": [float("nan")]}
