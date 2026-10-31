@@ -21,6 +21,32 @@ def chain(states, *, idempotent=False):
 
 
 class RecoveryJournalTests(unittest.TestCase):
+    def test_journal_must_begin_in_planned_state(self):
+        report = validate_journal(chain(["interrupted"]))
+        self.assertFalse(report.valid)
+        self.assertTrue(any("initial state must be planned" in e for e in report.errors))
+
+    def test_idempotency_declaration_must_remain_stable(self):
+        records = chain(["planned", "prepared"], idempotent=True)
+        records[1]["idempotent"] = False
+        records[1]["checksum"] = record_checksum(records[1])
+        report = validate_journal(records)
+        self.assertFalse(report.valid)
+        self.assertTrue(any("idempotent declaration changed" in e for e in report.errors))
+
+    def test_checksum_fields_require_lowercase_sha256_hex(self):
+        records = chain(["planned"])
+        records[0]["checksum"] = "A" * 64
+        report = validate_journal(records)
+        self.assertFalse(report.valid)
+        self.assertTrue(any("checksum must be 64 lowercase hexadecimal" in e for e in report.errors))
+        records = chain(["planned", "prepared"])
+        records[1]["previous_checksum"] = "g" * 64
+        records[1]["checksum"] = record_checksum(records[1])
+        report = validate_journal(records)
+        self.assertFalse(report.valid)
+        self.assertTrue(any("previous_checksum must be 64 lowercase hexadecimal" in e for e in report.errors))
+
     def test_valid_interrupted_journal(self):
         report = validate_journal(chain(["planned", "prepared", "executing",
                                          "interrupted"], idempotent=True))
