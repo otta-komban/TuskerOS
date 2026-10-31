@@ -242,3 +242,16 @@ A fresh read of NEXUS-07 branch `07-system-integration` confirms the public invo
 **Required NEXUS resolution:** remove `authorization_context` from the public caller schema and example, then define a separate broker-internal typed envelope or authenticated out-of-band binding; alternatively, document and test a transport boundary that makes caller population impossible. Add schema/adapter negative tests for all four authority fields and a positive test showing only independently authenticated broker context reaches AEGIS authorization consumption. Until this exists, do not infer trust from JSON shape or field presence; keep protected mutations fail-closed.
 
 **Evidence boundary:** re-read NEXUS schema, valid fixture, interface contract, authorization-boundary note and contract tests. No NEXUS files were changed and no NEXUS tests/runtime were executed. Existing owner follow-up remains [issue #17 comment 6539407164](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6539407164); no owner resolution was present in the fetched issue thread.
+
+
+## SEC-INST-001 — PHOENIX installer digest normalization mismatch (2026-10-31)
+
+**Finding:** Re-fetched PHOENIX-10 branch `10-installer-recovery` at `08b95273876767c7bab3c46e668f267e9d140d1c`. Its `docs/INSTALLER-CONTRACT-CONFORMANCE.md`, section “Digest ownership”, still says the AEGIS digest specification uses NFC normalization. This is stale and directly conflicts with the current AEGIS-owned `security/POLICY_ENGINE_SPEC.md` section 5 and `security/JCS_UNICODE_TEST_VECTORS.json`.
+
+**Correct rule:** RFC 8785 JCS preserves the exact Unicode code-point sequence of parsed JSON strings and property names. Do not apply NFC/NFD/NFKC/NFKD, case-folding, trimming or other generic text rewriting as JCS preprocessing. Reject invalid Unicode/unpaired surrogates. Any operation-specific identifier normalization belongs in the trusted resource resolver; preserve the original validated argument and bind the resolver-produced canonical resource identifier separately. Deterministic resource-list ordering remains a separate envelope-construction rule and does not authorize string normalization.
+
+**Risk:** If installer preview/approval and execution paths normalize strings differently, the action digest may not bind the exact approved payload. This creates an approval/execution integrity mismatch risk. No exploit or production JCS behavior is claimed.
+
+**Owner follow-up:** Posted the correction and requested PHOENIX-owned documentation plus composed/decomposed Unicode and unpaired-surrogate integration vectors on [issue #4 comment 6539428019](https://github.com/otta-komban/TuskerOS/issues/4#issuecomment-6539428019).
+
+**Verification boundary:** Cross-branch document review only. No PHOENIX files were modified and no PHOENIX tests were run. AEGIS fixture tests do not establish production canonicalizer conformance. Destructive installer operations remain blocked until the consumer contract is corrected and actual digest-path tests pass.
