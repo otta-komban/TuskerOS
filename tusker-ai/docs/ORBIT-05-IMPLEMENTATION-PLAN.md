@@ -49,6 +49,12 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - Added a delayed-frame HTTP fixture and regression test that expects `DEADLINE_EXCEEDED` when the first frame arrives after the request deadline.
 - GitHub Actions passed on code revision `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`: runtime unit tests run 74, AI contract tests run 97, unified validation run 562, and PHOENIX manifest integrity run 256.
 
+## Cancellation boundary hardening iteration
+
+- The Ollama stream adapter now checks the cancellation token immediately after a blocking NDJSON read, before parsing or emitting the returned frame. The socket-timeout path also honors cancellation before retrying the read.
+- Added a delayed-frame regression test asserting that cancellation while waiting yields only `started` then `cancelled`, with no post-cancellation text delta.
+- CI is pending on code revision `89c7aaee8eb383b2de37277ebc5de6cd879ec92b`.
+
 ## Remaining work sequence
 
 1. Keep full runtime/contract/unified validation green as further implementation changes land; all four required workflows passed on revisions `454d10d4ad13f7ab5ddb659866e9727bd8d7854f` and `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`.
