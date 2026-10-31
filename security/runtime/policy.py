@@ -196,6 +196,9 @@ class PolicyEngine:
                 or (minimum == "R5" and entry["approval_mode"] != "out_of_band_admin")):
                 return deny("POLICY_REGISTRY_INVALID")
             if entry.get("risk_escalation_rules"): return deny("POLICY_RISK_RULE_UNSUPPORTED")
+            # Do not treat configured quota metadata as an enforced control.
+            # A trusted shared limiter must exist before this policy can allow it.
+            if "rate_limit" in entry: return deny("POLICY_RATE_LIMIT_UNSUPPORTED")
             max_input = entry.get("max_input_bytes", 10485760)
             if not isinstance(max_input, int) or isinstance(max_input, bool) or not 1 <= max_input <= 10485760:
                 return deny("POLICY_REGISTRY_INVALID")
