@@ -25,6 +25,21 @@ _MAX_STDOUT: Final[int] = 16 * 1024
 _MAX_STDERR: Final[int] = 4 * 1024
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject ambiguous JSON objects instead of silently accepting the last key."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON object key")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(value: str) -> None:
+    """Reject JavaScript-style NaN/Infinity tokens accepted by Python's decoder."""
+    raise ValueError("non-standard JSON constant")
+
+
 class _OutputLimitExceeded(Exception):
     """Internal signal used to terminate a child that exceeds an output cap."""
 
@@ -187,7 +202,11 @@ class ReadOnlySystemBusAdapter:
         if return_code != 0:
             raise AdapterError("bus call failed")
         try:
-            payload = json.loads(stdout.decode("utf-8"))
+            payload = json.loads(
+                stdout.decode("utf-8"),
+                object_pairs_hook=_unique_json_object,
+                parse_constant=_reject_json_constant,
+            )
             expected_signature = "s" if method == "GetId" else "as"
             if not isinstance(payload, dict) or payload.get("type") != expected_signature:
                 raise ValueError("unexpected signature")
