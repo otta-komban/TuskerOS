@@ -122,6 +122,24 @@ class CatalogEntryValidationTests(unittest.TestCase):
         entry["compatibility"]["api"]["unexpected"] = "1.0"
         self.assertTrue(any("$.compatibility.api.unexpected" in e for e in validate_catalog_entry(entry)))
 
+
+    def test_timestamps_require_rfc3339_timezone_and_calendar_validity(self):
+        for value in ("2026-10-31 00:00:00Z", "2026-10-31T00:00:00", "2026-02-30T00:00:00Z", "2026-10-31T00:00:00+0530"):
+            with self.subTest(value=value):
+                entry = copy.deepcopy(self.fixture)
+                entry["release"]["published_at"] = value
+                self.assertTrue(any("$.release.published_at" in e for e in validate_catalog_entry(entry)))
+        for value in ("2026-10-31T00:00:00Z", "2026-10-31t05:30:00+05:30", "2026-10-31T00:00:00.123456-04:00"):
+            with self.subTest(value=value):
+                entry = copy.deepcopy(self.fixture)
+                entry["release"]["published_at"] = value
+                self.assertEqual(validate_catalog_entry(entry), [])
+
+    def test_review_timestamp_uses_same_rfc3339_rules(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["trust"]["reviewed_at"] = "2026-10-31 00:00:00+00:00"
+        self.assertTrue(any("$.trust.reviewed_at" in e for e in validate_catalog_entry(entry)))
+
     def test_duplicate_tags_rejected(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["tags"] = ["same", "same"]
