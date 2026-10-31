@@ -32,4 +32,4 @@ Run from the repository root:
 python -m unittest discover -s system-integration/tests -v
 ```
 
-The adapter unit tests use a test double for the private subprocess call and verify the authorization stop condition, fixed operation mapping, result validation, and degraded health behavior. They do not prove real system-bus interoperability, cancellation under a live child process, or production AEGIS integration. Those require a disposable D-Bus test session and the owner-approved broker contract respectively.
+The adapter unit tests verify the authorization stop condition, fixed operation mapping, result validation, degraded health behavior, exact subprocess arguments, immediate child termination on output overflow, and cancellation cleanup using a controlled fake process. They do not prove real system-bus interoperability or production AEGIS integration. Those require a disposable D-Bus test session and the owner-approved broker contract respectively.
