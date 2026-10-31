@@ -1,0 +1,32 @@
+name: Marketplace transaction contract tests
+
+on:
+  push:
+    branches:
+      - main
+      - integration/blocker-remediation
+    paths:
+      - "marketplace/tools/transaction_state.py"
+      - "marketplace/tests/test_transaction_state.py"
+      - ".github/workflows/marketplace-transaction-contracts.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "marketplace/tools/transaction_state.py"
+      - "marketplace/tests/test_transaction_state.py"
+      - ".github/workflows/marketplace-transaction-contracts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  transaction-contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run transaction lifecycle tests
+        run: python -m unittest discover -s marketplace/tests -p 'test_transaction_state.py' -v

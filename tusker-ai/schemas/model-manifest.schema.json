@@ -19,7 +19,7 @@
         "type": "object", "additionalProperties": false,
         "required": ["filename", "size_bytes", "sha256"],
         "properties": {
-          "filename": { "type": "string", "minLength": 1 },
+          "filename": { "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$", "description": "Canonical relative POSIX path. Each component starts alphanumeric; absolute paths, dot segments, empty components, backslashes, drive prefixes and control characters are excluded." },
           "size_bytes": { "type": "integer", "minimum": 1 },
           "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
           "quantization": { "type": "string" }
