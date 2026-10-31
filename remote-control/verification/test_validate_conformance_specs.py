@@ -92,15 +92,15 @@ class ParseCaseRowsTests(unittest.TestCase):
 
     def test_ignores_fenced_and_indented_code_example_rows(self):
         markdown = (
-            "| PAIR-C01 | Actual specification case | Reject safely |\\n"
-            "```markdown\\n"
-            "| PAIR-C01 | Fenced example duplicate | Ignored |\\n"
-            "```\\n"
-            "~~~text\\n"
-            "| PAIR-C01 | Tilde-fenced example duplicate | Ignored |\\n"
-            "~~~\\n"
-            "    | PAIR-C01 | Indented example duplicate | Ignored |\\n"
-            "\\t| PAIR-C01 | Tab-indented example duplicate | Ignored |\\n"
+            "| PAIR-C01 | Actual specification case | Reject safely |\n"
+            "```markdown\n"
+            "| PAIR-C01 | Fenced example duplicate | Ignored |\n"
+            "```\n"
+            "~~~text\n"
+            "| PAIR-C01 | Tilde-fenced example duplicate | Ignored |\n"
+            "~~~\n"
+            "    | PAIR-C01 | Indented example duplicate | Ignored |\n"
+            "\t| PAIR-C01 | Tab-indented example duplicate | Ignored |\n"
         )
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
