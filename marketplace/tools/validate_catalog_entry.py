@@ -19,7 +19,7 @@ SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 DATE_TIME_RE = re.compile(
     r"^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])[Tt]"
     r"([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
-    r"(\\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+    r"(\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
 )
 # Semantic Versioning 2.0.0: prerelease identifiers cannot be empty or
 # numeric with leading zeroes; build identifiers may contain leading zeroes.
