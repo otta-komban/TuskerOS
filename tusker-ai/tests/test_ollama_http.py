@@ -12,7 +12,10 @@ from tusker_ai.types import InferenceRequest, CancellationToken
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        body = json.dumps({"version": "test-live-http"}).encode()
+        if self.path == "/api/version" and getattr(type(self), "version_body", None) is not None:
+            body = type(self).version_body
+        else:
+            body = json.dumps({"version": "test-live-http"}).encode()
         self.send_response(200); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
 
     def do_POST(self):
@@ -106,6 +109,29 @@ class OllamaHttpTests(unittest.TestCase):
                 with self.assertRaises(TuskerRuntimeError) as ctx:
                     list(provider.infer(request, CancellationToken()))
                 self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_version_health_rejects_non_object_and_oversized_responses(self):
+        provider = OllamaProvider(self.endpoint, read_timeout=2)
+        original = getattr(Handler, "version_body", None)
+        try:
+            for body in (b"[]", b'"version-string"', b'{"version": 7}', b"{" + b" " * 65536):
+                with self.subTest(body_prefix=body[:16], body_length=len(body)):
+                    Handler.version_body = body
+                    self.assertIsNone(provider.version())
+                    self.assertFalse(provider.health())
+        finally:
+            Handler.version_body = original
+
+    def test_endpoint_rejects_paths_and_invalid_ports(self):
+        for endpoint in (
+            "http://127.0.0.1:bad",
+            "http://127.0.0.1:0",
+            "http://127.0.0.1:65536",
+            "http://127.0.0.1:11434/api",
+        ):
+            with self.subTest(endpoint=endpoint):
+                with self.assertRaises(ValueError):
+                    OllamaProvider(endpoint)
 
     def test_version_health_stream_and_usage(self):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
