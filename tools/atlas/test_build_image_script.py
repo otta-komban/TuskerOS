@@ -28,10 +28,17 @@ class KiwiBundleContractTests(unittest.TestCase):
     def test_repeat_build_compares_normalized_bundle_checksums(self):
         self.assertIn('diff -u "$RUN_DIR/first/SHA256SUMS" "$RUN_DIR/repeat/SHA256SUMS"', SCRIPT)
 
+    def test_image_build_requires_immutable_repository_metadata_and_package_pins(self):
+        self.assertIn('SNAPSHOT_LOCK="${ROOT}/os/repository-snapshot.lock.json"', SCRIPT)
+        self.assertIn('"$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"', SCRIPT)
+        self.assertIn('"repository_metadata_verified": True', SCRIPT)
+        self.assertIn('"repository_metadata_signature_verified": snapshot_lock.get("signature_verification") == "verified"', SCRIPT)
+
     def test_metadata_does_not_overclaim_reproducibility(self):
         self.assertIn('"repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run"', SCRIPT)
         self.assertIn('"reproducible_build_claim": False', SCRIPT)
-        self.assertIn("repository metadata snapshots and repomd.xml digests are not yet locked and verified", SCRIPT)
+        self.assertIn("RPM payload checksums are not yet recorded in the package lock", SCRIPT)
+        self.assertIn("Fedora repository metadata signatures are not yet verified against Fedora signing keys", SCRIPT)
         self.assertIn("Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified", SCRIPT)
 
 
