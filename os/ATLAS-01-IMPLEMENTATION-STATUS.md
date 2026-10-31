@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest verified head:** `e55e8a1944dc4e6e88bd496e236524530c6391c0`  
+**Latest verified head:** `32fba3efc6ab715e739cb6213944fcf61a4d24a9`  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -17,6 +17,8 @@
 - Hardened the resolver's production path to require all provenance fields and compare the resolved NEVRA and repository against the exact manifest pins. Existing helper tests remain compatible with their smaller fixture format.
 - Added nonzero-epoch, pin mismatch, repository mismatch, source RPM validation and source-lock structural tests.  
 - Added CI checks for JSON lock parsing and `bash -n` validation of the image build script.
+- Corrected the Fedora KIWI wrapper invocation: both image profiles now pass a fixed `--image-release=0`, which causes the wrapper to export result bundles into the requested output directories. Intermediate `*-build` trees are removed before checksum calculation; the script now requires an `.iso` and `.qcow2` bundle and hashes only exported artifacts.
+- Added static build-script regression tests for the wrapper's output/export contract. These checks do not execute KIWI.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 
 ## Evidence
@@ -37,6 +39,9 @@
   - `bash -n tools/atlas/build-image.sh`
   - `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`
 - Result: **32 tests passed**, exit code 0; JSON lock validation and shell syntax validation also passed.
+- Latest run: [41181333587](https://github.com/otta-komban/TuskerOS/actions/runs/41181333587), tested commit `32fba3efc6ab715e739cb6213944fcf61a4d24a9`.
+- Exact commands: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
+- Result: **36 tests passed**, exit code 0. JSON and shell syntax checks passed. Four new tests are static build-script contract checks, not image-build tests.
 - One preceding CI iteration (run `41180611540`) failed one newly added source-lock test due to an incorrect test-field lookup; the test was corrected and the next run passed.
 
 ### Image/build/runtime status
@@ -47,6 +52,12 @@
 - VM install/boot: **not tested**.
 - Secure Boot: **not tested**.
 - Physical hardware: **not tested**.
+
+## Cross-agent review updates
+
+- NEXUS-07 issue #5: ATLAS reviewed the provisional system-bus read-only API and service activation/packaging assumptions. Review comment: [6540691529](https://github.com/otta-komban/TuskerOS/issues/5#issuecomment-6540691529). The proposed reverse-DNS name remains provisional until project namespace ownership is confirmed; ATLAS will not invent NEXUS D-Bus identifiers or AEGIS Polkit action IDs.
+- NOVA-02 issue #12: ATLAS reconfirmed Fedora 44 / Plasma 6.6.4 / Qt 6 / KF6 as the POC platform baseline, Wayland-first, and called out Plasma Login Manager/Setup rather than assuming SDDM-only behavior. Review comment: [6540691845](https://github.com/otta-komban/TuskerOS/issues/12#issuecomment-6540691845). Exact RPM NEVRAs remain snapshot-derived; no image/login test is claimed.
+- Issue #51 is retained as a CI configuration follow-up because `protect-main` currently lists no required status checks. Repository instructions do not prohibit assigned-branch commits on that basis; implementation has resumed. This does not authorize merging or bypassing PR review/check requirements.
 
 ## Explicit blockers and boundaries
 
@@ -75,6 +86,11 @@ The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86
 | ATLAS-01-FB-010 | 2026-10-31T07:26:49Z | `os/ATLAS-01-IMPLEMENTATION-STATUS.md` | Implementation boundaries, evidence and blockers documented | `a1f008659708b05a232cbc57f75590889ccb820b` |
 | ATLAS-01-FB-011 | 2026-10-31T07:27:05Z | `tools/atlas/test_image_source_lock.py` | Corrected assertion; run 41180649544 passed all 32 tests | `e55e8a1944dc4e6e88bd496e236524530c6391c0` |
 | ATLAS-01-FB-012 | 2026-10-31T07:27:37Z | `os/ATLAS-01-IMPLEMENTATION-STATUS.md` | Recorded current CI evidence and follow-up actions | `ef7bda771bc791a7f52ff6fd554d0a189fefbf7f` |
+
+| ATLAS-01-FB-013 | 2026-10-31T07:36:56Z | `tools/atlas/build-image.sh` | Fixed KIWI wrapper result export with `--image-release=0`, removed intermediate trees before hashing, and added ISO/QCOW2 output assertions. CI run 41181310460 passed shell/JSON and 32 tests. | `d15951d3abbce8f6f2bae829d96269a1371c5b5b` |
+| ATLAS-01-FB-014 | 2026-10-31T07:37:11Z | `tools/atlas/test_build_image_script.py` | Added four static regression tests for KIWI bundle export and checksum scope. CI run 41181327409 passed 36 tests. | `2af6fec981c40824816c90dccbcbf0db69d18211` |
+| ATLAS-01-FB-015 | 2026-10-31T07:37:17Z | `.github/workflows/atlas-package-resolver.yml` | Added the new test file to Python compilation; CI run 41181333587 passed 36 tests, JSON validation and Bash syntax. | `32fba3efc6ab715e739cb6213944fcf61a4d24a9` |
+| ATLAS-01-FB-016 | 2026-10-31T07:37:30Z | GitHub issue comments #5 and #12 | Completed NEXUS system service/activation review and NOVA Fedora/Plasma platform review. No shared contracts changed. | N/A — review comments [#5](https://github.com/otta-komban/TuskerOS/issues/5#issuecomment-6540691529), [#12](https://github.com/otta-komban/TuskerOS/issues/12#issuecomment-6540691845) |
 
 **Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
 
