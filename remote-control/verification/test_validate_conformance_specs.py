@@ -283,6 +283,7 @@ class RepositoryValidationTests(unittest.TestCase):
         message = str(raised.exception)
         for prefix in ("PAIR", "SESS", "NET"):
             self.assertIn(prefix + ":", message)
+            self.assertNotIn(prefix + ": " + prefix + ":", message)
         self.assertIn("PAIR-C01", message)
         self.assertIn("SESS-C01", message)
         self.assertIn("NET-C01", message)
