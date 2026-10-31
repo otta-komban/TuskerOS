@@ -166,9 +166,7 @@ class PolicyEngine:
                     return deny("POLICY_INVALID_ARGUMENTS")
             if not isinstance(proposal["arguments"], dict) or not isinstance(proposal["resources"], list):
                 return deny("POLICY_INVALID_ARGUMENTS")
-            if self.argument_validator is None or self.argument_validator(proposal["action_id"], proposal["arguments"]) is not True:
-                return deny("POLICY_INVALID_ARGUMENTS")
-            if self.resource_resolver is None or self.precondition_verifier is None:
+            if self.argument_validator is None or self.resource_resolver is None or self.precondition_verifier is None:
                 return deny("POLICY_DEPENDENCY_UNAVAILABLE")
             matches = [entry for entry in registry if entry.get("action_id") == proposal["action_id"]]
             if len(matches) != 1: return deny("POLICY_UNKNOWN_ACTION")
@@ -203,6 +201,10 @@ class PolicyEngine:
             if not isinstance(max_input, int) or isinstance(max_input, bool) or not 1 <= max_input <= 10485760:
                 return deny("POLICY_REGISTRY_INVALID")
             if len(canonical_bytes(proposal)) > max_input: return deny("POLICY_INPUT_LIMIT")
+            # Bound the serialized proposal before passing attacker-controlled
+            # arguments to an injected schema validator.
+            if self.argument_validator(proposal["action_id"], proposal["arguments"]) is not True:
+                return deny("POLICY_INVALID_ARGUMENTS")
             if origin not in entry["allowed_origins"] or principal_class not in entry["allowed_principal_classes"]:
                 return deny("POLICY_SCOPE_EXCEEDED")
             resources = proposal["resources"]
