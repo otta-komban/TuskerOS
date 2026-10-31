@@ -82,6 +82,46 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(replay["task"]["state"], "planning")
 
 
+
+    def test_emitted_tasks_and_events_conform_to_draft_schemas(self):
+        self.assert_contract_valid(self.task, self.store.events(self.task["task_id"]))
+        self.move("planning")
+        self.move("awaiting_approval")
+        self.move("running")
+        self.move("verifying")
+        self.move("completed", verified=True)
+        self.assert_contract_valid(
+            self.store.get(self.task["task_id"]),
+            self.store.events(self.task["task_id"]),
+        )
+
+    def test_cancellation_events_conform_to_draft_schema(self):
+        self.move("planning")
+        self.move("running")
+        self.engine.request_cancellation(self.task["task_id"], expected_version=3)
+        self.engine.confirm_cancellation(
+            self.task["task_id"], expected_version=4, operation_stopped=True
+        )
+        self.assert_contract_valid(
+            self.store.get(self.task["task_id"]),
+            self.store.events(self.task["task_id"]),
+        )
+        self.assertEqual(
+            [event["type"] for event in self.store.events(self.task["task_id"])][-2:],
+            ["task.cancel_requested", "task.cancelled"],
+        )
+
+    def test_unknown_event_type_is_rejected_without_mutation(self):
+        before_task = self.store.get(self.task["task_id"])
+        before_events = self.store.events(self.task["task_id"])
+        with self.assertRaisesRegex(ValueError, "not defined by the task-event schema"):
+            self.engine.transition(
+                self.task["task_id"], "planning", expected_version=1,
+                event_type="task.made_up",
+            )
+        self.assertEqual(self.store.get(self.task["task_id"]), before_task)
+        self.assertEqual(self.store.events(self.task["task_id"]), before_events)
+
     def test_duplicate_event_id_is_rejected(self):
         initial_event_id = self.store.events("00000000-0000-4000-8000-000000000001")[0]["event_id"]
         with self.assertRaises(IdempotencyConflict):

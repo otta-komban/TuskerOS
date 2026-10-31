@@ -18,6 +18,8 @@ TASK_STATES = frozenset({
     "completed", "failed", "cancelled", "partially_completed",
 })
 TERMINAL_STATES = frozenset({"completed", "failed", "cancelled", "partially_completed"})
+# Keep emitted event names inside the currently approved draft event schema.
+ALLOWED_EVENT_TYPES = frozenset(["task.created","task.plan_ready","task.awaiting_approval","task.state_changed","step.started","step.progress","step.finished","task.verification_started","task.cancel_requested","task.finished","task.error","task.reconciled","task.cancelled"])
 ALLOWED_TRANSITIONS = {
     "queued": {"planning", "failed", "cancelled"},
     "planning": {"awaiting_approval", "running", "failed", "cancelled"},
@@ -162,6 +164,8 @@ class LifecycleEngine:
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
+        if event_type not in ALLOWED_EVENT_TYPES:
+            raise LifecycleError(f"event type is not defined by the task-event schema: {event_type}")
         fingerprint = event_type + ":" + target
         # An exact replay is returned even though its original write advanced the
         # version. Check the idempotency record before rejecting stale retries.
