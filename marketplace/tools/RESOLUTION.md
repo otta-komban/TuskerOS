@@ -43,18 +43,25 @@ manifest-to-package identity binding.
 
 ## Resolver boundaries
 
-`select_catalog_release` is a metadata selector, not a trust engine. It does
-not filter candidates by review/signature status because those fields are
-untrusted catalog claims. The caller must independently verify signed catalog
-provenance, signatures, revocation state and publisher trust through AEGIS-06
-services before presenting an install approval.
+`select_catalog_release` is a metadata selector, not a trust engine. It
+excludes entries whose catalog claims say the review status is `rejected`,
+`quarantined` or `revoked`, or whose signature status is `invalid` or
+`revoked`. These fields are untrusted claims: an exclusion is a conservative
+metadata filter, while `approved`/`valid` is never proof of publisher trust,
+signature validity or authorization. The caller must independently verify
+signed catalog provenance, signatures, revocation freshness and publisher
+trust through AEGIS-06 services before presenting an install approval.
 
 `resolve_catalog_plan` accepts a dependency graph extracted from separately
 validated manifests, selects a compatible catalog release for every package
 in the dependency closure, and returns the existing deterministic topological
-order plus the selected metadata. It does not interpret dependency version
-ranges. The manifest/dependency resolver must enforce those constraints before
-calling it. It does not fetch, verify, authorize, or install packages.
+order plus the selected metadata. When `dependency_constraints` is supplied,
+it validates that the constraint mapping exactly covers the declared edges,
+parses each exact/comparison expression, and intersects constraints from all
+parents before selecting a shared dependency release. Omitting the mapping
+retains compatibility with callers that have no edge constraints; it does not
+mean constraints were checked. The resolver does not fetch artifacts, verify
+provenance or signatures, authorize, or install packages.
 
 Run tests from the repository root with:
 
