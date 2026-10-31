@@ -266,7 +266,7 @@ class RepositoryValidationTests(unittest.TestCase):
 
         self.assertEqual(result, 1)
         self.assertEqual(stdout.getvalue(), "")
-        self.assertIn("FAIL PAIR:", stderr.getvalue())
+        self.assertIn("FAIL repository validation failed: PAIR:", stderr.getvalue())
         self.assertIn("utf-8", stderr.getvalue().lower())
         self.assertNotIn("Traceback", stderr.getvalue())
 
@@ -472,7 +472,7 @@ class RepositoryValidationTests(unittest.TestCase):
 
         message = str(raised.exception)
         self.assertIn("PAIR: simulated read denial", message)
-        self.assertIn("SESS: SESS-C01", message)
+        self.assertIn("SESS: missing SESS-C01", message)
         self.assertIn("NET: specification not found", message)
         positions = [message.index(prefix + ":") for prefix in ("PAIR", "SESS", "NET")]
         self.assertEqual(positions, sorted(positions))
