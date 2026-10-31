@@ -28,7 +28,7 @@ Run from the repository root after starting a pinned local Ollama service and in
 python tusker-ai/scripts/ollama-smoke.py --model MODEL_ID --repeats 5 --output ollama-smoke-report.json
 ```
 
-The harness sends a fixed non-sensitive prompt, checks for a fixed response marker, and stores metadata plus an output hash only. It does not persist prompts or generated text. `TUSKER_MODEL_SHA256` is optional and must only be set to an independently verified digest. The current portable harness does not probe GPU metadata; the report marks that limitation.
+The harness sends a fixed non-sensitive prompt, checks for a fixed response marker, and stores metadata plus an output hash only. It does not persist prompts or generated text. `TUSKER_MODEL_SHA256` is optional and must only be set to an independently verified digest. The current portable harness does not probe GPU metadata; the report marks that limitation. Model artifact download connections are pinned to validated globally routable DNS results, preserve TLS hostname verification, disable ambient HTTP proxies, and reject unsafe redirects.
 
 ## Optional live conformance command
 
