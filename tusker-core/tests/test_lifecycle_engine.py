@@ -220,12 +220,14 @@ class LifecycleEngineTests(unittest.TestCase):
     def test_replay_rejects_non_list_event_collection(self):
         task_id = self.task["task_id"]
         original_events = self.store.events
-        for malformed in (None, 7, {"not": "an event list"}, "events"):
-            with self.subTest(value=malformed):
-                self.store.events = lambda _task_id, value=malformed: value
-                with self.assertRaisesRegex(LifecycleError, "event stream is not a valid list"):
-                    self.engine.replay(task_id)
-        self.store.events = original_events
+        try:
+            for malformed in (None, 7, {"not": "an event list"}, "events"):
+                with self.subTest(value=malformed):
+                    self.store.events = lambda _task_id, value=malformed: value
+                    with self.assertRaisesRegex(LifecycleError, "event stream is not a valid list"):
+                        self.engine.replay(task_id)
+        finally:
+            self.store.events = original_events
 
     def test_replay_rejects_non_mapping_event_record(self):
         task_id = self.task["task_id"]
