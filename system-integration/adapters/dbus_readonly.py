@@ -72,8 +72,10 @@ def _is_valid_bus_name(name: object) -> bool:
     if len(elements) < 2:
         return False
     allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
-    for element in elements:
+    for index, element in enumerate(elements):
         if not element or any(character not in allowed for character in element):
+            return False
+        if unique and index == 0 and not element[0].isdigit():
             return False
         if not unique and element[0].isdigit():
             return False
