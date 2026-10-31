@@ -265,6 +265,8 @@ class LifecycleEngine:
         if task is None:
             raise LifecycleError(f"unknown task: {task_id}")
         events = self.store.events(task_id)
+        if not isinstance(events, list):
+            raise LifecycleError("event stream is not a valid list")
         if not events:
             raise LifecycleError("event stream is empty")
         if not isinstance(task, Mapping):
