@@ -165,6 +165,7 @@ def test_external_audit_checkpoint_detects_rollback_and_invalid_checkpoint():
     db = store()
     try:
         db._audit(audit())
+        db._audit(audit())
         checkpoint = db.audit_checkpoint()
         db._audit(audit())
         assert db.verify_audit_chain(checkpoint)
