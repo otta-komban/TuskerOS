@@ -516,6 +516,31 @@ def test_broker_gate_returns_a_narrow_grant_only_after_consume():
                                      "session_binding", "device_binding", "action_digest", "registry_version",
                                      "precondition_digest"}
     finally: db.close()
+def test_broker_gate_fails_closed_on_malformed_requests_and_authority_errors():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    class BrokenAuthority:
+        def consume(self, *args, **kwargs):
+            raise RuntimeError("authority unavailable")
+    assert BrokerAuthorizationGate(BrokenAuthority()).authorize(None, {}).outcome == "BINDING_MISMATCH"
+    request = BrokerAuthorizationRequest("opaque", "broker.disk.erase", D4, "policy-1",
+                                         ("disk:wwn-123",), "registry-1", D4, {"uid": 1000})
+    result = BrokerAuthorizationGate(BrokenAuthority()).authorize(request, {})
+    assert result.outcome == "AUTHORITY_UNAVAILABLE"
+    assert result.grant is None
+
+
+def test_broker_gate_never_releases_an_incomplete_consumed_grant():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    class IncompleteAuthority:
+        def consume(self, *args, **kwargs):
+            return ConsumeResult("CONSUMED", "consumption-1", {"operation_id": "broker.disk.erase"})
+    request = BrokerAuthorizationRequest("opaque", "broker.disk.erase", D4, "policy-1",
+                                         ("disk:wwn-123",), "registry-1", D4, {"uid": 1000})
+    result = BrokerAuthorizationGate(IncompleteAuthority()).authorize(request, {})
+    assert result.outcome == "AUTHORITY_UNAVAILABLE"
+    assert result.grant is None
+
+
 def test_reconciliation_is_bound_to_original_principal_session_and_device():
     db = store()
     try:
