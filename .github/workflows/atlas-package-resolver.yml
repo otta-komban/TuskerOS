@@ -39,3 +39,43 @@ jobs:
           bash -n tools/atlas/build-image.sh
       - name: Run resolver and image-lock unit tests
         run: python -m unittest discover -s tools/atlas -p 'test_*.py' -v
+
+  fedora44-dnf5-smoke:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:44
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install Fedora DNF5 and Python
+        run: dnf5 install -y dnf5 python3
+      - name: Query real Fedora 44 package metadata and validate DNF5 output
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          import subprocess
+          from pathlib import Path
+
+          path = Path("tools/atlas/resolve-package-manifest.py")
+          spec = importlib.util.spec_from_file_location("atlas_resolver", path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+
+          print(subprocess.run(["dnf5", "--version"], check=True, text=True, capture_output=True).stdout)
+          output = subprocess.run(
+              [
+                  "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
+                  "--latest-limit=1", "--qf", module.QUERY_FORMAT, "bash",
+              ],
+              check=True,
+              text=True,
+              capture_output=True,
+          ).stdout
+          nevra, repo, license_expression, source_rpm, upstream_url = module.parse_query_matches(output, "bash")
+          assert nevra.startswith("bash-0:"), nevra
+          assert repo, "DNF5 did not return a repository ID"
+          assert license_expression, "DNF5 did not return an RPM license"
+          assert source_rpm.endswith(".src.rpm"), source_rpm
+          assert upstream_url == "NOASSERTION" or upstream_url.startswith("https://"), upstream_url
+          print(f"Validated Fedora 44 DNF5 metadata: {nevra} from {repo}; source RPM {source_rpm}")
+          PY
