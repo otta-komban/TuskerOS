@@ -197,6 +197,77 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(process.killed)
 
+    async def test_nonzero_exit_does_not_expose_stderr(self):
+        process = FakeProcess(stdout=b"", stderr=b"secret diagnostic", returncode=2)
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus call failed")
+        self.assertNotIn("secret", str(caught.exception))
+
+    async def test_malformed_json_response_is_rejected(self):
+        process = FakeProcess(stdout=b"{not-json")
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "invalid bus response")
+
+    async def test_subprocess_startup_failure_is_sanitized(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(side_effect=OSError("private host detail")),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus client could not start")
+        self.assertNotIn("private host", str(caught.exception))
+
+    async def test_subprocess_is_killed_on_stderr_overflow(self):
+        process = FakeProcess(
+            stdout=b'{"type":"s","data":["bus-123"]}',
+            stderr=b"x" * 129,
+            returncode=None,
+        )
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), max_stderr=128
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus response exceeded output limit")
+        self.assertTrue(process.killed)
+
+    async def test_timeout_kills_running_subprocess(self):
+        process = FakeProcess(returncode=None)
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), timeout_seconds=0.01
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus call timed out")
+        self.assertTrue(process.killed)
+
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
             ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=31)
