@@ -207,3 +207,10 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added a raw NDJSON fixture containing a deeply nested JSON array and included it in the typed malformed-frame regression.
 - No schema, shared contract, endpoint, or daemon lifecycle behavior changed. Live Ollama remains NOT RUN.
 - Provider and test commits are recorded in the launch JSONL evidence log.
+
+
+## Iteration 20 — health-probe JSON recursion handling
+
+- The bounded `/api/version` response parser now catches `RecursionError` as an unhealthy provider result. A response can be under the 64 KiB byte cap yet still exceed the JSON decoder's nesting depth.
+- Extended the health/version regression fixture with a deeply nested JSON array, asserting both `version()` returns `None` and `health()` returns `False` rather than leaking a parser exception.
+- No endpoint, contract, inference, or daemon lifecycle behavior changed. Live Ollama remains NOT RUN.
