@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=TuskerOS Desktop Settings
+Comment=Configure TuskerOS desktop preferences
+Exec=/usr/libexec/tuskeros/settings
+TryExec=/usr/libexec/tuskeros/settings
+Icon=preferences-desktop
+Terminal=false
+Type=Application
+Categories=Settings;DesktopSettings;

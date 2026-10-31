@@ -36,6 +36,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Compile desktop Python modules
+        run: python -m compileall -q desktop
+
       - name: Run desktop unit tests
         run: python -m unittest discover -s desktop/tests -v
 

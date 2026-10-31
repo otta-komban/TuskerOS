@@ -7,25 +7,26 @@ ApplicationWindow {
     visible: true
     title: qsTr("TuskerOS Settings")
     color: palette.window
-    // Inject a host adapter around desktop.config.controller.SettingsController.
-    property var settingsBackend
     property var preferences: ({})
     property string saveError: ""
     function reloadPreferences() {
-        if (!settingsBackend) return
         preferences = settingsBackend.read()
-        saveError = ""
+        saveError = settingsBackend.status().needsRecovery
+            ? qsTr("Your settings file needs recovery. Restore defaults before editing.")
+            : ""
     }
     function persist(path, value) {
-        if (!settingsBackend) { saveError = qsTr("Settings service is unavailable."); return }
         let patch = ({}), cursor = patch, parts = path.split(".")
         for (let i=0; i<parts.length-1; ++i) { cursor[parts[i]] = ({}); cursor = cursor[parts[i]] }
         cursor[parts[parts.length-1]] = value
-        try { preferences = settingsBackend.update(patch); saveError = "" }
-        catch (error) {
+        let response = settingsBackend.update(patch)
+        if (!response || !response.ok) {
             saveError = qsTr("Could not save settings. Your previous preferences are unchanged.")
             reloadPreferences()
+            return
         }
+        preferences = response.settings
+        saveError = ""
     }
     Component.onCompleted: reloadPreferences()
     ScrollView {
@@ -102,8 +103,9 @@ ApplicationWindow {
         Label { width: 360; wrapMode: Text.Wrap
             text: qsTr("This replaces your desktop preferences with safe defaults. This cannot be undone.") }
         onAccepted: {
-            try { preferences=settingsBackend.reset(); saveError="" }
-            catch (error) { saveError=qsTr("Could not restore defaults. Your previous preferences are unchanged.") }
+            let response = settingsBackend.reset()
+            if (response && response.ok) { preferences=response.settings; saveError="" }
+            else saveError=qsTr("Could not restore defaults. Your previous preferences are unchanged.")
         }
     }
 }

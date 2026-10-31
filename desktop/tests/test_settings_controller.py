@@ -3,7 +3,7 @@ import json, tempfile, unittest
 from pathlib import Path
 from unittest.mock import patch
 from desktop.config.controller import SettingsController
-from desktop.config.settings import DEFAULT_SETTINGS
+from desktop.config.settings import DEFAULT_SETTINGS, MAX_SETTINGS_BYTES
 
 class SettingsControllerTests(unittest.TestCase):
     def setUp(self):
@@ -34,5 +34,28 @@ class SettingsControllerTests(unittest.TestCase):
         self.path.write_text('{"token":"do-not-print"}')
         controller=SettingsController(self.path)
         self.assertTrue(controller.load_errors); self.assertNotIn("do-not-print"," ".join(controller.load_errors))
+    def test_oversized_legacy_file_is_not_migrated_or_rewritten(self):
+        original='{"legacy":"' + ("x" * MAX_SETTINGS_BYTES) + '"}'
+        self.path.write_text(original)
+        controller=SettingsController(self.path)
+        self.assertTrue(controller.load_errors); self.assertEqual(self.path.read_text(),original)
+    def test_duplicate_legacy_keys_are_not_migrated(self):
+        original='{"panel":{"icon_size":48,"icon_size":72}}'
+        self.path.write_text(original)
+        controller=SettingsController(self.path)
+        self.assertTrue(controller.load_errors); self.assertEqual(self.path.read_text(),original)
+    def test_symlink_legacy_file_is_not_followed(self):
+        target=Path(self.tmp.name)/"target.json"; target.write_text('{"panel":{"icon_size":72}}')
+        self.path.symlink_to(target)
+        controller=SettingsController(self.path)
+        self.assertTrue(controller.load_errors); self.assertEqual(target.read_text(),'{"panel":{"icon_size":72}}')
+    def test_invalid_existing_file_requires_explicit_reset_before_update(self):
+        original='{"panel":{"edge":"unsafe"}}'; self.path.write_text(original)
+        controller=SettingsController(self.path)
+        with self.assertRaisesRegex(ValueError,"restore defaults"):
+            controller.update({"panel":{"icon_size":64}})
+        self.assertEqual(self.path.read_text(),original)
+        controller.reset()
+        self.assertEqual(json.loads(self.path.read_text()),DEFAULT_SETTINGS)
 
 if __name__ == "__main__": unittest.main()
