@@ -227,8 +227,36 @@ def resolve_catalog_plan(
     have exactly one corresponding constraint. Constraints are intersected
     across all parents before selecting each dependency release.
     """
-    root_ids = sorted(set(roots))
-    normalized_dependencies = {package_id: list(children) for package_id, children in dependencies.items()}
+    if isinstance(roots, (str, bytes)):
+        raise CatalogResolutionError("roots must be an iterable of package IDs, not text")
+    try:
+        root_values = list(roots)
+    except TypeError as exc:
+        raise CatalogResolutionError("roots must be an iterable of package IDs") from exc
+    if any(not isinstance(package_id, str) or not package_id.strip() for package_id in root_values):
+        raise CatalogResolutionError("roots must contain only non-empty package ID strings")
+    if not isinstance(dependencies, Mapping):
+        raise CatalogResolutionError("dependencies must be a mapping of package IDs to dependency lists")
+    normalized_dependencies: dict[str, list[str]] = {}
+    for package_id, children in dependencies.items():
+        if not isinstance(package_id, str) or not package_id.strip():
+            raise CatalogResolutionError("dependency graph keys must be non-empty package ID strings")
+        if isinstance(children, (str, bytes)):
+            raise CatalogResolutionError(
+                f"dependencies declared by {package_id} must be an iterable of package IDs, not text"
+            )
+        try:
+            child_ids = list(children)
+        except TypeError as exc:
+            raise CatalogResolutionError(
+                f"dependencies declared by {package_id} must be an iterable of package IDs"
+            ) from exc
+        if any(not isinstance(child, str) or not child.strip() for child in child_ids):
+            raise CatalogResolutionError(
+                f"dependencies declared by {package_id} must contain only non-empty package ID strings"
+            )
+        normalized_dependencies[package_id] = child_ids
+    root_ids = sorted(set(root_values))
     order = resolve_install_order(root_ids, normalized_dependencies)
     candidate_list = list(candidates)
     incoming: dict[str, list[str]] = {package_id: [] for package_id in order}
