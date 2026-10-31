@@ -89,6 +89,18 @@ class LockValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unsafe primary metadata path"):
             MODULE.parse_repomd(malicious)
 
+    def test_absolute_primary_metadata_url_is_rejected(self):
+        malicious = REPOMD.replace(
+            b"repodata/primary.xml.gz",
+            b"https://attacker.example/primary.xml.gz",
+        )
+        with self.assertRaisesRegex(RuntimeError, "unsafe primary metadata path"):
+            MODULE.parse_repomd(malicious)
+
+    def test_primary_metadata_must_stay_on_repository_origin(self):
+        with self.assertRaisesRegex(RuntimeError, "escaped its HTTPS repository origin"):
+            MODULE.primary_metadata_url(REPOMD_URL, "//attacker.example/primary.xml.gz")
+
 
 class CaptureTests(unittest.TestCase):
     def test_capture_pins_both_repomd_and_primary_payload(self):
