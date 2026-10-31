@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 import hashlib
+import http.client
 import ipaddress
 import json
 import os
 import re
 import shutil
 import socket
+import ssl
 import uuid
 from pathlib import Path
 from typing import Callable, Mapping
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
-from urllib.request import HTTPRedirectHandler, build_opener
+from urllib.request import HTTPSHandler, HTTPRedirectHandler, ProxyHandler, build_opener
 
 from .types import CancellationToken, RuntimeError as TuskerRuntimeError, RuntimeErrorCode
 
@@ -30,6 +32,22 @@ def _is_ip(host: str) -> bool:
         return False
 
 
+def _resolve_public_address(host: str, port: int) -> str:
+    """Resolve once, reject every non-public answer, and return the IP to pin."""
+    try:
+        addresses = {ipaddress.ip_address(host)} if _is_ip(host) else {
+            ipaddress.ip_address(item[4][0])
+            for item in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        }
+    except (OSError, ValueError):
+        raise ValueError("model source host could not be safely resolved") from None
+    if not addresses or any(not address.is_global for address in addresses):
+        raise ValueError("model source must resolve only to globally routable addresses")
+    # The selected IP is used for the TCP connection; TLS still authenticates
+    # the original hostname via SNI and certificate hostname verification.
+    return str(sorted(addresses, key=lambda address: (address.version, int(address)))[0])
+
+
 def _validate_remote_target(url: str) -> None:
     parsed = urlsplit(url)
     if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
@@ -37,14 +55,33 @@ def _validate_remote_target(url: str) -> None:
     host = parsed.hostname.lower()
     if host == "localhost" or host.endswith((".localhost", ".local")):
         raise ValueError("model source must not resolve to a local host")
-    try:
-        addresses = {ipaddress.ip_address(host)} if _is_ip(host) else {
-            ipaddress.ip_address(item[4][0]) for item in socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM)
-        }
-    except (OSError, ValueError):
-        raise ValueError("model source host could not be safely resolved") from None
-    if not addresses or any(not address.is_global for address in addresses):
-        raise ValueError("model source must resolve only to globally routable addresses")
+    _resolve_public_address(host, parsed.port or 443)
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS connection pinned to the public IP resolved for this connection."""
+
+    def __init__(self, host, *args, **kwargs):
+        parsed = urlsplit("//" + host)
+        if not parsed.hostname:
+            raise ValueError("invalid HTTPS host")
+        self._tls_hostname = parsed.hostname
+        self._pinned_address = _resolve_public_address(parsed.hostname, parsed.port or 443)
+        super().__init__(host, *args, **kwargs)
+
+    def connect(self):
+        if self._tunnel_host:
+            raise OSError("HTTPS proxy tunnels are disabled for model downloads")
+        raw_socket = socket.create_connection(
+            (self._pinned_address, self.port), self.timeout, self.source_address
+        )
+        context = self._context or ssl.create_default_context()
+        self.sock = context.wrap_socket(raw_socket, server_hostname=self._tls_hostname)
+
+
+class _PinnedHTTPSHandler(HTTPSHandler):
+    def https_open(self, request):
+        return self.do_open(_PinnedHTTPSConnection, request)
 
 
 class _HTTPSRedirectHandler(HTTPRedirectHandler):
@@ -58,7 +95,8 @@ class _HTTPSRedirectHandler(HTTPRedirectHandler):
 
 def _open_https(url: str, timeout: float):
     _validate_remote_target(url)
-    return build_opener(_HTTPSRedirectHandler).open(url, timeout=timeout)
+    opener = build_opener(ProxyHandler({}), _HTTPSRedirectHandler, _PinnedHTTPSHandler(context=ssl.create_default_context()))
+    return opener.open(url, timeout=timeout)
 
 
 class ModelStore:
