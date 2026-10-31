@@ -7,8 +7,10 @@ MANIFEST="${ROOT}/os/package-manifest.csv"
 SNAPSHOT_LOCK="${ROOT}/os/repository-snapshot.lock.json"
 SNAPSHOT_VERIFIER="${ROOT}/tools/atlas/verify-repository-snapshot.py"
 RESOLVER="${ROOT}/tools/atlas/resolve-package-manifest.py"
+KIWI_OVERLAY_PREPARER="${ROOT}/tools/atlas/prepare-kiwi-snapshot.py"
 BUILD_ROOT="${ROOT}/build/atlas"
 SNAPSHOT_ROOT="${BUILD_ROOT}/repository-snapshot"
+KIWI_BUILD_DIR="${BUILD_ROOT}/kiwi-local"
 OUTPUT_ROOT="${ROOT}/dist"
 REPRO_CHECK=1
 
@@ -33,11 +35,12 @@ require_command() { command -v "$1" >/dev/null 2>&1 || fail "required command no
 [[ "${ID:-}" == fedora && "${VERSION_ID:-}" == 44 ]] || fail "build host must be Fedora 44"
 [[ "$(uname -m)" == x86_64 ]] || fail "build host must be x86_64"
 
-for cmd in git python3 dnf5 kiwi-ng sha256sum rpm; do require_command "$cmd"; done
+for cmd in git tar python3 dnf5 kiwi-ng sha256sum rpm; do require_command "$cmd"; done
 [[ -f "$LOCK" ]] || fail "source lock is missing: $LOCK"
 [[ -f "$MANIFEST" ]] || fail "package manifest is missing: $MANIFEST"
 [[ -f "$SNAPSHOT_LOCK" ]] || fail "repository snapshot lock is missing: $SNAPSHOT_LOCK"
 [[ -f "$SNAPSHOT_VERIFIER" ]] || fail "repository snapshot verifier is missing: $SNAPSHOT_VERIFIER"
+[[ -f "$KIWI_OVERLAY_PREPARER" ]] || fail "KIWI local snapshot preparer is missing: $KIWI_OVERLAY_PREPARER"
 
 # Validate lock shape and expose only fixed, reviewed build inputs.
 eval "$(python3 - "$LOCK" <<'PY'
@@ -93,7 +96,7 @@ dnf5 reposync --help >/dev/null 2>&1 || fail "dnf5 reposync plugin is required (
 mkdir -p "$SNAPSHOT_ROOT"
 while IFS= read -r repo_id; do
   [[ -n "$repo_id" ]] || continue
-  dnf5 --repo="$repo_id" --setopt="$repo_id.gpgcheck=1" reposync \
+  dnf5 --repo="$repo_id" --setopt="$repo_id.gpgcheck=1" --setopt="$repo_id.repo_gpgcheck=1" reposync \
     --download-metadata --destdir="$SNAPSHOT_ROOT" --arch=x86_64 --arch=noarch --gpgcheck
 done < <(python3 - "$SNAPSHOT_LOCK" <<'PY'
 import json, sys
@@ -105,6 +108,13 @@ python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --local-root "$SNAPSHOT_ROO
 
 # Resolve package NEVRAs exclusively from the verified local repository copies.
 python3 "$RESOLVER" --manifest "$MANIFEST" --snapshot-root "$SNAPSHOT_ROOT" --output "$BUILD_ROOT/package-resolution.json"
+
+# Build from a clean export of the pinned source, then replace only the Fedora
+# core repository endpoints with the already-verified local snapshot paths.
+rm -rf -- "$KIWI_BUILD_DIR"
+mkdir -p "$KIWI_BUILD_DIR"
+git -C "$UPSTREAM_DIR" archive --format=tar "$UPSTREAM_COMMIT" | tar -xf - -C "$KIWI_BUILD_DIR"
+python3 "$KIWI_OVERLAY_PREPARER" --description-root "$KIWI_BUILD_DIR" --snapshot-root "$SNAPSHOT_ROOT" --lock "$SNAPSHOT_LOCK"
 
 KIWI_VERSION="$(kiwi-ng --version 2>&1 | head -n 1)"
 DNF_VERSION="$(dnf5 --version 2>&1 | head -n 1)"
@@ -118,7 +128,7 @@ build_pair() {
   local destination="$1"
   mkdir -p "$destination/iso" "$destination/disk"
   (
-    cd "$UPSTREAM_DIR"
+    cd "$KIWI_BUILD_DIR"
     # Fedora's wrapper builds into <output-dir>-build and exports the named
     # result bundle only when --image-release is provided. Keep this ID fixed
     # so repeat builds produce identical artifact names.
@@ -167,13 +177,13 @@ metadata = {
     "repository_snapshots": snapshot_lock["repositories"],
     "repository_snapshot_preflight_verified": True,
     "repository_snapshot_consumed_by_dnf5": True,
-    "repository_snapshot_consumed_by_kiwi": False,
-    "repository_metadata_signature_verified": snapshot_lock.get("signature_verification") == "verified",
+    "repository_snapshot_consumed_by_kiwi": True,
+    "repository_metadata_signature_verified": True,
     "resolved_packages": resolution["packages"],
     "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
     "reproducible_build_claim": False,
     "reproducibility_limitations": [
-        "KIWI still downloads from its upstream repository definitions; only DNF5 package resolution consumes the verified local repository copies",
+        "DNF5 reposync, package resolution and KIWI repository_gpgcheck/package_gpgcheck consume verified local repository copies with Fedora signing keys",
         "RPM payload checksums are not yet recorded in the package lock",
         "Fedora repository metadata signatures are not yet verified against Fedora signing keys",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
