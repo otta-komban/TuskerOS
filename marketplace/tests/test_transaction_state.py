@@ -22,6 +22,18 @@ class TransactionStateTests(unittest.TestCase):
                 with self.assertRaisesRegex(TransactionStateError, "invalid shape"):
                     transition_transaction(incomplete, "cancelled", {"reason_code": "user_requested"})
 
+    def test_lifecycle_container_fields_use_schema_types(self):
+        invalid_records = (
+            (dict(self.tx, history="[]"), "history must be an array"),
+            (dict(self.tx, terminal="false"), "terminal must be a boolean"),
+        )
+        for transaction, message in invalid_records:
+            with self.subTest(transaction=transaction):
+                with self.assertRaisesRegex(TransactionStateError, message):
+                    transition_transaction(
+                        transaction, "cancelled", {"reason_code": "user_requested"}
+                    )
+
     def test_prepared_cannot_start_execution(self):
         with self.assertRaisesRegex(TransactionStateError, "not allowed"):
             transition_transaction(self.tx, "execution_started", {"lock_ref": "lock-1"})
