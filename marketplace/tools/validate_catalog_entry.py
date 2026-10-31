@@ -71,7 +71,7 @@ def _https(value: object, path: str, errors: list[str]) -> None:
 
 
 def _date_time(value: object, path: str, errors: list[str]) -> None:
-    if not _text(value, path, errors):
+    if not _text(value, path, errors, maximum=64):
         return
     try:
         if not DATE_TIME_RE.fullmatch(value):
