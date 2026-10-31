@@ -107,6 +107,39 @@ class CatalogResolverTests(unittest.TestCase):
         )
         self.assertEqual(chosen["release"]["version"], "0.10.0")
 
+    def test_selector_reuses_generator_constraints_for_every_candidate(self):
+        older = self.candidate("1.5.0")
+        newer = self.candidate("2.5.0")
+        chosen = select_catalog_release(
+            [older, newer], "org.tuskeros.examples.hello", "0.5.0", "1.2.0",
+            version_constraints=(item for item in ("<2.0.0",)),
+        )
+        self.assertEqual(chosen["release"]["version"], "1.5.0")
+
+    def test_selector_rejects_malformed_public_collections_and_flags(self):
+        valid = self.candidate("1.0.0")
+        for candidates, package_id, constraints, prerelease in (
+            ("not-a-list", "org.tuskeros.examples.hello", (), False),
+            ({"entry": valid}, "org.tuskeros.examples.hello", (), False),
+            ([valid], "", (), False),
+            ([valid], "org.tuskeros.examples.hello", ">=1.0.0", False),
+            ([valid], "org.tuskeros.examples.hello", {}, False),
+            ([valid], "org.tuskeros.examples.hello", (), "yes"),
+            ([None], "org.tuskeros.examples.hello", (), False),
+        ):
+            with self.subTest(candidates=candidates, package_id=package_id):
+                with self.assertRaises(CatalogResolutionError):
+                    select_catalog_release(
+                        candidates, package_id, "0.5.0", "1.2.0",
+                        version_constraints=constraints, include_prerelease=prerelease,
+                    )
+
+    def test_selector_rejects_invalid_target_versions_even_without_candidates(self):
+        with self.assertRaises(CatalogResolutionError):
+            select_catalog_release(
+                [], "org.tuskeros.examples.hello", "not-a-version", "1.2.0"
+            )
+
     def test_excludes_incompatible_release(self):
         candidate = self.candidate("1.0.0", os_min="1.0.0", os_max="1.x")
         with self.assertRaisesRegex(CatalogResolutionError, "no compatible"):
