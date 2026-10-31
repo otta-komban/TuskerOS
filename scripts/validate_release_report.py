@@ -42,7 +42,7 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def strict_json_loads(data: str) -> Any:
-    """Parse JSON while rejecting duplicate object member names at every depth."""
+    """Parse standards-compliant JSON, rejecting duplicate keys and non-standard constants."""
     return json.loads(
         data,
         object_pairs_hook=_unique_object,
