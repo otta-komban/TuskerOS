@@ -23,7 +23,9 @@ no-follow descriptor; migration and validation use that same in-memory
 snapshot, avoiding inconsistent decisions across multiple file reads.
 Migration reads at most 64 KiB from a regular file, rejects final-component
 symlinks and duplicate JSON keys, validates the full candidate and uses the
-same mode-0600 atomic writer as normal updates.
+same mode-0600 atomic writer as normal updates. If cloning a deeply nested
+parsed document exceeds Python's recursion budget, migration returns a bounded
+recovery error instead of allowing startup to crash.
 
 Malformed, duplicate-key, symlinked, oversized, excessively nested and
 unsupported future-version files are not rewritten. When settings are invalid,
@@ -40,6 +42,7 @@ Run:
 
 These tests exercise single-snapshot startup, restart persistence, invalid
 update rejection, write failure recovery, reset, detached reads, bounded
-migration, and the backend recovery round trip from rejected edits through
-explicit reset to successful updates. Qt runtime, keyboard navigation and
-screen-reader testing still require the supported Plasma/Qt environment.
+migration, parser-accepted deep nesting, migration recursion failure, and the
+backend recovery round trip from rejected edits through explicit reset to
+successful updates. Qt runtime, keyboard navigation and screen-reader testing
+still require the supported Plasma/Qt environment.
