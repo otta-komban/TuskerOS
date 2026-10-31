@@ -138,6 +138,37 @@ class ValidateSpecTests(unittest.TestCase):
         self.assertEqual(payload["error"], "bad specification")
         self.assertFalse(payload["runtime_security_tested"])
 
+class RepositoryValidationTests(unittest.TestCase):
+    def test_validates_all_specs_from_supplied_root(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            for prefix, (relative_path, case_count) in validator.SPECS.items():
+                spec_path = root / relative_path
+                spec_path.parent.mkdir(parents=True, exist_ok=True)
+                spec_path.write_text(
+                    "".join(
+                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\\n"
+                        for number in range(1, case_count + 1)
+                    ),
+                    encoding="utf-8",
+                )
+
+            results = validator.validate_repository(root)
+
+        self.assertEqual(len(results), 3)
+        self.assertIn("PAIR: 22 unique, contiguous cases validated", results[0])
+        self.assertIn("SESS: 40 unique, contiguous cases validated", results[1])
+        self.assertIn("NET: 42 unique, contiguous cases validated", results[2])
+
+    def test_missing_specification_fails_repository_validation(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            with self.assertRaisesRegex(validator.SpecError, "PAIR: specification not found"):
+                validator.validate_repository(Path(temporary_root))
+
 
 if __name__ == "__main__":
     unittest.main()
