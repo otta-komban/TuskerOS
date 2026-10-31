@@ -118,14 +118,31 @@ class PolicyEngine:
                 if key in seen: return deny("POLICY_INVALID_RESOURCE")
                 seen.add(key)
                 normalized.append({"kind": kind, "id": rid, "access": access})
-            resolved = list(self.resource_resolver(normalized))
+            # Preserve validated caller identifiers separately from resolver output.
+            # The resolver may canonicalize an identifier, but cannot drop, add,
+            # re-type, or widen a requested resource/access tuple.
+            requested_resources = [dict(item) for item in normalized]
+            resolver_input = [dict(item) for item in requested_resources]
+            resolved_value = self.resource_resolver(resolver_input)
+            if not isinstance(resolved_value, Sequence) or isinstance(resolved_value, (str, bytes)):
+                return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
+            resolved = list(resolved_value)
+            if len(resolved) != len(requested_resources):
+                return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
             if not all(isinstance(item, Mapping) and set(item) == {"kind", "id", "access"} for item in resolved):
                 return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
-            keys = [(item["kind"], item["id"], item["access"]) for item in resolved]
-            if len(keys) != len(set(keys)): return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
+            requested_modes = sorted((item["kind"], item["access"]) for item in requested_resources)
+            resolved_modes, keys = [], []
             for item in resolved:
-                if item["kind"] not in allowed or item["access"] not in allowed[item["kind"]] or not isinstance(item["id"], str) or not item["id"]:
+                kind, rid, access = item["kind"], item["id"], item["access"]
+                if (not isinstance(kind, str) or not isinstance(rid, str) or not rid
+                    or not isinstance(access, str) or access not in _ACCESS
+                    or kind not in allowed or access not in allowed[kind]):
                     return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
+                resolved_modes.append((kind, access))
+                keys.append((kind, rid, access))
+            if sorted(resolved_modes) != requested_modes or len(keys) != len(set(keys)):
+                return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
             normalized = resolved
             precondition_digest = self.precondition_verifier(proposal, resolved)
             if not isinstance(precondition_digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", precondition_digest):
@@ -142,7 +159,9 @@ class PolicyEngine:
                 return deny("POLICY_R5_OUT_OF_BAND_DENY")
             envelope = {"schema_version": proposal["schema_version"], "action_id": proposal["action_id"],
                 "proposal_id": proposal["proposal_id"], "task_id": proposal["task_id"], "step_id": proposal["step_id"],
-                "arguments": proposal["arguments"], "resources": sorted(normalized, key=lambda r: (r["kind"], r["id"], r["access"])),
+                "arguments": proposal["arguments"],
+                "requested_resources": sorted(requested_resources, key=lambda r: (r["kind"], r["id"], r["access"])),
+                "resources": sorted(normalized, key=lambda r: (r["kind"], r["id"], r["access"])),
                 "idempotency_key": proposal.get("idempotency_key"), "principal_binding": context["principal_binding"],
                 "session_binding": context["session_binding"], "device_binding": context["device_binding"],
                 "broker_operation_id": entry["broker_operation_id"], "operation_schema_version": entry.get("operation_schema_version"),

@@ -84,6 +84,57 @@ def test_policy_deny_default_allow_read_require_approval_and_deny_r5():
     assert engine.evaluate(proposal, context, [reg], "registry-1").risk_class == "R3"
     assert engine.evaluate(proposal, context, [reg], "registry-1").status == "REQUIRE_APPROVAL"
 
+
+def test_resource_resolver_cannot_drop_add_or_widen_resources():
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    def evaluate_with(resolver):
+        engine = PolicyEngine("policy-1", identity_verifier=lambda c: c.get("authenticated") is True,
+            registry_verifier=lambda r, v: bool(r) and v == "registry-1",
+            argument_validator=lambda a, x: True, resource_resolver=resolver,
+            precondition_verifier=lambda p, r: D4)
+        return engine.evaluate(proposal, context, registry, "registry-1")
+    assert evaluate_with(lambda resources: []).reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
+    assert evaluate_with(lambda resources: resources + [{"kind":"system","id":"other","access":"read"}]).reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
+    assert evaluate_with(lambda resources: [{"kind":"system","id":"host","access":"modify"}]).reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
+
+
+def test_action_digest_binds_original_and_resolved_resource_identifiers():
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "alias-a", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: c.get("authenticated") is True,
+        registry_verifier=lambda r, v: bool(r) and v == "registry-1",
+        argument_validator=lambda a, x: True,
+        resource_resolver=lambda resources: [{"kind":"system","id":"canonical-host","access":"read"}],
+        precondition_verifier=lambda p, r: D4)
+    first = engine.evaluate(proposal, context, registry, "registry-1")
+    proposal["resources"][0]["id"] = "alias-b"
+    second = engine.evaluate(proposal, context, registry, "registry-1")
+    assert first.status == second.status == "ALLOW"
+    assert first.action_digest != second.action_digest
+
 def test_atomic_consume_replay_and_authenticated_reconciliation():
     db = store()
     try:
