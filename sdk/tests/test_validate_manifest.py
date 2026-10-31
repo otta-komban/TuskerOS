@@ -41,7 +41,7 @@ class ManifestValidatorTests(unittest.TestCase):
                 self.assertTrue(any("semantic version" in e for e in validator.validate(dict(EXAMPLE, version=version))))
 
     def test_dependency_constraint_obeys_512_character_bound(self):
-        valid = dict(EXAMPLE, dependencies=[{"id": "org.tuskeros.example.dep", "version": "1.2.3"}])
+        valid = dict(EXAMPLE, dependencies=[{"id": "org.tuskeros.example.dep", "version": "x" * 512}])
         self.assertEqual(validator.validate(valid), [])
         oversized = dict(EXAMPLE, dependencies=[{"id": "org.tuskeros.example.dep", "version": "x" * 513}])
         self.assertTrue(any("at most 512" in e for e in validator.validate(oversized)))
