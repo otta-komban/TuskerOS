@@ -203,7 +203,10 @@ class PolicyEngine:
             if origin not in entry["allowed_origins"] or principal_class not in entry["allowed_principal_classes"]:
                 return deny("POLICY_SCOPE_EXCEEDED")
             resources = proposal["resources"]
-            if len(resources) > 128: return deny("POLICY_SCOPE_EXCEEDED")
+            # Every registered operation declares concrete resource kinds. An
+            # empty proposal scope cannot be authorized against that declaration.
+            if not resources or len(resources) > 128:
+                return deny("POLICY_SCOPE_EXCEEDED")
             # Registry resource declarations are security policy, not best-effort
             # hints. Reject malformed or ambiguous declarations rather than
             # silently dropping entries or allowing duplicate kinds to overwrite.
