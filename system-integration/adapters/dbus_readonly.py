@@ -126,12 +126,17 @@ class ReadOnlySystemBusAdapter:
             _INTERFACE,
             method,
         )
-        process = await asyncio.create_subprocess_exec(
-            *argv,
-            stdin=asyncio.subprocess.DEVNULL,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *argv,
+                stdin=asyncio.subprocess.DEVNULL,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            raise AdapterError("bus client could not start") from exc
         assert process.stdout is not None and process.stderr is not None
         out_task = asyncio.create_task(process.stdout.read(self._max_stdout + 1))
         err_task = asyncio.create_task(process.stderr.read(self._max_stderr + 1))
