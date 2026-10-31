@@ -48,6 +48,9 @@ class PanelTemplateInstallerTests(unittest.TestCase):
         self.assertTrue((self.destination / "metadata.desktop").is_file())
         self.assertTrue((self.destination / "contents" / "layout.js").is_file())
         self.assertEqual((self.destination / MARKER).read_text(encoding="utf-8"), MARKER_CONTENT)
+        marker_text = (self.destination / MARKER).read_text(encoding="utf-8")
+        self.assertTrue(marker_text.endswith("\n"))
+        self.assertFalse(marker_text.endswith("\\n"))
 
     def test_install_rejects_symlink_inside_source_tree(self) -> None:
         layout = self.source / "contents" / "layout.js"
