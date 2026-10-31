@@ -1307,3 +1307,28 @@ def test_reissuing_authorization_revokes_previous_reference_atomically():
         assert db.verify_audit_chain()
     finally:
         db.close()
+
+
+def test_approval_decision_one_microsecond_before_expiry_is_accepted():
+    db = store()
+    try:
+        rid = approval(db)
+        just_before_expiry = NOW + timedelta(minutes=2) - timedelta(microseconds=1)
+        result = db.decide(
+            rid,
+            approve=True,
+            current_binding=BINDING,
+            approver_credentials={"uid": 1000},
+            audit_context=audit_for_approval(db, rid),
+            now=just_before_expiry,
+        )
+        assert result == "APPROVED"
+        assert db._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"] == "APPROVED"
+        events = db.audit_events()
+        assert events[-1]["event_type"] == "approval_granted"
+        assert events[-1]["timestamp_utc"] == db._iso(just_before_expiry)
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
