@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 8  
+Current authorized cohort count: 9  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0017  
+Last completion: PHOENIX-10-C0018  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0018 | P2 | installer-jcs-unicode-conformance | Corrected stale NFC digest rule; added AEGIS Unicode reference-vector tests and CI coverage; PHOENIX CI 41185982568 passed. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; `tests/test_installer_jcs_unicode_vectors.py`; workflow; PR #55. |
 | PHOENIX-10-C0017 | P2 | release-report-cli-test-repair | Fixed the missing-file CLI test's stderr capture assertion after CI exposed the test-only failure; rerun pending. | `tests/test_validate_release_report.py`; PHOENIX CI `41185512785` identified the defect; fix commit `7de652d`; JSONL C0017. |
 | PHOENIX-10-C0016 | P2 | release-report-cli-contract-tests | Added CLI regression coverage for valid, semantic-invalid, malformed, duplicate-key, non-standard-constant, invalid-UTF-8 and missing-file inputs; clarified validator scope and exit codes. | `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; prior CI `41185062227` passed before the new CLI tests; latest CI pending; JSONL C0016. |
 | PHOENIX-10-C0015 | P2 | release-report-strict-json-constant-validation | Reject non-standard JSON constants; add regression coverage, UTF-8 CLI error handling, documentation and branch-specific CI trigger. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; PHOENIX CI `41185062227` success (py_compile, 20 manifest tests, 17 report tests); JSONL C0015. |
@@ -31,12 +32,13 @@ Last updated: 2026-10-31
 ## Current authorized cohort accounting
 
 - Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
-- Counted responses in this cohort: **8** — C0010 through C0017.
+- Counted responses in this cohort: **9** — C0010 through C0018.
 - Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
 
+- [x] C0018 response completion logged; corrected installer JCS Unicode contract, added string-only vectors and unpaired-surrogate regression coverage; PHOENIX CI 41185982568 passed.
 - [x] C0017 response completion logged; fixed the missing-file CLI test assertion after CI exposed a test-only failure; rerun pending.
 - [x] C0016 response completion logged; CLI tests cover success, semantic failure and input-error exit classes; initial CLI test CI failed on the missing-file assertion.
 - [x] C0015 response completion logged; strict JSON parsing rejects non-standard numeric constants; CI `41185062227` passed 20 manifest and 17 report tests.
@@ -96,4 +98,6 @@ C0015 limitation: this response added strict rejection of NaN/Infinity/-Infinity
 
 C0016 limitation: added CLI-level regression tests and corrected documentation scope/exit codes. The initial PHOENIX CI run 41185512785 executed 24 report tests but failed one test assertion (not validator behavior); the subsequent test-only repair is recorded in C0017 and awaits rerun. No JSON Schema engine, evidence fetcher, signature verifier, release promotion controller, image build, VM boot/install, recovery runtime or disk mutation was added or performed.
 
-C0017 limitation: this response repaired a regression-test assertion and updated PR/log records. The repair commit has not yet passed CI. No recovery journal implementation, installer runtime, cryptographic signature verification, image build, VM boot/install or storage mutation was performed.
+C0017 limitation: this response repaired a regression-test assertion and updated PR/log records. No recovery journal implementation, installer runtime, cryptographic signature verification, image build, VM boot/install or storage mutation was performed.
+
+C0018 limitation: the Unicode fixture test covers two string-only vectors and strict UTF-8 rejection; it is not a full RFC 8785 implementation or production approval-digest integration test. The actual policy/broker digest path still requires AEGIS/NEXUS integration and tests. No installer runtime, image build, VM boot/install, recovery runtime or storage mutation was performed.
