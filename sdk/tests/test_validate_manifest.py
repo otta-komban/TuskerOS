@@ -30,6 +30,16 @@ class ManifestValidatorTests(unittest.TestCase):
         data = dict(EXAMPLE, permissions=["files.read", "files.read"])
         self.assertTrue(any("duplicates" in e for e in validator.validate(data)))
 
+    def test_accepts_valid_semver_prerelease_and_build_metadata(self):
+        for version in ("1.2.3-alpha.1", "1.2.3-0", "1.2.3-alpha+build.7"):
+            with self.subTest(version=version):
+                self.assertEqual(validator.validate(dict(EXAMPLE, version=version)), [])
+
+    def test_rejects_malformed_semver_identifiers(self):
+        for version in ("1.2.3-alpha..1", "1.2.3-alpha.", "1.2.3-01", "1.2.3+build..7", "1.2.3+"):
+            with self.subTest(version=version):
+                self.assertTrue(any("semantic version" in e for e in validator.validate(dict(EXAMPLE, version=version))))
+
     def test_rejects_malformed_dependency(self):
         data = dict(EXAMPLE, dependencies=[{"id": "bad", "version": "*"}])
         self.assertTrue(validator.validate(data))
