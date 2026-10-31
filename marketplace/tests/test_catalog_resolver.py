@@ -44,6 +44,35 @@ class CatalogResolverTests(unittest.TestCase):
     def test_release_versions_order_numerically(self):
         self.assertLess(parse_release_version("1.9.0"), parse_release_version("1.10.0"))
 
+    def test_semver_prerelease_precedence_follows_specification(self):
+        versions = (
+            "1.0.0-alpha",
+            "1.0.0-alpha.1",
+            "1.0.0-alpha.beta",
+            "1.0.0-beta",
+            "1.0.0-beta.2",
+            "1.0.0-beta.11",
+            "1.0.0-rc.1",
+            "1.0.0",
+        )
+        parsed = [parse_release_version(value) for value in versions]
+        self.assertEqual(parsed, sorted(parsed))
+
+    def test_dependency_constraint_operators_are_inclusive_or_exclusive_as_named(self):
+        from marketplace.tools.catalog_resolver import satisfies_dependency_constraints
+        self.assertTrue(satisfies_dependency_constraints("1.2.0", [">=1.2.0", "<=1.2.0"]))
+        self.assertFalse(satisfies_dependency_constraints("1.2.0", [">1.2.0"]))
+        self.assertFalse(satisfies_dependency_constraints("1.2.0", ["<1.2.0"]))
+        self.assertTrue(satisfies_dependency_constraints("1.2.1", [">1.2.0", "<2.0.0"]))
+        self.assertTrue(satisfies_dependency_constraints("1.1.9", ["<=1.2.0", ">=1.0.0"]))
+
+    def test_dependency_constraint_rejects_empty_or_malformed_clauses(self):
+        from marketplace.tools.catalog_resolver import parse_dependency_constraint
+        for constraint in ("", ",>=1.0.0", ">=1.0.0,", ">=1.0.0,,<2.0.0", "=>1.0.0"):
+            with self.subTest(constraint=constraint):
+                with self.assertRaises(CatalogResolutionError):
+                    parse_dependency_constraint(constraint)
+
     def test_prerelease_sorts_before_stable(self):
         self.assertLess(parse_release_version("2.0.0-rc.1"), parse_release_version("2.0.0"))
 
