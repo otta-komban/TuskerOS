@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 13  
+Current authorized cohort count: 14  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0022  
+Last completion: PHOENIX-10-C0023  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0023 | P2 | recovery-journal-in-memory-object-shape-hardening | Reject non-string keys in caller-supplied journal dictionaries as structured validation errors; regression test and docs added; CI pending. | validator commit `a300daa1`, test `ddc91a4d`, docs `1a3bcb04`; PR #55. |
 | PHOENIX-10-C0022 | P2 | recovery-journal-parser-and-state-robustness | Guard unknown states from transition lookup crashes; parse LF/CRLF JSONL boundaries while preserving U+2028 string data; PHOENIX CI `41187813890` and unified CI `41187818792` passed. | validator, tests, docs; commits `e185cd53`, `58e1793f`, `12d977cf`; PR #55. |
 | PHOENIX-10-C0021 | P2 | recovery-journal-state-and-digest-invariants | Require `planned` initial state, stable idempotency declaration and lowercase SHA-256 encodings; PHOENIX CI `41187263494` passed. | validator, tests, docs; commits `6873234f`, `07a5e757`, `99b89182`; PR #55. |
 | PHOENIX-10-C0020 | P2 | recovery-journal-resource-bounds | Added 4 MiB / 64 KiB / 10,000-record input bounds and bounded iterable validation; fixed the JSONL boundary test fixture; CI `41186648724` passed. | `scripts/validate_recovery_journal.py`; tests; docs; PR #55. |
@@ -36,12 +37,13 @@ Last updated: 2026-10-31
 ## Current authorized cohort accounting
 
 - Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
-- Counted responses in this cohort: **13** — C0010 through C0022.
+- Counted responses in this cohort: **14** — C0010 through C0023.
 - Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
 
+- [x] C0023 response completion logged; reject malformed non-string object keys in caller-supplied recovery-journal records; CI pending.
 - [x] C0021 response completion logged; tightened initial-state, idempotency and digest-format invariants; CI pending.
 - [x] C0020 response completion logged; added parser resource bounds and corrected the JSONL boundary test fixture; follow-up PHOENIX CI 41186648724 passed.
 - [x] C0019 response completion logged; added read-only recovery-journal validation and replay advisory gates; PHOENIX CI 41186199820 passed.
@@ -114,3 +116,6 @@ C0021 limitation: this response added three local recovery-journal invariants an
 
 
 C0022 limitation: this response hardened in-memory JSONL parsing and malformed-state validation only. The first CI attempt failed due to incorrectly escaped test-fixture newline strings; corrected fixtures passed PHOENIX CI `41187813890` and unified validation `41187818792`. No journal persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed.
+
+
+C0023 limitation: this response hardened only the in-memory recovery-journal validator for non-string object keys. CI has not yet reported for the follow-up, so automated test status is pending. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
