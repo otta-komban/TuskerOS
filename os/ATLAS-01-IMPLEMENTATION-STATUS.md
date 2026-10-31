@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `a951a70a1ad07a282731db5283a193f69a6e05ae` (ATLAS CI passed 86 tests, Fedora 44 DNF5 smoke and actual pinned-source local KIWI overlay integration; unified validation passed all 8 jobs)  
+**Latest code/test evidence head:** `a951a70a1ad07a282731db5283a193f69a6e05ae` (ATLAS CI passed 86 tests, Fedora 44 DNF5 smoke and actual pinned-source local KIWI overlay integration; unified validation passed all 8 jobs). Follow-up full-metadata-payload verification is in progress.  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -36,7 +36,7 @@
 - Lock: `os/repository-snapshot.lock.json`; it is intentionally empty until NOVA-02/NEXUS-07 approve package inputs and the selected Fedora repository endpoints are reviewed.
 - Capture reviewed endpoints with `python3 tools/atlas/verify-repository-snapshot.py --capture REPO_ID=REPOMD_URL --lock os/repository-snapshot.lock.json`. Repeat `--capture` for each approved repository in one invocation; the command fetches `repomd.xml` and its primary metadata and records SHA-256 identities.
 - Verify the committed lock and manifest pins with `python3 tools/atlas/verify-repository-snapshot.py --lock os/repository-snapshot.lock.json --manifest os/package-manifest.csv`.
-- The lock verifier pins `repomd.xml` and primary metadata only, and checks the same bytes plus the presence of `repomd.xml.asc` in the staged repository. DNF5 `repo_gpgcheck` validates repository metadata signatures during sync and local resolution; KIWI `repository_gpgcheck` validates them during image construction, both using the Fedora 44 primary key. The lock does not yet pin the key fingerprint, every repodata payload or individual RPM payload checksums.
+- The lock pins the repomd.xml and primary metadata identities. Because the repomd digest commits to each metadata payload checksum, local verification now checks every repodata payload SHA-256 referenced by repomd.xml, plus the presence of repomd.xml.asc. DNF5 repo_gpgcheck validates repository metadata signatures during sync and local resolution; KIWI repository_gpgcheck validates them during image construction, both using the Fedora 44 primary key. The key fingerprint is not separately pinned in the lock. Individual RPM checksums are present in signed primary metadata and enforced by DNF5/KIWI during package retrieval, but are not yet duplicated in a separate package checksum lock.
 
 ## Pull request
 
