@@ -1,5 +1,6 @@
 import json
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -13,15 +14,20 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
 
     def do_POST(self):
-        self.rfile.read(int(self.headers.get("Content-Length", "0")))
+        request = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
+        if request.get("model") == "slow":
+            time.sleep(0.12)
         chunks = [
             {"message": {"content": "Tusker "}, "done": False},
             {"message": {"content": "runtime"}, "done": False},
             {"done": True, "done_reason": "stop", "prompt_eval_count": 8, "eval_count": 2},
         ]
         self.send_response(200); self.send_header("Content-Type", "application/x-ndjson"); self.end_headers()
-        for chunk in chunks:
-            self.wfile.write((json.dumps(chunk) + "\n").encode()); self.wfile.flush()
+        try:
+            for chunk in chunks:
+                self.wfile.write((json.dumps(chunk) + "\n").encode()); self.wfile.flush()
+        except BrokenPipeError:
+            pass
 
     def log_message(self, *_args):
         pass
@@ -38,6 +44,14 @@ class OllamaHttpTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.server.shutdown(); cls.server.server_close(); cls.thread.join(timeout=2)
+
+    def test_request_deadline_is_distinct_from_provider_disconnect(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        provider = OllamaProvider(self.endpoint, read_timeout=1)
+        req = InferenceRequest("slow-request", "slow", [{"role": "user", "content": "hello"}], timeout_seconds=0.03)
+        with self.assertRaises(TuskerRuntimeError) as ctx:
+            list(provider.infer(req, CancellationToken()))
+        self.assertEqual(ctx.exception.code, RuntimeErrorCode.DEADLINE_EXCEEDED)
 
     def test_version_health_stream_and_usage(self):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
