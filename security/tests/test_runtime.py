@@ -1099,3 +1099,30 @@ def test_policy_rejects_truthy_non_boolean_argument_validator(callback_result):
     result = engine.evaluate(proposal, context, registry, "registry-1")
     assert result.status == "DENY"
     assert result.reason_code == "POLICY_INVALID_ARGUMENTS"
+
+
+def test_security_database_rejection_closes_open_file_descriptor(tmp_path, monkeypatch):
+    import os
+    from security.runtime import store as store_module
+
+    target = tmp_path / "shared.db"
+    target.write_bytes(b"preserve external file")
+    path = tmp_path / "security.db"
+    path.hardlink_to(target)
+
+    opened = []
+    real_open = os.open
+
+    def capture_open(*args, **kwargs):
+        fd = real_open(*args, **kwargs)
+        opened.append(fd)
+        return fd
+
+    monkeypatch.setattr(store_module.os, "open", capture_open)
+    with pytest.raises(SecurityStoreError, match="must not have hard links"):
+        SecurityStore(path, audit_key=KEY)
+
+    assert len(opened) == 1
+    with pytest.raises(OSError):
+        os.fstat(opened[0])
+    assert target.read_bytes() == b"preserve external file"
