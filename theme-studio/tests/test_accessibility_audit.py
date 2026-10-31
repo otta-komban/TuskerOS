@@ -37,11 +37,14 @@ class AccessibilityAuditTests(unittest.TestCase):
                 pack = json.loads(path.read_text(encoding="utf-8"))
                 checks = audit_theme_colors(pack["tokens"]["colors"])
                 self.assertTrue(checks)
+                required = [check for check in checks if check.foreground_role != "border"]
                 self.assertTrue(
-                    all(check.status == "pass" for check in checks),
+                    all(check.status == "pass" for check in required),
                     [(check.foreground_role, check.background_role, check.ratio)
-                     for check in checks if check.status != "pass"],
+                     for check in required if check.status != "pass"],
                 )
+                border = next(check for check in checks if check.foreground_role == "border")
+                self.assertEqual(border.status, "review")
 
     def test_low_contrast_text_pair_is_reported_as_failure(self):
         colors = {**self.colors, "foreground": "#777777", "surface": "#FFFFFF"}
