@@ -475,6 +475,22 @@ def test_consumed_replay_disclosure_is_bound_to_original_peer_identity():
         db.close()
 
 
+
+def test_consume_rejects_oversized_or_non_utf8_authorization_reference():
+    db = store()
+    try:
+        oversized = consume(db, "x" * 513)
+        malformed_unicode = consume(db, chr(0xD800))
+        assert oversized.outcome == "BINDING_MISMATCH"
+        assert malformed_unicode.outcome == "BINDING_MISMATCH"
+
+        # Rejected references must not mutate authorization state.
+        ref = decide_and_issue(db)
+        assert consume(db, ref).outcome == "CONSUMED"
+    finally:
+        db.close()
+
+
 def test_resource_resolver_cannot_return_oversized_canonical_identifier():
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
         "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
