@@ -154,3 +154,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added regressions for invalid configuration types/ranges and valid integer/float timeout values.
 - Commits: `6e2468f2b4bcdea1be36bd94526bb8a1191dbcec` (types), `28e14e59a6f39a5358ef37f6d8097c1f60adbe33` (tests).
 - Latest-head CI pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 14 — typed provider request serialization failures
+
+- Ollama request JSON encoding now catches unsupported values, circular structures, recursion failures and Unicode encoding errors before network dispatch.
+- These failures are returned as safe `INVALID_REQUEST` runtime errors rather than raw Python serialization exceptions.
+- Added a regression using circular nested message data and asserted the typed error code.
+- Commits: `25ec82136315466b4e476c3300e18d9c1fd01497` (provider), `4b84dae22590c422280dfcf10d686399e832daa9` (tests).
+- Latest-head CI pending verification. Live Ollama remains NOT RUN.
