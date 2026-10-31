@@ -105,7 +105,10 @@ def _read_settings_document(path: Path) -> Any:
             raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
     finally:
         os.close(descriptor)
-    return json.loads(payload.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
+    try:
+        return json.loads(payload.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
+    except RecursionError as exc:
+        raise ValueError("settings JSON nesting exceeds the parser limit") from exc
 
 
 def _fsync_directory(path: Path) -> None:
