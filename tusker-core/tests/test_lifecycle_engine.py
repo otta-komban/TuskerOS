@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from adapters.lifecycle import (
-    InMemoryLifecycleStore, LifecycleEngine, InvalidTransition, LifecycleError,
+    InMemoryLifecycleStore, LifecycleEngine, InvalidTransition,
     VersionConflict, IdempotencyConflict,
 )
 
