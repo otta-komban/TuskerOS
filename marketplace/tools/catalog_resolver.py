@@ -74,8 +74,10 @@ def _prerelease_parts(value: str | None) -> tuple[str, ...]:
 
 def parse_release_version(value: str) -> Version:
     """Parse a strict MAJOR.MINOR.PATCH release version."""
-    if not isinstance(value, str):
-        raise CatalogResolutionError("release version must be a string")
+    if not isinstance(value, str) or not value or len(value) > 128:
+        raise CatalogResolutionError(
+            "release version must be a non-empty string (max 128 characters)"
+        )
     match = SEMVER_RE.fullmatch(value)
     if not match:
         raise CatalogResolutionError(f"invalid semantic release version: {value!r}")
