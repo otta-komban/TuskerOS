@@ -931,6 +931,34 @@ def test_security_database_refuses_final_component_symlink(tmp_path):
     assert target.read_bytes() == b"not a database"
 
 
+def test_security_database_refuses_path_swap_during_sqlite_open(tmp_path, monkeypatch):
+    import sqlite3
+    from security.runtime import store as store_module
+
+    path = tmp_path / "security.db"
+    target = tmp_path / "attacker.db"
+    original_connect = sqlite3.connect
+    original_connect(target).close()
+
+    def swap_before_sqlite_open(database, *args, **kwargs):
+        path.unlink()
+        path.symlink_to(target)
+        return original_connect(database, *args, **kwargs)
+
+    monkeypatch.setattr(store_module.sqlite3, "connect", swap_before_sqlite_open)
+    with pytest.raises(SecurityStoreError, match="path changed during open"):
+        SecurityStore(path, audit_key=KEY)
+
+    # The redirected connection is closed before schema/PRAGMA writes occur.
+    probe = original_connect(target)
+    try:
+        assert probe.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall() == []
+    finally:
+        probe.close()
+
+
 @pytest.mark.parametrize("callback_result", [1, "authenticated", [], {}])
 def test_decide_rejects_truthy_non_boolean_approver_authentication(callback_result):
     db = store()
