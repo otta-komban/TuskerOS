@@ -34,6 +34,23 @@ class LedgerValidationTests(unittest.TestCase):
     def test_one_record_is_valid(self):
         self.assertEqual(self.validate_text(json.dumps(self.record()) + "\n"), [])
 
+    def test_coordinator_record_is_valid(self):
+        item = self.record(
+            completion_id="COORDINATOR-000001",
+            agent_id="COORDINATOR",
+            branch="main",
+            response_summary="Verified and recorded one coordinator-owned project result.",
+            evidence_refs=["https://github.com/otta-komban/TuskerOS/pull/49"],
+        )
+        self.assertEqual(self.validate_text(json.dumps(item) + "\n"), [])
+
+    def test_coordinator_wrong_branch_is_rejected(self):
+        item = self.record(
+            completion_id="COORDINATOR-000001", agent_id="COORDINATOR", branch="coordinator/other"
+        )
+        errors = self.validate_text(json.dumps(item) + "\n")
+        self.assertTrue(any("branch does not match COORDINATOR" in error for error in errors))
+
     def test_duplicate_response_is_rejected(self):
         item = self.record()
         second = self.record(completion_id="ATLAS-01-000002", response_id=item["response_id"])

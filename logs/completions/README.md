@@ -8,3 +8,8 @@ The canonical aggregate `progress/completions.jsonl` is coordinator-owned. Agent
 python -m unittest discover -s tools/completions -p 'test_*.py' -v
 python tools/completions/validate_ledger.py progress/completions.jsonl
 ```
+
+
+## Coordinator records
+
+The coordinator records its own qualifying responses in the canonical `progress/completions.jsonl` ledger using `agent_id: "COORDINATOR"`, `branch: "main"`, and sequential IDs `COORDINATOR-000001`, `COORDINATOR-000002`, and so on. These records count toward the project target but are reported separately from the ten specialist-agent quotas. Do not create a fake specialist-agent identity or write coordinator entries into an agent-local log. Late-recorded responses use the actual append timestamp and evidence links to the original repository actions.
