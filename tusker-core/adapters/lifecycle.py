@@ -68,11 +68,15 @@ class InMemoryLifecycleStore:
             raise LifecycleError("task snapshot and creation event must be mappings")
         if "task_id" not in task or "event_id" not in event:
             raise LifecycleError("task snapshot and creation event require task_id and event_id")
-        task_id, event_id = str(task["task_id"]), str(event["event_id"])
+        task_id, event_id = task["task_id"], event["event_id"]
+        if not isinstance(task_id, str) or not task_id or not isinstance(event_id, str) or not event_id:
+            raise LifecycleError("task_id and event_id must be non-empty strings")
+        if type(task.get("version")) is not int or type(event.get("sequence")) is not int:
+            raise LifecycleError("initial task version and event sequence must be integers")
         with self._lock:
             if task_id in self._tasks:
                 raise IdempotencyConflict(f"task already exists: {task_id}")
-            if str(event.get("task_id")) != task_id or event.get("sequence") != 1 or task.get("version") != 1:
+            if event.get("task_id") != task_id or event["sequence"] != 1 or task["version"] != 1:
                 raise LifecycleError("initial task snapshot and event must share task_id and start at version/sequence 1")
             if event_id in self._event_ids.get(task_id, set()):
                 raise IdempotencyConflict(f"duplicate event: {event_id}")
@@ -86,6 +90,14 @@ class InMemoryLifecycleStore:
             raise LifecycleError("task snapshot and transition event must be mappings")
         if "event_id" not in event:
             raise LifecycleError("transition event requires event_id")
+        if not isinstance(task_id, str) or not task_id:
+            raise LifecycleError("transition task_id must be a non-empty string")
+        if type(expected_version) is not int:
+            raise LifecycleError("expected_version must be an integer")
+        if not isinstance(event["event_id"], str) or not event["event_id"]:
+            raise LifecycleError("event_id must be a non-empty string")
+        if type(task.get("version")) is not int or type(event.get("sequence")) is not int:
+            raise LifecycleError("task version and event sequence must be integers")
         with self._lock:
             current = self._tasks.get(task_id)
             if current is None:
@@ -99,12 +111,12 @@ class InMemoryLifecycleStore:
                     return deepcopy(prior_task)
             if current["version"] != expected_version:
                 raise VersionConflict(f"expected version {expected_version}, found {current['version']}")
-            if str(task.get("task_id")) != task_id or str(event.get("task_id")) != task_id:
+            if task.get("task_id") != task_id or event.get("task_id") != task_id:
                 raise LifecycleError("task snapshot and event must match the transition task_id")
             next_version = expected_version + 1
             if task.get("version") != next_version or event.get("sequence") != next_version:
                 raise LifecycleError("task version and event sequence must advance together by exactly one")
-            event_id = str(event["event_id"])
+            event_id = event["event_id"]
             if event_id in self._event_ids[task_id]:
                 raise IdempotencyConflict(f"duplicate event: {event_id}")
             # Commit task snapshot, event and idempotency record as one critical section.
