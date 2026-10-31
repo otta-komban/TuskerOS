@@ -15,6 +15,7 @@ on:
     paths:
       - "tools/atlas/**"
       - "os/package-manifest.csv"
+      - "os/repository-snapshot.lock.json"
       - ".github/workflows/atlas-package-resolver.yml"
   workflow_dispatch:
 
