@@ -755,6 +755,16 @@ def test_audit_rejects_non_utc_or_timezone_naive_timestamps(timestamp):
     {"device_binding": [], "origin": "remote", "session_binding": D2},
     {"session_binding": {}, "origin": "remote", "device_binding": D3},
 ])
+def test_audit_rejects_free_form_reason_codes():
+    db = store()
+    try:
+        with pytest.raises(SecurityStoreError, match="reason code"):
+            db._audit(audit(reason_code="user supplied secret: do not log"))
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
 def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
     db = store()
     try:
