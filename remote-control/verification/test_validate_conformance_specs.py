@@ -54,6 +54,26 @@ class ParseCaseRowsTests(unittest.TestCase):
             [("PAIR-C01", r"Two slashes \\| then text", "Reject")],
         )
 
+    def test_pipe_delimiter_parity_for_one_through_six_backslashes(self):
+        for slash_count in range(1, 7):
+            with self.subTest(slash_count=slash_count):
+                slashes = "\\" * slash_count
+                row = "| PAIR-C01 | prefix " + slashes + "| suffix | Reject |"
+                if slash_count % 2:
+                    expected = [
+                        "PAIR-C01",
+                        "prefix " + ("\\" * (slash_count - 1)) + "| suffix",
+                        "Reject",
+                    ]
+                else:
+                    expected = [
+                        "PAIR-C01",
+                        "prefix " + slashes,
+                        "suffix",
+                        "Reject",
+                    ]
+                self.assertEqual(validator.split_table_cells(row), expected)
+
     def test_rejects_malformed_case_identifier(self):
         markdown = "| PAIR-C1 | Missing zero padding | Reject |" + "\n"
         with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
