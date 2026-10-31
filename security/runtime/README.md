@@ -9,7 +9,7 @@ This package implements a deterministic policy evaluator, SQLite-backed approval
 - DENY when identity, registry verification, argument-schema validation, resource resolution, precondition verification, or canonical data is missing or invalid.
 - Trust dependencies are injected callbacks. Production adapters must source them from authenticated OS/session state and integrity-protected registry/schema artifacts.
 - R0/R1 registered actions may receive ALLOW; R2/R3/R4 require approval. R5 and unsupported risk-escalation rules are denied.
-- Mutations require idempotency keys. Resource mutations are escalated to at least R3; delete/administer to R4.
+- Mutations require idempotency keys. Resource mutations are escalated to at least R3; execute/delete/administer to R4.
 - The digest binds arguments, canonical resources, principal/session/device, origin, principal class, precondition digest, fixed broker operation, operation schema version, and policy/registry versions.
 - Unicode is preserved without normalization. Lone surrogates, unsafe integers and floating-point values are rejected until a vetted full RFC 8785 implementation is selected. The repository's two Unicode reference vectors match exact bytes and digests.
 - Approval binds proposal/action digest, principal, session/device, fixed broker operation, exact resources, policy/registry versions, precondition digest, task/step correlation and expiry. R5 cannot enter the approval path.

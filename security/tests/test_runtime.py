@@ -84,6 +84,13 @@ def test_policy_deny_default_allow_read_require_approval_and_deny_r5():
     assert engine.evaluate(proposal, context, [reg], "registry-1").risk_class == "R3"
     assert engine.evaluate(proposal, context, [reg], "registry-1").status == "REQUIRE_APPROVAL"
 
+    # Executable resources are elevated to R4, not ordinary mutation R3.
+    proposal["resources"][0]["access"] = "execute"
+    reg["resources"][0]["access_modes"] = ["read", "modify", "execute"]
+    decision = engine.evaluate(proposal, context, [reg], "registry-1")
+    assert decision.status == "REQUIRE_APPROVAL"
+    assert decision.risk_class == "R4"
+
 
 def test_resource_resolver_cannot_drop_add_or_widen_resources():
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",

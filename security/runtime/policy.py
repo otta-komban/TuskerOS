@@ -153,7 +153,7 @@ class PolicyEngine:
                 return deny("POLICY_IDEMPOTENCY_REQUIRED")
             risk = minimum
             if mutating:
-                risk = "R4" if any(item["access"] in {"delete", "administer"} for item in normalized) else "R3"
+                risk = "R4" if any(item["access"] in {"execute", "delete", "administer"} for item in normalized) else "R3"
                 if minimum in {"R4", "R5"}: risk = minimum
             if risk == "R5" or entry["approval_mode"] == "out_of_band_admin":
                 return deny("POLICY_R5_OUT_OF_BAND_DENY")
