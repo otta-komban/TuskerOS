@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from datetime import datetime, timezone
 from enum import Enum
 from threading import Event
@@ -94,11 +95,26 @@ class RuntimeLimits:
     minimum_available_memory_bytes: int = 0
 
     def __post_init__(self) -> None:
+        integer_limits = (
+            self.max_concurrent_requests,
+            self.max_input_characters,
+            self.max_output_tokens,
+            self.max_context_tokens,
+            self.minimum_available_memory_bytes,
+        )
+        if any(isinstance(value, bool) or not isinstance(value, int) for value in integer_limits):
+            raise ValueError("integer runtime limits must be integers")
         if self.max_concurrent_requests < 1 or self.max_input_characters < 1:
             raise ValueError("runtime limits must be positive")
         if self.max_output_tokens < 1 or self.max_context_tokens < 1:
             raise ValueError("token limits must be positive")
         if self.minimum_available_memory_bytes < 0:
             raise ValueError("memory reserve must not be negative")
-        if self.request_timeout_seconds <= 0:
-            raise ValueError("timeouts must be positive")
+        timeout = self.request_timeout_seconds
+        if (
+            isinstance(timeout, bool)
+            or not isinstance(timeout, (int, float))
+            or not math.isfinite(timeout)
+            or timeout <= 0
+        ):
+            raise ValueError("timeout must be a finite positive number")
