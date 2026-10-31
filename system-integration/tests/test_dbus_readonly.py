@@ -93,6 +93,17 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(caught.exception), "authorization unavailable")
         adapter._call.assert_not_awaited()
 
+    async def test_authorization_cancellation_propagates_without_provider_call(self):
+        gate = AsyncMock(side_effect=asyncio.CancelledError())
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock()
+
+        with self.assertRaises(asyncio.CancelledError):
+            await adapter.get_bus_id()
+
+        gate.assert_awaited_once_with("system.bus.id.read")
+        adapter._call.assert_not_awaited()
+
     async def test_invalid_bus_id_is_rejected(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         adapter._call = AsyncMock(return_value=["not-a-string"])
