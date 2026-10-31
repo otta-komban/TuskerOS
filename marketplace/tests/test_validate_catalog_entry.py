@@ -213,7 +213,7 @@ class CatalogEntryValidationTests(unittest.TestCase):
                 if sample is not None:
                     with self.subTest(pattern=pattern):
                         self.assertIsNotNone(re.search(pattern, sample))
-                        self.assertIsNone(re.search(pattern, sample + "\\n"))
+                        self.assertIsNone(re.search(pattern, sample + "\n"))
 
 
 if __name__ == "__main__":
