@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 24
+Current verified count: 25
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -43,3 +43,5 @@ Counts include only actual assistant responses. Never backfill or fabricate entr
 | 23 | ATLAS-01-C0023 | P1 | validation | partial | Fedora 44 CI now checks the exact DNF5 reposync flags and global repo-selection option used by the build script. Removed obsolete repomd.xml.asc fixture files; KIWI overlay test now explicitly passes without detached metadata signatures while RPM package GPG checks remain enabled. ATLAS run 41197942774 passed 93 tests and Fedora 44 smoke; unified run 41197942886 passed 8/8. No full reposync/image build. |
 
 | 24 | ATLAS-01-C0024 | P1 | implementation | partial | Moved snapshot+manifest production preflight and DNF5 reposync plugin check before upstream KIWI clone/fetch; empty/invalid package inputs now fail before network/source work. Added two ordering regression tests. ATLAS run 41198325237 passed 95 tests and Fedora 44 DNF5 smoke; unified run 41198328542 passed 8/8 on same code head. No full reposync/image build. |
+
+| 25 | ATLAS-01-C0025 | P1 | security | partial | Local repository snapshot verifier now resolves repomd.xml and rejects symlink targets outside the repository root; added repomd and metadata payload symlink-escape tests. ATLAS run 41198494806 passed 97 tests plus Fedora 44 DNF5 smoke; unified run 41198494782 passed 8/8. No full reposync/image build. |

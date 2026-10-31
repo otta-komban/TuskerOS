@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `a74f1bf0ac46235b8bcafdc64c3b19bf3e1b760a` (ATLAS CI passed 95 tests, Fedora 44 DNF5 5.4.3.0 reposync option and queryformat/RPM-location smoke, reposync plugin/key checks and pinned-source KIWI overlay integration; unified validation passed all 8 jobs).  
+**Latest code/test evidence head:** `c52d0e513dff6c45114b1ed39c1220965196af65` (ATLAS CI passed 97 tests, Fedora 44 DNF5 5.4.3.0 reposync option and queryformat/RPM-location smoke, reposync plugin/key checks and pinned-source KIWI overlay integration; unified validation passed all 8 jobs).  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -31,6 +31,11 @@
 - Added `tools/atlas/prepare-kiwi-snapshot.py`. It creates a clean export of the pinned upstream KIWI commit, resolves the pinned `repositories/core.xml` symlink, requires exact alias parity with the snapshot lock, rewrites each source to its local `file://` snapshot path, resolves the Fedora `$releasever` key macro to the installed Fedora 44 primary key, and enables KIWI `package_gpgcheck` (Fedora 44 repository metadata does not publish detached repomd signatures at the inspected endpoints). The wrapper now builds from this derived overlay, not the unmodified upstream checkout.
 - Build metadata records `repository_snapshot_consumed_by_dnf5: true`, `repository_snapshot_consumed_by_kiwi: true` and `repository_metadata_signature_verified: false`. Fedora repository metadata is content-pinned through HTTPS capture, the committed repomd digest and all referenced payload checksums, but is not detached-signature verified. RPM package signatures remain enforced by DNF5/KIWI using the Fedora 44 primary key. The trusted key fingerprint is not separately recorded in the lock. Each approved package row now carries an rpm_sha256 pin verified against the local RPM payload. A full reposync can require substantial disk/network capacity.
 
+## Latest repository snapshot path-containment hardening
+
+- `verify_local_snapshot` now resolves `repodata/repomd.xml` strictly and rejects a symlink target outside the repository root before reading it. Regression tests cover both repomd and metadata payload symlink escapes.
+- ATLAS run [41198494806](https://github.com/otta-komban/TuskerOS/actions/runs/41198494806) passed **97 tests**, Fedora 44 DNF5 reposync/queryformat/RPM-location smoke and pinned-source KIWI overlay integration. Unified run [41198494782](https://github.com/otta-komban/TuskerOS/actions/runs/41198494782) passed all **8 jobs** on the same code head.
+
 ## Latest fail-fast build gate
 
 - `build-image.sh` now verifies the production repository snapshot and non-empty owner-approved package manifest, and checks DNF5 reposync plugin availability, before cloning or fetching the upstream KIWI source. Invalid/empty inputs fail before upstream network activity.
@@ -46,7 +51,7 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest code/test head: a74f1bf0ac46235b8bcafdc64c3b19bf3e1b760a; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 180 ahead / 0 behind main.
+- Latest code/test head: c52d0e513dff6c45114b1ed39c1220965196af65; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 182 ahead / 0 behind main.
 - ATLAS run [41197460809](https://github.com/otta-komban/TuskerOS/actions/runs/41197460809): resolver-tests job passed **92 tests**, including the two new output-isolation regressions; Fedora 44 DNF5 5.4.3.0 smoke passed, including a real repoquery result with RPM location.
 - Unified validation [41197460810](https://github.com/otta-komban/TuskerOS/actions/runs/41197460810) passed all 8 jobs on exact code head `3d2755b88cf94d9fbf20404b19e1555fe94800d8`.
 - Build script now allocates a unique `mktemp` run directory and clears each target's prior output/intermediate directories before starting, preventing stale ISO/QCOW2 files from passing artifact existence checks.
