@@ -703,3 +703,9 @@ def test_jcs_unicode_reference_vectors_preserve_exact_code_points():
     # NFC- and NFD-equivalent text remains byte-distinct under JCS.
     assert encoded_vectors[0] != encoded_vectors[1]
     assert JCS_UNICODE_VECTORS["cases"][0]["sha256"] != JCS_UNICODE_VECTORS["cases"][1]["sha256"]
+
+
+def test_approval_request_schema_rejects_out_of_band_risk_class():
+    request = json.loads(json.dumps(VALID_APPROVAL))
+    request["risk_class"] = "R5"
+    assert list(approval_validator().iter_errors(request))
