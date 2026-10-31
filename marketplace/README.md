@@ -17,3 +17,6 @@ The Python URL validator also fails closed on malformed authorities/ports and re
 The JSON Schema also caps release version text at the same 128-character limit as the Python validator.
 
 The catalog plan resolver validates root IDs and the complete supplied dependency mapping before ordering or release selection. Text-valued dependency declarations, invalid IDs, non-iterable dependency values, and non-mapping graphs are rejected as `CatalogResolutionError` rather than leaking Python type errors. Candidate collections must be iterable catalog-entry sequences (not text or mappings), and optional dependency-constraint input must be a mapping with non-empty parent IDs; malformed inputs are normalized to `CatalogResolutionError`.
+
+
+Catalog JSON Schema patterns use an explicit end-of-input guard after their anchors. This prevents regex engines that treat `$` as matching before a final line terminator from accepting identifiers, versions, digests, timestamps or URLs with a trailing newline; the Python validator continues to enforce full-string matches.
