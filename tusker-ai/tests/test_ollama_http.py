@@ -26,6 +26,16 @@ class Handler(BaseHTTPRequestHandler):
             chunks = [[]]
         elif request.get("model") == "bad-message":
             chunks = [{"message": "not-an-object", "done": False}]
+        elif request.get("model") == "falsey-message":
+            chunks = [{"message": [], "done": False}]
+        elif request.get("model") == "bad-content":
+            chunks = [{"message": {"content": []}, "done": False}]
+        elif request.get("model") == "bad-done":
+            chunks = [{"message": {}, "done": "yes"}]
+        elif request.get("model") == "bad-reason":
+            chunks = [{"message": {}, "done": True, "done_reason": []}]
+        elif request.get("model") == "bad-usage":
+            chunks = [{"message": {}, "done": True, "prompt_eval_count": True}]
         else:
             chunks = [
                 {"message": {"content": "Tusker "}, "done": False},
@@ -103,7 +113,7 @@ class OllamaHttpTests(unittest.TestCase):
     def test_oversized_and_malformed_frames_are_typed_provider_errors(self):
         from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
         provider = OllamaProvider(self.endpoint, read_timeout=2)
-        for model in ("oversized", "bad-shape", "bad-message"):
+        for model in ("oversized", "bad-shape", "bad-message", "falsey-message", "bad-content", "bad-done", "bad-reason", "bad-usage"):
             request = InferenceRequest(model, model, [{"role": "user", "content": "hello"}])
             with self.subTest(model=model):
                 with self.assertRaises(TuskerRuntimeError) as ctx:
