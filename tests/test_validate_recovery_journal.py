@@ -36,6 +36,11 @@ class HostileKey:
         raise RuntimeError("repr must not be called")
 
 
+class HostileList(list):
+    def __iter__(self):
+        raise RuntimeError("list iteration must not be called")
+
+
 class HostileValue:
     def __repr__(self):
         raise RuntimeError("repr must not be called")
@@ -193,6 +198,45 @@ class RecoveryJournalTests(unittest.TestCase):
                             for e in report.errors))
         self.assertTrue(any("state must be a plain string" in e
                             for e in report.errors))
+
+
+    def test_checksum_rejects_nested_container_subclasses_without_hooks(self):
+        record = chain(["planned"])[0]
+        record["extra"] = HostileList(["value"])
+        with self.assertRaisesRegex(JournalValidationError, "non-JSON value type"):
+            record_checksum(record)
+        record = chain(["planned"])[0]
+        record["extra"] = HostileJournalDict({"nested": "value"})
+        with self.assertRaisesRegex(JournalValidationError, "non-JSON value type"):
+            record_checksum(record)
+
+    def test_checksum_rejects_circular_and_excessively_nested_values(self):
+        record = chain(["planned"])[0]
+        circular = []
+        circular.append(circular)
+        record["extra"] = circular
+        with self.assertRaisesRegex(JournalValidationError, "circular reference"):
+            record_checksum(record)
+        record = chain(["planned"])[0]
+        nested = "leaf"
+        for _ in range(66):
+            nested = [nested]
+        record["extra"] = nested
+        with self.assertRaisesRegex(JournalValidationError, "nesting depth"):
+            record_checksum(record)
+
+    def test_checksum_rejects_non_finite_nested_numbers(self):
+        record = chain(["planned"])[0]
+        record["extra"] = {"nested": [float("nan")]}
+        with self.assertRaisesRegex(JournalValidationError, "non-finite"):
+            record_checksum(record)
+
+    def test_journal_reports_unsupported_nested_values(self):
+        record = chain(["planned"])[0]
+        record["extra"] = HostileList(["value"])
+        report = validate_journal([record])
+        self.assertFalse(report.valid)
+        self.assertTrue(any("non-JSON value type" in e for e in report.errors))
 
     def test_replay_requires_all_external_gates(self):
         record = chain(["planned", "prepared", "executing", "interrupted"],
