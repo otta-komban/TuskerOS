@@ -174,6 +174,18 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, "invalid event ID"):
             self.engine.replay(task_id)
 
+    def test_replay_rejects_non_string_event_state_without_type_error(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["state"] = ["queued"]
+        with self.assertRaisesRegex(LifecycleError, "unknown task state"):
+            self.engine.replay(task_id)
+
+    def test_replay_rejects_unknown_string_event_state(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["state"] = "not-a-task-state"
+        with self.assertRaisesRegex(LifecycleError, "unknown task state"):
+            self.engine.replay(task_id)
+
     def test_replay_rejects_unknown_task(self):
         with self.assertRaisesRegex(LifecycleError, "unknown task"):
             self.engine.replay("00000000-0000-4000-8000-000000000099")
