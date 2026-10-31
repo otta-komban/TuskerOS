@@ -2,9 +2,9 @@
 
 **Status:** Diagnostic-only implementation; not a shared theme contract or pack-acceptance rule.
 
-The runtime utility `runtime/accessibility_audit.py` calculates contrast for the semantic color pairs currently present in theme-pack v1. It reports text-role pairs against a 4.5:1 threshold and focus/boundary pairs against a 3:1 threshold.
+The runtime utility `runtime/accessibility_audit.py` calculates contrast for the semantic color pairs currently present in theme-pack v1. It reports text-role pairs against a 4.5:1 threshold and focus pairs against a 3:1 threshold.
 
-Alpha colors are marked `not_evaluated` because their effective luminance depends on the actual composited render surface. Missing or malformed semantic roles raise a diagnostic error.
+Alpha colors are marked `not_evaluated` because their effective luminance depends on the actual composited render surface. Border contrast is reported as `review`: the current pack data does not tell us whether a border is decorative or conveys a meaningful UI component boundary, so a rendered desktop review is required before applying a 3:1 criterion to it. Missing or malformed semantic roles raise a diagnostic error.
 
 Run from the repository root:
 
