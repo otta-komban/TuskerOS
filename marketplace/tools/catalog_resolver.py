@@ -85,8 +85,10 @@ def parse_release_version(value: str) -> Version:
 
 def parse_compat_version(value: str) -> Version:
     """Parse compatibility versions as MAJOR[.MINOR[.PATCH]], optionally prerelease."""
-    if not isinstance(value, str):
-        raise CatalogResolutionError("compatibility version must be a string")
+    if not isinstance(value, str) or not value or len(value) > 64:
+        raise CatalogResolutionError(
+            "compatibility version must be a non-empty string (max 64 characters)"
+        )
     match = _COMPAT_RE.fullmatch(value)
     if not match:
         raise CatalogResolutionError(f"invalid compatibility version: {value!r}")
