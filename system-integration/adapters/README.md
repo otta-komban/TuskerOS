@@ -9,7 +9,7 @@
 - `system.bus.id.read` → `GetId`
 - `system.bus.names.read` → `ListNames`
 
-The adapter does not accept a bus name, object path, interface, method, command-line argument, or D-Bus payload from a caller. It uses a fixed absolute `/usr/bin/busctl` path, system bus, JSON output, a bounded call timeout, and concurrent bounded stdout/stderr streaming. A pipe that crosses its byte cap triggers immediate child termination rather than waiting for the overall timeout. Subprocess diagnostics are not returned to callers.
+The adapter does not accept a bus name, object path, interface, method, command-line argument, or D-Bus payload from a caller. The executable path is a module constant (`/usr/bin/busctl`) and cannot be overridden through the adapter constructor; it uses the system bus, JSON output, a bounded call timeout, and concurrent bounded stdout/stderr streaming. A pipe that crosses its byte cap triggers immediate child termination rather than waiting for the overall timeout. Subprocess diagnostics are not returned to callers.
 
 ## Authorization boundary
 
