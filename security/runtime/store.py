@@ -439,7 +439,9 @@ class SecurityStore:
                          "result_status":"success", "timestamp_utc":self._iso(current)})
             self._db.execute("COMMIT")
             return token
-        except SecurityStoreError: raise
+        except SecurityStoreError:
+            if self._db.in_transaction: self._db.execute("ROLLBACK")
+            raise
         except Exception as exc:
             if self._db.in_transaction: self._db.execute("ROLLBACK")
             raise SecurityStoreError("authorization issue/audit failed closed") from exc
