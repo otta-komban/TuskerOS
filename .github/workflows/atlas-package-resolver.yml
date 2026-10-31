@@ -1,0 +1,36 @@
+name: ATLAS package resolver tests
+
+on:
+  push:
+    branches:
+      - 01-fedora-base
+    paths:
+      - "tools/atlas/**"
+      - "os/package-manifest.csv"
+      - ".github/workflows/atlas-package-resolver.yml"
+  pull_request:
+    branches:
+      - 01-fedora-base
+    paths:
+      - "tools/atlas/**"
+      - "os/package-manifest.csv"
+      - ".github/workflows/atlas-package-resolver.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolver-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile resolver and tests
+        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py
+      - name: Run resolver unit tests
+        run: python -m unittest discover -s tools/atlas -p 'test_*.py' -v
