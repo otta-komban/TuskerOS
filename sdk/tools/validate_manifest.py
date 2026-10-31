@@ -13,7 +13,13 @@ import sys
 from pathlib import Path
 
 ID_RE = re.compile(r"^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+\.[a-z][a-z0-9-]*$")
-VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
+_PRERELEASE_ID = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+_BUILD_ID = r"[0-9A-Za-z-]+"
+VERSION_RE = re.compile(
+    rf"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+    rf"(?:-({_PRERELEASE_ID}(?:\.{_PRERELEASE_ID})*))?"
+    rf"(?:\+({_BUILD_ID}(?:\.{_BUILD_ID})*))?$"
+)
 PERMISSION_RE = re.compile(r"^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9-]*)+$")
 REQUIRED = {
     "manifest_version", "id", "name", "version", "description", "publisher",
