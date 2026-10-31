@@ -130,8 +130,9 @@ cp "$RUN_DIR/first/SHA256SUMS" "$OUTPUT_ROOT/SHA256SUMS"
 python3 - "$LOCK" "$SNAPSHOT_LOCK" "$BUILD_ROOT/package-resolution.json" "$OUTPUT_ROOT/build-metadata.json" "$ACTUAL_COMMIT" "$KIWI_VERSION" "$DNF_VERSION" "$SOURCE_DATE_EPOCH" "$RUN_ID" "$REPRO_CHECK" <<'PY'
 import datetime, json, platform, sys
 from pathlib import Path
-lock_path, resolution_path, output_path, commit, kiwi, dnf, epoch, run_id, repro = sys.argv[1:]
+lock_path, snapshot_path, resolution_path, output_path, commit, kiwi, dnf, epoch, run_id, repro = sys.argv[1:]
 lock = json.loads(Path(lock_path).read_text(encoding="utf-8"))
+snapshot_lock = json.loads(Path(snapshot_path).read_text(encoding="utf-8"))
 resolution = json.loads(Path(resolution_path).read_text(encoding="utf-8"))
 metadata = {
     "schema_version": 1,
