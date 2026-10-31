@@ -109,3 +109,8 @@ its durable transaction boundary.
 ## Replay event vocabulary
 
 Replay rejects any event whose `type` is absent or outside the Core draft event enum, matching the write-side event-type guard. This is fail-closed validation, not a change to the shared draft schema.
+
+
+## Replay malformed-value handling
+
+Replay validates the runtime types of event IDs and event types before set membership, duplicate detection, or UUID parsing. Non-string values are rejected as lifecycle corruption with a stable `LifecycleError`, rather than leaking Python `TypeError` from malformed/untrusted persisted data.

@@ -263,8 +263,10 @@ class LifecycleEngine:
                for index, event in enumerate(events, 1)):
             raise LifecycleError("event sequence is not contiguous")
         event_ids = [event.get("event_id") for event in events]
-        if any(not event_id for event_id in event_ids) or len(set(event_ids)) != len(event_ids):
-            raise LifecycleError("event stream contains missing or duplicate event IDs")
+        if any(not isinstance(event_id, str) or not event_id for event_id in event_ids):
+            raise LifecycleError("event stream contains missing or invalid event IDs")
+        if len(set(event_ids)) != len(event_ids):
+            raise LifecycleError("event stream contains duplicate event IDs")
         for event_id in event_ids:
             try:
                 UUID(event_id)
@@ -272,7 +274,8 @@ class LifecycleEngine:
                 raise LifecycleError("event stream contains an invalid event ID") from exc
         if any(event.get("task_id") != task_id for event in events):
             raise LifecycleError("event stream contains an event for another task")
-        if any(event.get("type") not in ALLOWED_EVENT_TYPES for event in events):
+        if any(not isinstance(event.get("type"), str) or event.get("type") not in ALLOWED_EVENT_TYPES
+               for event in events):
             raise LifecycleError("event stream contains an unknown event type")
         first = events[0]
         if first.get("type") != "task.created" or first.get("state") != "queued":
@@ -280,7 +283,7 @@ class LifecycleEngine:
         previous_state = "queued"
         for index, event in enumerate(events):
             event_type = event.get("type")
-            if event_type not in ALLOWED_EVENT_TYPES:
+            if not isinstance(event_type, str) or event_type not in ALLOWED_EVENT_TYPES:
                 raise LifecycleError("event stream contains an unknown event type")
             state = event.get("state")
             if state not in TASK_STATES:

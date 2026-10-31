@@ -156,6 +156,18 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, "unknown event type"):
             self.engine.replay(task_id)
 
+    def test_replay_rejects_non_string_event_type_without_type_error(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["type"] = ["task.created"]
+        with self.assertRaisesRegex(LifecycleError, "unknown event type"):
+            self.engine.replay(task_id)
+
+    def test_replay_rejects_non_string_event_id_without_type_error(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["event_id"] = {"id": "not-a-uuid"}
+        with self.assertRaisesRegex(LifecycleError, "invalid event ID"):
+            self.engine.replay(task_id)
+
     def test_replay_rejects_malformed_event_uuid(self):
         task_id = self.task["task_id"]
         self.store._events[task_id][0]["event_id"] = "not-a-uuid"
