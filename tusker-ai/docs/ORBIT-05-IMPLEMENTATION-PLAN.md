@@ -136,3 +136,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Boolean values are not accepted as token/context/deadline numbers; floating-point NaN and infinities are rejected. Added regressions that assert invalid requests never invoke the provider and that all five contract message roles remain accepted.
 - Commits: `4056c379f44bc96a9d0d3ab9582a3fdb8f088f4d` (runtime), `1121d8eb587502d5dc0aa50143edbb41b2386fdc` (tests), `8de3ce6693986460cdd06f2071789d5616381bf2` (deadline edge-case hardening).
 - Latest-head CI pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 12 — provider event envelope validation
+
+- Runtime now validates each provider-emitted event before reading its fields: event type must be an `InferenceEvent`, request ID and event type must be strings, sequence must be a non-negative integer (not bool), payload must be a mapping, and timestamp must be a string.
+- Malformed provider objects and wrong primitive types now map to a safe `PROVIDER_DISCONNECTED` error instead of leaking raw attribute/type errors.
+- Added regression cases for a null event, string/bool sequences, non-mapping payload and non-string timestamp.
+- Commits: `5aafedc233d87ae5bd479af45db5a6d69f366ec2` (runtime), `4b598b8d899e77c5236dee4ddd08e2284c000d9e` (tests).
+- Latest-head CI pending verification. Live Ollama remains NOT RUN.
