@@ -1048,6 +1048,34 @@ def test_decide_rejects_truthy_non_boolean_approver_authentication(callback_resu
         db.close()
 
 
+def test_approval_decision_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        rid = approval(db)
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected approval audit write failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="approval decision/audit failed closed"):
+                db.decide(rid, approve=True, current_binding=BINDING,
+                    approver_credentials={"uid": 1000},
+                    audit_context=audit_for_approval(db, rid), now=NOW)
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
 def test_issue_authorization_rolls_back_when_audit_write_fails():
     db = store()
     try:
