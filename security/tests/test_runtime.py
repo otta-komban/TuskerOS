@@ -1546,7 +1546,7 @@ def test_consume_commit_response_loss_reconciles_committed_consumption_without_g
             "SELECT state, consumption_id FROM auth_refs"
         ).fetchone()
         assert tuple(persisted_ref) == ("CONSUMED", result.consumption_id)
-        assert len(db.audit_events()) == 3
+        assert len(db.audit_events()) == 4
         assert db.verify_audit_chain()
     finally:
         db.close()
