@@ -145,3 +145,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added regression cases for a null event, string/bool sequences, non-mapping payload and non-string timestamp.
 - Commits: `5aafedc233d87ae5bd479af45db5a6d69f366ec2` (runtime), `4b598b8d899e77c5236dee4ddd08e2284c000d9e` (tests).
 - Latest-head CI pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 13 — strict runtime limit configuration
+
+- `RuntimeLimits` now rejects booleans and non-integer values for concurrency, input/output/context ceilings and memory reserve.
+- Request timeout configuration must be numeric, finite and strictly positive; NaN, infinities, booleans, strings and zero are rejected at construction time.
+- Added regressions for invalid configuration types/ranges and valid integer/float timeout values.
+- Commits: `6e2468f2b4bcdea1be36bd94526bb8a1191dbcec` (types), `28e14e59a6f39a5358ef37f6d8097c1f60adbe33` (tests).
+- Latest-head CI pending verification. Live Ollama remains NOT RUN.
