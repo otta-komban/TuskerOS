@@ -308,6 +308,35 @@ def test_registry_full_schema_shape_is_enforced(field, value):
     assert result.reason_code == "POLICY_REGISTRY_INVALID"
 
 
+def test_policy_enforces_input_size_before_calling_argument_validator():
+    called = []
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {"payload": "x" * 2048},
+        "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    entry = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only", "preconditions": [],
+        "postcondition_verifier": "verify.system.info", "max_input_bytes": 256}
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: True,
+        argument_validator=lambda action, args: called.append((action, args)) or True,
+        resource_resolver=lambda resources: list(resources),
+        precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, [entry], "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_INPUT_LIMIT"
+    assert called == []
+
+
 def test_policy_denies_configured_rate_limit_until_enforcement_is_available():
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
         "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
