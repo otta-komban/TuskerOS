@@ -161,3 +161,6 @@ validates task identity, expected-version type, and requires an actual boolean
 stop acknowledgement. Malformed values fail with `LifecycleError` rather than
 leaking dictionary/set type errors or accepting truthy non-boolean values.
 Rejected calls do not mutate the task snapshot or event stream.
+
+
+The public creation API rejects a supplied `origin` that is not a mapping before attempting conversion or persistence. Replay rejects empty or non-string task identifiers before calling the store. Regression tests cover malformed origins and verify malformed replay identifiers do not reach the store. These checks validate input shape only; they do not establish a canonical origin schema or change lifecycle semantics.
