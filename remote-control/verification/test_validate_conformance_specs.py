@@ -689,5 +689,26 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("PAIR-C01 (lines 1, 3)", str(raised.exception))
 
 
+    def test_fence_closers_require_matching_marker_and_no_info_string(self):
+        markdown = (
+            "| PAIR-C01 | Before fence | Reject |\\n"
+            "```markdown\\n"
+            "| PAIR-C01 | Inside fence | Ignored |\\n"
+            "~~~\\n"
+            "| PAIR-C01 | Still inside after different marker | Ignored |\\n"
+            "``` trailing-text\\n"
+            "| PAIR-C01 | Still inside after invalid closer | Ignored |\\n"
+            "```   \\n"
+            "| PAIR-C01 | After valid closer | Reject |\\n"
+        )
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [
+                ("PAIR-C01", "Before fence", "Reject"),
+                ("PAIR-C01", "After valid closer", "Reject"),
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
