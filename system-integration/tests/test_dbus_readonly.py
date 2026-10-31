@@ -1,4 +1,5 @@
 """Unit tests for the fail-closed D-Bus provider boundary."""
+import asyncio
 import pathlib
 import sys
 import unittest
@@ -97,6 +98,25 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
             await adapter.health(),
             {"state": "degraded", "reason": "bus_unavailable"},
         )
+
+    async def test_bounded_pipe_reader_accepts_exact_limit(self):
+        stream = asyncio.StreamReader()
+        stream.feed_data(b"x" * 128)
+        stream.feed_eof()
+
+        result = await ReadOnlySystemBusAdapter._read_bounded(stream, 128)
+
+        self.assertEqual(result, b"x" * 128)
+
+    async def test_bounded_pipe_reader_signals_overflow(self):
+        stream = asyncio.StreamReader()
+        stream.feed_data(b"x" * 129)
+        stream.feed_eof()
+
+        with self.assertRaises(Exception) as caught:
+            await ReadOnlySystemBusAdapter._read_bounded(stream, 128)
+
+        self.assertEqual(type(caught.exception).__name__, "_OutputLimitExceeded")
 
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
