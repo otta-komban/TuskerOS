@@ -91,7 +91,6 @@ class OllamaHttpTests(unittest.TestCase):
         self.assertEqual(events[3].payload["output_tokens"], 2)
 
     def test_cancellation_during_stream_is_request_scoped(self):
-        from tusker_ai.types import RuntimeErrorCode
         provider = OllamaProvider(self.endpoint, read_timeout=0.05)
         cancellation = CancellationToken()
         timer = threading.Timer(0.03, cancellation.cancel)
