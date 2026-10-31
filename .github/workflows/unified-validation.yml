@@ -15,6 +15,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  response-completion-ledger:
+    name: Response completion ledger validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tools/completions -p 'test_*.py' -v
+      - run: python tools/completions/validate_ledger.py progress/completions.jsonl
+
   core:
     name: Core contract schemas
     runs-on: ubuntu-latest
