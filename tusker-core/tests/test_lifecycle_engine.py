@@ -1,5 +1,6 @@
 import sys
 import unittest
+import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +80,56 @@ class LifecycleEngineTests(unittest.TestCase):
         replay = self.engine.replay("00000000-0000-4000-8000-000000000001")
         self.assertEqual([e["sequence"] for e in replay["events"]], [1, 2])
         self.assertEqual(replay["task"]["state"], "planning")
+
+
+    def test_duplicate_event_id_is_rejected(self):
+        initial_event_id = self.store.events("00000000-0000-4000-8000-000000000001")[0]["event_id"]
+        with self.assertRaises(IdempotencyConflict):
+            self.engine.transition(
+                "00000000-0000-4000-8000-000000000001", "planning",
+                expected_version=1, event_id=initial_event_id,
+            )
+
+    def test_returned_snapshots_are_isolated_from_store(self):
+        task = self.store.get("00000000-0000-4000-8000-000000000001")
+        task["state"] = "completed"
+        task["origin"]["kind"] = "remote"
+        self.assertEqual(self.store.get("00000000-0000-4000-8000-000000000001")["state"], "queued")
+        self.assertEqual(self.store.get("00000000-0000-4000-8000-000000000001")["origin"]["kind"], "local")
+        events = self.store.events("00000000-0000-4000-8000-000000000001")
+        events[0]["state"] = "failed"
+        self.assertEqual(self.store.events("00000000-0000-4000-8000-000000000001")[0]["state"], "queued")
+
+    def test_concurrent_writers_have_one_winner(self):
+        barrier = threading.Barrier(2)
+        outcomes = []
+        lock = threading.Lock()
+
+        def writer(target):
+            barrier.wait()
+            try:
+                result = self.engine.transition(
+                    "00000000-0000-4000-8000-000000000001", target,
+                    expected_version=1,
+                )
+                outcome = ("ok", result["state"])
+            except VersionConflict:
+                outcome = ("conflict", target)
+            with lock:
+                outcomes.append(outcome)
+
+        threads = [
+            threading.Thread(target=writer, args=("planning",)),
+            threading.Thread(target=writer, args=("failed",)),
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=2)
+        self.assertTrue(all(not thread.is_alive() for thread in threads))
+        self.assertEqual(sorted(kind for kind, _ in outcomes), ["conflict", "ok"])
+        self.assertEqual(self.store.get("00000000-0000-4000-8000-000000000001")["version"], 2)
+        self.assertEqual(len(self.store.events("00000000-0000-4000-8000-000000000001")), 2)
 
 
 if __name__ == "__main__":
