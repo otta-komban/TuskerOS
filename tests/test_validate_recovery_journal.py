@@ -105,6 +105,27 @@ class RecoveryJournalTests(unittest.TestCase):
         with self.assertRaises(JournalValidationError):
             parse_jsonl('{"sequence":1,"sequence":2}')
 
+    def test_unknown_state_followed_by_record_is_rejected_without_crashing(self):
+        records = chain(["planned", "prepared"])
+        records[0]["state"] = "unknown"
+        records[0]["checksum"] = record_checksum(records[0])
+        report = validate_journal(records)
+        self.assertFalse(report.valid)
+        self.assertTrue(any("unknown state" in e for e in report.errors))
+
+    def test_jsonl_preserves_unicode_line_separator_inside_string(self):
+        record = seal_record(sequence=1, operation_id="install\u2028one",
+                             state="planned", idempotent=False)
+        encoded = __import__("json").dumps(record, ensure_ascii=False) + "\\n"
+        parsed = parse_jsonl(encoded)
+        self.assertEqual(parsed[0]["operation_id"], "install\u2028one")
+
+    def test_jsonl_accepts_crlf_and_one_final_newline(self):
+        record = seal_record(sequence=1, operation_id="install-001",
+                             state="planned", idempotent=False)
+        encoded = __import__("json").dumps(record) + "\\r\\n"
+        self.assertEqual(parse_jsonl(encoded), [record])
+
     def test_non_string_state_is_rejected_without_crashing(self):
         records = chain(["planned"])
         records[0]["state"] = []
