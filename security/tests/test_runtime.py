@@ -528,3 +528,22 @@ def test_registry_invalid_unmatched_entry_invalidates_entire_registry():
     assert decision.status == "DENY"
     assert decision.reason_code == "POLICY_REGISTRY_INVALID"
 
+
+
+def test_audit_chain_rejects_boolean_checkpoint_sequence_and_sequence_gaps():
+    db = store()
+    try:
+        db._audit(audit())
+        checkpoint = db.audit_checkpoint()
+        boolean_sequence = dict(checkpoint)
+        boolean_sequence["sequence"] = True
+        assert not db.verify_audit_chain(boolean_sequence)
+
+        db._audit(audit())
+        assert db.verify_audit_chain()
+        # Alter only SQLite sequence metadata, leaving authenticated event bytes
+        # and the HMAC chain untouched. The verifier must still detect the gap.
+        db._db.execute("UPDATE audit_events SET seq=3 WHERE seq=2")
+        assert not db.verify_audit_chain()
+    finally:
+        db.close()

@@ -404,7 +404,7 @@ class SecurityStore:
             if checkpoint is not None:
                 if set(checkpoint) != {"schema_version", "sequence", "event_hash", "mac"}:
                     return False
-                if checkpoint["schema_version"] != "1" or not isinstance(checkpoint["sequence"], int) or checkpoint["sequence"] < 0:
+                if checkpoint["schema_version"] != "1" or type(checkpoint["sequence"]) is not int or checkpoint["sequence"] < 0:
                     return False
                 if not isinstance(checkpoint["event_hash"], str) or not re.fullmatch(r"[0-9a-f]{64}", checkpoint["event_hash"]):
                     return False
@@ -414,7 +414,13 @@ class SecurityStore:
                     return False
                 checkpoint_seq, checkpoint_hash = checkpoint["sequence"], checkpoint["event_hash"]
             seen_checkpoint = checkpoint_seq == 0
+            expected_seq = 1
             for row in self._db.execute("SELECT seq,event_json,previous_hash,event_hash FROM audit_events ORDER BY seq"):
+                # Sequence numbers are integrity metadata too: gaps or renumbering
+                # must not be silently accepted even when event bytes still hash.
+                if row["seq"] != expected_seq:
+                    return False
+                expected_seq += 1
                 payload = bytes(row["event_json"])
                 expected = hmac.new(self._audit_key, bytes.fromhex(previous) + payload, hashlib.sha256).hexdigest()
                 if row["previous_hash"] != previous or not hmac.compare_digest(row["event_hash"], expected):

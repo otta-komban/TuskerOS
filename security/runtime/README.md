@@ -18,7 +18,7 @@ This package implements a deterministic policy evaluator, SQLite-backed approval
 - Approver authentication and post-approval policy re-evaluation are mandatory callbacks. Missing callbacks fail closed.
 - Opaque authorization references are random; only SHA-256 token hashes are stored. Approval request IDs are not consume credentials.
 - BEGIN IMMEDIATE serializes transitions. Consume state, durable consumption ID and required audit evidence commit in one SQLite transaction. Replays return ALREADY_CONSUMED and the original consumption ID.
-- Audit rows are projected onto the candidate v0.2.0 field allowlist, redacted, and chained with HMAC-SHA-256. The HMAC key is externally managed and never stored in this database. SQLite uses WAL and synchronous=FULL.
+- Audit rows are projected onto the candidate v0.2.0 field allowlist, redacted, and chained with HMAC-SHA-256. Verification rejects sequence gaps/renumbering, invalid checkpoint sequence types and broken/truncated chains. The HMAC key is externally managed and never stored in this database. SQLite uses WAL and synchronous=FULL.
 
 ## Tests
 
