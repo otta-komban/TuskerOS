@@ -27,3 +27,12 @@ Reviewed security-relevant patches on divergent legacy branch `06-security-gatek
 **Verification:** GitHub Actions unified validation run `41221036114` completed successfully at exact head `637ffe32738d355d61483b32da0faaafad77df27`; the `Security contract validation` job ran `python -m pytest -q security/tests` and passed. This confirms the security suite on that head; it does not certify a production privileged broker or approve privileged execution.
 
 **Disposition:** selective port complete. Further legacy history remains excluded unless reviewed patch-by-patch. Privileged execution remains blocked pending the cross-agent interface and release-gate evidence.
+
+
+## 12. Authorization audit-write rollback fix — 2026-10-31
+
+Runtime review found that `issue_authorization()` re-raised `SecurityStoreError` without rolling back when an audit append failed after the authorization-reference insert. The handler now rolls back whenever a transaction remains active. A regression injects an audit-write failure and verifies no reference is persisted, approval remains `APPROVED`, the connection is out of transaction, and prior audit events remain readable.
+
+**Verification:** GitHub Actions security run `41221480288` passed `python -m pytest -q security/tests` on exact head `16d58ce420ee06f34fa64604700d9405e25cb587`; unified validation run `41221480289` also passed at that head. An immediately preceding run failed collection because a pytest parametrization decorator attached to the new test; the decorator was corrected before the successful run and the failure is retained in CI history.
+
+No shared schema or event vocabulary changed. Privileged execution remains blocked.
