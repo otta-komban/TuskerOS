@@ -9,19 +9,16 @@ import re
 from dataclasses import dataclass
 from typing import Iterable, Mapping, Any
 
-from marketplace.tools.validate_catalog_entry import validate_catalog_entry
+from marketplace.tools.validate_catalog_entry import SEMVER_RE, validate_catalog_entry
 from sdk.tools.dependency_plan import resolve_install_order, DependencyPlanError
 
 
-_RELEASE_RE = re.compile(
-    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
-    r"(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$"
-)
+# Direct parser calls share the catalog validator's strict ASCII SemVer grammar.
 _COMPAT_RE = re.compile(
-    r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?"
+    r"^(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?(?:\.(0|[1-9][0-9]*))?"
     r"(?:-([0-9A-Za-z.-]+))?$"
 )
-_WILDCARD_RE = re.compile(r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?\.x$")
+_WILDCARD_RE = re.compile(r"^(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?\.x$")
 
 
 class CatalogResolutionError(ValueError):
@@ -79,10 +76,10 @@ def parse_release_version(value: str) -> Version:
     """Parse a strict MAJOR.MINOR.PATCH release version."""
     if not isinstance(value, str):
         raise CatalogResolutionError("release version must be a string")
-    match = _RELEASE_RE.fullmatch(value)
+    match = SEMVER_RE.fullmatch(value)
     if not match:
         raise CatalogResolutionError(f"invalid semantic release version: {value!r}")
-    major, minor, patch, prerelease = match.groups()
+    major, minor, patch, prerelease, _build = match.groups()
     return Version(int(major), int(minor), int(patch), _prerelease_parts(prerelease))
 
 
