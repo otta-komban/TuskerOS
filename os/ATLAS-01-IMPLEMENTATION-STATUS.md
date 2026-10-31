@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `b499f54621b6d6aa61c5879b74c2d2291b7ed91d` (PR head; 44 commits ahead / 0 behind `main`)  
+**Latest code/test evidence head:** `f763cd56a382a31c6206f42a3ecd402f077bd13d` (PR head; 47 commits ahead / 0 behind `main`)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -29,8 +29,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Last validated code head: `b499f54621b6d6aa61c5879b74c2d2291b7ed91d`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
-- Draft remains open for review. PR validation on this exact head passed: unified validation run 41183021170 (8 jobs) and ATLAS resolver run 41183021284 (49 tests plus live Fedora 44 DNF5 smoke). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
+- Last validated code head: `f763cd56a382a31c6206f42a3ecd402f077bd13d`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
+- Draft remains open for review. PR validation on this exact head passed: unified validation run 41183355869 (8 jobs) and ATLAS resolver run 41183355823 (49 tests plus live Fedora 44 DNF5 and upstream KIWI source-lock checks). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
 
 ## Evidence
 
@@ -55,13 +55,18 @@
 - Result: **36 tests passed**, exit code 0. JSON and shell syntax checks passed. Four new tests are static build-script contract checks, not image-build tests.
 - Resolver metadata pin run: [41181625107](https://github.com/otta-komban/TuskerOS/actions/runs/41181625107), commit `44bfe6b6350c79d9ab9caec5a0d613983ed5931b`, passed **39 tests** after fixing test fixtures for the expanded DNF5 query format.
 - Latest previous run: [41181689969](https://github.com/otta-komban/TuskerOS/actions/runs/41181689969), commit `81e44a5adfddbc6781c24319b7920de67e3192e2`, passed **40 tests**, JSON validation and shell syntax validation.
-- Current run: [41182830193](https://github.com/otta-komban/TuskerOS/actions/runs/41182830193), exact PR head `14b211967a6bb390050d8c233df1bd5508e1007d`, passed **49 tests**, package-manifest offline validation (0 rows), image-lock JSON validation and shell syntax validation.
-- Current PR unified validation: [41182834842](https://github.com/otta-komban/TuskerOS/actions/runs/41182834842), all 8 jobs passed on the same exact head.
-- Current PR ATLAS validation: [41182834784](https://github.com/otta-komban/TuskerOS/actions/runs/41182834784), all steps passed on the same exact head.
+- Current run: [41183352032](https://github.com/otta-komban/TuskerOS/actions/runs/41183352032), exact PR head `f763cd56a382a31c6206f42a3ecd402f077bd13d`, passed **49 tests**, package-manifest offline validation (0 rows), image-lock JSON validation, shell syntax, upstream source commit/blob verification and live Fedora 44 DNF5 smoke.
+- Current PR unified validation: [41183355869](https://github.com/otta-komban/TuskerOS/actions/runs/41183355869), all 8 jobs passed on the same exact head.
+- Current PR ATLAS validation: [41183355823](https://github.com/otta-komban/TuskerOS/actions/runs/41183355823), all steps passed on the same exact head.
 - Exact current command set: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python tools/atlas/resolve-package-manifest.py --validate-only --manifest os/package-manifest.csv`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Exact latest commands: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Two intermediate CI runs (`41181567432`, `41181595588`) failed because test fixtures still used the old two-column DNF query output / two-argument pin helper after the resolver began validating license and source RPM. Fixtures were corrected; subsequent 39- and 40-test runs passed.
 - One preceding CI iteration (run `41180611540`) failed one newly added source-lock test due to an incorrect test-field lookup; the test was corrected and the next run passed.
+
+### Pinned Fedora KIWI source verification
+
+- The CI job fetches the immutable upstream commit `dfc49a5a10f69941179fdadd96aa6a5984f7c677` from Fedora Forge and verifies Git blob IDs for `Fedora.kiwi`, `kiwi-build` and `teams/kde.xml`.
+- Latest evidence: run [41183352032](https://github.com/otta-komban/TuskerOS/actions/runs/41183352032); all three blob checks and commit identity passed.
 
 ### Live Fedora 44 DNF5 smoke
 
@@ -159,6 +164,8 @@ The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86
 | ATLAS-01-FB-033 | 2026-10-31T08:03:20Z | `.github/workflows/atlas-package-resolver.yml` | Added Fedora 44 container smoke using live DNF5/libdnf5 5.4.3.0 and a real `bash` repoquery result. PR run 41183021284 passed 49 unit tests plus the live DNF5 smoke; unified run 41183021170 passed all 8 jobs. | `b499f54621b6d6aa61c5879b74c2d2291b7ed91d` |
 
 | ATLAS-01-FB-034 | 2026-10-31T08:02:50Z | GitHub issue comments #5 and #12 | Requested owner-approved desktop and system-capability package names/layering from NOVA-02 and NEXUS-07; package manifest remains empty pending their input. | N/A — [NOVA request](https://github.com/otta-komban/TuskerOS/issues/12#issuecomment-6540959722), [NEXUS request](https://github.com/otta-komban/TuskerOS/issues/5#issuecomment-6540960034) |
+
+| ATLAS-01-FB-035 | 2026-10-31T08:08:14Z | `.github/workflows/atlas-package-resolver.yml` | Added CI fetch/verification of the pinned Fedora KIWI commit and three source blobs. Run 41183352032 passed 49 tests, live Fedora 44 DNF5 smoke and source lock verification; unified run 41183355869 passed all 8 jobs. | `f763cd56a382a31c6206f42a3ecd402f077bd13d` |
 
 **Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
 
