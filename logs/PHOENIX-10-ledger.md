@@ -1,14 +1,33 @@
 # PHOENIX-10 Completion Ledger
 
 Permanent identity: PHOENIX-10  
-Branch: `10-installer-recovery`  
+Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current verified count: 9  
-Last completion: PHOENIX-10-C0009  
+Current authorized cohort count: 18  
+Authorized cohort start: 2026-10-31T07:39:06Z  
+Last completion: PHOENIX-10-C0027  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0027 | P2 | recovery-journal-parser-input-hardening | Require plain text input; convert deep JSON recursion and oversized-token parser errors into validation failures; add hostile string and parser-limit tests. PHOENIX CI passed; unified validation pending. | validator `afaed817`; tests `941dbb01`, `97c75988`; docs `c6cc450c`; PR #55. |
+| PHOENIX-10-C0026 | P2 | recovery-journal-nested-json-bounds | Reject nested custom containers/values and cycles; bound depth, nodes and in-memory record size; add hostile-input/resource-limit tests and docs. PHOENIX + unified CI passed. | validator `2729e248`, `201b290d`; tests `a5e00ef9`, `0a703ac3`, `59ea2e81`; docs `bbab5f62`, `bfe0c574`; PR #55. |
+| PHOENIX-10-C0025 | P2 | recovery-journal-hostile-object-hardening | Reject dict subclasses, non-plain keys and hostile malformed values without invoking custom hooks; add regression coverage and docs; latest-head CI pending after diagnostic compatibility repair. | validator `67ea9b5b` (hardening commits `00285d27`, `573d55c1`, `653156f7`, `355130e2`); tests `83b8eeed`, `6040c225`; docs `83c7382e`; PR #55. |
+| PHOENIX-10-C0024 | P2 | recovery-journal-iterator-failure-hardening | Return structured validation failure when caller iterator creation/consumption raises; add generator regression and docs; CI pending. | validator `daa12aac`, test `3d815ec5`, docs `b3c9b412`; PR #55. |
+| PHOENIX-10-C0023 | P2 | recovery-journal-in-memory-object-shape-hardening | Reject non-string keys in caller-supplied journal dictionaries as structured validation errors; regression test and docs added; PHOENIX CI `41189062747` and unified validation `41189062769` passed. | validator commit `a300daa1`, test `ddc91a4d`, docs `1a3bcb04`; PR #55. |
+| PHOENIX-10-C0022 | P2 | recovery-journal-parser-and-state-robustness | Guard unknown states from transition lookup crashes; parse LF/CRLF JSONL boundaries while preserving U+2028 string data; PHOENIX CI `41187813890` and unified CI `41187818792` passed. | validator, tests, docs; commits `e185cd53`, `58e1793f`, `12d977cf`; PR #55. |
+| PHOENIX-10-C0021 | P2 | recovery-journal-state-and-digest-invariants | Require `planned` initial state, stable idempotency declaration and lowercase SHA-256 encodings; PHOENIX CI `41187263494` passed. | validator, tests, docs; commits `6873234f`, `07a5e757`, `99b89182`; PR #55. |
+| PHOENIX-10-C0020 | P2 | recovery-journal-resource-bounds | Added 4 MiB / 64 KiB / 10,000-record input bounds and bounded iterable validation; fixed the JSONL boundary test fixture; CI `41186648724` passed. | `scripts/validate_recovery_journal.py`; tests; docs; PR #55. |
+| PHOENIX-10-C0019 | P2 | read-only-recovery-journal-validation | Added strict read-only journal validation, state transitions, checksum-chain checks and advisory replay gates; PHOENIX CI `41186199820` passed. | `scripts/validate_recovery_journal.py`; `tests/test_validate_recovery_journal.py`; `docs/RECOVERY-JOURNAL-VALIDATION.md`; workflow; PR #55. |
+| PHOENIX-10-C0018 | P2 | installer-jcs-unicode-conformance | Corrected stale NFC digest rule; added AEGIS Unicode reference-vector tests and CI coverage; PHOENIX CI 41185982568 passed. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; `tests/test_installer_jcs_unicode_vectors.py`; workflow; PR #55. |
+| PHOENIX-10-C0017 | P2 | release-report-cli-test-repair | Fixed the missing-file CLI test's stderr capture assertion after CI exposed the test-only failure; rerun pending. | `tests/test_validate_release_report.py`; PHOENIX CI `41185512785` identified the defect; fix commit `7de652d`; JSONL C0017. |
+| PHOENIX-10-C0016 | P2 | release-report-cli-contract-tests | Added CLI regression coverage for valid, semantic-invalid, malformed, duplicate-key, non-standard-constant, invalid-UTF-8 and missing-file inputs; clarified validator scope and exit codes. | `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; prior CI `41185062227` passed before the new CLI tests; latest CI pending; JSONL C0016. |
+| PHOENIX-10-C0015 | P2 | release-report-strict-json-constant-validation | Reject non-standard JSON constants; add regression coverage, UTF-8 CLI error handling, documentation and branch-specific CI trigger. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; PHOENIX CI `41185062227` success (py_compile, 20 manifest tests, 17 report tests); JSONL C0015. |
+| PHOENIX-10-C0014 | P2 | release-report-strict-json-parsing | Reject duplicate JSON member names at all nesting depths; added three parser regression tests, documented and updated PR #55. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; CI `41184742602` success; JSONL C0014. |
+| PHOENIX-10-C0013 | P2 | release-report-semantic-validation-hardening | Hardened report digest argument handling and exact integer summary counters; added three regressions, extended PHOENIX CI to run both release validator suites, documented and updated PR #55. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; workflow `.github/workflows/phoenix-release-validation.yml`; CI `41184321235` success; JSONL C0013. |
+| PHOENIX-10-C0012 | P2 | release-evidence-no-follow-hardening | Replaced resolve-then-open evidence hashing with component-by-component no-follow descriptor opens; rejects symlinks, special files and ambiguous path components; added five regression tests and updated PR #55. | `scripts/verify_release_manifest.py`; `tests/test_verify_release_manifest.py`; `docs/PHOENIX-10-RELEASE-VERIFIER.md`; CI `41183117967` 20/20; unified validation `41183117936`; JSONL C0012. |
+| PHOENIX-10-C0011 | P1/P2 | atlas-image-build-handoff-integration | Reconciled the Fedora 44 KIWI/Anaconda POC plan with ATLAS-01's pinned Fedora Forge source lock and build script; recorded exact source/blob identities, profiles, static CI evidence and remaining blockers. No image build or installer acceptance claimed. | `docs/PHOENIX-10-KIWI-POC.md` section 13; ATLAS lock/build/status blobs reviewed; CI run `41181689969` reports 40 static tests; doc commit `a28e8814`; JSONL C0011. |
+| PHOENIX-10-C0010 | P1/P2 | release-verification-audit | Re-verified branch/base, audited the release verifier and install-mode proposal, and confirmed PR #55's dedicated GitHub Actions job completed successfully. Confirmed promotion remains blocked pending AEGIS trust policy; no VM/install/storage runtime acceptance is claimed. | PR #55 head `2c3c7d3d`; run `41181257090`; verifier and installer architecture docs reviewed; JSONL entry C0010. |
 | PHOENIX-10-C0009 | P1/P2 | release-report-semantic-validator | Implemented a standard-library Python semantic validator and unittest coverage for report counts, outcome derivation, subject binding, UTC intervals and duplicate check IDs; hardened malformed status types. Nine in-memory semantic smoke assertions and malformed-type checks passed; repository unittest suite not executed. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; implementation commits `7689f5bd`, `501a8fe4`, hardening `1a659246`, test `9859842a`; JSONL commit `71441b66`. |
 | PHOENIX-10-C0008 | P1 | release-validation-report-contract | Added the Draft 2020-12 validation-report schema and semantic contract binding each check/evidence record to the exact manifest digest; rechecked owner blockers and PR state; passed JSON parsing and eight focused schema-structure assertions. | `schemas/release-validation-report.schema.json`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; schema commit `fd50250c`; doc commit `1450ef98`; JSONL commit `b43f31a1`. |
 | PHOENIX-10-C0001 | P0 | research / design / documentation | Reviewed the master execution blueprint, PHOENIX-10 P0–P7 checklist, shared quality/release gates; inspected repository and assigned branch; researched Fedora installer/image options; drafted initial architecture and risk plan. | `docs/INSTALLER-RELEASE-ARCHITECTURE.md`; initial repository intake evidence. |
@@ -19,7 +38,35 @@ Last updated: 2026-10-31
 | PHOENIX-10-C0004 | P1 | installer-contract-conformance | Mapped installer workflows to NEXUS-07 operation lifecycle and AEGIS-06 policy/digest proposals; documented operation ownership, exact-action approval invariants, negative/race tests, result semantics and implementation gates. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; source reviews on `07-system-integration`, `06-security-gatekeeper` and `01-fedora-base`; doc commit `9458940`; JSONL commit `e166214`. |
 | PHOENIX-10-C0003 | P0/P1 | release-design / coordination | Rechecked cross-agent blockers, requested exact Fedora Forge KIWI source/profile from ATLAS-01, and documented release artifact identity, provenance, explicit test statuses, digest/signature verification and promotion gates. | `docs/RELEASE-ARTIFACT-CONTRACT.md`; issue #2 comment `6531176703`; commit `0fe1c3417c0db958fb5e573b5184870697d6ef13`. |
 
+## Current authorized cohort accounting
+
+- Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
+- Counted responses in this cohort: **18** — C0010 through C0027.
+- Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
+- JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
+
 ## Current status
+
+- [x] C0027 response completion logged; parser rejects string subclasses and structures decoder recursion/oversized-token errors; PHOENIX CI passed, unified validation pending.
+
+- [x] C0026 response completion logged; nested recovery-journal JSON values are strictly validated and resource-bounded; PHOENIX and unified CI passed.
+
+- [x] C0025 response completion logged; hardened recovery-journal validation against hostile dict subclasses, keys and scalar values; CI pending after diagnostic compatibility repair.
+
+- [x] C0024 response completion logged; iterator exceptions become structured validation failures; CI pending.
+- [x] C0023 response completion logged; reject malformed non-string object keys in caller-supplied recovery-journal records; PHOENIX CI `41189062747` and unified validation `41189062769` passed.
+- [x] C0021 response completion logged; tightened initial-state, idempotency and digest-format invariants; CI pending.
+- [x] C0020 response completion logged; added parser resource bounds and corrected the JSONL boundary test fixture; follow-up PHOENIX CI 41186648724 passed.
+- [x] C0019 response completion logged; added read-only recovery-journal validation and replay advisory gates; PHOENIX CI 41186199820 passed.
+- [x] C0018 response completion logged; corrected installer JCS Unicode contract, added string-only vectors and unpaired-surrogate regression coverage; PHOENIX CI 41185982568 passed.
+- [x] C0017 response completion logged; fixed the missing-file CLI test assertion after CI exposed a test-only failure; rerun pending.
+- [x] C0016 response completion logged; CLI tests cover success, semantic failure and input-error exit classes; initial CLI test CI failed on the missing-file assertion.
+- [x] C0015 response completion logged; strict JSON parsing rejects non-standard numeric constants; CI `41185062227` passed 20 manifest and 17 report tests.
+- [x] C0014 response completion logged; duplicate JSON object keys rejected at every nesting depth.
+- [x] C0013 response completion logged; semantic report counters and digest argument validation hardened.
+- [x] C0012 response completion logged; release evidence paths now use no-follow descriptor opens and five path-hardening regressions pass CI.
+- [x] C0011 response completion logged; ATLAS-01 pinned Fedora Forge source/build-script handoff documented (no image build/runtime acceptance claimed).
+- [x] C0010 response completion logged; branch/base and PR #55 CI evidence re-verified. No new runtime acceptance claimed.
 
 - [x] C0009 dependency-free semantic report validator and unittest coverage committed; in-memory semantic/robustness checks passed (repository test suite not executed).
 
@@ -33,7 +80,7 @@ Last updated: 2026-10-31
 - [x] NEXUS-07 typed-operation and AEGIS-06 approval/security proposals reviewed.
 - [x] KIWI/Anaconda POC runbook documented.
 - [x] Installer contract conformance and negative/race test plan documented (design only).
-- [ ] ATLAS-01 confirms canonical Fedora Forge KIWI descriptions repository/ref and build profile (follow-up remains open).
+- [x] ATLAS-01 supplied the canonical Fedora Forge KIWI descriptions repository/ref, pinned commit/blob identities and build profiles; PHOENIX reviewed and documented the handoff. Actual image build remains blocked by the empty package manifest.
 - [ ] NEXUS-07 confirms installer storage identity and health contracts and operation schemas (follow-up issue #3 comment `6531617901`).
 - [ ] AEGIS-06 confirms installer action-envelope/authorization/audit and release-signing contracts (follow-up issue #4 comment `6531618606`).
 - [ ] Fedora 44 ISO/QCOW2 build and UEFI VM tests executed.
@@ -46,6 +93,8 @@ Last updated: 2026-10-31
 - [ ] P6 hardening completed.
 - [ ] P7 release/handover completed.
 
+C0010 limitation: this response verified existing code and CI only. No installer build, VM boot/install, interrupted-install recovery, storage mutation, cryptographic signature verification or release promotion was performed. The canonical project-wide completion ledger remains coordinator-owned; this is the PHOENIX-10 branch-local response ledger.
+
 ## Accounting rules
 
 Only actual assistant responses count. Tool calls, commits, CI jobs and user messages do not count. Partial or blocked work is still logged as a response but must not be represented as completed implementation or testing. The JSONL file is the append-only machine-readable record.
@@ -53,3 +102,43 @@ Only actual assistant responses count. Tool calls, commits, CI jobs and user mes
 C0008 limitation: no JSON Schema engine, full report fixture suite, semantic validator, evidence-byte verification, signature verification or release promotion was run. Fedora image/installer validation remains unexecuted and ATLAS-01, NEXUS-07 and AEGIS-06 decisions remain pending.
 
 C0009 limitation: the validator assumes schema validation is performed separately and does not retrieve evidence, verify evidence bytes/signatures, or authorize promotion. No Fedora image/installer tests were run; owner decisions remain pending.
+
+
+C0011 limitation: this response reviewed ATLAS-01 source/build handoff and recorded it in the POC runbook. The cited 40-test CI run is ATLAS-01's reported static validation; PHOENIX-10 did not execute those tests, run KIWI, produce an image, boot a VM, launch Anaconda or perform storage operations. The canonical project-wide completion ledger remains coordinator-owned.
+
+C0012 limitation: GitHub Actions run 41183117967 executed the verifier tests on the PR merge ref; local container execution was unavailable because outbound DNS/network access was unavailable. No image build, VM boot, Anaconda install, storage mutation, cryptographic signature verification or release promotion was performed. The no-follow protection applies to paths below the opened manifest directory; the directory's parent path remains part of the caller's trusted selection.
+
+C0013 limitation: this response hardened semantic validation of release reports and added focused CI coverage only. It does not verify cryptographic signatures, authorize release promotion, build an image, boot/install a VM, exercise recovery runtime or perform storage operations. The unified validation run triggered by the final branch push was still in progress at ledger update time; the PHOENIX-specific run 41184321235 completed successfully.
+
+C0014 limitation: strict JSON parsing and focused release-report regression coverage only. No cryptographic signature verification, release promotion, image build, VM boot/install, recovery runtime or disk mutation was performed.
+
+
+C0015 limitation: this response added strict rejection of NaN/Infinity/-Infinity and UTF-8 decode error handling, plus regression tests and documentation. Subsequent PHOENIX CI run 41185062227 passed py_compile, all 20 release-manifest tests and all 17 release-report tests. The unified validation workflow was still in progress at last check. No signature verification, release promotion, image build, VM boot/install, recovery runtime or disk mutation was performed.
+
+
+C0016 limitation: added CLI-level regression tests and corrected documentation scope/exit codes. The initial PHOENIX CI run 41185512785 executed 24 report tests but failed one test assertion (not validator behavior); the subsequent test-only repair is recorded in C0017 and awaits rerun. No JSON Schema engine, evidence fetcher, signature verifier, release promotion controller, image build, VM boot/install, recovery runtime or disk mutation was added or performed.
+
+C0017 limitation: this response repaired a regression-test assertion and updated PR/log records. No recovery journal implementation, installer runtime, cryptographic signature verification, image build, VM boot/install or storage mutation was performed.
+
+C0018 limitation: the Unicode fixture test covers two string-only vectors and strict UTF-8 rejection; it is not a full RFC 8785 implementation or production approval-digest integration test. The actual policy/broker digest path still requires AEGIS/NEXUS integration and tests. No installer runtime, image build, VM boot/install, recovery runtime or storage mutation was performed.
+
+
+C0021 limitation: this response added three local recovery-journal invariants and tests only. PHOENIX CI `41187263494` passed; no persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed. The checksum remains unkeyed and unauthenticated; runtime integration remains blocked on accepted NEXUS-07/AEGIS-06 contracts.
+
+
+C0022 limitation: this response hardened in-memory JSONL parsing and malformed-state validation only. The first CI attempt failed due to incorrectly escaped test-fixture newline strings; corrected fixtures passed PHOENIX CI `41187813890` and unified validation `41187818792`. No journal persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed.
+
+
+C0023 limitation: this response hardened only the in-memory recovery-journal validator for non-string object keys. PHOENIX CI `41189062747` and unified validation `41189062769` subsequently passed, including compilation and all four focused unittest suites. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0024 limitation: this response hardens only bounded in-memory iterable handling. CI for the final commit was pending at ledger update time. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0025 limitation: this response hardens only bounded in-memory recovery-journal validation and its tests. PHOENIX runs 41190832893 and 41190919216 exposed regressions in the unknown-state diagnostic: the first required legacy diagnostic wording, and the second showed the first-record state checks had become mutually exclusive. Restored the legacy diagnostic and made initial-state and unknown-state validation independent in commit c321aa91. Latest-head PHOENIX CI [41191071719](https://github.com/otta-komban/TuskerOS/actions/runs/41191071719) passed (compile plus all four focused suites); unified validation [41191071572](https://github.com/otta-komban/TuskerOS/actions/runs/41191071572) remains pending. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0026 limitation: bounded in-memory validation only. The journal is not persisted; no atomic writes, locking, fsync, broker integration, recovery dispatch, disk access/write, image build or VM test was performed. The SHA-256 chain is unkeyed integrity evidence, not authentication or authorization. NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0027 limitation: read-only parser boundary hardening and regression tests only. The initial 1,100-level nesting fixture did not reach CPython 3.12's JSON decoder recursion limit; corrected to 12,000 levels and PHOENIX CI run 41197383993 passed. Unified validation run 41197388866 was pending at ledger update time. No journal persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites.

@@ -1,69 +1,65 @@
 # Release manifest validation plan
 
 Owner: PHOENIX-10  
-Status: proposed test plan; no production validator or promotion gate is implemented by this document.
+Status: partially implemented; structural and local byte-integrity checks exist. Cryptographic trust, remote evidence, and promotion remain blocked pending owner decisions.
 
-## Scope
+## Scope and stages
 
-Validate manifests against `schemas/release-manifest.schema.json` using a JSON Schema Draft 2020-12 implementation with date-time format assertion enabled. Then run semantic and evidence checks that JSON Schema cannot express or cannot prove. Keep schema validation, evidence verification, test-gate evaluation and signing as separate stages.
+Keep these stages separate:
+
+1. Parse JSON strictly and validate Draft 2020-12 structure with date-time format assertion.
+2. Run semantic checks for unique IDs/filenames, safe local paths, and platform/artifact architecture consistency.
+3. Recompute local artifact byte sizes and SHA-256 values; recompute local SBOM, provenance and optional signature-file digests.
+4. Evaluate whether required per-artifact test statuses are passed and have report references.
+5. Verify signatures and rollback metadata only through the AEGIS-06 approved trust implementation.
+6. Re-verify staged bytes after upload and before publication.
+
+A schema pass or byte-integrity pass is not a release verification or promotion pass. UEFI and Secure Boot remain independent tests.
 
 ## Structural test matrix
 
 | ID | Fixture/change | Expected result |
 |---|---|---|
-| RM-S01 | Minimal complete manifest with all required top-level and artifact fields | Schema accepts |
+| RM-S01 | Complete manifest with required top-level and artifact fields | Schema accepts |
 | RM-S02 | Unsupported schema version | Reject |
-| RM-S03 | Missing source commit, recipe commit, platform, SBOM or provenance | Reject |
-| RM-S04 | Git commit is neither exactly 40 nor 64 lowercase hexadecimal characters | Reject |
-| RM-S05 | Timestamp has a numeric offset instead of UTC `Z` | Reject |
+| RM-S03 | Missing source/recipe/platform/SBOM/provenance | Reject |
+| RM-S04 | Invalid immutable commit identifier | Reject |
+| RM-S05 | Timestamp without UTC Z suffix | Reject |
 | RM-S06 | Invalid RFC 3339 date-time with format assertion enabled | Reject |
-| RM-S07 | Empty repositories, package inventory or artifact list | Reject |
-| RM-S08 | Artifact has zero-byte size or malformed SHA-256 | Reject |
-| RM-S09 | Empty firmware target list or unsupported firmware value | Reject |
+| RM-S07 | Empty repository, package or artifact inventory | Reject |
+| RM-S08 | Zero-byte artifact or malformed SHA-256 | Reject |
+| RM-S09 | Empty/unsupported firmware target | Reject |
 | RM-S10 | Unknown property at a closed object boundary | Reject |
-| RM-S11 | Test status outside passed/failed/blocked/not_tested | Reject |
-| RM-S12 | Test result omits status | Reject |
-| RM-S13 | Valid unsigned candidate omits optional artifact signature | Accept structurally; signing gate remains pending |
-| RM-S14 | Duplicate object values in arrays | Schema behavior documented; semantic uniqueness checks still required |
+| RM-S11 | Unsupported test status or missing status | Reject |
+| RM-S12 | Optional signature omitted | Structurally valid; cryptographic gate remains blocked |
 
 ## Semantic and evidence test matrix
 
 | ID | Validation | Expected result |
 |---|---|---|
-| RM-E01 | Recompute each artifact byte length and SHA-256 from actual bytes | Exact match required |
-| RM-E02 | Fetch SBOM/provenance references and verify their SHA-256 | Exact match and parseable supported format required |
-| RM-E03 | Resolve source and recipe commits from their repositories | Exact immutable commits must exist and be readable |
-| RM-E04 | Compare repository snapshot identifiers and resolved package NEVRAs to retained build evidence | Exact match required |
-| RM-E05 | Compare artifact architecture with platform and package architectures | Mismatch rejects candidate |
-| RM-E06 | Check artifact IDs and filenames for duplicates/path traversal | Reject duplicates and unsafe paths |
-| RM-E07 | Compare signature verification result with AEGIS-06 trust policy | Do not accept until authoritative verifier and trust policy exist |
-| RM-E08 | Re-download staged artifact and recompute size/digest | Must match pre-stage bytes |
-| RM-E09 | Check required test statuses and linked reports | Every required gate must be passed with retained evidence |
-| RM-E10 | Check report timestamps, runner identity, firmware mode and test target | Evidence must be attributable to this exact candidate |
-| RM-E11 | Mutate artifact bytes after verification | Invalidate candidate verification and any prior signature |
-| RM-E12 | Replay older release against approved security epoch/rollback policy | Defer decision to AEGIS-06's authoritative anti-rollback contract |
+| RM-E01 | Recompute artifact size and SHA-256 from actual bytes | Exact match required |
+| RM-E02 | Recompute local SBOM/provenance reference SHA-256 | Exact match required |
+| RM-E03 | Duplicate artifact IDs or filenames | Reject |
+| RM-E04 | Artifact architecture differs from platform | Reject |
+| RM-E05 | Absolute path, parent traversal, remote URI or symlink escape | Reject |
+| RM-E06 | Referenced signature file bytes | Digest match only; not cryptographic trust |
+| RM-E07 | Required test status missing, blocked, failed or not tested | Promotion remains blocked |
+| RM-E08 | Mutate artifact bytes after manifest creation | Reject digest/size mismatch |
+| RM-E09 | Duplicate JSON object keys | Reject |
+| RM-E10 | Resolve source/recipe commits, verify evidence formats and trust policy | Pending external/owner-controlled implementations |
+| RM-E11 | Re-download staged artifact and recompute digest | Pending staging/publishing integration |
+| RM-E12 | Anti-rollback / security epoch | Defer to AEGIS-06 authoritative policy |
 
-## Promotion gate
+## Current implementation
 
-1. Parse JSON and validate Draft 2020-12 schema with format assertion enabled.
-2. Run semantic checks, including uniqueness, architecture consistency, immutable source resolution and safe artifact names.
-3. Fetch every evidence reference and verify its digest against downloaded bytes.
-4. Evaluate test gates from retained reports; missing, blocked, failed or not-tested required evidence cannot pass.
-5. Verify signatures and rollback metadata only through the AEGIS-06 approved trust implementation.
-6. Re-verify staged bytes after upload and before publication.
-7. Record validator version, policy version, candidate digest, each check result and evidence reference.
-8. Any changed artifact bytes create a new candidate and require the full validation sequence again.
+scripts/verify_release_manifest.py implements strict JSON parsing, Draft 2020-12 validation, local path/symlink confinement, artifact/SBOM/provenance byte-digest checks, optional signature-file digest checks, architecture and duplicate checks, and test-status reporting. tests/test_verify_release_manifest.py covers positive and negative paths. .github/workflows/phoenix-release-validation.yml runs the dedicated test suite.
 
-A JSON Schema pass is not a release verification pass. A successful build is not a boot/install pass. UEFI and Secure Boot remain independent tests.
+The tool intentionally reports promotion_ready=false and returns exit code 3 after successful integrity checks because the AEGIS-owned cryptographic signature verifier/trust-root policy has not been selected or integrated. It does not claim Git ref resolution, SBOM/provenance semantic validation, remote evidence retrieval, image build, VM boot, installer execution or storage recovery. See docs/PHOENIX-10-RELEASE-VERIFIER.md.
 
-## Implementation prerequisites
+## Owner dependencies
 
-- Select and pin a JSON Schema Draft 2020-12 validator and its format-assertion behavior.
-- Define a versioned validator CLI and machine-readable report only after repository tooling conventions are reviewed.
-- ATLAS-01 must confirm package/repository snapshot evidence and pinned image-build inputs.
-- AEGIS-06 must define signature format, trust roots, key lifecycle and anti-rollback policy.
-- CI must run structural fixtures and semantic checks before any promotion job is enabled.
+- ATLAS-01: exact package/repository snapshot inputs, immutable image recipe and build/SBOM/provenance production.
+- AEGIS-06 / release maintainers: selected signature format, trusted root, key custody/rotation/revocation, anti-rollback policy and verifier integration.
+- NEXUS-07: stable storage identity, typed inventory/preflight and destructive operation schemas; PHOENIX must not invent broker/action IDs.
 
-## Current execution status
-
-No validator executable, CI job, fixture suite, artifact hash verification, signature verification, staged download or release promotion test has been run in this completion. The matrix above is a test specification, not execution evidence.
+Destructive storage implementation remains blocked until NEXUS-07 and AEGIS-06 accept compatible contracts and negative authorization tests.

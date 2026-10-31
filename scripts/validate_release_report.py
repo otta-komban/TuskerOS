@@ -20,6 +20,36 @@ STATUSES = {"passed", "failed", "blocked", "not_run"}
 OVERALL = {"passed", "failed", "blocked", "incomplete"}
 
 
+class DuplicateJSONKeyError(ValueError):
+    """Raised when a JSON object repeats a member name."""
+
+
+class NonJSONConstantError(ValueError):
+    """Raised when input contains Python's non-standard JSON constants."""
+
+
+def _reject_non_json_constant(value: str) -> None:
+    raise NonJSONConstantError(f"non-standard JSON constant: {value}")
+
+
+def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise DuplicateJSONKeyError(f"duplicate JSON object key: {key!r}")
+        result[key] = value
+    return result
+
+
+def strict_json_loads(data: str) -> Any:
+    """Parse standards-compliant JSON, rejecting duplicate keys and non-standard constants."""
+    return json.loads(
+        data,
+        object_pairs_hook=_unique_object,
+        parse_constant=_reject_non_json_constant,
+    )
+
+
 def parse_utc(value: Any, field: str, errors: list[str]) -> datetime | None:
     if not isinstance(value, str) or not value.endswith("Z"):
         errors.append(f"{field}: expected an RFC 3339 UTC timestamp ending in Z")
@@ -47,7 +77,7 @@ def validate_report(report: Any, expected_manifest_digest: str | None = None) ->
     if not isinstance(digest, str) or not DIGEST_RE.fullmatch(digest):
         errors.append("subject.manifest_sha256: expected 64 lowercase hexadecimal characters")
     if expected_manifest_digest is not None:
-        if not DIGEST_RE.fullmatch(expected_manifest_digest):
+        if not isinstance(expected_manifest_digest, str) or not DIGEST_RE.fullmatch(expected_manifest_digest):
             errors.append("--expected-manifest-digest: expected 64 lowercase hexadecimal characters")
         elif digest != expected_manifest_digest:
             errors.append("subject.manifest_sha256: does not match the expected manifest digest")
@@ -113,8 +143,9 @@ def validate_report(report: Any, expected_manifest_digest: str | None = None) ->
         "not_run": counts["not_run"],
     }
     for key, expected in expected_counts.items():
-        if summary.get(key) != expected or isinstance(summary.get(key), bool):
-            errors.append(f"summary.{key}: expected {expected}")
+        actual = summary.get(key)
+        if type(actual) is not int or actual != expected:
+            errors.append(f"summary.{key}: expected integer {expected}")
 
     if counts["failed"]:
         derived = "failed"
@@ -137,12 +168,15 @@ def main() -> int:
     parser.add_argument("--expected-manifest-digest", help="optional SHA-256 of the manifest being checked")
     args = parser.parse_args()
     try:
-        report = json.loads(args.report.read_text(encoding="utf-8"))
+        report = strict_json_loads(args.report.read_text(encoding="utf-8"))
     except OSError as exc:
         print(f"cannot read report: {exc}", file=sys.stderr)
         return 2
-    except json.JSONDecodeError as exc:
+    except (DuplicateJSONKeyError, NonJSONConstantError, json.JSONDecodeError) as exc:
         print(f"invalid JSON: {exc}", file=sys.stderr)
+        return 2
+    except UnicodeError as exc:
+        print(f"cannot decode report as UTF-8: {exc}", file=sys.stderr)
         return 2
 
     errors = validate_report(report, args.expected_manifest_digest)
