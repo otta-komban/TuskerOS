@@ -73,6 +73,28 @@ class CatalogResolverTests(unittest.TestCase):
                 with self.assertRaises(CatalogResolutionError):
                     parse_dependency_constraint(constraint)
 
+    def test_constraint_satisfaction_normalizes_malformed_public_inputs(self):
+        from marketplace.tools.catalog_resolver import Version, satisfies_dependency_constraints
+        for version, constraints in (
+            (None, []),
+            ("1.0.0", None),
+            ("1.0.0", ">=1.0.0"),
+            ("1.0.0", 7),
+            (Version(-1, 0, 0), []),
+            (Version(True, 0, 0), []),
+            (Version(1, 0, 0, ("01",)), []),
+            (Version(1, 0, 0, ["alpha"]), []),
+        ):
+            with self.subTest(version=version, constraints=constraints):
+                with self.assertRaises(CatalogResolutionError):
+                    satisfies_dependency_constraints(version, constraints)
+
+    def test_constraint_satisfaction_accepts_valid_version_objects_and_generators(self):
+        from marketplace.tools.catalog_resolver import Version, satisfies_dependency_constraints
+        self.assertTrue(satisfies_dependency_constraints(
+            Version(1, 2, 3, ("alpha",)), (item for item in (">=1.2.3-alpha", "<2.0.0"))
+        ))
+
     def test_prerelease_sorts_before_stable(self):
         self.assertLess(parse_release_version("2.0.0-rc.1"), parse_release_version("2.0.0"))
 
