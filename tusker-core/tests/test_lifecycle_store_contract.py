@@ -67,9 +67,9 @@ class LifecycleStoreContractMixin:
         task = self.store.get(self.task_id)
         task["state"] = "failed"
         events = self.store.events(self.task_id)
-        events[0]["state"] = "failed"
+        events[0]["type"] = "task.error"
         self.assertEqual(self.store.get(self.task_id)["state"], "queued")
-        self.assertEqual(self.store.events(self.task_id)[0]["state"], "queued")
+        self.assertEqual(self.store.events(self.task_id)[0]["type"], "task.created")
 
     def test_failed_write_does_not_reserve_idempotency_key(self):
         bad_task, bad_event = self.candidate(event_id=self.event["event_id"])
