@@ -16,6 +16,7 @@ GENESIS_CHECKSUM = "0" * 64
 MAX_JOURNAL_BYTES = 4 * 1024 * 1024
 MAX_RECORD_BYTES = 64 * 1024
 MAX_RECORDS = 10_000
+SHA256_HEX_LENGTH = 64
 STATES = {"planned", "prepared", "executing", "interrupted",
           "succeeded", "failed", "cancelled"}
 TERMINAL_STATES = {"succeeded", "failed", "cancelled"}
@@ -87,6 +88,7 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
     previous = GENESIS_CHECKSUM
     previous_state: str | None = None
     operation_id: str | None = None
+    operation_idempotent: bool | None = None
     seen_sequences: set[int] = set()
 
     for index, record in enumerate(materialized, start=1):
@@ -116,13 +118,24 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         elif record["operation_id"] != operation_id:
             errors.append(f"record {index}: operation_id changed within journal")
         state = record["state"]
+        if index == 1 and state != "planned":
+            errors.append("record 1: initial state must be planned")
         if not isinstance(state, str) or state not in STATES:
             errors.append(f"record {index}: unknown state {state!r}")
         elif previous_state is not None and state not in TRANSITIONS[previous_state]:
             errors.append(f"record {index}: illegal transition {previous_state} -> {state}")
         if type(record["idempotent"]) is not bool:
             errors.append(f"record {index}: idempotent must be boolean")
-        if record["previous_checksum"] != previous:
+        elif operation_idempotent is None:
+            operation_idempotent = record["idempotent"]
+        elif record["idempotent"] is not operation_idempotent:
+            errors.append(f"record {index}: idempotent declaration changed within journal")
+        previous_checksum = record["previous_checksum"]
+        if (not isinstance(previous_checksum, str)
+                or len(previous_checksum) != SHA256_HEX_LENGTH
+                or any(char not in "0123456789abcdef" for char in previous_checksum)):
+            errors.append(f"record {index}: previous_checksum must be 64 lowercase hexadecimal characters")
+        if previous_checksum != previous:
             errors.append(f"record {index}: previous checksum does not match chain")
         try:
             actual = record_checksum(record)
@@ -130,7 +143,11 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
             errors.append(f"record {index}: {exc}")
             actual = ""
         supplied = record["checksum"]
-        if not isinstance(supplied, str) or supplied != actual:
+        if (not isinstance(supplied, str)
+                or len(supplied) != SHA256_HEX_LENGTH
+                or any(char not in "0123456789abcdef" for char in supplied)):
+            errors.append(f"record {index}: checksum must be 64 lowercase hexadecimal characters")
+        elif supplied != actual:
             errors.append(f"record {index}: checksum mismatch")
         previous = supplied if isinstance(supplied, str) else ""
         previous_state = state if isinstance(state, str) else None
