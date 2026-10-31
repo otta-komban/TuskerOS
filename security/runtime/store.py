@@ -131,9 +131,17 @@ class SecurityStore:
 
     @staticmethod
     def _time(value: datetime | None = None) -> datetime:
-        current = value or datetime.now(timezone.utc)
-        if current.tzinfo is None: raise ValueError("timezone-aware timestamp required")
-        return current.astimezone(timezone.utc)
+        current = datetime.now(timezone.utc) if value is None else value
+        if not isinstance(current, datetime) or current.tzinfo is None:
+            raise ValueError("timezone-aware timestamp required")
+        try:
+            # A tzinfo object can exist while still representing a naive datetime:
+            # Python signals that case by returning None from utcoffset().
+            if current.utcoffset() is None:
+                raise ValueError("timezone-aware timestamp required")
+            return current.astimezone(timezone.utc)
+        except Exception as exc:
+            raise ValueError("invalid timezone-aware timestamp") from exc
 
     @staticmethod
     def _iso(value: datetime) -> str:
