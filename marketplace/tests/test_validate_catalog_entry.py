@@ -118,7 +118,7 @@ class CatalogEntryValidationTests(unittest.TestCase):
         )
         for definition in url_locations:
             pattern = re.compile(definition["pattern"])
-            for value in ("https://example.invalid/a b", "https://example.invalid/\tpath"):
+            for value in ("https://example.invalid/a b", "https://example.invalid/\tpath", "https://example.invalid/a\x7fb", "https://example.invalid/a\u0085b"):
                 with self.subTest(value=value, pattern=definition["pattern"]):
                     self.assertIsNone(pattern.fullmatch(value))
             self.assertIsNotNone(pattern.fullmatch("https://example.invalid/a%20b"))
