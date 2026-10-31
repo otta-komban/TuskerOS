@@ -4,6 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
+**Latest verified head:** `e55e8a1944dc4e6e88bd496e236524530c6391c0`  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -14,7 +15,8 @@
 - Added `tools/atlas/build-image.sh`. It checks Fedora 44/x86_64 prerequisites, checks out the immutable upstream commit, verifies the three source blob IDs, resolves the manifest, builds the ISO and disk targets, writes SHA-256 checksums and build metadata, and optionally compares a second build's checksums.
 - Extended the package CSV header with exact NEVRA, repository ID/snapshot label, RPM license, source RPM and HTTPS source URL fields.
 - Hardened the resolver's production path to require all provenance fields and compare the resolved NEVRA and repository against the exact manifest pins. Existing helper tests remain compatible with their smaller fixture format.
-- Added nonzero-epoch, pin mismatch, repository mismatch, source RPM validation and source-lock structural tests.
+- Added nonzero-epoch, pin mismatch, repository mismatch, source RPM validation and source-lock structural tests.  
+- Added CI checks for JSON lock parsing and `bash -n` validation of the image build script.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 
 ## Evidence
@@ -28,7 +30,14 @@
   - `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py`
   - `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`
 - Result: **28 tests passed**, exit code 0.
-- This run preceded the additional image-source-lock tests and final CI syntax checks now in the workflow; those checks require a fresh run on the current branch head.
+- Follow-up run: [41180649544](https://github.com/otta-komban/TuskerOS/actions/runs/41180649544), commit `e55e8a1944dc4e6e88bd496e236524530c6391c0`, passed all jobs.
+- Exact follow-up commands:
+  - `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py`
+  - `python -m json.tool os/image-source.lock.json > /dev/null`
+  - `bash -n tools/atlas/build-image.sh`
+  - `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`
+- Result: **32 tests passed**, exit code 0; JSON lock validation and shell syntax validation also passed.
+- One preceding CI iteration (run `41180611540`) failed one newly added source-lock test due to an incorrect test-field lookup; the test was corrected and the next run passed.
 
 ### Image/build/runtime status
 
