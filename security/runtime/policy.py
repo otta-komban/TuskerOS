@@ -135,7 +135,7 @@ class PolicyEngine:
             resolved_modes, keys = [], []
             for item in resolved:
                 kind, rid, access = item["kind"], item["id"], item["access"]
-                if (not isinstance(kind, str) or not isinstance(rid, str) or not rid
+                if (not isinstance(kind, str) or not isinstance(rid, str) or not 1 <= len(rid) <= 1024
                     or not isinstance(access, str) or access not in _ACCESS
                     or kind not in allowed or access not in allowed[kind]):
                     return deny("POLICY_RESOURCE_RESOLUTION_MISMATCH")
