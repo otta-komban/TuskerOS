@@ -185,6 +185,7 @@ class LifecycleEngineTests(unittest.TestCase):
             ("correlation_id", "x" * 129, "invalid correlation_id"),
             ("origin", [], "invalid origin"),
             ("origin", {"kind": "untrusted"}, "invalid origin"),
+            ("origin", {"kind": []}, "invalid origin"),
         )
         original = dict(event)
         for field, malformed, message in invalid_fields:
