@@ -172,7 +172,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         invalid_names = (
             "single", "org..service", ".org.service", "org.service.",
             "org.1service", "org.service name", "org.sérvice", "org:service.name",
-            ":1", ":.42", ":1..42", "::1.42",
+            ":1", ":.42", ":1..42", "::1.42", ":abc.foo", ":_private.7",
         )
         for name in invalid_names:
             with self.subTest(name=name):
