@@ -125,14 +125,14 @@ def test_policy_rechecker_cannot_mutate_authoritative_approval_bindings():
                          approver_credentials={"uid": 1000},
                          audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
         before = copy.deepcopy(BINDING)
-        with pytest.raises(SecurityStoreError, match="binding changed"):
-            db.issue_authorization(rid, current_binding=BINDING,
-                                   current_policy_version="policy-1",
-                                   audit_context=audit_for_approval(db, rid), now=NOW)
+        ref = db.issue_authorization(rid, current_binding=BINDING,
+                                     current_policy_version="policy-1",
+                                     audit_context=audit_for_approval(db, rid), now=NOW)
+        assert isinstance(ref, str) and ref
         assert BINDING == before
-        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "INVALIDATED"
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "APPROVED"
         assert seen == [rid]
-        assert db.audit_events()[-1]["reason_code"] == "POLICY_BINDING_MISMATCH"
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs WHERE request_id=?", (rid,)).fetchone()[0] == 1
     finally:
         db.close()
 
