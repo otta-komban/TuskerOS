@@ -11,7 +11,16 @@ class TransactionStateTests(unittest.TestCase):
         self.tx = {
             "transaction_id": "txn-1", "state": "prepared",
             "plan_digest": "a" * 64, "snapshot_digest": "b" * 64,
+            "history": [], "terminal": False,
         }
+
+    def test_schema_required_lifecycle_fields_cannot_be_omitted(self):
+        for field in ("history", "terminal"):
+            with self.subTest(field=field):
+                incomplete = dict(self.tx)
+                incomplete.pop(field)
+                with self.assertRaisesRegex(TransactionStateError, "invalid shape"):
+                    transition_transaction(incomplete, "cancelled", {"reason_code": "user_requested"})
 
     def test_prepared_cannot_start_execution(self):
         with self.assertRaisesRegex(TransactionStateError, "not allowed"):
