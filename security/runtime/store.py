@@ -269,7 +269,7 @@ class SecurityStore:
         except (TypeError, ValueError, OverflowError) as exc:
             raise SecurityStoreError("approval timestamps must be timezone-aware") from exc
         if expiry <= current: raise SecurityStoreError("approval expiry must be in the future")
-        op = r"[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+"
+        op = r"[a-z][a-z0-9]*(\.[a-z][a-z0-9_-]*)+"
         if (not isinstance(action_id, str) or len(action_id) > 160 or not re.fullmatch(op, action_id)
             or not isinstance(broker_operation_id, str) or len(broker_operation_id) > 160
             or not re.fullmatch(op, broker_operation_id)):
