@@ -189,6 +189,9 @@ class LifecycleEngineTests(unittest.TestCase):
             ("origin", [], "invalid origin"),
             ("origin", {"kind": "untrusted"}, "invalid origin"),
             ("origin", {"kind": []}, "invalid origin"),
+            ("origin", {"kind": "local", "display_label": []}, "invalid origin"),
+            ("origin", {"kind": "local", "display_label": "x" * 81}, "invalid origin"),
+            ("origin", {"kind": "local", "unexpected": "value"}, "invalid origin"),
         )
         original = dict(event)
         for field, malformed, message in invalid_fields:
