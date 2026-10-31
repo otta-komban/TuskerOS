@@ -106,3 +106,12 @@ The transaction-state JSON Schema now constrains each history item to one of the
 Data-driven transition vectors live in `marketplace/tests/fixtures/transaction-state-vectors.json`. They cover valid commit, successful rollback, stale-snapshot termination, cancellation and rejection paths, plus fail-closed cases for execution bypass, snapshot mismatch, unexpected evidence fields and transitions after terminal state. `marketplace/tests/test_transaction_state_vectors.py` runs those vectors against the pure Python validator with `unittest`.
 
 The vectors are structural test inputs only. Their approval/lock/result references are placeholders and do not represent authenticated approvals, real locks or package-manager outcomes. Test files are committed; execution must be performed in a working checkout before release.
+
+
+The Python `build_audit_event(...)` builder mirrors the audit-event schema's
+field-level constraints: plan and snapshot digests must be lowercase SHA-256,
+timestamps must be valid RFC 3339 date-times with explicit timezones, numeric
+counters must be non-negative integers (booleans are rejected), reason/error
+codes are bounded strings, and rollback status must use the schema enum. This
+is structural consistency only; it does not authenticate the actor, verify
+authorization, or persist a durable audit record.
