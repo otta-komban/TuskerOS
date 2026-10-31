@@ -414,8 +414,25 @@ class SecurityStore:
             return ConsumeResult("AUTHORITY_UNAVAILABLE")
 
     def audit_events(self) -> list[dict[str, Any]]:
-        return [json.loads(bytes(row["event_json"]).decode("utf-8"))
-                for row in self._db.execute("SELECT event_json FROM audit_events ORDER BY seq")]
+        """Return audit events only after verifying them in the same read snapshot."""
+        if self._db.in_transaction:
+            raise SecurityStoreError("cannot read audit events during an active transaction")
+        try:
+            self._db.execute("BEGIN")
+            if not self.verify_audit_chain():
+                raise SecurityStoreError("cannot read an invalid audit chain")
+            events = [json.loads(bytes(row["event_json"]).decode("utf-8"))
+                      for row in self._db.execute("SELECT event_json FROM audit_events ORDER BY seq")]
+            self._db.execute("COMMIT")
+            return events
+        except SecurityStoreError:
+            if self._db.in_transaction:
+                self._db.execute("ROLLBACK")
+            raise
+        except Exception as exc:
+            if self._db.in_transaction:
+                self._db.execute("ROLLBACK")
+            raise SecurityStoreError("audit event retrieval failed closed") from exc
 
     def audit_checkpoint(self) -> dict[str, Any]:
         """Create an externally storable authenticated chain checkpoint.

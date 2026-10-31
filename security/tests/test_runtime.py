@@ -663,3 +663,36 @@ def test_audit_checkpoint_rejects_existing_transaction_without_committing_it():
         if db._db.in_transaction:
             db._db.execute("ROLLBACK")
         db.close()
+
+
+def test_audit_events_verifies_chain_before_returning_events():
+    db = store()
+    try:
+        db._audit(audit())
+        events = db.audit_events()
+        assert len(events) == 1
+        assert events[0]["event_type"] == "requested"
+
+        # Event export is an integrity boundary: do not return bytes whose
+        # authenticated chain no longer verifies.
+        db._db.execute("UPDATE audit_events SET event_json=? WHERE seq=1", (b'{"tampered":true}',))
+        with pytest.raises(SecurityStoreError, match="invalid audit chain"):
+            db.audit_events()
+    finally:
+        db.close()
+
+
+def test_audit_events_rejects_existing_transaction_without_ending_it():
+    db = store()
+    try:
+        db._db.execute("BEGIN")
+        db._audit(audit())
+        with pytest.raises(SecurityStoreError, match="active transaction"):
+            db.audit_events()
+        assert db._db.in_transaction
+        db._db.execute("ROLLBACK")
+        assert db.audit_events() == []
+    finally:
+        if db._db.in_transaction:
+            db._db.execute("ROLLBACK")
+        db.close()
