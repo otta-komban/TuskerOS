@@ -182,6 +182,34 @@ class CatalogResolverTests(unittest.TestCase):
         )
         self.assertEqual(plan["releases"]["org.tuskeros.libs.shared"]["release"]["version"], "1.8.0")
 
+    def test_declared_package_conflict_blocks_resolved_plan(self):
+        app = self.candidate("1.0.0")
+        app["package"]["id"] = "org.tuskeros.apps.demo"
+        app["package"]["conflicts"] = ["org.tuskeros.libs.core"]
+        lib = self.candidate("1.0.0")
+        lib["package"]["id"] = "org.tuskeros.libs.core"
+        with self.assertRaisesRegex(CatalogResolutionError, "package conflict"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [app, lib],
+                {"org.tuskeros.apps.demo": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []},
+                "0.5.0", "1.2.0",
+            )
+
+    def test_conflict_declared_by_either_package_is_enforced(self):
+        root = self.candidate("1.0.0")
+        root["package"]["id"] = "org.tuskeros.apps.root"
+        dependency = self.candidate("1.0.0")
+        dependency["package"]["id"] = "org.tuskeros.libs.core"
+        dependency["package"]["conflicts"] = ["org.tuskeros.apps.root"]
+        with self.assertRaisesRegex(CatalogResolutionError, "package conflict"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.root"], [root, dependency],
+                {"org.tuskeros.apps.root": ["org.tuskeros.libs.core"],
+                 "org.tuskeros.libs.core": []},
+                "0.5.0", "1.2.0",
+            )
+
     def test_malformed_dependency_constraint_is_rejected(self):
         with self.assertRaisesRegex(CatalogResolutionError, "invalid dependency version constraint"):
             resolve_catalog_plan(
