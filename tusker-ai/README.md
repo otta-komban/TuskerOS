@@ -6,10 +6,22 @@ This package is optional and local-first. The first provider adapter targets an 
 
 ```sh
 cd tusker-ai
-PYTHONPATH=. python -m unittest discover -s tests -v
+python -m pip install -r requirements-test.txt
+PYTHONPATH=. python -m pytest -q tests
 ```
 
 The suite uses deterministic provider tests, a local HTTP protocol fixture, and mocked download byte streams. It validates request guards, stream invariants, trace redaction, download verification, cancellation cleanup, path policy, and atomic active-pointer replacement. It does **not** prove live Ollama compatibility, hardware resource enforcement, or crash-recovery behavior.
+
+## Optional live Ollama conformance
+
+With a local Ollama service and a preinstalled test model, run:
+
+```sh
+cd tusker-ai
+TUSKER_OLLAMA_MODEL=MODEL_ID PYTHONPATH=. python -m pytest -q tests/test_ollama_live.py -v
+```
+
+The optional live tests exercise real chat streaming and cancellation isolation between two requests. They are skipped when `TUSKER_OLLAMA_MODEL` is not set. A skip is not provider acceptance.
 
 ## Live Ollama smoke / benchmark
 
