@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
-from desktop.config.settings import DEFAULT_SETTINGS, load_settings, save_settings, validate_settings, _read_settings_document
+from desktop.config.settings import DEFAULT_SETTINGS, save_settings, validate_settings, _read_settings_document
 from desktop.config.migrations import migrate_settings
 
 
@@ -23,30 +23,35 @@ class SettingsController:
     def __init__(self, path: Path):
         self.path = Path(path)
         self.load_errors: list[str] = []
-        self._settings, self.load_errors = load_settings(self.path)
         try:
+            # Parse once so validation and migration operate on the same opened
+            # no-follow, bounded file snapshot.
             raw = _read_settings_document(self.path)
         except FileNotFoundError:
-            return
-        except (OSError, UnicodeError, ValueError) as exc:
-            self.load_errors = [f"cannot migrate settings: {exc}"]
             self._settings = deepcopy(DEFAULT_SETTINGS)
             return
+        except (OSError, UnicodeError, ValueError) as exc:
+            self.load_errors = [f"cannot load settings: {exc}"]
+            self._settings = deepcopy(DEFAULT_SETTINGS)
+            return
+
         migrated, errors, changed = migrate_settings(raw)
         errors.extend(validate_settings(migrated) if not errors else [])
         if errors:
             self.load_errors = errors
             self._settings = deepcopy(DEFAULT_SETTINGS)
-        elif changed:
-            candidate = _merge(DEFAULT_SETTINGS, migrated)
+            return
+
+        candidate = _merge(DEFAULT_SETTINGS, migrated)
+        if changed:
             try:
                 save_settings(self.path, candidate)
             except (OSError, ValueError) as exc:
                 self.load_errors = [f"cannot persist settings migration: {exc}"]
                 self._settings = deepcopy(DEFAULT_SETTINGS)
-            else:
-                self._settings = candidate
-                self.load_errors = []
+                return
+
+        self._settings = candidate
 
     def read(self) -> dict[str, Any]:
         return deepcopy(self._settings)
