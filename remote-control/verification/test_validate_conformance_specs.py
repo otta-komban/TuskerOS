@@ -288,6 +288,31 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("SESS-C01", message)
         self.assertIn("NET-C01", message)
 
+    def test_repository_validation_aggregates_invalid_utf8_and_missing_specs(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            pair_path = root / validator.SPECS["PAIR"][0]
+            sess_path = root / validator.SPECS["SESS"][0]
+            pair_path.parent.mkdir(parents=True, exist_ok=True)
+            sess_path.parent.mkdir(parents=True, exist_ok=True)
+            pair_path.write_bytes(bytes([255, 254]))
+            sess_path.write_text("", encoding="utf-8")
+
+            with self.assertRaises(validator.SpecError) as raised:
+                validator.validate_repository(root)
+
+        message = str(raised.exception)
+        self.assertIn("PAIR:", message)
+        self.assertIn("utf-8", message.lower())
+        self.assertIn("SESS:", message)
+        self.assertIn("SESS-C01", message)
+        self.assertIn("NET:", message)
+        self.assertIn("specification not found", message)
+        for prefix in ("PAIR", "SESS", "NET"):
+            self.assertNotIn(prefix + ": " + prefix + ":", message)
+
     def test_missing_specification_fails_repository_validation(self):
         import tempfile
 
