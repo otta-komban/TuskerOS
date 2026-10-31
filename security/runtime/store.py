@@ -358,15 +358,46 @@ class SecurityStore:
         return [json.loads(bytes(row["event_json"]).decode("utf-8"))
                 for row in self._db.execute("SELECT event_json FROM audit_events ORDER BY seq")]
 
-    def verify_audit_chain(self) -> bool:
+    def audit_checkpoint(self) -> dict[str, Any]:
+        """Create an externally storable authenticated chain checkpoint.
+
+        Store the returned object outside this database (e.g. remote append-only
+        storage). A local-only checkpoint cannot detect database rollback.
+        """
+        row = self._db.execute("SELECT seq,event_hash FROM audit_events ORDER BY seq DESC LIMIT 1").fetchone()
+        seq, event_hash = (row["seq"], row["event_hash"]) if row else (0, "0" * 64)
+        payload = {"schema_version": "1", "sequence": seq, "event_hash": event_hash}
+        mac = hmac.new(self._audit_key, b"TUSKER-AUDIT-CHECKPOINT-v1\\0" + canonical_bytes(payload), hashlib.sha256).hexdigest()
+        return {**payload, "mac": mac}
+
+    def verify_audit_chain(self, checkpoint: Mapping[str, Any] | None = None) -> bool:
         previous = "0" * 64
+        checkpoint_seq = 0
+        checkpoint_hash = "0" * 64
         try:
-            for row in self._db.execute("SELECT event_json,previous_hash,event_hash FROM audit_events ORDER BY seq"):
+            if checkpoint is not None:
+                if set(checkpoint) != {"schema_version", "sequence", "event_hash", "mac"}:
+                    return False
+                if checkpoint["schema_version"] != "1" or not isinstance(checkpoint["sequence"], int) or checkpoint["sequence"] < 0:
+                    return False
+                if not isinstance(checkpoint["event_hash"], str) or not re.fullmatch(r"[0-9a-f]{64}", checkpoint["event_hash"]):
+                    return False
+                payload = {key: checkpoint[key] for key in ("schema_version", "sequence", "event_hash")}
+                expected_mac = hmac.new(self._audit_key, b"TUSKER-AUDIT-CHECKPOINT-v1\\0" + canonical_bytes(payload), hashlib.sha256).hexdigest()
+                if not isinstance(checkpoint["mac"], str) or not hmac.compare_digest(checkpoint["mac"], expected_mac):
+                    return False
+                checkpoint_seq, checkpoint_hash = checkpoint["sequence"], checkpoint["event_hash"]
+            seen_checkpoint = checkpoint_seq == 0
+            for row in self._db.execute("SELECT seq,event_json,previous_hash,event_hash FROM audit_events ORDER BY seq"):
                 payload = bytes(row["event_json"])
                 expected = hmac.new(self._audit_key, bytes.fromhex(previous) + payload, hashlib.sha256).hexdigest()
                 if row["previous_hash"] != previous or not hmac.compare_digest(row["event_hash"], expected):
                     return False
                 previous = row["event_hash"]
-            return True
-        except (ValueError, TypeError):
+                if row["seq"] == checkpoint_seq:
+                    if not hmac.compare_digest(row["event_hash"], checkpoint_hash):
+                        return False
+                    seen_checkpoint = True
+            return seen_checkpoint
+        except (ValueError, TypeError, KeyError):
             return False

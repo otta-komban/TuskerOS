@@ -160,6 +160,20 @@ def test_two_concurrent_consumers_have_one_winner(tmp_path):
     with ThreadPoolExecutor(max_workers=2) as pool: outcomes = list(pool.map(attempt, range(2)))
     assert outcomes.count("CONSUMED") == 1 and outcomes.count("ALREADY_CONSUMED") == 1
 
+
+def test_external_audit_checkpoint_detects_rollback_and_invalid_checkpoint():
+    db = store()
+    try:
+        db._audit(audit())
+        checkpoint = db.audit_checkpoint()
+        db._audit(audit())
+        assert db.verify_audit_chain(checkpoint)
+        tampered = dict(checkpoint); tampered["sequence"] = 999
+        assert not db.verify_audit_chain(tampered)
+        db._db.execute("DELETE FROM audit_events WHERE seq > 1")
+        assert not db.verify_audit_chain(checkpoint)
+    finally: db.close()
+
 def test_broker_gate_returns_a_narrow_grant_only_after_consume():
     from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
     db = store()
