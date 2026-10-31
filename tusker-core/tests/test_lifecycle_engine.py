@@ -1,6 +1,8 @@
 import sys
 import unittest
 import threading
+import json
+from jsonschema import Draft202012Validator, FormatChecker
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +14,25 @@ from adapters.lifecycle import (
 
 
 class LifecycleEngineTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        schema_dir = ROOT / "schemas"
+        with (schema_dir / "task.schema.json").open(encoding="utf-8") as stream:
+            task_schema = json.load(stream)
+        with (schema_dir / "task-event.schema.json").open(encoding="utf-8") as stream:
+            event_schema = json.load(stream)
+        checker = FormatChecker()
+        cls.task_validator = Draft202012Validator(task_schema, format_checker=checker)
+        cls.event_validator = Draft202012Validator(event_schema, format_checker=checker)
+
+    def assert_contract_valid(self, task, events):
+        task_errors = list(self.task_validator.iter_errors(task))
+        self.assertEqual(task_errors, [], "; ".join(error.message for error in task_errors))
+        for event in events:
+            with self.subTest(event_type=event["type"], sequence=event["sequence"]):
+                errors = list(self.event_validator.iter_errors(event))
+                self.assertEqual(errors, [], "; ".join(error.message for error in errors))
+
     def setUp(self):
         self.store = InMemoryLifecycleStore()
         self.engine = LifecycleEngine(self.store)
