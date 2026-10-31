@@ -43,11 +43,11 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
     async def test_get_bus_id_authorizes_canonical_operation(self):
         gate = AsyncMock(return_value=True)
         adapter = ReadOnlySystemBusAdapter(gate)
-        adapter._call = AsyncMock(return_value="bus-id-123")
+        adapter._call = AsyncMock(return_value="0123456789abcdef0123456789abcdef")
 
         result = await adapter.get_bus_id()
 
-        self.assertEqual(result, "bus-id-123")
+        self.assertEqual(result, "0123456789abcdef0123456789abcdef")
         gate.assert_awaited_once_with("system.bus.id.read")
         adapter._call.assert_awaited_once_with("GetId")
 
@@ -96,6 +96,13 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_bus_id_is_rejected(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         adapter._call = AsyncMock(return_value=["not-a-string"])
+
+        with self.assertRaises(AdapterError):
+            await adapter.get_bus_id()
+
+    async def test_bus_id_with_non_hex_characters_is_rejected(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value="g" * 32)
 
         with self.assertRaises(AdapterError):
             await adapter.get_bus_id()
@@ -181,7 +188,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
             await ReadOnlySystemBusAdapter._read_bounded(stream, 128)
 
     async def test_subprocess_uses_only_fixed_system_bus_arguments(self):
-        process = FakeProcess(stdout=b'{"type":"s","data":["bus-123"]}')
+        process = FakeProcess(stdout=b'{"type":"s","data":["0123456789abcdef0123456789abcdef"]}')
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
             "adapters.dbus_readonly.asyncio.create_subprocess_exec",
@@ -189,7 +196,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         ) as spawn:
             result = await adapter._call("GetId")
 
-        self.assertEqual(result, "bus-123")
+        self.assertEqual(result, "0123456789abcdef0123456789abcdef")
         self.assertEqual(
             spawn.await_args.args,
             (
@@ -288,7 +295,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_subprocess_is_killed_on_stderr_overflow(self):
         process = FakeProcess(
-            stdout=b'{"type":"s","data":["bus-123"]}',
+            stdout=b'{"type":"s","data":["0123456789abcdef0123456789abcdef"]}',
             stderr=b"x" * 129,
             returncode=None,
         )
@@ -322,7 +329,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_duplicate_json_response_keys_are_rejected(self):
         process = FakeProcess(
-            stdout=b'{"type":"s","type":"as","data":["bus-123"]}'
+            stdout=b'{"type":"s","type":"as","data":["0123456789abcdef0123456789abcdef"]}'
         )
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
@@ -348,7 +355,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unexpected_json_response_fields_are_rejected(self):
         process = FakeProcess(
-            stdout=b'{"type":"s","data":["bus-123"],"metadata":{"trusted":true}}'
+            stdout=b'{"type":"s","data":["0123456789abcdef0123456789abcdef"],"metadata":{"trusted":true}}'
         )
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
