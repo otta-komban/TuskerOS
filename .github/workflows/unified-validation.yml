@@ -59,6 +59,17 @@ jobs:
       - run: python -m pip install -r system-integration/requirements-test.txt
       - run: python -m unittest discover -s system-integration/tests -v
 
+  remote-control-conformance:
+    name: Remote-control conformance specifications
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s remote-control/verification -p 'test_*.py' -v
+      - run: python remote-control/verification/validate_conformance_specs.py --json
+
   ai:
     name: AI model and inference contracts
     runs-on: ubuntu-latest
