@@ -73,6 +73,41 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaises(IdempotencyConflict):
             self.engine.transition("00000000-0000-4000-8000-000000000001", "planning", expected_version=1, idempotency_key="plan-1", event_type="different")
 
+    def test_idempotency_fingerprint_covers_semantic_request_data(self):
+        task_id = self.task["task_id"]
+        first = self.engine.transition(
+            task_id, "planning", expected_version=1,
+            idempotency_key="semantic-1", details={"reason": "initial"},
+        )
+        replay = self.engine.transition(
+            task_id, "planning", expected_version=1,
+            idempotency_key="semantic-1", details={"reason": "initial"},
+        )
+        self.assertEqual(first, replay)
+        with self.assertRaises(IdempotencyConflict):
+            self.engine.transition(
+                task_id, "planning", expected_version=1,
+                idempotency_key="semantic-1", details={"reason": "different"},
+            )
+        self.assertEqual(len(self.store.events(task_id)), 2)
+
+    def test_cancellation_idempotency_includes_reason(self):
+        task_id = self.task["task_id"]
+        self.move("planning")
+        self.move("running")
+        first = self.engine.request_cancellation(
+            task_id, expected_version=3, reason="user_requested"
+        )
+        replay = self.engine.request_cancellation(
+            task_id, expected_version=3, reason="user_requested"
+        )
+        self.assertEqual(first, replay)
+        with self.assertRaises(IdempotencyConflict):
+            self.engine.request_cancellation(
+                task_id, expected_version=3, reason="shutdown"
+            )
+        self.assertEqual(len(self.store.events(task_id)), 4)
+
     def test_cancellation_is_request_then_confirmed_stop(self):
         self.move("planning")
         self.move("running")

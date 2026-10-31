@@ -43,3 +43,16 @@ across process restart.
 This is an internal provisional implementation. Durable crash recovery, schema
 consumer agreement, AEGIS authorization dispatch gates, NEXUS execution wiring,
 and persistent event delivery remain separate integration work.
+
+## Idempotency request identity
+
+Idempotency keys are scoped to a task and paired with a canonical JSON fingerprint of
+the operation's semantic inputs. For state transitions this includes the event type,
+target state, verification and cancellation-stop flags, side-effect declaration, and
+details payload. Cancellation requests include their reason. Repeating the same key
+with the same fingerprint returns the original result; reusing it with different
+semantic inputs raises an idempotency conflict. Event IDs are intentionally excluded
+from the fingerprint so a transport retry can replay the original operation.
+
+A durable store adapter must atomically persist the fingerprint with the task snapshot
+and event, and must check an existing key before checking the expected task version.

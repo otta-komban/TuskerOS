@@ -7,6 +7,7 @@ must implement the same atomic append/CAS contract as InMemoryLifecycleStore.
 from __future__ import annotations
 
 from copy import deepcopy
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from threading import RLock
@@ -47,7 +48,7 @@ class IdempotencyConflict(LifecycleError):
 
 class LifecycleStore(Protocol):
     def create(self, task: Mapping[str, Any], event: Mapping[str, Any]) -> dict[str, Any]: ...
-    def transition(self, task_id: str, expected_version: int, task: Mapping[str, Any], event: Mapping[str, Any], idempotency_key: str | None) -> dict[str, Any]: ...
+    def transition(self, task_id: str, expected_version: int, task: Mapping[str, Any], event: Mapping[str, Any], idempotency_key: str | None, idempotency_fingerprint: str | None) -> dict[str, Any]: ...
     def get(self, task_id: str) -> dict[str, Any] | None: ...
     def events(self, task_id: str) -> list[dict[str, Any]]: ...
     def idempotent_result(self, task_id: str, key: str, fingerprint: str) -> dict[str, Any] | None: ...
@@ -74,7 +75,7 @@ class InMemoryLifecycleStore:
             self._event_ids[task_id] = {event_id}
             return deepcopy(self._tasks[task_id])
 
-    def transition(self, task_id: str, expected_version: int, task: Mapping[str, Any], event: Mapping[str, Any], idempotency_key: str | None) -> dict[str, Any]:
+    def transition(self, task_id: str, expected_version: int, task: Mapping[str, Any], event: Mapping[str, Any], idempotency_key: str | None, idempotency_fingerprint: str | None) -> dict[str, Any]:
         with self._lock:
             current = self._tasks.get(task_id)
             if current is None:
@@ -83,7 +84,7 @@ class InMemoryLifecycleStore:
                 prior = self._idempotency.get((task_id, idempotency_key))
                 if prior:
                     prior_fingerprint, prior_task = prior
-                    if prior_fingerprint != str(event["type"]) + ":" + str(event["state"]):
+                    if prior_fingerprint != idempotency_fingerprint:
                         raise IdempotencyConflict("idempotency key reused for a different transition")
                     return deepcopy(prior_task)
             if current["version"] != expected_version:
@@ -97,7 +98,7 @@ class InMemoryLifecycleStore:
             self._event_ids[task_id].add(event_id)
             if idempotency_key:
                 self._idempotency[(task_id, idempotency_key)] = (
-                    str(event["type"]) + ":" + str(event["state"]), deepcopy(dict(task))
+                    str(idempotency_fingerprint), deepcopy(dict(task))
                 )
             return deepcopy(self._tasks[task_id])
 
@@ -156,6 +157,14 @@ class LifecycleEngine:
         }
         return self.store.create(task, self._event(task, "task.created"))
 
+    @staticmethod
+    def _fingerprint(payload: Mapping[str, Any]) -> str:
+        try:
+            return json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                              ensure_ascii=False, allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            raise LifecycleError("idempotent request data must be JSON-serializable") from exc
+
     def transition(self, task_id: str, target: str, *, expected_version: int,
                    event_type: str = "task.state_changed", idempotency_key: str | None = None,
                    event_id: str | None = None, verified: bool = False,
@@ -164,7 +173,11 @@ class LifecycleEngine:
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
-        fingerprint = event_type + ":" + target
+        fingerprint = self._fingerprint({
+            "operation": "transition", "event_type": event_type, "target": target,
+            "verified": verified, "operation_stopped": operation_stopped,
+            "side_effects": side_effects, "details": dict(details or {}),
+        }) if idempotency_key else None
         # An exact replay is returned even though its original write advanced the
         # version. Check the idempotency record before rejecting stale retries.
         if idempotency_key:
@@ -201,11 +214,18 @@ class LifecycleEngine:
         next_task.update({"state": target, "updated_at": self._now(), "version": expected_version + 1})
         existing_events = self.store.events(task_id)
         event = self._event(next_task, event_type, event_id, sequence=len(existing_events) + 1)
-        return self.store.transition(task_id, expected_version, next_task, event, idempotency_key)
+        return self.store.transition(task_id, expected_version, next_task, event, idempotency_key, fingerprint)
 
     def request_cancellation(self, task_id: str, *, expected_version: int, reason: str = "user_requested") -> dict[str, Any]:
         if reason not in {"user_requested", "policy_requested", "shutdown", "superseded"}:
             raise LifecycleError("unsupported cancellation reason")
+        key = f"cancel:{task_id}:{expected_version}"
+        fingerprint = self._fingerprint({
+            "operation": "request_cancellation", "reason": reason,
+        })
+        prior = self.store.idempotent_result(task_id, key, fingerprint)
+        if prior is not None:
+            return prior
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
@@ -217,7 +237,7 @@ class LifecycleEngine:
         next_task.update({"updated_at": self._now(), "version": expected_version + 1})
         events = self.store.events(task_id)
         event = self._event(next_task, "task.cancel_requested", sequence=len(events) + 1)
-        return self.store.transition(task_id, expected_version, next_task, event, f"cancel:{task_id}:{expected_version}")
+        return self.store.transition(task_id, expected_version, next_task, event, key, fingerprint)
 
     def confirm_cancellation(self, task_id: str, *, expected_version: int, operation_stopped: bool) -> dict[str, Any]:
         if not operation_stopped:
