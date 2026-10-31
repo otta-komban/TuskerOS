@@ -132,14 +132,14 @@ def load_settings(path: Path) -> tuple[dict[str, Any], list[str]]:
     return _merge(DEFAULT_SETTINGS, raw), []
 
 
-def save_settings(path: Path, value: Any) -> None:
-    """Validate and atomically persist a complete effective configuration, mode 0600."""
+def save_settings(path: Path, value: Any, *, replace_symlink: bool = False) -> None:
+    """Validate and atomically persist settings; recovery may replace the final symlink entry."""
     errors = validate_settings(value)
     if errors:
         raise ValueError("; ".join(errors))
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_symlink():
+    if path.is_symlink() and not replace_symlink:
         raise ValueError("refusing to replace a symlink settings file")
     payload = json.dumps(_merge(DEFAULT_SETTINGS, value), indent=2, sort_keys=True) + "\n"
     if len(payload.encode("utf-8")) > MAX_SETTINGS_BYTES:
@@ -152,7 +152,7 @@ def save_settings(path: Path, value: Any) -> None:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
-        if path.is_symlink():
+        if path.is_symlink() and not replace_symlink:
             raise ValueError("refusing to replace a symlink settings file")
         os.replace(temporary, path)
         _fsync_directory(path.parent)

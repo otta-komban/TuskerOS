@@ -69,7 +69,8 @@ class SettingsController:
 
     def reset(self) -> dict[str, Any]:
         candidate = deepcopy(DEFAULT_SETTINGS)
-        save_settings(self.path, candidate)
+        # Explicit recovery atomically replaces the final symlink entry; os.replace never follows its target.
+        save_settings(self.path, candidate, replace_symlink=True)
         self._settings = candidate
         self.load_errors = []
         return self.read()

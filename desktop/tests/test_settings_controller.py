@@ -49,6 +49,26 @@ class SettingsControllerTests(unittest.TestCase):
         self.path.symlink_to(target)
         controller=SettingsController(self.path)
         self.assertTrue(controller.load_errors); self.assertEqual(target.read_text(),'{"panel":{"icon_size":72}}')
+    def test_explicit_reset_recovers_valid_and_broken_symlinks(self):
+        target=Path(self.tmp.name)/"outside.json"
+        original='{"panel":{"icon_size":72}}'
+        target.write_text(original)
+        self.path.symlink_to(target)
+        controller=SettingsController(self.path)
+        self.assertTrue(controller.load_errors)
+        self.assertEqual(controller.reset(),DEFAULT_SETTINGS)
+        self.assertFalse(self.path.is_symlink())
+        self.assertEqual(target.read_text(),original)
+        self.assertEqual(json.loads(self.path.read_text()),DEFAULT_SETTINGS)
+
+        self.path.unlink()
+        self.path.symlink_to(Path(self.tmp.name)/"missing-target.json")
+        broken=SettingsController(self.path)
+        self.assertTrue(broken.load_errors)
+        self.assertEqual(broken.reset(),DEFAULT_SETTINGS)
+        self.assertFalse(self.path.is_symlink())
+        self.assertEqual(json.loads(self.path.read_text()),DEFAULT_SETTINGS)
+
     def test_invalid_existing_file_requires_explicit_reset_before_update(self):
         original='{"panel":{"edge":"unsafe"}}'; self.path.write_text(original)
         controller=SettingsController(self.path)
