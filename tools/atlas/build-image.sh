@@ -142,7 +142,12 @@ metadata = {
     "upstream_commit": lock["source"]["commit"],
     "package_manifest_sha256": resolution["manifest_sha256"],
     "resolved_packages": resolution["packages"],
-    "reproducibility_check": "passed" if repro == "1" else "not_tested",
+    "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
+    "reproducible_build_claim": False,
+    "reproducibility_limitations": [
+        "repository metadata snapshots and repomd.xml digests are not yet locked and verified",
+        "RPM payload checksums are not yet recorded in the package lock"
+    ],
     "artifact_checksums": "SHA256SUMS"
 }
 Path(output_path).write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
