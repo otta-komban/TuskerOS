@@ -367,10 +367,9 @@ class LocalSnapshotRepositoryTests(unittest.TestCase):
             (repo / "repodata").mkdir(parents=True)
             (repo / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
             args = RESOLVER.snapshot_repo_args(root, {"fedora"}, key)
-            self.assertEqual(len(args), 5)
+            self.assertEqual(len(args), 4)
             self.assertTrue(args[0].startswith("--repofrompath=fedora,file://"))
             self.assertIn("--setopt=fedora.gpgcheck=1", args)
-            self.assertIn("--setopt=fedora.repo_gpgcheck=1", args)
             self.assertIn(f"--setopt=fedora.gpgkey={key.as_uri()}", args)
             self.assertIn("--repo=fedora", args)
 
