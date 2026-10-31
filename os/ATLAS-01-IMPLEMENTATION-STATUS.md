@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `9cc6ebcd9567b6d1cb7f198bf9f45d7f442da5f4` (ATLAS CI passed 70 tests; branch 76 commits ahead / 0 behind `main`)  
+**Latest code/test evidence head:** `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc` (ATLAS CI passed 70 tests; unified validation passed all 8 jobs; branch 79 commits ahead / 0 behind `main`)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -23,7 +23,7 @@
 - The resolver preserves an empty fifth query field and normalizes a missing upstream URL to the explicit `NOASSERTION` sentinel rather than dropping the trailing tab or silently inventing a URL.
 - Added offline `--validate-only` mode: CI validates the real manifest header and provenance columns even while it has zero rows; normal resolution still fails closed on an empty package list.
 - Unit tests use mocked DNF5 output on Ubuntu, and a separate Fedora 44 container smoke now validates the real DNF5 queryformat and metadata fields. The production resolver still has not processed an owner-approved non-empty manifest.
-- Changed build metadata so a matching second build is reported as `repeat_build_checksum_comparison: passed`; `reproducible_build_claim` remains `false` until immutable repository metadata and RPM payload checksums are locked.
+- Changed build metadata so a matching second build is reported as `repeat_build_checksum_comparison: passed`; `reproducible_build_claim` remains `false` until KIWI/DNF consume a frozen repository snapshot and RPM payload checksums are locked.
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 - Added `os/repository-snapshot.lock.json` and `tools/atlas/verify-repository-snapshot.py` to capture and preflight-check Fedora 44 `repomd.xml` plus primary metadata SHA-256 identities. The verifier rejects digest drift, malformed/unsafe metadata paths, non-HTTPS URLs and repository-origin escapes.
 - Added package-manifest snapshot binding: every build package row must reference the exact `snapshot_id` recorded for its repository in the lock.
