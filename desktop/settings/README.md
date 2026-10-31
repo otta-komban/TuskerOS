@@ -38,6 +38,9 @@ Controls have accessible names, keyboard operation and system palette colors.
 Save failures preserve the last persisted settings and are announced in an
 assertive accessibility live region. If existing settings are invalid,
 ordinary edits are blocked until the user explicitly confirms Restore defaults.
+If that reset write fails, the UI reports failure, the source file remains
+unchanged and the recovery lock stays active; a successful reset is required
+before preferences can be edited again.
 
 The offscreen test is not a replacement for real Plasma session, keyboard
 navigation or screen-reader acceptance. Those checks still require the
