@@ -90,15 +90,20 @@ def validate_spec(markdown: str, prefix: str, expected_count: int) -> list[str]:
     """Validate uniqueness, contiguous numbering, and complete assertions."""
     cases = parse_case_rows(markdown, prefix)
     ids = [case[0] for case in cases]
-    seen: set[str] = set()
-    duplicates_set: set[str] = set()
-    for case_id in ids:
-        if case_id in seen:
-            duplicates_set.add(case_id)
-        seen.add(case_id)
-    duplicates = sorted(duplicates_set)
+    lines_by_id: dict[str, list[int]] = {}
+    for line_number, line in enumerate(markdown.splitlines(), 1):
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = split_table_cells(line)
+        if cells and CASE_ID.fullmatch(cells[0]) and cells[0].startswith(prefix + "-"):
+            lines_by_id.setdefault(cells[0], []).append(line_number)
+    duplicates = sorted(case_id for case_id, lines in lines_by_id.items() if len(lines) > 1)
     if duplicates:
-        raise SpecError(f"{prefix}: duplicate case IDs: {', '.join(duplicates)}")
+        details = [
+            f"{case_id} (lines {', '.join(str(line) for line in lines_by_id[case_id])})"
+            for case_id in duplicates
+        ]
+        raise SpecError(f"{prefix}: duplicate case IDs: {', '.join(details)}")
     expected = [f"{prefix}-C{number:02d}" for number in range(1, expected_count + 1)]
     missing = [case_id for case_id in expected if case_id not in ids]
     unexpected = [case_id for case_id in ids if case_id not in expected]
