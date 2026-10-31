@@ -224,6 +224,10 @@ class SecurityStore:
     def decide(self, request_id: str, *, approve: bool, current_binding: Mapping[str, Any],
                approver_credentials: Any, audit_context: Mapping[str, Any], now: datetime | None = None) -> str:
         current = self._time(now)
+        # A decision is a typed security input, not a truthiness test: reject
+        # integers, strings and other coercible values before authentication
+        # or any approval-state transition.
+        if type(approve) is not bool: return "INVALID_DECISION"
         if self._approver_authenticator is None: return "CALLER_UNAUTHORIZED"
         try:
             if not self._approver_authenticator(approver_credentials, request_id): return "CALLER_UNAUTHORIZED"
