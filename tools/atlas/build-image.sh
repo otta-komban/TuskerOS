@@ -87,7 +87,7 @@ done
 
 # Verify immutable repomd.xml and primary metadata bytes before package resolution.
 # An empty lock intentionally fails production verification until approved repo snapshots are captured.
-python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK"
+python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"
 
 # The resolver is read-only and fails closed on an empty manifest or repository failure.
 python3 "$RESOLVER" --manifest "$MANIFEST" --output "$BUILD_ROOT/package-resolution.json"
@@ -127,7 +127,7 @@ if [[ "$REPRO_CHECK" == 1 ]]; then
 fi
 
 cp "$RUN_DIR/first/SHA256SUMS" "$OUTPUT_ROOT/SHA256SUMS"
-python3 - "$LOCK" "$BUILD_ROOT/package-resolution.json" "$OUTPUT_ROOT/build-metadata.json" "$ACTUAL_COMMIT" "$KIWI_VERSION" "$DNF_VERSION" "$SOURCE_DATE_EPOCH" "$RUN_ID" "$REPRO_CHECK" <<'PY'
+python3 - "$LOCK" "$SNAPSHOT_LOCK" "$BUILD_ROOT/package-resolution.json" "$OUTPUT_ROOT/build-metadata.json" "$ACTUAL_COMMIT" "$KIWI_VERSION" "$DNF_VERSION" "$SOURCE_DATE_EPOCH" "$RUN_ID" "$REPRO_CHECK" <<'PY'
 import datetime, json, platform, sys
 from pathlib import Path
 lock_path, resolution_path, output_path, commit, kiwi, dnf, epoch, run_id, repro = sys.argv[1:]
@@ -148,7 +148,7 @@ metadata = {
     "upstream_repository": lock["source"]["repository"],
     "upstream_ref": lock["source"]["ref"],
     "upstream_commit": lock["source"]["commit"],
-    "package_manifest_sha256": resolution["manifest_sha256"],
+    "package_manifest_sha256": resolution["manifest_sha256"],\n    "repository_snapshots": snapshot_lock["repositories"],\n    "repository_metadata_verified": True,\n    "repository_metadata_signature_verified": snapshot_lock.get("signature_verification") == "verified",
     "resolved_packages": resolution["packages"],
     "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
     "reproducible_build_claim": False,
