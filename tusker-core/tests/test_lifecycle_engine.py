@@ -611,5 +611,31 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
 
+    def test_replay_rejects_mismatched_task_snapshot_identity(self):
+        task_id = self.task["task_id"]
+        original_get = self.store.get
+        self.store.get = lambda requested: {**original_get(requested), "task_id": "other-task"}
+        try:
+            with self.assertRaisesRegex(LifecycleError, "snapshot identity"):
+                self.engine.replay(task_id)
+        finally:
+            self.store.get = original_get
+
+    def test_replay_rejects_invalid_snapshot_state_before_event_read(self):
+        task_id = self.task["task_id"]
+        original_get = self.store.get
+        original_events = self.store.events
+        event_reads = []
+        self.store.get = lambda requested: {**original_get(requested), "state": []}
+        self.store.events = lambda requested: event_reads.append(requested) or original_events(requested)
+        try:
+            with self.assertRaisesRegex(LifecycleError, "snapshot contains an unknown task state"):
+                self.engine.replay(task_id)
+        finally:
+            self.store.get = original_get
+            self.store.events = original_events
+        self.assertEqual(event_reads, [])
+
+
 if __name__ == "__main__":
     unittest.main()
