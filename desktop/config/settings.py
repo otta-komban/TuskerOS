@@ -149,6 +149,7 @@ def save_settings(path: Path, value: Any, *, replace_symlink: bool = False) -> N
         raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
     fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
+    backup: Path | None = None
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             os.fchmod(stream.fileno(), 0o600)
@@ -157,10 +158,35 @@ def save_settings(path: Path, value: Any, *, replace_symlink: bool = False) -> N
             os.fsync(stream.fileno())
         if path.is_symlink() and not replace_symlink:
             raise ValueError("refusing to replace a symlink settings file")
-        os.replace(temporary, path)
-        _fsync_directory(path.parent)
-    finally:
+
+        # Keep a same-directory hard link to the previous directory entry until
+        # the rename is durable. This lets us roll back if directory fsync fails.
+        backup_fd, backup_name = tempfile.mkstemp(prefix=f".{path.name}.backup.", dir=path.parent)
+        os.close(backup_fd)
+        backup = Path(backup_name)
+        backup.unlink()
         try:
-            temporary.unlink()
+            os.link(path, backup, follow_symlinks=False)
         except FileNotFoundError:
-            pass
+            backup = None
+
+        os.replace(temporary, path)
+        try:
+            _fsync_directory(path.parent)
+        except OSError:
+            # A failed directory sync must not be reported as a failed reset
+            # after silently replacing the caller's previous settings.
+            if backup is not None:
+                os.replace(backup, path)
+                backup = None
+            else:
+                path.unlink(missing_ok=True)
+            _fsync_directory(path.parent)
+            raise
+    finally:
+        for leftover in (temporary, backup):
+            if leftover is not None:
+                try:
+                    leftover.unlink()
+                except FileNotFoundError:
+                    pass
