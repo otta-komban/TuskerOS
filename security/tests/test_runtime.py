@@ -1023,3 +1023,9 @@ def test_security_database_refuses_hard_link_without_chmod_or_writes(tmp_path):
 
     assert target.read_bytes() == b"preserve external file"
     assert stat.S_IMODE(target.stat().st_mode) == 0o644
+
+
+@pytest.mark.parametrize("database", ["", b"", "security\\x00.sqlite"])
+def test_security_store_rejects_empty_or_invalid_database_paths(database):
+    with pytest.raises(SecurityStoreError, match="database path"):
+        SecurityStore(database, audit_key=KEY)

@@ -44,7 +44,16 @@ class SecurityStore:
             raise SecurityStoreError("an externally managed audit key of at least 32 bytes is required")
         self._audit_key, self._peer_authenticator = audit_key, peer_authenticator
         self._approver_authenticator, self._policy_rechecker = approver_authenticator, policy_rechecker
-        self.path = str(database)
+        try:
+            database_path = os.fspath(database)
+        except TypeError as exc:
+            raise SecurityStoreError("database path must be a non-empty string") from exc
+        # An empty SQLite filename creates a temporary database whose contents
+        # disappear when the connection closes. Security decisions and audit
+        # state must never silently fall back to ephemeral storage.
+        if not isinstance(database_path, str) or not database_path or "\0" in database_path:
+            raise SecurityStoreError("database path must be a non-empty string without NUL bytes")
+        self.path = database_path
         database_fd = None
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
