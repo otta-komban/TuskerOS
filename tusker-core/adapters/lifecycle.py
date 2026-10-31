@@ -359,8 +359,8 @@ class LifecycleEngine:
             rfc3339 = (
                 isinstance(occurred_at, str)
                 and re.fullmatch(
-                    r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
-                    r"(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})",
+                    r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
+                    r"(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})",
                     occurred_at,
                 ) is not None
             )
