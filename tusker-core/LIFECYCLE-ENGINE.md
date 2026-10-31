@@ -141,3 +141,13 @@ The in-memory store rejects non-string or empty task/event identifiers and requi
 ## Idempotency boundary validation
 
 Store transitions require idempotency keys and fingerprints to be supplied together as non-empty strings; malformed, empty, or one-sided values are rejected before mutation. Direct idempotency lookups likewise validate task, key, and fingerprint identities before dictionary access. This prevents malformed adapter callers from triggering unhashable-key interpreter errors or silently bypassing idempotency handling.
+
+
+## Engine transition argument validation
+
+The public transition method validates task identity, expected-version type, target
+state and event-type shapes, optional idempotency-key shape, details mapping, and
+boolean guard flags before store access or enum/set membership. Invalid caller
+values fail with `LifecycleError` and leave the snapshot/event stream unchanged.
+This is defensive API-boundary validation; it does not add fields or change the
+provisional lifecycle contract.
