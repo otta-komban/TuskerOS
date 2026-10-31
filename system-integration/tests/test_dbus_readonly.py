@@ -539,7 +539,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(str(caught.exception), "bus response exceeded output limit")
         self.assertNotIn("private kill detail", str(caught.exception))
-        process.wait.assert_awaited_once()
+        self.assertEqual(process.wait.await_count, 2)
 
     async def test_process_wait_failure_does_not_escape_cleanup_boundary(self):
         process = FakeProcess(returncode=None)
