@@ -16,6 +16,7 @@ from pathlib import Path
 
 EXPECTED_RELEASE = "44"
 EXPECTED_ARCH = "x86_64"
+DEFAULT_FEDORA_GPG_KEY = Path("/usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-44-primary")
 REQUIRED_COLUMNS = {"layer", "package", "owner", "required", "rationale"}
 PINNED_COLUMNS = {"pinned_nevra", "repository_id", "repository_snapshot", "rpm_license", "source_rpm", "source_repository_url", "upstream_url"}
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -199,9 +200,15 @@ def verify_pin(
             raise RuntimeError(f"resolved {field} {actual!r} does not match pinned value {pinned!r}")
 
 
-def snapshot_repo_args(snapshot_root: Path, repository_ids: set[str]) -> list[str]:
-    """Build DNF5 options that expose only verified local repository copies."""
+def snapshot_repo_args(
+    snapshot_root: Path, repository_ids: set[str], gpg_key_path: Path = DEFAULT_FEDORA_GPG_KEY
+) -> list[str]:
+    """Build DNF5 options that expose only verified local repositories with Fedora trust."""
     root = snapshot_root.resolve(strict=True)
+    key_path = gpg_key_path.resolve(strict=True)
+    if not key_path.is_file():
+        raise RuntimeError(f"Fedora repository signing key is not a regular file: {key_path}")
+    key_uri = key_path.as_uri()
     arguments: list[str] = []
     for repository_id in sorted(repository_ids):
         if not REPOSITORY_RE.fullmatch(repository_id):
@@ -218,6 +225,7 @@ def snapshot_repo_args(snapshot_root: Path, repository_ids: set[str]) -> list[st
             f"--repofrompath={repository_id},{repository_path.as_uri()}",
             f"--setopt={repository_id}.gpgcheck=1",
             f"--setopt={repository_id}.repo_gpgcheck=1",
+            f"--setopt={repository_id}.gpgkey={key_uri}",
             f"--repo={repository_id}",
         ])
     if not arguments:
@@ -230,6 +238,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=Path("os/package-manifest.csv"))
     parser.add_argument("--output", type=Path, default=Path("build/package-resolution.json"))
     parser.add_argument("--snapshot-root", type=Path, help="root containing one verified local repository directory per repository_id")
+    parser.add_argument("--gpg-key", type=Path, default=DEFAULT_FEDORA_GPG_KEY, help="installed Fedora 44 RPM/repodata signing key")
     parser.add_argument(
         "--validate-only",
         action="store_true",
@@ -255,7 +264,7 @@ def main() -> int:
         raise RuntimeError("dnf5 is required; install/use the Fedora 44 DNF5 client.")
 
     rows = read_manifest(args.manifest, require_pins=True)
-    repo_args = snapshot_repo_args(args.snapshot_root, {row["repository_id"].strip() for row in rows})
+    repo_args = snapshot_repo_args(args.snapshot_root, {row["repository_id"].strip() for row in rows}, args.gpg_key)
     repo_evidence = run(["dnf5", *repo_args, "repo", "info"])
     resolved: list[dict[str, str]] = []
     failures: list[str] = []
