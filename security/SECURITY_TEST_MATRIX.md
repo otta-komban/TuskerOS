@@ -217,3 +217,17 @@ These cases validate the candidate envelope only. They do not prove that a trust
 
 
 C0053 expands AUD-REMOTE-006 with 11 explicit forbidden-field regression cases. This validates the candidate schema's strict envelope only; it does not prove runtime redaction or audit-store behavior.
+
+## Policy-decision constraints fail-closed acceptance cases — SEC-SCHEMA-007 (pending owner vocabulary and runtime implementation)
+
+| ID | Scenario | Expected result | Status |
+|---|---|---|---|
+| POL-CON-001 | Decision contains an empty `constraints: {}` object | Accept as carrying no additional execution permission | Pending consumer test |
+| POL-CON-002 | Decision contains any non-empty constraint before a vocabulary is ratified | Reject / DENY; zero broker handler calls | Pending consumer test |
+| POL-CON-003 | Decision contains an unknown top-level constraint key after vocabulary versioning | Reject / DENY; zero broker handler calls | Pending schema and consumer test |
+| POL-CON-004 | A supported constraint has the wrong type or exceeds its agreed bound | Reject / DENY; zero broker handler calls | Pending schema and consumer test |
+| POL-CON-005 | Consumer encounters missing, malformed, or unsupported constraint data | Fail closed; do not ignore, drop, reinterpret, or broaden scope | Pending consumer test |
+| POL-CON-006 | Constraint attempts to relax registered operation bounds or expand canonical resource scope | Reject / DENY; zero broker handler calls | Pending consumer test |
+
+These are acceptance criteria, not passing tests. The current v0.1.0 JSON Schema still accepts arbitrary nested objects under `constraints`; no consumer implementation was exercised. The interim contract requires producers to emit an empty object and consumers to reject non-empty objects until the policy-engine and broker owners approve a bounded, versioned vocabulary. SEC-SCHEMA-007 remains open.
+
