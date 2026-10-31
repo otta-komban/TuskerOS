@@ -122,7 +122,7 @@ class SettingsTests(unittest.TestCase):
 
     def test_directory_fsync_failure_restores_previous_settings(self) -> None:
         self.path.parent.mkdir(parents=True)
-        original = '{"panel":{"icon_size":72}}\\n'
+        original = json.dumps({"panel": {"icon_size": 72}}) + "\\n"
         self.path.write_text(original, encoding="utf-8")
         real_fsync = os.fsync
         calls = 0
