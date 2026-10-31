@@ -31,9 +31,12 @@ Malformed, duplicate-key, symlinked, oversized, excessively nested and
 unsupported future-version files are not rewritten. When settings are invalid,
 the preference groups are disabled in the UI and normal updates remain blocked;
 only the separately confirmed Restore defaults action can replace them. A
-failed migration write preserves the original file for recovery. Future schema
-changes require a new migration and regression tests; unknown future versions
-must never be silently downgraded.
+failed migration write preserves the original file for recovery. If the
+explicit reset write itself fails, the controller keeps its previous in-memory
+settings and recovery status and leaves the source file unchanged; users cannot
+resume editing until a later reset succeeds. Future schema changes require a
+new migration and regression tests; unknown future versions must never be
+silently downgraded.
 
 ## Validation
 
@@ -41,7 +44,7 @@ Run:
 `python -m unittest desktop.tests.test_settings_controller desktop.tests.test_settings_migration desktop.tests.test_settings_ui desktop.tests.test_settings_app -v`.
 
 These tests exercise single-snapshot startup, restart persistence, invalid
-update rejection, write failure recovery, reset, detached reads, bounded
+update rejection, update/reset write-failure recovery, detached reads, bounded
 migration, parser-accepted deep nesting, migration recursion failure, and the
 backend recovery round trip from rejected edits through explicit reset to
 successful updates. Qt runtime, keyboard navigation and screen-reader testing
