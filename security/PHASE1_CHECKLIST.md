@@ -125,3 +125,5 @@
 
 
 - [ ] **SEC-INT-008 — NEXUS public authorization-context provenance regression:** current `07-system-integration` head `a0cc0a74242070135b6b7937bd7605c7861fe7d8` still exposes optional top-level `authorization_context` with `additionalProperties: true` in the public invocation schema, contrary to prior C0049 review note. NEXUS owner follow-up posted on issue #17 comment 6539261475. Require caller-authority negative tests and authenticated internal-context positive test; no NEXUS code changed or tests run. Keep provider mutations fail-closed pending peer binding and atomic consume-before-dispatch evidence.
+
+- [ ] **SEC-INT-008 revalidation:** The public invocation schema accepts arbitrary optional `authorization_context`; the valid fixture omits it, but the prose example includes it. The authorization-boundary note defers the injection mechanism. Require public/internal envelope separation or authenticated transport proof, four authority-field negative tests, and a positive trusted-context test. No NEXUS code or tests changed/run.
