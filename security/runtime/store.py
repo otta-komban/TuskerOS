@@ -108,8 +108,12 @@ class SecurityStore:
         try:
             uuid.UUID(safe["proposal_id"])
             if safe["decision_id"] is not None: uuid.UUID(safe["decision_id"])
-            stamp = datetime.fromisoformat(safe["timestamp_utc"].replace("Z", "+00:00"))
-            if stamp.tzinfo is None: raise ValueError("timezone required")
+            timestamp = safe["timestamp_utc"]
+            if not isinstance(timestamp, str) or not 1 <= len(timestamp) <= 40:
+                raise ValueError("bounded timestamp string required")
+            stamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if stamp.tzinfo is None or stamp.utcoffset() != timedelta(0):
+                raise ValueError("timestamp_utc must carry an explicit UTC offset")
         except (ValueError, TypeError, AttributeError) as exc:
             raise SecurityStoreError("invalid audit identifier or timestamp") from exc
         if (not isinstance(safe["operation_id"], str) or not 1 <= len(safe["operation_id"]) <= 160

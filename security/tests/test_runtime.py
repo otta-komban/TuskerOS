@@ -696,3 +696,17 @@ def test_audit_events_rejects_existing_transaction_without_ending_it():
         if db._db.in_transaction:
             db._db.execute("ROLLBACK")
         db.close()
+
+
+@pytest.mark.parametrize("timestamp", [
+    NOW.replace(tzinfo=timezone(timedelta(hours=5, minutes=30))).isoformat(),
+    NOW.replace(tzinfo=None).isoformat(),
+])
+def test_audit_rejects_non_utc_or_timezone_naive_timestamps(timestamp):
+    db = store()
+    try:
+        with pytest.raises(SecurityStoreError, match="invalid audit identifier or timestamp"):
+            db._audit(audit(timestamp_utc=timestamp))
+        assert db.audit_events() == []
+    finally:
+        db.close()
