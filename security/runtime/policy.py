@@ -156,7 +156,11 @@ class PolicyEngine:
             if proposal.get("schema_version") != "0.1.0" or not _ACTION.fullmatch(str(proposal.get("action_id", ""))):
                 return deny("POLICY_INVALID_ARGUMENTS")
             try:
-                uuid.UUID(str(proposal["proposal_id"]))
+                proposal_id = proposal["proposal_id"]
+                if (not isinstance(proposal_id, str)
+                    or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", proposal_id)
+                    or str(uuid.UUID(proposal_id)) != proposal_id):
+                    return deny("POLICY_INVALID_ARGUMENTS")
                 requested = datetime.fromisoformat(str(proposal["requested_at"]).replace("Z", "+00:00"))
                 if requested.tzinfo is None: return deny("POLICY_INVALID_ARGUMENTS")
             except (ValueError, TypeError):
