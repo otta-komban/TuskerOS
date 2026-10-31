@@ -51,6 +51,10 @@ def audit_for_ref(db, ref):
     token_hash = __import__("hashlib").sha256(ref.encode("utf-8")).hexdigest()
     row = db._db.execute("""SELECT a.*, r.state AS ref_state FROM auth_refs r
         JOIN approvals a ON a.request_id=r.request_id WHERE r.token_hash=?""", (token_hash,)).fetchone()
+    # Invalid/oversized references intentionally have no row; the consume
+    # method rejects them before audit-context validation.
+    if row is None:
+        return audit()
     binding = __import__("json").loads(bytes(row["binding_json"]).decode("utf-8"))
     return audit(principal_binding=row["principal_binding"], proposal_id=row["proposal_id"],
         operation_id=row["broker_operation_id"], risk_class=row["risk_class"],
