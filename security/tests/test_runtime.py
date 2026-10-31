@@ -596,3 +596,19 @@ def test_audit_checkpoint_refuses_to_sign_a_tampered_chain():
             db.audit_checkpoint()
     finally:
         db.close()
+
+
+def test_audit_checkpoint_rejects_existing_transaction_without_committing_it():
+    db = store()
+    try:
+        db._db.execute("BEGIN")
+        with pytest.raises(SecurityStoreError, match="active transaction"):
+            db.audit_checkpoint()
+        assert db._db.in_transaction
+        db._db.execute("ROLLBACK")
+        assert db.verify_audit_chain()
+        assert db.audit_checkpoint()["sequence"] == 0
+    finally:
+        if db._db.in_transaction:
+            db._db.execute("ROLLBACK")
+        db.close()

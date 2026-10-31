@@ -394,14 +394,26 @@ class SecurityStore:
         Store the returned object outside this database (e.g. remote append-only
         storage). A local-only checkpoint cannot detect database rollback.
         """
-        # Never use a newly generated MAC to bless already-corrupted database state.
-        if not self.verify_audit_chain():
-            raise SecurityStoreError("cannot checkpoint an invalid audit chain")
-        row = self._db.execute("SELECT seq,event_hash FROM audit_events ORDER BY seq DESC LIMIT 1").fetchone()
-        seq, event_hash = (row["seq"], row["event_hash"]) if row else (0, "0" * 64)
-        payload = {"schema_version": "1", "sequence": seq, "event_hash": event_hash}
-        mac = hmac.new(self._audit_key, b"TUSKER-AUDIT-CHECKPOINT-v1\\0" + canonical_bytes(payload), hashlib.sha256).hexdigest()
-        return {**payload, "mac": mac}
+        # Verify and read the tip from one SQLite snapshot. Otherwise a concurrent
+        # writer could append between verification and the checkpoint tip query.
+        if self._db.in_transaction:
+            raise SecurityStoreError("cannot checkpoint during an active transaction")
+        try:
+            self._db.execute("BEGIN")
+            if not self.verify_audit_chain():
+                raise SecurityStoreError("cannot checkpoint an invalid audit chain")
+            row = self._db.execute("SELECT seq,event_hash FROM audit_events ORDER BY seq DESC LIMIT 1").fetchone()
+            seq, event_hash = (row["seq"], row["event_hash"]) if row else (0, "0" * 64)
+            payload = {"schema_version": "1", "sequence": seq, "event_hash": event_hash}
+            mac = hmac.new(self._audit_key, b"TUSKER-AUDIT-CHECKPOINT-v1\\0" + canonical_bytes(payload), hashlib.sha256).hexdigest()
+            self._db.execute("COMMIT")
+            return {**payload, "mac": mac}
+        except SecurityStoreError:
+            if self._db.in_transaction: self._db.execute("ROLLBACK")
+            raise
+        except Exception as exc:
+            if self._db.in_transaction: self._db.execute("ROLLBACK")
+            raise SecurityStoreError("audit checkpoint creation failed closed") from exc
 
     def verify_audit_chain(self, checkpoint: Mapping[str, Any] | None = None) -> bool:
         previous = "0" * 64
