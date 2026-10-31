@@ -334,6 +334,17 @@ class LifecycleEngine:
             raise LifecycleError("event stream is empty")
         if any(not isinstance(event, Mapping) for event in events):
             raise LifecycleError("event stream contains a malformed event record")
+        for event in events:
+            if event.get("schema_version") != "0.1.0-draft":
+                raise LifecycleError("event stream contains an unsupported schema version")
+            if not isinstance(event.get("occurred_at"), str) or not event["occurred_at"]:
+                raise LifecycleError("event stream contains an invalid occurred_at value")
+            if not isinstance(event.get("correlation_id"), str) or len(event["correlation_id"]) > 128:
+                raise LifecycleError("event stream contains an invalid correlation_id")
+            origin = event.get("origin")
+            if (not isinstance(origin, Mapping)
+                    or origin.get("kind") not in {"local", "remote", "extension", "system"}):
+                raise LifecycleError("event stream contains an invalid origin")
         if any(type(event.get("sequence")) is not int or event.get("sequence") != index
                for index, event in enumerate(events, 1)):
             raise LifecycleError("event sequence is not contiguous")
