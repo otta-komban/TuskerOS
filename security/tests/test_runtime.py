@@ -105,20 +105,6 @@ def test_create_approval_rejects_mismatched_audit_context(field, value):
         db.close()
 
 
-@pytest.mark.parametrize("overrides", [
-    {"policy_version": 7},
-    {"risk_class": []},
-    {"task_id": 1},
-    {"step_id": {}},
-    {"action_digest": 7},
-    {"principal_binding": 7},
-    {"binding": None},
-    {"audit_context": None},
-    {"expires_at": "2026-10-31T06:02:00Z"},
-    {"now": "2026-10-31T06:00:00Z"},
-    {"action_id": "a" * 161},
-    {"broker_operation_id": "b" * 161},
-])
 def test_security_store_time_rejects_tzinfo_without_utc_offset():
     from datetime import tzinfo
 
@@ -134,6 +120,20 @@ def test_security_store_time_rejects_tzinfo_without_utc_offset():
         SecurityStore._time(pseudo_aware)
 
 
+@pytest.mark.parametrize("overrides", [
+    {"policy_version": 7},
+    {"risk_class": []},
+    {"task_id": 1},
+    {"step_id": {}},
+    {"action_digest": 7},
+    {"principal_binding": 7},
+    {"binding": None},
+    {"audit_context": None},
+    {"expires_at": "2026-10-31T06:02:00Z"},
+    {"now": "2026-10-31T06:00:00Z"},
+    {"action_id": "a" * 161},
+    {"broker_operation_id": "b" * 161},
+])
 def test_create_approval_rejects_malformed_typed_inputs_with_security_error(overrides):
     db = store()
     try:
