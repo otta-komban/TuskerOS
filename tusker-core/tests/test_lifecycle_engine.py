@@ -465,6 +465,40 @@ class LifecycleEngineTests(unittest.TestCase):
             self.store.transition(task_id, 1, candidate, event, None, None)
         self.assertEqual(self.store.get(task_id), before_task)
 
+    def test_store_transition_requires_valid_idempotency_pair_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        candidate = {**before_task, "state": "planning", "version": 2}
+        event = self.engine._event(candidate, "task.state_changed", sequence=2)
+        invalid_pairs = (
+            ("key-only", None),
+            (None, "fingerprint-only"),
+            ([], "fingerprint"),
+            ("key", {}),
+            ("", "fingerprint"),
+            ("key", ""),
+        )
+        for key, fingerprint in invalid_pairs:
+            with self.subTest(key=key, fingerprint=fingerprint):
+                with self.assertRaisesRegex(LifecycleError, "must be non-empty strings supplied together"):
+                    self.store.transition(
+                        task_id, 1, candidate, event, key, fingerprint
+                    )
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
+    def test_idempotent_lookup_rejects_malformed_identity(self):
+        for task_id, key, fingerprint in (
+            (None, "key", "fingerprint"),
+            ("task", [], "fingerprint"),
+            ("task", "key", None),
+            ("task", "", "fingerprint"),
+        ):
+            with self.subTest(task_id=task_id, key=key, fingerprint=fingerprint):
+                with self.assertRaisesRegex(LifecycleError, "must be non-empty strings"):
+                    self.store.idempotent_result(task_id, key, fingerprint)
+
     def test_store_transition_rejects_non_mapping_records_without_mutation(self):
         task_id = self.task["task_id"]
         before_task = self.store.get(task_id)
