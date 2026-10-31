@@ -31,7 +31,11 @@ def split_table_cells(line: str) -> list[str]:
     if row.startswith("|"):
         row = row[1:]
     if row.endswith("|"):
-        row = row[:-1]
+        # A final pipe is an optional table delimiter only when it is not
+        # escaped by an odd-length run of immediately preceding backslashes.
+        backslashes = len(row) - len(row.rstrip("\\"))
+        if backslashes % 2 == 0:
+            row = row[:-1]
 
     cells: list[str] = []
     current: list[str] = []
