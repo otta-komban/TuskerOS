@@ -146,11 +146,11 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         elif record["idempotent"] is not operation_idempotent:
             errors.append(f"record {index}: idempotent declaration changed within journal")
         previous_checksum = record["previous_checksum"]
-        if (not isinstance(previous_checksum, str)
+        if (type(previous_checksum) is not str
                 or len(previous_checksum) != SHA256_HEX_LENGTH
                 or any(char not in "0123456789abcdef" for char in previous_checksum)):
             errors.append(f"record {index}: previous_checksum must be 64 lowercase hexadecimal characters")
-        if previous_checksum != previous:
+        elif previous_checksum != previous:
             errors.append(f"record {index}: previous checksum does not match chain")
         supplied = record["checksum"]
         if type(supplied) is not str:
