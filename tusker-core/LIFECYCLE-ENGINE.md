@@ -131,3 +131,8 @@ Replay also verifies that the event collection returned by a store adapter is
 a list before iterating it. A malformed adapter response (for example, a
 scalar, mapping, or string) is rejected with `LifecycleError` rather than
 leaking an iteration-related interpreter exception.
+
+
+## Store boundary type validation
+
+The in-memory store rejects non-string or empty task/event identifiers and requires exact integer types for task versions, event sequences, and expected versions. In particular, boolean values are not accepted as counters even though Python considers `True == 1`. These checks run before any write, and regression tests assert that rejected records leave the task snapshot and event stream unchanged. This is input-shape hardening only; it does not approve or alter the draft lifecycle transition/event contract.
