@@ -24,6 +24,14 @@ class DuplicateJSONKeyError(ValueError):
     """Raised when a JSON object repeats a member name."""
 
 
+class NonJSONConstantError(ValueError):
+    """Raised when input contains Python's non-standard JSON constants."""
+
+
+def _reject_non_json_constant(value: str) -> None:
+    raise NonJSONConstantError(f"non-standard JSON constant: {value}")
+
+
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -35,7 +43,11 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def strict_json_loads(data: str) -> Any:
     """Parse JSON while rejecting duplicate object member names at every depth."""
-    return json.loads(data, object_pairs_hook=_unique_object)
+    return json.loads(
+        data,
+        object_pairs_hook=_unique_object,
+        parse_constant=_reject_non_json_constant,
+    )
 
 
 def parse_utc(value: Any, field: str, errors: list[str]) -> datetime | None:
@@ -160,11 +172,11 @@ def main() -> int:
     except OSError as exc:
         print(f"cannot read report: {exc}", file=sys.stderr)
         return 2
-    except DuplicateJSONKeyError as exc:
+    except (DuplicateJSONKeyError, NonJSONConstantError, json.JSONDecodeError) as exc:
         print(f"invalid JSON: {exc}", file=sys.stderr)
         return 2
-    except json.JSONDecodeError as exc:
-        print(f"invalid JSON: {exc}", file=sys.stderr)
+    except UnicodeError as exc:
+        print(f"cannot decode report as UTF-8: {exc}", file=sys.stderr)
         return 2
 
     errors = validate_report(report, args.expected_manifest_digest)
