@@ -173,3 +173,34 @@ Reviewed on 2026-10-31:
 - ATLAS-01 `os/BASE-SYSTEM-CONTRACTS.md` on `01-fedora-base`: recovery must not depend on Tusker daemon/model; no arbitrary root API; package/service ownership remains with the responsible agent.
 
 These are proposals pending cross-agent approval. They are not runtime implementations and do not authorize PHOENIX-10 to create privileged operations independently.
+
+
+## 13. ATLAS-01 pinned-source/build-script handoff — 2026-10-31
+
+**Handoff status:** source lock and build automation reviewed; actual build and VM acceptance remain blocked.
+
+ATLAS-01's active branch `agent/01-fedora-base` now supplies the following concrete, immutable POC inputs:
+
+- Repository: `https://forge.fedoraproject.org/releng/kiwi-descriptions.git`
+- Ref: `f44`
+- Commit: `dfc49a5a10f69941179fdadd96aa6a5984f7c677`
+- Root description: `Fedora.kiwi`, blob `4e6c5a4bf102c28dff9869b230075a695c72c38c`
+- Wrapper: `kiwi-build`, blob `7ff247ae6e5a41c88902cbab0042c13a5143e9d7`
+- KDE profile: `teams/kde.xml`, blob `6424e056ebb08d0b035b171bd571b0177a8dd7a7`
+- ISO profile: `KDE-Desktop-Live`; disk profile: `KDE-Desktop-Disk`
+- Target: Fedora 44, x86_64, UEFI; outputs are a live ISO and OEM QCOW2.
+
+ATLAS-01's `tools/atlas/build-image.sh` checks for a Fedora 44 x86_64 build host and required tools, validates the source-lock shape, checks out the pinned upstream commit, verifies the three source blob IDs, invokes the package-manifest resolver, builds both profiles through the Fedora wrapper with a fixed image release, verifies that ISO/QCOW2 bundles exist, writes SHA-256 checksums and build metadata, and optionally compares a second clean build's artifact checksums.
+
+The ATLAS-01 status record reports its latest CI run `41181689969` passed 40 resolver/source-lock/build-script static tests, JSON lock parsing and Bash syntax validation. This is static CI evidence only: the workflow did not execute KIWI or produce an image.
+
+### PHOENIX integration boundary
+
+- The pinned source handoff removes the earlier uncertainty about the Fedora Forge repository, ref, commit and profile names. The earlier checklist item asking ATLAS to identify these inputs is therefore superseded by this verified handoff.
+- `os/package-manifest.csv` still has no package rows. The resolver and build script intentionally fail closed until package owners provide reviewed exact NEVRAs and provenance fields.
+- The source lock verifies immutable upstream Git blob identity, but the upstream commit is not GPG-verified. Do not describe this as a trusted upstream signature.
+- Repository metadata snapshots and RPM payload checksums are not yet locked and verified. ATLAS explicitly sets `reproducible_build_claim=false`; a second matching checksum run alone must not be described as a reproducible-build guarantee.
+- No ISO/QCOW2 build, artifact checksum, QEMU/UEFI boot, Anaconda launch/install, Secure Boot test or storage-safety test has been performed.
+- PHOENIX-10 may now consume the source-lock/build-script handoff for planning and later integration, but image acceptance still requires a non-empty reviewed package manifest, successful real build, and the POC test matrix above. Installer writes remain blocked on accepted NEXUS-07 and AEGIS-06 contracts.
+
+**Evidence reviewed:** `os/image-source.lock.json` (blob `361e09117f9199f7c1bd0980f6383f5f0564d194`), `tools/atlas/build-image.sh` (blob `f18983f817feffd3851a86f8df15dc1b861ed071`), and `os/ATLAS-01-IMPLEMENTATION-STATUS.md` (blob `08c8ce89baeb188145930c086be80ac278071f56`) on `agent/01-fedora-base`.
