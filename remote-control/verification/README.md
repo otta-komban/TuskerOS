@@ -51,7 +51,8 @@ python -m unittest discover -s remote-control/verification -p 'test_*.py' -v
 ```
 
 The tests cover parser behavior, backslash parity, case-ID integrity, repository-root
-validation, and JSON CLI success/failure paths.
+validation, JSON CLI success/failure paths, and controlled text/JSON CLI handling of
+invalid UTF-8 specification files.
 
 ## Scope and release gate
 
