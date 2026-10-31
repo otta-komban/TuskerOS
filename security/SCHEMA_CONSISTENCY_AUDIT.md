@@ -194,7 +194,7 @@ Updated `security/tests/test_security_schemas.py` with parametrized `test_audit_
 
 ## SEC-SCHEMA-007 — Policy-decision constraints object is underspecified
 
-Reviewed `security/schemas/policy-decision.schema.json` against `security/SECURITY_CONTRACTS.md` section 4. The schema declares `constraints` only as `{"type":"object"}`: it has no declared properties, value types, size bounds, or `additionalProperties: false`. Consequently, arbitrary nested keys and values are accepted even though the security contract describes this field as carrying narrow execution constraints.
+Reviewed `security/schemas/policy-decision.schema.json` against `security/SECURITY_CONTRACTS.md` section 4. The original finding was that `constraints` accepted arbitrary nested objects. The current v0.1.0 schema now requires an empty object with `maxProperties: 0` and `additionalProperties: false`; regression tests accept `{}` and reject non-empty objects. This is a conservative interim restriction, not the final bounded constraint vocabulary.
 
 **Risk / ambiguity:** a producer can serialize an unknown constraint that a consumer silently ignores, or different consumers can interpret the same untyped object differently. The current sources do not define a canonical constraint vocabulary, so AEGIS must not invent one in a compatibility-sensitive schema change.
 
