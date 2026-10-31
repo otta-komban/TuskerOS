@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 7  
+Current authorized cohort count: 8  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0016  
+Last completion: PHOENIX-10-C0017  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0017 | P2 | release-report-cli-test-repair | Fixed the missing-file CLI test's stderr capture assertion after CI exposed the test-only failure; rerun pending. | `tests/test_validate_release_report.py`; PHOENIX CI `41185512785` identified the defect; fix commit `7de652d`; JSONL C0017. |
 | PHOENIX-10-C0016 | P2 | release-report-cli-contract-tests | Added CLI regression coverage for valid, semantic-invalid, malformed, duplicate-key, non-standard-constant, invalid-UTF-8 and missing-file inputs; clarified validator scope and exit codes. | `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; prior CI `41185062227` passed before the new CLI tests; latest CI pending; JSONL C0016. |
 | PHOENIX-10-C0015 | P2 | release-report-strict-json-constant-validation | Reject non-standard JSON constants; add regression coverage, UTF-8 CLI error handling, documentation and branch-specific CI trigger. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; PHOENIX CI `41185062227` success (py_compile, 20 manifest tests, 17 report tests); JSONL C0015. |
 | PHOENIX-10-C0014 | P2 | release-report-strict-json-parsing | Reject duplicate JSON member names at all nesting depths; added three parser regression tests, documented and updated PR #55. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; CI `41184742602` success; JSONL C0014. |
@@ -30,13 +31,14 @@ Last updated: 2026-10-31
 ## Current authorized cohort accounting
 
 - Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
-- Counted responses in this cohort: **7** — C0010 through C0016.
+- Counted responses in this cohort: **8** — C0010 through C0017.
 - Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
 
-- [x] C0016 response completion logged; CLI tests cover success, semantic failure and input-error exit classes; latest CI pending.
+- [x] C0017 response completion logged; fixed the missing-file CLI test assertion after CI exposed a test-only failure; rerun pending.
+- [x] C0016 response completion logged; CLI tests cover success, semantic failure and input-error exit classes; initial CLI test CI failed on the missing-file assertion.
 - [x] C0015 response completion logged; strict JSON parsing rejects non-standard numeric constants; CI `41185062227` passed 20 manifest and 17 report tests.
 - [x] C0014 response completion logged; duplicate JSON object keys rejected at every nesting depth.
 - [x] C0013 response completion logged; semantic report counters and digest argument validation hardened.
@@ -92,4 +94,6 @@ C0014 limitation: strict JSON parsing and focused release-report regression cove
 C0015 limitation: this response added strict rejection of NaN/Infinity/-Infinity and UTF-8 decode error handling, plus regression tests and documentation. Subsequent PHOENIX CI run 41185062227 passed py_compile, all 20 release-manifest tests and all 17 release-report tests. The unified validation workflow was still in progress at last check. No signature verification, release promotion, image build, VM boot/install, recovery runtime or disk mutation was performed.
 
 
-C0016 limitation: added CLI-level regression tests and corrected documentation scope/exit codes. The latest CLI test additions have not yet been confirmed by GitHub Actions; do not count them as executed. No JSON Schema engine, evidence fetcher, signature verifier, release promotion controller, image build, VM boot/install, recovery runtime or disk mutation was added or performed.
+C0016 limitation: added CLI-level regression tests and corrected documentation scope/exit codes. The initial PHOENIX CI run 41185512785 executed 24 report tests but failed one test assertion (not validator behavior); the subsequent test-only repair is recorded in C0017 and awaits rerun. No JSON Schema engine, evidence fetcher, signature verifier, release promotion controller, image build, VM boot/install, recovery runtime or disk mutation was added or performed.
+
+C0017 limitation: this response repaired a regression-test assertion and updated PR/log records. The repair commit has not yet passed CI. No recovery journal implementation, installer runtime, cryptographic signature verification, image build, VM boot/install or storage mutation was performed.
