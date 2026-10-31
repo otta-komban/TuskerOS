@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "operation_id": "op-1",
+  "status": "succeeded",
+  "result": {
+    "hostname": "tusker"
+  },
+  "postcondition": {
+    "state": "verified",
+    "details": {}
+  },
+  "side_effects": [],
+  "timing": {
+    "duration_ms": 12
+  },
+  "error": null,
+  "task_id": "task-1",
+  "step_id": "step-1",
+  "correlation_id": "corr-1",
+  "cancellation": {
+    "request_state": "not_requested",
+    "operation_state": "completed"
+  },
+  "evidence_refs": [
+    "system-snapshot:op-1"
+  ]
+}

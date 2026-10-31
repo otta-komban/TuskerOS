@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "caller": {
+    "component": "tusker-core",
+    "instance_id": "local-1"
+  },
+  "tool": "system.info",
+  "arguments": {},
+  "deadline_ms": 5000,
+  "task_id": "task-1",
+  "step_id": "step-1",
+  "correlation_id": "corr-1"
+}

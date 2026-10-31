@@ -1,0 +1,39 @@
+{
+  "descriptor_version": "1.0",
+  "name": "system.info",
+  "version": "1.0.0",
+  "description": "Return a bounded, read-only summary of the local operating system.",
+  "input_schema_ref": "schemas/system-info-input-1.0.json",
+  "output_schema_ref": "schemas/system-info-output-1.0.json",
+  "risk": "read_only",
+  "privilege": "user",
+  "side_effects": [],
+  "preconditions": [
+    "Provider is available."
+  ],
+  "postconditions": [
+    "Returned snapshot includes an observation timestamp."
+  ],
+  "timeout_ms": {
+    "default": 3000,
+    "minimum": 100,
+    "maximum": 10000
+  },
+  "idempotency": {
+    "supported": true,
+    "scope": "request"
+  },
+  "cancellation": {
+    "supported": false,
+    "semantics": "not_supported"
+  },
+  "rollback": "not_supported",
+  "required_capabilities": [
+    "system.info.read"
+  ],
+  "availability": "experimental",
+  "provider": {
+    "component": "nexus-system-tools",
+    "activation": "in_process"
+  }
+}
