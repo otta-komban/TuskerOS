@@ -258,10 +258,19 @@ def resolve_catalog_plan(
         normalized_dependencies[package_id] = child_ids
     root_ids = sorted(set(root_values))
     order = resolve_install_order(root_ids, normalized_dependencies)
-    candidate_list = list(candidates)
+    if isinstance(candidates, (str, bytes, Mapping)):
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries, not text or a mapping")
+    try:
+        candidate_list = list(candidates)
+    except TypeError as exc:
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries") from exc
     incoming: dict[str, list[str]] = {package_id: [] for package_id in order}
     if dependency_constraints is not None:
+        if not isinstance(dependency_constraints, Mapping):
+            raise CatalogResolutionError("dependency_constraints must be a mapping")
         for parent, child_constraints in dependency_constraints.items():
+            if not isinstance(parent, str) or not parent.strip():
+                raise CatalogResolutionError("dependency constraint parent IDs must be non-empty strings")
             if parent not in normalized_dependencies:
                 raise CatalogResolutionError(f"constraints supplied for unknown parent: {parent}")
             if not isinstance(child_constraints, Mapping):
