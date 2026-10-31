@@ -107,6 +107,15 @@ This is a recommendation, **not a frozen decision**. Chief Architect and AEGIS a
 
 No production NEXUS canonicalizer is currently identified or wired into the read-only adapter. The RFC 8785 vectors must be run against the actual selected broker canonicalizer, including invalid-surrogate rejection and exact code-point preservation, before any privileged operation can be enabled. Do not treat Python's generic JSON serialization as proof of JCS conformance.
 
+### Additional AEGIS schema consistency findings from the security review
+
+The NEXUS-07 review of the uploaded `6-Security.txt` report records two further AEGIS-owned contract gaps. These are findings from the security agent's review, not changes made on the NEXUS branch:
+
+1. **Approval binding completeness:** the approval schema does not fully represent the session/device, registry, resource and precondition bindings required by the authorization lifecycle contract. Until AEGIS reconciles the schema with those lifecycle bindings, NEXUS cannot claim that an approval record is a complete binding of the authorized operation context.
+2. **Audit correlation minimums:** the audit schema does not require `task_id` and `step_id`, although the lifecycle contract lists them among its minimum fields. AEGIS should decide whether these are universally required or conditionally required for task-scoped events, then encode that rule and add valid/invalid schema examples and tests.
+
+**Owner / disposition:** AEGIS-06 owns both schemas and the lifecycle-to-schema reconciliation; Chief Architect approval is required for shared contract changes. NEXUS will preserve task/step identifiers when supplied and will not independently edit, migrate or version AEGIS schemas. These gaps join the existing broker release blockers; they do not authorize a permissive fallback or privileged dispatch.
+
 ## 4. Blockers and next acceptance evidence
 
 | Blocker | Owner(s) | Evidence/decision needed |
