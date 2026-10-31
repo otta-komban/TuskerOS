@@ -286,7 +286,9 @@ class LifecycleEngine:
             if not isinstance(event_type, str) or event_type not in ALLOWED_EVENT_TYPES:
                 raise LifecycleError("event stream contains an unknown event type")
             state = event.get("state")
-            if state not in TASK_STATES:
+            # Persisted event data is untrusted. Check the type before frozenset
+            # membership so lists/dicts fail closed as LifecycleError, not TypeError.
+            if not isinstance(state, str) or state not in TASK_STATES:
                 raise LifecycleError("event stream contains an unknown task state")
             if index and event.get("type") == "task.created":
                 raise LifecycleError("event stream contains a duplicate task.created event")
