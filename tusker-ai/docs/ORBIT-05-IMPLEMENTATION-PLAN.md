@@ -172,3 +172,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added regressions for missing/wrong/empty text deltas, boolean/negative usage counts, malformed and unknown finish reasons, plus a valid text/usage/completion sequence.
 - Runtime and test commits: `0051d46c0b50c88f2b6a1af8c496c53029f3b654`, `0d0ce3f2926d751e9c866dc7e974df4a6b3cae19`.
 - Latest-head CI verification is pending. Live Ollama remains NOT RUN.
+
+
+## Iteration 16 — strict JSON number serialization
+
+- Tightened Ollama request serialization with `allow_nan=False`. Python's default JSON encoder otherwise emits non-standard `NaN` and `Infinity` tokens, which are not valid JSON values and can lead to inconsistent provider parsing.
+- Non-finite numeric values nested in message metadata now map to the existing safe `INVALID_REQUEST` error before any HTTP dispatch.
+- Added regressions for NaN, positive infinity and negative infinity using an unreachable loopback port to ensure serialization fails first.
+- Provider and test commits: `3f99557877708de1ba94d093687252d7eba3368d`, `b5964137144499d8e1bbd3d870b90a60be91bdb1`.
+- Latest-head CI verification is pending. Live Ollama remains NOT RUN.
