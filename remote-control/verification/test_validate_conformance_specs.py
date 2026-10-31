@@ -124,6 +124,21 @@ class ValidateSpecTests(unittest.TestCase):
         ):
             validator.validate_spec(markdown, "PAIR", 1)
 
+    def test_multiple_duplicate_ids_report_all_lines_in_stable_id_order(self):
+        markdown = (
+            "| PAIR-C02 | First C02 condition | First C02 assertion |\\n"
+            "| PAIR-C01 | First C01 condition | First C01 assertion |\\n"
+            "| PAIR-C02 | Second C02 condition | Second C02 assertion |\\n"
+            "| PAIR-C01 | Second C01 condition | Second C01 assertion |\\n"
+        )
+        with self.assertRaises(validator.SpecError) as caught:
+            validator.validate_spec(markdown, "PAIR", 2)
+
+        self.assertIn(
+            "PAIR-C01 (lines 2, 4), PAIR-C02 (lines 1, 3)",
+            str(caught.exception),
+        )
+
     def test_json_success_output_is_machine_readable_and_scoped(self):
         from contextlib import redirect_stdout
         import io
