@@ -63,3 +63,20 @@ from the fingerprint so a transport retry can replay the original operation.
 
 A durable store adapter must atomically persist the fingerprint with the task snapshot
 and event, and must check an existing key before checking the expected task version.
+
+## Storage adapter conformance suite
+
+`tests/test_lifecycle_store_contract.py` is a reusable behavioral suite for
+implementations of `LifecycleStore`. It checks initial version/sequence,
+atomic snapshot-plus-event advancement, task identity, stale compare-and-swap,
+duplicate event rejection, idempotency replay/fingerprint conflicts, and
+two-writer arbitration. Every rejected write is checked for absence of partial
+snapshot or event mutation.
+
+A future adapter can reuse the same suite by importing
+`LifecycleStoreContractMixin`, subclassing it with a test case, and
+implementing `make_store()` to return a fresh adapter instance. The current
+test module binds the mixin to `InMemoryLifecycleStore`; no persistent backend
+is selected or claimed by these tests. An adapter with different setup
+requirements may override `setUp()` while preserving the same contract
+assertions.
