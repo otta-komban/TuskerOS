@@ -49,19 +49,15 @@ class ReadOnlySystemBusAdapter:
         self,
         authorization_gate: AuthorizationGate | None,
         *,
-        executable: str = _BUSCTL,
         timeout_seconds: float = 3.0,
         max_stdout: int = _MAX_STDOUT,
         max_stderr: int = _MAX_STDERR,
     ) -> None:
-        if not executable or not executable.startswith("/"):
-            raise ValueError("executable must be an absolute path")
         if timeout_seconds <= 0 or timeout_seconds > 30:
             raise ValueError("timeout_seconds must be in (0, 30]")
         if max_stdout < 128 or max_stderr < 128:
             raise ValueError("output limits are too small")
         self._authorization_gate = authorization_gate
-        self._executable = executable
         self._timeout = timeout_seconds
         self._max_stdout = max_stdout
         self._max_stderr = max_stderr
@@ -115,11 +111,11 @@ class ReadOnlySystemBusAdapter:
         # The method is selected only by the private fixed call sites above.
         if method not in {"GetId", "ListNames"}:
             raise AdapterError("unsupported bus method")
-        if shutil.which(self._executable) is None:
+        if shutil.which(_BUSCTL) is None:
             raise AdapterError("bus client unavailable")
 
         argv = (
-            self._executable,
+            _BUSCTL,
             "--system",
             "--json=short",
             "--timeout",
