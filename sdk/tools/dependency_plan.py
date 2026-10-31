@@ -15,8 +15,10 @@ class DependencyPlanError(ValueError):
 
 
 def _package_ids(values: Iterable[str], *, field: str) -> list[str]:
-    if isinstance(values, (str, bytes)):
-        raise DependencyPlanError(f"{field} must be an iterable of package IDs, not text")
+    if isinstance(values, (str, bytes, Mapping)):
+        raise DependencyPlanError(
+            f"{field} must be an iterable of package IDs, not text or a mapping"
+        )
     try:
         result = list(values)
     except TypeError as exc:
