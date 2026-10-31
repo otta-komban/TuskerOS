@@ -119,3 +119,6 @@
 
 
 - [x] **SEC-SCHEMA-007 interim guard:** policy-decision v0.1.0 requires an empty `constraints` object; schema tests reject omission and non-empty values. The final typed vocabulary remains pending policy-engine/broker owner agreement in issue #31; runtime enforcement is not claimed.
+
+
+- [x] **JCS-UNICODE-001 — RFC 8785 correction:** removed generic NFC rewriting of parsed JSON strings; exact Unicode code-point preservation is now required; added composed/decomposed UTF-8 + SHA-256 reference vectors and a pytest fixture regression. Runtime canonicalizer conformance and invalid-surrogate handling remain release gates; no production JCS implementation is claimed.
