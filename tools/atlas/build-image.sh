@@ -6,6 +6,7 @@ LOCK="${ROOT}/os/image-source.lock.json"
 MANIFEST="${ROOT}/os/package-manifest.csv"
 SNAPSHOT_LOCK="${ROOT}/os/repository-snapshot.lock.json"
 SNAPSHOT_VERIFIER="${ROOT}/tools/atlas/verify-repository-snapshot.py"
+SNAPSHOT_ROOT="${BUILD_ROOT}/repository-snapshot"
 RESOLVER="${ROOT}/tools/atlas/resolve-package-manifest.py"
 BUILD_ROOT="${ROOT}/build/atlas"
 OUTPUT_ROOT="${ROOT}/dist"
@@ -85,12 +86,25 @@ for pair in "$DESCRIPTION_FILE:$DESCRIPTION_BLOB" "$WRAPPER_FILE:$WRAPPER_BLOB" 
   [[ "$actual" == "$expected" ]] || fail "upstream source blob mismatch for $path: $actual"
 done
 
-# Verify immutable repomd.xml and primary metadata bytes before package resolution.
-# An empty lock intentionally fails production verification until approved repo snapshots are captured.
+# Verify the remote lock first, then materialize the exact repositories locally.
+# An empty lock or manifest intentionally fails before any image build work.
 python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"
+dnf5 reposync --help >/dev/null 2>&1 || fail "dnf5 reposync plugin is required (install dnf5-plugins)"
+mkdir -p "$SNAPSHOT_ROOT"
+while IFS= read -r repo_id; do
+  [[ -n "$repo_id" ]] || continue
+  dnf5 --repo="$repo_id" --setopt="$repo_id.gpgcheck=1" reposync \
+    --download-metadata --destdir="$SNAPSHOT_ROOT" --arch=x86_64 --arch=noarch --gpgcheck
+done < <(python3 - "$SNAPSHOT_LOCK" <<'PY'
+import json, sys
+for item in json.load(open(sys.argv[1], encoding="utf-8"))["repositories"]:
+    print(item["repository_id"])
+PY
+)
+python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --local-root "$SNAPSHOT_ROOT"
 
-# The resolver is read-only and fails closed on an empty manifest or repository failure.
-python3 "$RESOLVER" --manifest "$MANIFEST" --output "$BUILD_ROOT/package-resolution.json"
+# Resolve package NEVRAs exclusively from the verified local repository copies.
+python3 "$RESOLVER" --manifest "$MANIFEST" --snapshot-root "$SNAPSHOT_ROOT" --output "$BUILD_ROOT/package-resolution.json"
 
 KIWI_VERSION="$(kiwi-ng --version 2>&1 | head -n 1)"
 DNF_VERSION="$(dnf5 --version 2>&1 | head -n 1)"
@@ -152,13 +166,14 @@ metadata = {
     "package_manifest_sha256": resolution["manifest_sha256"],
     "repository_snapshots": snapshot_lock["repositories"],
     "repository_snapshot_preflight_verified": True,
+    "repository_snapshot_consumed_by_dnf5": True,
     "repository_snapshot_consumed_by_kiwi": False,
     "repository_metadata_signature_verified": snapshot_lock.get("signature_verification") == "verified",
     "resolved_packages": resolution["packages"],
     "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
     "reproducible_build_claim": False,
     "reproducibility_limitations": [
-        "KIWI and DNF5 still need to consume a frozen local repository snapshot; preflight verification alone does not pin later package downloads",
+        "KIWI still downloads from its upstream repository definitions; only DNF5 package resolution consumes the verified local repository copies",
         "RPM payload checksums are not yet recorded in the package lock",
         "Fedora repository metadata signatures are not yet verified against Fedora signing keys",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
