@@ -118,3 +118,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added parameterized regression coverage for invalid timeout values.
 - Commits: 90085d51d535039bba6d085e71c4f1938854ec28 (provider), fdbc70efea7bfd63916f14913656994ddca183d2 (tests).
 - Branch-head CI pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 10 — strict stream metadata validation
+
+- Tightened NDJSON frame validation: `message` must be an object when present (including falsey malformed values), `message.content` must be a string or absent, and `done` must be a boolean.
+- Validate usage counters as non-negative integers (excluding booleans) and `done_reason` as a string or absent. This prevents malformed provider metadata from leaking Python type errors or being emitted as invalid usage.
+- Added fixture regressions for falsey non-object messages, non-string content, non-boolean completion flags, unhashable completion reasons, and invalid usage counters.
+- Source commit: `8da8c82fd712e0b1b4aca81a2caab5fee436c385`; test commit: `114f47507253c933fe87ed8f8f57d93c78d29459`.
+- Latest-head CI pending verification. Live Ollama remains NOT RUN.
