@@ -1048,7 +1048,6 @@ def test_decide_rejects_truthy_non_boolean_approver_authentication(callback_resu
         db.close()
 
 
-@pytest.mark.parametrize("callback_result", [1, "allowed", [], {}])
 def test_issue_authorization_rolls_back_when_audit_write_fails():
     db = store()
     try:
