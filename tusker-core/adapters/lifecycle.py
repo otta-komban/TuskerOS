@@ -68,6 +68,8 @@ class InMemoryLifecycleStore:
         with self._lock:
             if task_id in self._tasks:
                 raise IdempotencyConflict(f"task already exists: {task_id}")
+            if str(event.get("task_id")) != task_id or event.get("sequence") != 1 or task.get("version") != 1:
+                raise LifecycleError("initial task snapshot and event must share task_id and start at version/sequence 1")
             if event_id in self._event_ids.get(task_id, set()):
                 raise IdempotencyConflict(f"duplicate event: {event_id}")
             self._tasks[task_id] = deepcopy(dict(task))
@@ -89,6 +91,11 @@ class InMemoryLifecycleStore:
                     return deepcopy(prior_task)
             if current["version"] != expected_version:
                 raise VersionConflict(f"expected version {expected_version}, found {current['version']}")
+            if str(task.get("task_id")) != task_id or str(event.get("task_id")) != task_id:
+                raise LifecycleError("task snapshot and event must match the transition task_id")
+            next_version = expected_version + 1
+            if task.get("version") != next_version or event.get("sequence") != next_version:
+                raise LifecycleError("task version and event sequence must advance together by exactly one")
             event_id = str(event["event_id"])
             if event_id in self._event_ids[task_id]:
                 raise IdempotencyConflict(f"duplicate event: {event_id}")
@@ -212,8 +219,8 @@ class LifecycleEngine:
             raise InvalidTransition("unknown mutation outcome must be reconciled, not failed")
         next_task = deepcopy(current)
         next_task.update({"state": target, "updated_at": self._now(), "version": expected_version + 1})
-        existing_events = self.store.events(task_id)
-        event = self._event(next_task, event_type, event_id, sequence=len(existing_events) + 1)
+        # The store atomically enforces the next sequence against expected_version.
+        event = self._event(next_task, event_type, event_id, sequence=expected_version + 1)
         return self.store.transition(task_id, expected_version, next_task, event, idempotency_key, fingerprint)
 
     def request_cancellation(self, task_id: str, *, expected_version: int, reason: str = "user_requested") -> dict[str, Any]:
@@ -235,8 +242,7 @@ class LifecycleEngine:
             raise VersionConflict("task version changed")
         next_task = deepcopy(current)
         next_task.update({"updated_at": self._now(), "version": expected_version + 1})
-        events = self.store.events(task_id)
-        event = self._event(next_task, "task.cancel_requested", sequence=len(events) + 1)
+        event = self._event(next_task, "task.cancel_requested", sequence=expected_version + 1)
         return self.store.transition(task_id, expected_version, next_task, event, key, fingerprint)
 
     def confirm_cancellation(self, task_id: str, *, expected_version: int, operation_stopped: bool) -> dict[str, Any]:
