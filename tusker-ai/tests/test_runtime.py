@@ -41,6 +41,42 @@ class RuntimeTests(unittest.TestCase):
         events = list(InferenceRuntime(FakeProvider()).infer(self.request()))
         self.assertEqual([e.event_type for e in events], ["started", "text_delta", "completed"])
 
+    def test_rejects_malformed_request_fields_before_provider(self):
+        class TrackingProvider(FakeProvider):
+            calls = 0
+            def infer(self, request, cancellation):
+                self.calls += 1
+                yield from super().infer(request, cancellation)
+
+        cases = (
+            {"messages": "not-a-message-list"},
+            {"messages": [{"role": "root", "content": "hello"}]},
+            {"messages": [{"role": "user", "content": ["not", "text"]}]},
+            {"messages": [{"role": 7, "content": "hello"}]},
+            {"model": " "},
+            {"model": "m" * 257},
+            {"max_output_tokens": True},
+            {"context_limit": False},
+            {"timeout_seconds": float("nan")},
+            {"timeout_seconds": float("inf")},
+            {"timeout_seconds": True},
+        )
+        for changes in cases:
+            provider = TrackingProvider()
+            with self.subTest(changes=changes):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(provider).infer(self.request(**changes)))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.INVALID_REQUEST)
+                self.assertEqual(provider.calls, 0)
+
+    def test_accepts_all_contract_message_roles(self):
+        messages = [
+            {"role": role, "content": "ok"}
+            for role in ("system", "developer", "user", "assistant", "tool")
+        ]
+        events = list(InferenceRuntime(FakeProvider()).infer(self.request(messages=messages)))
+        self.assertEqual(events[-1].event_type, "completed")
+
     def test_rejects_oversized_input_before_provider(self):
         runtime = InferenceRuntime(FakeProvider(), RuntimeLimits(max_input_characters=3))
         with self.assertRaises(TuskerRuntimeError) as ctx:
