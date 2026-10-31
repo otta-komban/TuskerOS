@@ -104,6 +104,40 @@ class ValidateSpecTests(unittest.TestCase):
         with self.assertRaisesRegex(validator.SpecError, "duplicate case IDs"):
             validator.validate_spec(markdown, "PAIR", 1)
 
+    def test_json_success_output_is_machine_readable_and_scoped(self):
+        from contextlib import redirect_stdout
+        import io
+        import json
+        from unittest.mock import patch
+
+        output = io.StringIO()
+        with patch.object(validator, "validate_repository", return_value=["validated"]):
+            with redirect_stdout(output):
+                result = validator.main(["--json"])
+        payload = json.loads(output.getvalue())
+        self.assertEqual(result, 0)
+        self.assertTrue(payload["ok"])
+        self.assertFalse(payload["runtime_security_tested"])
+        self.assertEqual([item["prefix"] for item in payload["specifications"]],
+                         ["PAIR", "SESS", "NET"])
+
+    def test_json_failure_output_is_machine_readable_and_scoped(self):
+        from contextlib import redirect_stdout
+        import io
+        import json
+        from unittest.mock import patch
+
+        output = io.StringIO()
+        with patch.object(validator, "validate_repository",
+                          side_effect=validator.SpecError("bad specification")):
+            with redirect_stdout(output):
+                result = validator.main(["--json"])
+        payload = json.loads(output.getvalue())
+        self.assertEqual(result, 1)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["error"], "bad specification")
+        self.assertFalse(payload["runtime_security_tested"])
+
 
 if __name__ == "__main__":
     unittest.main()
