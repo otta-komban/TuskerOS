@@ -154,7 +154,11 @@ class PolicyEngine:
             required = {"schema_version", "action_id", "proposal_id", "task_id", "step_id", "arguments", "resources", "requested_at"}
             if not required.issubset(proposal) or set(proposal) - (required | {"idempotency_key"}):
                 return deny("POLICY_INVALID_ARGUMENTS")
-            if proposal.get("schema_version") != "0.1.0" or not _ACTION.fullmatch(str(proposal.get("action_id", ""))):
+            action_id = proposal.get("action_id")
+            if (proposal.get("schema_version") != "0.1.0"
+                or not isinstance(action_id, str)
+                or len(action_id) > 160
+                or not _ACTION.fullmatch(action_id)):
                 return deny("POLICY_INVALID_ARGUMENTS")
             try:
                 proposal_id = proposal["proposal_id"]
