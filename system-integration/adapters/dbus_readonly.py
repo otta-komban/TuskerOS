@@ -275,6 +275,10 @@ class ReadOnlySystemBusAdapter:
         except ProcessLookupError:
             # The child may exit between the returncode check and kill().
             pass
+        except Exception:
+            # A cleanup failure must not mask the original adapter error or
+            # cancellation that caused termination.
+            pass
         try:
             await asyncio.wait_for(process.wait(), timeout=1.0)
         except asyncio.TimeoutError:
