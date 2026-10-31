@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -38,6 +39,32 @@ class SettingsQtRuntimeTests(unittest.TestCase):
             0,
             msg=f"Qt Quick QML failed to load. stdout={result.stdout!r}; stderr={result.stderr!r}",
         )
+
+    def test_backend_round_trip_rejects_invalid_changes_and_resets(self) -> None:
+        from desktop.config.controller import SettingsController
+        from desktop.settings.app import SettingsBackend
+
+        with tempfile.TemporaryDirectory(prefix="tuskeros-backend-") as directory:
+            path = Path(directory) / "desktop.json"
+            backend = SettingsBackend(SettingsController(path))
+            self.assertEqual(backend.read()["panel"]["icon_size"], 48)
+            self.assertEqual(backend.status(), {"needsRecovery": False})
+
+            changed = backend.update({"panel": {"icon_size": 72}})
+            self.assertTrue(changed["ok"])
+            self.assertEqual(changed["settings"]["panel"]["icon_size"], 72)
+            self.assertEqual(json.loads(path.read_text())["panel"]["icon_size"], 72)
+
+            self.assertEqual(backend.update({"panel": {"edge": "unsafe"}}), {"ok": False})
+            self.assertEqual(backend.read()["panel"]["edge"], "bottom")
+            self.assertEqual(json.loads(path.read_text())["panel"]["edge"], "bottom")
+
+            restarted = SettingsBackend(SettingsController(path))
+            self.assertEqual(restarted.read()["panel"]["icon_size"], 72)
+            reset = restarted.reset()
+            self.assertTrue(reset["ok"])
+            self.assertEqual(reset["settings"]["panel"]["icon_size"], 48)
+            self.assertEqual(json.loads(path.read_text())["panel"]["icon_size"], 48)
 
 
 if __name__ == "__main__":
