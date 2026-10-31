@@ -41,17 +41,15 @@ class ParseCaseRowsTests(unittest.TestCase):
         )
 
     def test_even_backslash_run_does_not_escape_delimiter(self):
-        markdown = r"| PAIR-C01 | Two slashes \\ before delimiter | Reject |" + "\n"
-        self.assertEqual(
-            validator.parse_case_rows(markdown, "PAIR"),
-            [( "PAIR-C01", r"Two slashes \ before delimiter", "Reject")],
-        )
+        markdown = r"| PAIR-C01 | Two slashes \\| before delimiter | Reject |" + "\n"
+        with self.assertRaisesRegex(validator.SpecError, "expected 3 table cells, got 4"):
+            validator.parse_case_rows(markdown, "PAIR")
 
     def test_odd_backslash_run_escapes_pipe_and_preserves_pairs(self):
         markdown = r"| PAIR-C01 | Three slashes \\\| then text | Reject |" + "\n"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
-            [("PAIR-C01", r"Two slashes \\| then text", "Reject")],
+            [("PAIR-C01", r"Three slashes \\| then text", "Reject")],
         )
 
     def test_pipe_delimiter_parity_for_one_through_six_backslashes(self):
