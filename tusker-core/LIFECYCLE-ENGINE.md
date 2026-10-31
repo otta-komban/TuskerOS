@@ -89,7 +89,7 @@ sequence numbers, a task version that differs from the event count, or a final
 event state that differs from the task snapshot. These checks detect corruption;
 they do not repair state or execute any operation.
 
-Replay validates the event envelope against the provisional JSON Schema: required and allowed top-level fields, UUID identities, positive integer sequence values, bounded evidence references, and object-or-null payload slots. Invalid records fail closed before the stream is returned. These checks are schema conformance only and do not approve the draft contract.
+Replay requires `occurred_at` to use RFC 3339 date-time wire syntax before parsing calendar and timezone values. Python's more permissive ISO parser alone is insufficient because it accepts alternate separators and compact offsets that do not match the schema format.\n\nReplay validates the event envelope against the provisional JSON Schema: required and allowed top-level fields, UUID identities, positive integer sequence values, bounded evidence references, and object-or-null payload slots. Invalid records fail closed before the stream is returned. These checks are schema conformance only and do not approve the draft contract.
 
 Replay also verifies that the first record is the queued `task.created` event,
 event IDs are UUIDs, and each subsequent state change follows the declared
