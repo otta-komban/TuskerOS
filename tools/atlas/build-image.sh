@@ -96,7 +96,7 @@ dnf5 reposync --help >/dev/null 2>&1 || fail "dnf5 reposync plugin is required (
 mkdir -p "$SNAPSHOT_ROOT"
 while IFS= read -r repo_id; do
   [[ -n "$repo_id" ]] || continue
-  dnf5 --repo="$repo_id" --setopt="$repo_id.gpgcheck=1" --setopt="$repo_id.repo_gpgcheck=1" reposync \
+  dnf5 --repo="$repo_id" --setopt="$repo_id.gpgcheck=1" reposync \
     --download-metadata --destdir="$SNAPSHOT_ROOT" --arch=x86_64 --arch=noarch --gpgcheck
 done < <(python3 - "$SNAPSHOT_LOCK" <<'PY'
 import json, sys
@@ -178,12 +178,13 @@ metadata = {
     "repository_snapshot_preflight_verified": True,
     "repository_snapshot_consumed_by_dnf5": True,
     "repository_snapshot_consumed_by_kiwi": True,
-    "repository_metadata_signature_verified": True,
+    "repository_metadata_signature_verified": False,
     "resolved_packages": resolution["packages"],
     "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
     "reproducible_build_claim": False,
     "reproducibility_limitations": [
-        "DNF5 reposync, package resolution and KIWI repository_gpgcheck/package_gpgcheck consume verified local repository copies with Fedora signing keys",
+        "Fedora 44 fedora/updates endpoints do not publish repomd.xml.asc at the inspected official URLs; metadata integrity is enforced by the committed repomd digest and every referenced payload SHA-256, not detached metadata signatures",
+        "DNF5 and KIWI enforce RPM package signatures using the Fedora 44 primary key; the key fingerprint is not separately recorded in the snapshot lock",
         "RPM payload checksums are not yet recorded in the package lock",
         "Fedora repository metadata and RPM signatures are enforced by DNF5 and KIWI using the Fedora 44 primary key; the trusted key fingerprint is not separately recorded in the repository lock",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
