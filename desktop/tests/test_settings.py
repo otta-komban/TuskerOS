@@ -93,7 +93,7 @@ class SettingsTests(unittest.TestCase):
     def test_explicit_recovery_replaces_symlink_without_touching_target(self) -> None:
         self.path.parent.mkdir(parents=True)
         target = self.path.parent / "outside.json"
-        original = json.dumps({"panel": {"icon_size": 72}})
+        original = json.dumps({"panel": {"icon_size": 72}}) + chr(10)
         target.write_text(original, encoding="utf-8")
         self.path.symlink_to(target)
 
@@ -119,6 +119,58 @@ class SettingsTests(unittest.TestCase):
         with patch("desktop.config.settings.os.fsync", wraps=original_fsync) as fsync:
             save_settings(self.path, {"panel": {"icon_size": 64}})
         self.assertEqual(fsync.call_count, 2)
+
+    def test_directory_fsync_failure_restores_previous_settings(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        original = json.dumps({"panel": {"icon_size": 72}}) + chr(10)
+        self.path.write_text(original, encoding="utf-8")
+        real_fsync = os.fsync
+        calls = 0
+
+        def fail_directory_sync_once(descriptor: int) -> None:
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError("simulated directory sync failure")
+            real_fsync(descriptor)
+
+        with patch("desktop.config.settings.os.fsync", side_effect=fail_directory_sync_once):
+            with self.assertRaisesRegex(OSError, "directory sync failure"):
+                save_settings(self.path, {"panel": {"icon_size": 64}})
+
+        self.assertEqual(self.path.read_text(encoding="utf-8"), original)
+        restored, errors = load_settings(self.path)
+        self.assertEqual(errors, [])
+        self.assertEqual(restored["panel"]["icon_size"], 72)
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.backup.*")), [])
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.*")), [])
+
+    def test_directory_fsync_failure_restores_symlink_during_explicit_recovery(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        target = self.path.parent / "outside.json"
+        original = json.dumps({"panel": {"icon_size": 72}}) + chr(10)
+        target.write_text(original, encoding="utf-8")
+        self.path.symlink_to(target)
+        real_fsync_directory = __import__("desktop.config.settings", fromlist=["_fsync_directory"])._fsync_directory
+        calls = 0
+
+        def fail_directory_sync_once(directory: Path) -> None:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise OSError("simulated directory sync failure")
+            real_fsync_directory(directory)
+
+        with patch("desktop.config.settings._fsync_directory", side_effect=fail_directory_sync_once):
+            with self.assertRaisesRegex(OSError, "directory sync failure"):
+                save_settings(self.path, DEFAULT_SETTINGS, replace_symlink=True)
+
+        self.assertTrue(self.path.is_symlink())
+        self.assertEqual(self.path.resolve(), target)
+        self.assertEqual(target.read_text(encoding="utf-8"), original)
+        self.assertEqual(json.loads(target.read_text(encoding="utf-8"))["panel"]["icon_size"], 72)
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.backup.*")), [])
+        self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.*")), [])
 
     def test_save_closes_temporary_file_when_file_fsync_fails(self) -> None:
         descriptors: list[int] = []

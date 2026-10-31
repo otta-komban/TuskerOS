@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 import os
 import shutil
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -13,17 +16,74 @@ from pathlib import Path
 PLUGIN_ID = "com.tuskeros.desktop.dock"
 MARKER = ".tuskeros-managed"
 MARKER_CONTENT = "TuskerOS managed Plasma layout template; safe to remove with this installer.\n"
+MAX_SOURCE_FILES = 256
+MAX_SOURCE_BYTES = 8 * 1024 * 1024
+AT_FDCWD = -100
+RENAME_NOREPLACE = 1
 
 
 def default_destination() -> Path:
-    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
-    return data_home / "plasma" / "layout-templates" / PLUGIN_ID
+    """Resolve the XDG data location, ignoring invalid relative environment values."""
+    configured_home = os.environ.get("XDG_DATA_HOME")
+    base = Path(configured_home).expanduser() if configured_home else Path.home() / ".local" / "share"
+    if not base.is_absolute():
+        base = Path.home() / ".local" / "share"
+    return base / "plasma" / "layout-templates" / PLUGIN_ID
+
+
+def _publish_directory_noreplace(source: Path, destination: Path) -> None:
+    """Atomically publish a directory only if the destination is still absent."""
+    try:
+        libc = ctypes.CDLL(None, use_errno=True)
+        renameat2 = libc.renameat2
+    except AttributeError as exc:
+        raise OSError(errno.ENOTSUP, "atomic no-replace directory publication is unavailable") from exc
+
+    renameat2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    renameat2.restype = ctypes.c_int
+    result = renameat2(
+        AT_FDCWD, os.fsencode(source), AT_FDCWD, os.fsencode(destination), RENAME_NOREPLACE
+    )
+    if result != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(destination))
+
+
+def _validate_source_entry(path: Path, totals: list[int]) -> None:
+    """Reject links/special files and bound the amount of data copied."""
+    try:
+        info = path.lstat()
+        mode = info.st_mode
+    except OSError as exc:
+        raise ValueError(f"cannot inspect panel template source entry: {path}: {exc}") from exc
+
+    if stat.S_ISDIR(mode):
+        try:
+            children = sorted(path.iterdir(), key=lambda child: child.name)
+        except OSError as exc:
+            raise ValueError(f"cannot read panel template source directory: {path}: {exc}") from exc
+        for child in children:
+            _validate_source_entry(child, totals)
+        return
+
+    if not stat.S_ISREG(mode):
+        raise ValueError(f"panel template source contains a symlink or special file: {path}")
+
+    totals[0] += 1
+    totals[1] += info.st_size
+    if totals[0] > MAX_SOURCE_FILES:
+        raise ValueError(f"panel template source exceeds {MAX_SOURCE_FILES} files")
+    if totals[1] > MAX_SOURCE_BYTES:
+        raise ValueError(f"panel template source exceeds {MAX_SOURCE_BYTES} bytes")
 
 
 def install(source: Path, destination: Path) -> None:
     source = source.resolve()
-    if not (source / "metadata.desktop").is_file() or not (source / "contents" / "layout.js").is_file():
-        raise ValueError(f"invalid panel template source: {source}")
+    metadata = source / "metadata.desktop"
+    contents = source / "contents"
+    totals = [0, 0]
+    _validate_source_entry(metadata, totals)
+    _validate_source_entry(contents, totals)
     if destination.is_symlink():
         raise FileExistsError(f"refusing symlink destination: {destination}")
     if destination.exists():
@@ -34,11 +94,11 @@ def install(source: Path, destination: Path) -> None:
     staging: Path | None = None
     try:
         staging = Path(tempfile.mkdtemp(prefix=".tusker-dock-staging-", dir=parent))
-        shutil.copy2(source / "metadata.desktop", staging / "metadata.desktop")
-        shutil.copytree(source / "contents", staging / "contents")
+        shutil.copy2(metadata, staging / "metadata.desktop")
+        shutil.copytree(contents, staging / "contents")
         (staging / MARKER).write_text(MARKER_CONTENT, encoding="utf-8")
-        # Destination is required not to exist; rename publishes the complete tree atomically.
-        os.replace(staging, destination)
+        # RENAME_NOREPLACE closes the check/publish race without replacing user data.
+        _publish_directory_noreplace(staging, destination)
         staging = None
     finally:
         if staging is not None:

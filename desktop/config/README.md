@@ -18,22 +18,35 @@ desktop entry is `tuskeros-settings.desktop`.
 ## Migration and persistence
 
 `desktop/config/migrations.py` upgrades unversioned and explicit schema-v0
-preferences to schema v1. Migration reads at most 64 KiB from a regular file,
-rejects final-component symlinks and duplicate JSON keys, validates the full
-candidate and uses the same mode-0600 atomic writer as normal updates.
-Malformed, duplicate-key, symlinked, oversized and unsupported future-version
-files are not rewritten. When settings are invalid, normal UI updates remain
-blocked; only the separately confirmed Restore defaults action can replace
-them. A failed migration write preserves the original file for recovery.
-Future schema changes require a new migration and regression tests; unknown
-future versions must never be silently downgraded.
+preferences to schema v1. Startup parses the document once through a bounded,
+no-follow descriptor; migration and validation use that same in-memory
+snapshot, avoiding inconsistent decisions across multiple file reads.
+Migration reads at most 64 KiB from a regular file, rejects final-component
+symlinks and duplicate JSON keys, validates the full candidate and uses the
+same mode-0600 atomic writer as normal updates. If cloning a deeply nested
+parsed document exceeds Python's recursion budget, migration returns a bounded
+recovery error instead of allowing startup to crash.
+
+Malformed, duplicate-key, symlinked, oversized, excessively nested and
+unsupported future-version files are not rewritten. When settings are invalid,
+the preference groups are disabled in the UI and normal updates remain blocked;
+only the separately confirmed Restore defaults action can replace them. A
+failed migration write preserves the original file for recovery. If the
+explicit reset write or the parent-directory durability sync fails, the writer
+restores the previous file entry before reporting failure. The controller keeps
+its previous in-memory settings and recovery status; users cannot resume editing
+until a later reset succeeds. Future schema changes require a
+new migration and regression tests; unknown future versions must never be
+silently downgraded.
 
 ## Validation
 
 Run:
 `python -m unittest desktop.tests.test_settings_controller desktop.tests.test_settings_migration desktop.tests.test_settings_ui desktop.tests.test_settings_app -v`.
 
-These tests exercise restart persistence, invalid update rejection, write
-failure recovery, reset, detached reads, bounded migration and source-level
-host/accessibility contracts. Qt runtime, keyboard navigation and screen-reader
-testing still require the supported Plasma/Qt environment.
+These tests exercise single-snapshot startup, restart persistence, invalid
+update rejection, update/reset write-failure recovery, detached reads, bounded
+migration, parser-accepted deep nesting, migration recursion failure, and the
+backend recovery round trip from rejected edits through explicit reset to
+successful updates. Qt runtime, keyboard navigation and screen-reader testing
+still require the supported Plasma/Qt environment.
