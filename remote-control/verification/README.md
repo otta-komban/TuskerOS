@@ -22,6 +22,8 @@ The validator checks these specification tables and their expected case counts:
 
 It rejects malformed or cross-specification case IDs, duplicate or missing IDs,
 non-contiguous numbering, malformed table rows, and empty conditions or assertions.
+Fenced and indented Markdown code examples are ignored, so illustrative pipe rows
+do not count as specification cases.
 Duplicate-ID diagnostics include every source line containing the repeated ID.
 Markdown pipes escaped with an odd number of immediately preceding backslashes are
 treated as cell content; an even run leaves the pipe as a table delimiter.
