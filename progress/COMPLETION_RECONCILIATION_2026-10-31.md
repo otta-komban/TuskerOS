@@ -30,7 +30,7 @@ Counts below use the new-cohort boundary and the local response-completion recor
 | PIXEL-03 | `logs/PIXEL-03.jsonl` on main / branch tree inspected | 0 found | Existing 13 legacy entries predate the new-cohort boundary. No post-boundary response log was found in the inspected branch tree. This means “no repository evidence found”, not proof that no response occurred. |
 | TUSKER-04 | `tusker-core/logs/completions.jsonl` on `agent/04-tusker-core` | 12 | Counted only `record_type=response_completion`; audit corrections and validation updates are excluded from the 26 physical rows. |
 | ORBIT-05 | `logs/completions/ORBIT-05.jsonl` on `agent/05-ai-runtime` | 6 | Sequential local response records. |
-| AEGIS-06 | `logs/completions/AEGIS-06.jsonl` on `agent/06-security-gatekeeper` | 33 | Sequential local response records. Do not confuse with the separate 69-row historical `logs/AEGIS-06.jsonl` index, whose ledger count is 21. |
+| AEGIS-06 | `logs/completions/AEGIS-06.jsonl` on `agent/06-security-gatekeeper` | 33 | Primary local response log. A separate legacy `06-security-gatekeeper` branch has alternate C00032/C00033 variants with different response UUIDs; these are not double-counted pending reconciliation. Do not confuse with the separate 69-row historical `logs/AEGIS-06.jsonl` index, whose ledger count is 21. |
 | NEXUS-07 | `system-integration/COMPLETION_LOG.jsonl` on `agent/07-system-integration` | 26 | Post-resumption entries numbered 1–26. |
 | PILOT-08 | `logs/PILOT-08-response-completions.jsonl` on `agent/08-remote-control` | 28 | 28 response-completion entries; one correction row is not counted. |
 | FORGE-09 | `logs/completions/FORGE-09.jsonl` on `agent/09-ecosystem` | 24 | Sequential local response records. |
@@ -103,7 +103,22 @@ GitHub comparisons against the audited main HEAD show:
 | `agent/09-ecosystem` | 0 | 489 | No branch-only commits |
 | `agent/10-installer-recovery` | 0 | 481 | No branch-only commits |
 
-Eight of the ten current `agent/*` branch tips are ancestors of main and contribute no branch-only commits at this comparison. NEXUS-07 and PILOT-08 still have unique branch-only work. Do not treat the old unprefixed branch names (`01-fedora-base` through `10-installer-recovery`) as current working branches; they are historical refs and are substantially stale.
+Eight of the ten current `agent/*` branch tips are ancestors of main and contribute no branch-only commits at this comparison. NEXUS-07 and PILOT-08 still have unique branch-only work. Most old unprefixed refs are historical and far behind main; the exception is `06-security-gatekeeper`, which still has seven unique commits and must be reviewed separately.
+
+
+### Additional repository branches (outside the current `agent/*` cohort)
+
+| Branch | Ahead of main | Behind main | Treatment |
+|---|---:|---:|---|
+| `06-security-gatekeeper` | 7 | 542 | Unmerged security hardening in `security/runtime/*` and tests; CI passed on code head `6b8bdf4`. Its AEGIS C00032/C00033 log entries conflict by ID with different response UUIDs in the main/agent branch version. Do not merge the log blindly. |
+| `docs/agent-workforce-v1` | 16 | 605 | Diverged documentation/accounting branch. Its logging policy, validator and canonical ledger differ from the newer main versions; review as potentially superseded, do not merge wholesale. |
+| `recovery/2026-10-31-agent-freeze` | 1 | 1,732 | Preserves the forensic baseline report. Keep as an archival recovery ref; do not fold into implementation work without a deliberate decision. |
+| `coordinator/completion-accounting` | 0 | 597 | No branch-only commits; its merged work is on main. |
+| `integration/blocker-remediation` | 0 | 611 | No branch-only commits. |
+| `integration/unified-baseline` | 0 | 618 | No branch-only commits. |
+| `integration/unified-ci` | 0 | 606 | No branch-only commits. |
+
+The seven unique AEGIS commits are dated 2026-10-31T11:52:54Z–11:56:15Z and implement strict literal-boolean verifier checks plus single-hard-link database validation, associated tests and log updates. Security contract validation passed on the code commits, including run 41198854799 for code head `6b8bdf4ffd0675d166594d1f00ab3499993c248e`. The branch's final commit `647c684703eedf9ff72e7b3660a719fd3dfa8c10` is a log-only completion update. The branch still needs a reviewed integration path; the completion-log ID collision must be resolved without rewriting source history.
 
 ### Pull requests and main validation
 
@@ -112,6 +127,9 @@ Eight of the ten current `agent/*` branch tips are ancestors of main and contrib
 - **PR #63:** merged (coordinator completion accounting).
 - **PR #61 and #62:** still displayed as open, but the corresponding `agent/09-ecosystem` and `agent/04-tusker-core` branch tips compare as having zero commits ahead of main. Treat these as stale/open PR metadata requiring closure/reconciliation, not proof of additional unmerged branch commits.
 - **NEXUS-07 / PILOT-08:** branch-only work remains; no merge into main is evidenced by the branch comparisons.
+- **Legacy AEGIS branch `06-security-gatekeeper`:** seven unique security commits remain outside main; CI passed on the code head, but its completion log has conflicting C00032/C00033 variants and requires reviewed reconciliation.
+- **`docs/agent-workforce-v1`:** 16 unique commits remain on a diverged documentation branch; its key logging/validator/ledger files differ from newer main versions and must be reviewed for superseded content.
+- **Recovery branch:** one archival forensic-baseline commit remains separate intentionally.
 
 For exact main HEAD `9b6063e54b19650030bc6b85c8f7fc62c67fa4b7`, GitHub Actions reported:
 - Unified validation run **41202168472** — completed, **success**.
@@ -125,7 +143,7 @@ This confirms the latest mainline CI checks passed. It does **not** establish th
 - No agent branch was deleted, rebased, force-pushed or rewritten.
 - No existing completion log or timestamp was edited.
 - No new set of ten branches was created.
-- No outstanding NEXUS-07 or PILOT-08 branch work was merged by this audit.
+- No outstanding NEXUS-07, PILOT-08 or legacy AEGIS branch work was merged by this audit.
 - The canonical aggregate now contains four coordinator records; specialist entries still require the documented response-identity and provenance checks.
 
 ## 7. Required reconciliation before claiming an exact all-chat total
@@ -136,7 +154,8 @@ This confirms the latest mainline CI checks passed. It does **not** establish th
 4. Add stable response UUIDs or other auditable one-response provenance for legacy ATLAS/PHOENIX entries before importing them to the canonical ledger.
 5. Validate every second-cohort record against the source conversation, including timestamp, one-record-per-response, unique response identity and branch mapping.
 6. Import validated specialist records into `progress/completions.jsonl` through the coordinator-owned validator only; do not have agents edit the canonical file.
-7. Recheck NEXUS-07 and PILOT-08 diffs and owner/security acceptance before integrating their remaining branch-only work.
-8. Only after these steps report one exact cumulative all-chat total and create the next ten branches from the verified main HEAD.
+7. Reconcile the conflicting AEGIS C00032/C00033 records and review its seven security commits before integration.
+8. Recheck NEXUS-07 and PILOT-08 diffs and owner/security acceptance before integrating their remaining branch-only work.
+9. Only after these steps report one exact cumulative all-chat total and create the next ten branches from the verified main HEAD.
 
-**Bottom line:** repository evidence currently supports 165 second-cohort specialist records plus 4 coordinator records. The historical first cohort remains 124 verified versus 135 unreconciled. The arithmetic range is 293–304, but the exact all-chat total is not yet proven. Mainline CI is green at the audited HEAD, but NEXUS-07 and PILOT-08 still have unmerged work and no full OS image/boot result is evidenced.
+**Bottom line:** repository evidence currently supports 165 second-cohort specialist records plus 4 coordinator records. The historical first cohort remains 124 verified versus 135 unreconciled. The arithmetic range is 293–304, but the exact all-chat total is not yet proven. Mainline CI is green at the audited HEAD, but NEXUS-07, PILOT-08 and the legacy AEGIS branch still have unmerged work; the documentation branch is also diverged, and no full OS image/boot result is evidenced.
