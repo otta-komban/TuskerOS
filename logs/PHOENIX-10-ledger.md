@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 15  
+Current authorized cohort count: 16  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0024  
+Last completion: PHOENIX-10-C0025  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0025 | P2 | recovery-journal-hostile-object-hardening | Reject dict subclasses, non-plain keys and hostile malformed values without invoking custom hooks; add regression coverage and docs; latest-head CI pending after diagnostic compatibility repair. | validator `67ea9b5b` (hardening commits `00285d27`, `573d55c1`, `653156f7`, `355130e2`); tests `83b8eeed`, `6040c225`; docs `83c7382e`; PR #55. |
 | PHOENIX-10-C0024 | P2 | recovery-journal-iterator-failure-hardening | Return structured validation failure when caller iterator creation/consumption raises; add generator regression and docs; CI pending. | validator `daa12aac`, test `3d815ec5`, docs `b3c9b412`; PR #55. |
 | PHOENIX-10-C0023 | P2 | recovery-journal-in-memory-object-shape-hardening | Reject non-string keys in caller-supplied journal dictionaries as structured validation errors; regression test and docs added; PHOENIX CI `41189062747` and unified validation `41189062769` passed. | validator commit `a300daa1`, test `ddc91a4d`, docs `1a3bcb04`; PR #55. |
 | PHOENIX-10-C0022 | P2 | recovery-journal-parser-and-state-robustness | Guard unknown states from transition lookup crashes; parse LF/CRLF JSONL boundaries while preserving U+2028 string data; PHOENIX CI `41187813890` and unified CI `41187818792` passed. | validator, tests, docs; commits `e185cd53`, `58e1793f`, `12d977cf`; PR #55. |
@@ -43,6 +44,8 @@ Last updated: 2026-10-31
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
+
+- [x] C0025 response completion logged; hardened recovery-journal validation against hostile dict subclasses, keys and scalar values; CI pending after diagnostic compatibility repair.
 
 - [x] C0024 response completion logged; iterator exceptions become structured validation failures; CI pending.
 - [x] C0023 response completion logged; reject malformed non-string object keys in caller-supplied recovery-journal records; PHOENIX CI `41189062747` and unified validation `41189062769` passed.
@@ -124,3 +127,6 @@ C0023 limitation: this response hardened only the in-memory recovery-journal val
 
 
 C0024 limitation: this response hardens only bounded in-memory iterable handling. CI for the final commit was pending at ledger update time. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0025 limitation: this response hardens only bounded in-memory recovery-journal validation and its tests. PHOENIX run 41190832893 exposed two assertions that expected the previous unknown-state diagnostic wording; the wording was restored while retaining strict plain-string checks. Final-head PHOENIX/unified CI is pending. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
