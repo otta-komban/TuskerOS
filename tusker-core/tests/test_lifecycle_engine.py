@@ -397,6 +397,41 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(self.store.get(task_id), current)
         self.assertEqual(len(self.store.events(task_id)), 1)
 
+    def test_store_create_rejects_non_mapping_records(self):
+        with self.assertRaisesRegex(LifecycleError, "must be mappings"):
+            self.store.create(None, {})
+        with self.assertRaisesRegex(LifecycleError, "must be mappings"):
+            self.store.create({}, None)
+        self.assertEqual(self.store._tasks, {})
+        self.assertEqual(self.store._events, {})
+
+    def test_store_create_rejects_missing_record_identity(self):
+        with self.assertRaisesRegex(LifecycleError, "require task_id and event_id"):
+            self.store.create({"version": 1}, {"sequence": 1})
+        self.assertEqual(self.store._tasks, {})
+        self.assertEqual(self.store._events, {})
+
+    def test_store_transition_rejects_non_mapping_records_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        with self.assertRaisesRegex(LifecycleError, "must be mappings"):
+            self.store.transition(task_id, 1, None, {}, None, None)
+        with self.assertRaisesRegex(LifecycleError, "must be mappings"):
+            self.store.transition(task_id, 1, before_task, None, None, None)
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
+    def test_store_transition_rejects_missing_event_identity_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        candidate = {**before_task, "state": "planning", "version": 2}
+        with self.assertRaisesRegex(LifecycleError, "requires event_id"):
+            self.store.transition(task_id, 1, candidate, {"task_id": task_id, "sequence": 2}, None, None)
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
     def test_event_sequence_tracks_task_version_through_cancellation(self):
         self.move("planning")
         self.move("running")
