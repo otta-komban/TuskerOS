@@ -126,3 +126,8 @@ Malformed inputs are rejected with `LifecycleError` before any snapshot, event,
 or idempotency state is changed. This protects the adapter boundary from
 interpreter-level `TypeError`/`KeyError` leaks; it does not expand the wire
 schema or define new lifecycle semantics.
+
+Replay also verifies that the event collection returned by a store adapter is
+a list before iterating it. A malformed adapter response (for example, a
+scalar, mapping, or string) is rejected with `LifecycleError` rather than
+leaking an iteration-related interpreter exception.
