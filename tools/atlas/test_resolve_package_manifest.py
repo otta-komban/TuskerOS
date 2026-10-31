@@ -359,29 +359,38 @@ class LocalSnapshotRepositoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             repo = root / "fedora"
+            key = root / "fedora-key"
+            key.write_text("fixture", encoding="utf-8")
             (repo / "repodata").mkdir(parents=True)
             (repo / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
-            args = RESOLVER.snapshot_repo_args(root, {"fedora"})
-            self.assertEqual(len(args), 4)
+            args = RESOLVER.snapshot_repo_args(root, {"fedora"}, key)
+            self.assertEqual(len(args), 5)
             self.assertTrue(args[0].startswith("--repofrompath=fedora,file://"))
             self.assertIn("--setopt=fedora.gpgcheck=1", args)
             self.assertIn("--setopt=fedora.repo_gpgcheck=1", args)
+            self.assertIn(f"--setopt=fedora.gpgkey={key.as_uri()}", args)
             self.assertIn("--repo=fedora", args)
 
     def test_snapshot_args_reject_missing_local_repository(self):
         with tempfile.TemporaryDirectory() as directory:
+            key = Path(directory) / "fedora-key"
+            key.write_text("fixture", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "Local repository snapshot is missing"):
-                RESOLVER.snapshot_repo_args(Path(directory), {"fedora"})
+                RESOLVER.snapshot_repo_args(Path(directory), {"fedora"}, key)
 
     def test_snapshot_args_reject_invalid_repository_id(self):
         with tempfile.TemporaryDirectory() as directory:
+            key = Path(directory) / "fedora-key"
+            key.write_text("fixture", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "Invalid repository ID"):
-                RESOLVER.snapshot_repo_args(Path(directory), {"../fedora"})
+                RESOLVER.snapshot_repo_args(Path(directory), {"../fedora"}, key)
 
     def test_snapshot_args_reject_empty_repository_selection(self):
         with tempfile.TemporaryDirectory() as directory:
+            key = Path(directory) / "fedora-key"
+            key.write_text("fixture", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "No package repositories"):
-                RESOLVER.snapshot_repo_args(Path(directory), set())
+                RESOLVER.snapshot_repo_args(Path(directory), set(), key)
 
 
 if __name__ == "__main__":
