@@ -98,7 +98,7 @@ class ReleaseReportSemanticTests(unittest.TestCase):
             with patch("sys.argv", ["validate_release_report.py", str(missing_path)]), redirect_stdout(stdout), redirect_stderr(stderr):
                 exit_code = main()
             self.assertEqual(exit_code, 2)
-            self.assertIn("cannot read report:", stderr)
+            self.assertIn("cannot read report:", stderr.getvalue())
 
     def test_cli_semantic_failure_exits_one(self):
         report = valid_report()
