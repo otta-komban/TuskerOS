@@ -29,11 +29,11 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 
 - Added a deterministic stream-cancellation regression: cancellation is triggered while the adapter is waiting for the next NDJSON frame, the request emits a `cancelled` terminal event rather than `completed`, and a subsequent independent request succeeds against the same HTTP fixture.
 - The test uses the adapter's bounded socket-read timeout to observe cancellation. It does not prove server-side generation stops in Ollama; live cancellation conformance remains outstanding.
-- CI was triggered for this branch head; results are pending at the time this plan update was prepared.
+- GitHub Actions Tusker AI Runtime Unit Tests passed on branch head `0f9440f026ad2078653b903b989572a292494d9a` (run 59). Tusker AI contract tests and unified validation were still in progress when checked.
 
 ## Remaining work sequence
 
-1. Run the full runtime/schema test suite in a reproducible checkout and capture exact branch-head evidence.
+1. Confirm Tusker AI contract/schema tests and unified validation on the exact branch head; the dedicated runtime unit-test workflow has passed.
 2. Review provider cancellation/deadline behavior and add focused tests for request isolation without terminating the shared daemon.
 3. Verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
 4. Keep model install/remove fail-closed until the approved AEGIS action/session/device/resource/precondition authorization is integrated and tested.
