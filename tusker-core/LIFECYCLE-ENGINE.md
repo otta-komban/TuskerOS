@@ -136,3 +136,8 @@ leaking an iteration-related interpreter exception.
 ## Store boundary type validation
 
 The in-memory store rejects non-string or empty task/event identifiers and requires exact integer types for task versions, event sequences, and expected versions. In particular, boolean values are not accepted as counters even though Python considers `True == 1`. These checks run before any write, and regression tests assert that rejected records leave the task snapshot and event stream unchanged. This is input-shape hardening only; it does not approve or alter the draft lifecycle transition/event contract.
+
+
+## Idempotency boundary validation
+
+Store transitions require idempotency keys and fingerprints to be supplied together as non-empty strings; malformed, empty, or one-sided values are rejected before mutation. Direct idempotency lookups likewise validate task, key, and fingerprint identities before dictionary access. This prevents malformed adapter callers from triggering unhashable-key interpreter errors or silently bypassing idempotency handling.
