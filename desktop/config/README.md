@@ -1,62 +1,35 @@
 # Desktop settings contract (schema v1)
 
-The first desktop settings module is dependency-free Python. It deliberately owns only presentation preferences; it does not store credentials, privileged system state, task history, or remote-session secrets.
+The dependency-free settings module owns presentation preferences only. It does
+not store credentials, privileged system state, task history, or remote-session
+secrets. Defaults and validation rules remain defined by
+`desktop/config/settings.py`.
 
-## Effective defaults
+## UI integration
 
-```json
-{
-  "schema_version": 1,
-  "panel": { "enabled": true, "edge": "bottom", "icon_size": 48, "auto_hide": false },
-  "assistant": { "enabled": false, "show_task_progress": true },
-  "accessibility": { "reduced_motion": false, "high_contrast": false }
-}
-```
+The Qt Quick Controls surface is in `desktop/settings/main.qml`. The host
+injects a narrow adapter backed by `desktop.config.controller.SettingsController`.
+The controller exposes detached `read()`, validated transactional
+`update(patch)`, and `reset()`; it publishes an in-memory candidate only after
+the atomic disk write succeeds. Failed writes leave the last valid state active.
 
-The assistant panel is disabled by default. Supported panel edges are `bottom`, `top`, `left`, and `right`; supported icon sizes are 24 through 96 in 8-pixel increments. Booleans are type-checked explicitly (Python booleans are not accepted as integer values). Unknown keys and unsupported schema versions are rejected rather than silently persisted.
+## Migration and persistence
 
-## API
-
-Import `load_settings`, `validate_settings`, `save_settings` from `desktop.config.settings`.
-
-- `validate_settings(value)` returns a list of validation errors. Partial nested objects are accepted and merged with defaults.
-- `load_settings(path)` returns `(effective_settings, errors)`. A missing file returns defaults without error; malformed, oversized, symlinked, duplicate-key, or invalid input returns defaults with an error list. Duplicate keys at any JSON object depth are rejected to avoid ambiguous last-key-wins parsing.
-- `save_settings(path, value)` validates before writing, creates parent directories, writes a complete effective config to a temporary file with mode `0600`, fsyncs the file, atomically replaces the destination, and fsyncs the parent directory so the rename is durable. The temporary file descriptor is managed by a context manager, including on write/fsync failures. atomically replaces the destination. It refuses symlink destinations and raises `ValueError` for invalid input.
-
-The caller chooses the user config path (recommended: `$XDG_CONFIG_HOME/tuskeros/desktop.json`, falling back to `~/.config/tuskeros/desktop.json`). This module does not read environment variables or perform any privileged operation. Integrate with the UI only after settings migration and desktop component contracts are agreed.
+`desktop/config/migrations.py` upgrades unversioned and explicit schema-v0
+preferences to schema v1. Migration validates the complete candidate and uses
+the same mode-0600 atomic writer as normal updates. Malformed, duplicate-key,
+symlinked, oversized and unsupported future-version files are not rewritten;
+the UI receives safe defaults and a non-sensitive error. A failed migration
+write preserves the original file for recovery. Future schema changes require
+a new migration and regression tests; unknown future versions must never be
+silently downgraded.
 
 ## Validation
 
-Run `python -m unittest discover -s desktop/tests -v`. The CI workflow runs this suite on every desktop-related branch push and pull request. The tests cover defaults, partial merges, strict keys/types, malformed and oversized files, atomic round-trip persistence, file permissions and symlink refusal. The recovery CLI has separate tests for safe status output, explicit reset confirmation, XDG path resolution and symlink refusal.
+Run:
+`python -m unittest desktop.tests.test_settings_controller desktop.tests.test_settings_migration desktop.tests.test_settings_ui -v`.
 
-## User recovery commands
-
-Run a privacy-conscious validation check (it reports status/errors but does not print settings values):
-
-```sh
-python -m desktop.tools.settings_recovery check
-```
-
-Restore schema-v1 defaults only after explicit confirmation:
-
-```sh
-python -m desktop.tools.settings_recovery reset --yes
-```
-
-Both commands accept `--config /path/to/desktop.json` for a non-default file. The default path is `$XDG_CONFIG_HOME/tuskeros/desktop.json`, or `~/.config/tuskeros/desktop.json` when `XDG_CONFIG_HOME` is unset or relative. Reset uses the existing atomic mode-0600 writer and refuses symlink destinations. It replaces the settings file; copy it first if you may need its current values.
-
-Schema v1 is an initial desktop-owned contract, not yet a cross-agent integration contract. Future additions require a schema version/migration decision and tests. Do not persist transient task state or security/approval decisions here.
-
-
-Regression coverage includes malformed root values, unsupported schema versions, and dangling symlinks; dangling links are checked before missing-file handling so they cannot silently appear absent.
-
-
-## Machine-readable schema
-
-`settings.schema.json` publishes the same schema-v1 shape as a JSON Schema Draft 2020-12 artifact for editor completion and external tooling. The runtime Python validator remains authoritative for application loading and persistence; the JSON Schema does not replace it. Partial objects are valid by design, omitted values use runtime defaults, and unknown keys are rejected. The standard-library regression tests compare the schema's defaults, keys, version and enum constraints with `DEFAULT_SETTINGS`.
-
-Run the consistency tests with:
-
-```sh
-python -m unittest desktop.tests.test_settings_schema -v
-```
+These tests exercise restart persistence, invalid update rejection, write
+failure recovery, reset, detached reads, migration and source-level accessibility
+contracts. Qt runtime, keyboard navigation and screen-reader testing still
+require the supported Plasma/Qt environment.

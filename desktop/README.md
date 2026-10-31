@@ -4,152 +4,18 @@
 **Branch:** `agent/02-desktop-shell`  
 **Owned scope:** `desktop/`, desktop-specific configuration, desktop UI tests, and desktop documentation.
 
-## Purpose
+## Settings UX and persistence
 
-Deliver a premium, responsive, accessible KDE Plasma desktop that remains fully usable when Tusker, model runtimes, network access, or optional desktop components are unavailable.
+The Qt Quick Controls preferences surface is in `desktop/settings/main.qml`.
+It covers panel layout, assistant visibility and accessibility preferences.
+The host injects a narrow adapter around `SettingsController`; QML never writes
+configuration files directly. Updates are validated and atomically persisted
+before being published to the UI. Restore defaults requires explicit
+confirmation. See [settings UI](settings/README.md) and
+[settings persistence contract](config/README.md).
 
-## Platform direction
-
-- KDE Plasma 6 and KWin on Wayland are the target desktop platform.
-- Qt 6 / QML is the preferred UI implementation technology for Plasma-native surfaces.
-- Prefer supported Plasma applet and configuration extension points over replacing core Plasma services.
-- Use KWin scripts/effects only for capabilities that cannot be implemented safely through existing desktop settings or Plasma components.
-- Final Fedora/Plasma/Qt minor versions and package names must be pinned with ATLAS-01 after checking the selected Fedora release.
-
-## Proposed component boundaries
-
-| Component | Responsibility | Initial implementation direction |
-|---|---|---|
-| Shell layout | Desktop/panel composition and defaults | Plasma layout template and declarative configuration |
-| Dock/taskbar | Pinned apps, running apps, launch and activation | Native Plasma panel/task manager components first |
-| Launcher/search | App discovery and search entry point | Existing Plasma launcher/KRunner integration; custom UI only where justified |
-| Quick settings | Network, audio, brightness, Bluetooth and power affordances | Existing Plasma applets and system services; no duplicated privileged logic |
-| Notifications | Actionable system and assistant notifications | Plasma notification infrastructure |
-| Workspace/overview | Desktop navigation, window switching and snapping | KWin/Plasma supported facilities; small scoped extensions if needed |
-| Tusker panel | Task progress, approvals and controls | Separate UI client consuming a versioned, agreed task-event contract |
-| Preferences | Layout, shortcuts, density, gestures and accessibility | Declarative settings with validated defaults and migration |
-
-## Architecture rules
-
-1. Keep shell presentation separate from privileged system operations.
-2. Do not create a custom background daemon when a Plasma/KDE service or D-Bus API already provides the required capability.
-3. Use user-session scope for desktop UI; never grant the shell blanket root privileges.
-4. Treat assistant content, remote task events, themes and plugin metadata as untrusted input.
-5. Assistant UI must be optional and nonblocking. Hiding or crashing it must not cancel or terminate an independent task.
-6. Preserve keyboard and pointer operation as the baseline. Gestures are optional, configurable and conflict-checked.
-7. Support multiple displays, fractional scaling, high-DPI, localization, screen readers, high contrast and reduced motion.
-8. Keep animations subtle and honor system animation preferences.
-9. Invalid configuration/theme data must fall back to safe defaults without making Plasma unusable.
-10. Prefer native components and incremental replacement over a wholesale shell fork.
-
-## Cross-agent contracts
-
-- **PIXEL-03:** design tokens, theme package schema, supported desktop surfaces, live reload and invalid-theme fallback.
-- **TUSKER-04:** task identity, status/progress events, tool activity, approval request/response, pause, resume, cancel, dismiss and error semantics.
-- **NEXUS-07:** read-only system status and approved control interfaces; desktop UI must not duplicate privileged operations.
-- **PILOT-08:** remote-session identity, task origin, connection status and notification/approval presentation.
-- **ATLAS-01 / PHOENIX-10:** supported Plasma/Qt versions, package names, session defaults, image composition and recovery behavior.
-
-No shared contract is considered implemented until its owner has agreed to a versioned interface.
-
-## Static validation and tests
-
-Dependency-free validators check the applet package metadata/QML entry point and the optional dock template metadata/layout invariants. They do not replace `qmllint`, `kpackagetool6`, or a real Plasma Wayland session.
-
-From the repository root:
-
-```sh
-python desktop/tools/validate_plasmoid.py desktop/plasmoid/package
-python desktop/tools/validate_panel_template.py desktop/panel-template
-python -m unittest discover -s desktop/tests -v
-node --check desktop/panel-template/contents/layout.js
-```
-
-The panel-template validator checks the layout-template service metadata, required native launcher/task-manager widgets, bottom-panel intent and absence of selected destructive panel operations. These are static checks only: they do not establish that the installed Plasma build accepts the metadata or widget IDs. Automated static CI is implemented; Fedora/Plasma runtime validation remains pending.
-
-## Desktop settings recovery
-
-Check the user settings file without printing its values:
-
-```sh
-python -m desktop.tools.settings_recovery check
-```
-
-Restore schema-v1 defaults only with explicit confirmation:
-
-```sh
-python -m desktop.tools.settings_recovery reset --yes
-```
-
-Use `--config /path/to/desktop.json` to target a specific file. The command defaults to the XDG user config location, reports validation errors without echoing file contents, and refuses symlink destinations. Reset replaces the file; back it up first if its current values may be needed. See [the settings contract](config/README.md).
-
-## Initial source references
-
-- [Plasma QML API](https://develop.kde.org/docs/plasma/widget/plasma-qml-api/)
-- [Plasma widget/plugin types](https://develop.kde.org/docs/plasma/)
-- [Plasmoid migration to KF6 / Plasma 6](https://develop.kde.org/docs/plasma/widget/porting_kf6/)
-- [KWin scripting tutorial](https://develop.kde.org/docs/plasma/kwin/)
-- [KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/)
-
-## Current status
-
-This remains an incremental desktop foundation, not a complete shell replacement. The branch contains a minimal Plasma applet, an opt-in native dock template, dependency-free static validators, safe user-level template installation/removal, and a passing GitHub Actions static-validation workflow. Fedora/Plasma runtime, accessibility and packaging claims remain unverified. See [the Fedora/Plasma runtime validation runbook](validation/FEDORA-PLASMA-RUNTIME.md).
-
-## Optional native dock template
-
-An opt-in Plasma layout template is available at `desktop/panel-template/`. It adds a bottom floating panel with the built-in Kickoff launcher and Icons-only Task Manager. It does not replace the user's current panel or impose a pinned-app list. See [the template README](panel-template/README.md) for manual developer installation and limitations.
-
-The template is a Plasma desktop-scripting artifact, not a standalone dock process. JavaScript syntax and static structure checks do not prove runtime compatibility on the pinned Fedora/Plasma image.
-
-## Dock template installation and recovery
-
-The optional native dock template can be installed for the current user without sudo:
-
-```sh
-python desktop/tools/install_panel_template.py
-```
-
-The installer uses `$XDG_DATA_HOME` (or `~/.local/share`), refuses existing or symlink destinations, stages the copy before publishing it, and writes an ownership marker. It never overwrites existing user data. To remove only its own marked installation:
-
-```sh
-python desktop/tools/install_panel_template.py --remove
-```
-
-There is no force-overwrite option. Inspect an existing destination manually. Installing the template only makes it available to Plasma; the user explicitly selects it from Add Panel if supported. Existing panels and their configuration are not modified. See [the dock template README](panel-template/README.md).
-
-Installer unit tests cover installation, no-overwrite, symlink refusal, marked removal and refusal to remove unmanaged directories. Static tests do not validate Plasma runtime compatibility.
-
-
-## Automated desktop CI
-
-The `.github/workflows/desktop-validation.yml` workflow runs on desktop-related pushes to `agent/02-desktop-shell`, pull requests targeting `main`, and manual dispatch. It runs the full desktop unittest discovery suite, both static package/template validators, and `node --check` for the panel layout script. The first hosted run passed all 15 unit tests and all validation steps; this does not exercise a Plasma session.
-
-The workflow uses GitHub-hosted Ubuntu with Python 3.12 and Node.js 22, requests read-only repository contents permission, and does not start a Plasma session or claim runtime validation. Check the Actions run for the actual result; workflow creation alone is not a passing CI result.
-
-
-## Fedora / Plasma runtime validation
-
-ATLAS-01 has proposed Fedora 44 / Plasma 6.6.4 / Wayland-first as the provisional target. The exact RPM package set remains to be resolved from the chosen Fedora repository snapshot. Follow [the Fedora/Plasma runtime validation runbook](validation/FEDORA-PLASMA-RUNTIME.md) for package discovery, Qt 6 QML lint, isolated applet checks, a real Wayland-session test and rollback evidence. The runbook is a plan only; no Fedora runtime test is claimed.
-
-
-## Desktop preferences foundation
-
-The dependency-free settings module at `desktop/config/settings.py` provides schema-v1 defaults, strict validation, partial-default merging, safe fallback for invalid files, and atomic user-scoped persistence (mode `0600`, symlink refusal). The assistant panel is disabled by default. The caller supplies the config path; the recommended location is `$XDG_CONFIG_HOME/tuskeros/desktop.json` or `~/.config/tuskeros/desktop.json`. See [the settings contract](config/README.md). This is a settings foundation only; it is not yet wired into Plasma UI or a settings migration framework.
-
-
-## Reproducible Plasma Wayland session
-
-The package now includes an opt-in SDDM session descriptor and a thin launcher for
-the stock Plasma 6 Wayland session. Package
-`desktop/session/launch.py` as
-`/usr/libexec/tuskeros/session-launcher` (mode 0755) and
-`desktop/session/tuskeros-wayland.desktop` as
-`/usr/share/wayland-sessions/tuskeros-wayland.desktop` (mode 0644).
-The launcher preserves the login-manager environment and directly execs
-`/usr/bin/startplasma-wayland`; it does not replace Plasma or start privileged
-services. See [the session integration runbook](session/README.md).
-
-The launcher unit tests exercise environment setup, direct exec, argument
-forwarding, missing executable handling and startup failure recovery. They do
-not prove a graphical session starts. A disposable Fedora KDE Wayland VM smoke
-test remains required before runtime acceptance.
+Schema-v0 and unversioned preferences migrate to v1 through the same atomic
+mode-0600 writer. Invalid, symlinked, duplicate-key and future-version input
+fails closed and is not overwritten. Backend and source-level accessibility
+tests are included. Qt/Plasma runtime and screen-reader checks remain pending;
+this source-level work is not a graphical runtime acceptance claim.
