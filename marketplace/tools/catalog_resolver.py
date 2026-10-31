@@ -254,6 +254,16 @@ def resolve_catalog_plan(
             include_prerelease=include_prerelease,
             version_constraints=incoming.get(package_id, ()),
         )
+    # Conflict declarations are advisory metadata until resolution. Treat either
+    # side's declaration as sufficient and fail closed before returning a plan.
+    selected_ids = set(selected)
+    for package_id, entry in selected.items():
+        conflicts = entry.get("package", {}).get("conflicts", [])
+        overlap = sorted(set(conflicts) & selected_ids)
+        if overlap:
+            raise CatalogResolutionError(
+                f"package conflict: {package_id} conflicts with {', '.join(overlap)}"
+            )
     return {"order": order, "releases": selected}
 
 
