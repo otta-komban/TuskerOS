@@ -1007,3 +1007,75 @@ def test_consume_rejects_truthy_non_boolean_policy_recheck(callback_result):
         assert db.audit_events()[-1]["reason_code"] == "POLICY_BINDING_MISMATCH"
     finally:
         db.close()
+
+
+@pytest.mark.parametrize("callback_result", [1, "verified", [], {}])
+def test_policy_rejects_truthy_non_boolean_registry_verifier(callback_result):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: callback_result, argument_validator=lambda a, x: True,
+        resource_resolver=lambda r: list(r), precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, registry, "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_REGISTRY_UNAVAILABLE"
+
+
+@pytest.mark.parametrize("callback_result", [1, "verified", [], {}])
+def test_policy_rejects_truthy_non_boolean_identity_verifier(callback_result):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: callback_result,
+        registry_verifier=lambda r, v: True, argument_validator=lambda a, x: True,
+        resource_resolver=lambda r: list(r), precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, registry, "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_UNKNOWN_PRINCIPAL"
+
+
+@pytest.mark.parametrize("callback_result", [1, "valid", [], {}])
+def test_policy_rejects_truthy_non_boolean_argument_validator(callback_result):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: True, argument_validator=lambda a, x: callback_result,
+        resource_resolver=lambda r: list(r), precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, registry, "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_INVALID_ARGUMENTS"
