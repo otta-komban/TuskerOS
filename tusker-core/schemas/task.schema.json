@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tuskeros.invalid/core/task-0.1.0-draft.json",
+  "title": "Tusker Core Task (provisional)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "request_id",
+    "created_at",
+    "updated_at",
+    "state",
+    "origin",
+    "version"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0-draft"
+    },
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "session_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "planning",
+        "awaiting_approval",
+        "running",
+        "verifying",
+        "completed",
+        "failed",
+        "cancelled",
+        "partially_completed"
+      ]
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "local",
+            "remote",
+            "extension",
+            "system"
+          ]
+        },
+        "display_label": {
+          "type": "string",
+          "maxLength": 80
+        }
+      }
+    },
+    "user_request": {
+      "type": "string",
+      "maxLength": 32768
+    },
+    "intent": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "plan_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "current_step_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "result_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 512
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

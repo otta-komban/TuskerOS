@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tuskeros.invalid/core/cancellation-0.1.0-draft.json",
+  "title": "Tusker Core Cancellation Request (provisional)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "reason",
+    "requested_at",
+    "request_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0-draft"
+    },
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "reason": {
+      "enum": [
+        "user_requested",
+        "policy_requested",
+        "shutdown",
+        "superseded"
+      ]
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    }
+  }
+}

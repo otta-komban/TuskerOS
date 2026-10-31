@@ -1,0 +1,8 @@
+{
+  "schema_version": "0.1.0-draft",
+  "task_id": "123e4567-e89b-42d3-a456-426614174000",
+  "request_id": "123e4567-e89b-42d3-a456-426614174030",
+  "reason": "user_requested",
+  "requested_at": "2026-10-31T00:00:03Z",
+  "correlation_id": "corr-123e4567"
+}
