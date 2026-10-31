@@ -50,19 +50,34 @@ class JournalReport:
 
 def _validate_json_value(value: Any, *, depth: int = 0,
                          active: set[int] | None = None,
-                         budget: list[int] | None = None) -> None:
+                         budget: list[int] | None = None,
+                         byte_budget: list[int] | None = None) -> None:
     """Accept bounded JSON primitives/containers only; never call custom hooks."""
     if active is None:
         active = set()
     if budget is None:
         budget = [MAX_JSON_NODES]
+    if byte_budget is None:
+        byte_budget = [MAX_RECORD_BYTES]
     budget[0] -= 1
     if budget[0] < 0:
         raise JournalValidationError("record exceeds maximum JSON node count")
     if depth > MAX_JSON_DEPTH:
         raise JournalValidationError("record exceeds maximum JSON nesting depth")
     value_type = type(value)
-    if value_type in (type(None), bool, int, str):
+    if value_type in (type(None), bool):
+        return
+    if value_type is str:
+        try:
+            byte_budget[0] -= len(value.encode("utf-8", errors="strict"))
+        except UnicodeEncodeError as exc:
+            raise JournalValidationError("record contains invalid Unicode") from exc
+        if byte_budget[0] < 0:
+            raise JournalValidationError("record exceeds maximum encoded input size")
+        return
+    if value_type is int:
+        if value.bit_length() > MAX_RECORD_BYTES * 3:
+            raise JournalValidationError("record contains an oversized integer")
         return
     if value_type is float:
         if not math.isfinite(value):
@@ -78,14 +93,24 @@ def _validate_json_value(value: Any, *, depth: int = 0,
         if value_type is list:
             for item in value:
                 _validate_json_value(item, depth=depth + 1,
-                                     active=active, budget=budget)
+                                     active=active, budget=budget,
+                                     byte_budget=byte_budget)
         else:
             for key, item in value.items():
                 if type(key) is not str:
                     raise JournalValidationError(
                         "nested object keys must be plain strings")
+                try:
+                    byte_budget[0] -= len(key.encode("utf-8", errors="strict"))
+                except UnicodeEncodeError as exc:
+                    raise JournalValidationError(
+                        "record contains invalid Unicode") from exc
+                if byte_budget[0] < 0:
+                    raise JournalValidationError(
+                        "record exceeds maximum encoded input size")
                 _validate_json_value(item, depth=depth + 1,
-                                     active=active, budget=budget)
+                                     active=active, budget=budget,
+                                     byte_budget=byte_budget)
     finally:
         active.remove(identity)
 
@@ -98,9 +123,13 @@ def _canonical_payload(record: dict[str, Any]) -> bytes:
     payload = {key: value for key, value in record.items() if key != "checksum"}
     _validate_json_value(payload)
     try:
-        return json.dumps(payload, ensure_ascii=False, sort_keys=True,
-                          separators=(",", ":"), allow_nan=False).encode(
-                              "utf-8", errors="strict")
+        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                             separators=(",", ":"), allow_nan=False).encode(
+                                 "utf-8", errors="strict")
+        if len(encoded) > MAX_RECORD_BYTES:
+            raise JournalValidationError(
+                f"record exceeds maximum size ({MAX_RECORD_BYTES} bytes)")
+        return encoded
     except (TypeError, ValueError, UnicodeEncodeError) as exc:
         raise JournalValidationError(f"record is not strict JSON data: {exc}") from exc
 
