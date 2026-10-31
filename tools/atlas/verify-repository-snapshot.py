@@ -71,6 +71,43 @@ def parse_repomd(data: bytes) -> tuple[str, str, str, str]:
     return revision.strip(), href, checksum_value, checksum_type
 
 
+def parse_repomd_metadata(data: bytes) -> list[tuple[str, str, str]]:
+    """Return every repomd payload's relative path, SHA-256 and metadata type."""
+    try:
+        root = ET.fromstring(data)
+    except ET.ParseError as exc:
+        raise RuntimeError(f"repomd.xml is not valid XML: {exc}") from exc
+    namespace = {"r": "http://linux.duke.edu/metadata/repo"}
+    entries: list[tuple[str, str, str]] = []
+    for item in root.findall("r:data", namespace):
+        metadata_type = item.attrib.get("type", "")
+        location = item.find("r:location", namespace)
+        checksum = item.find("r:checksum", namespace)
+        if not metadata_type or location is None or checksum is None:
+            raise RuntimeError("repomd.xml contains a metadata entry missing type, location or checksum")
+        href = location.attrib.get("href", "")
+        parsed_href = urllib.parse.urlparse(href)
+        decoded_href = urllib.parse.unquote(href)
+        if (
+            not href or href.startswith("/") or href.startswith("//") or "\\" in href
+            or parsed_href.scheme or parsed_href.netloc or parsed_href.query or parsed_href.fragment
+            or ".." in Path(decoded_href).parts
+        ):
+            raise RuntimeError(f"unsafe metadata payload path in repomd.xml: {href!r}")
+        checksum_type = checksum.attrib.get("type", "").lower()
+        checksum_value = (checksum.text or "").strip().lower()
+        if checksum_type != "sha256" or len(checksum_value) != 64 or any(
+            char not in "0123456789abcdef" for char in checksum_value
+        ):
+            raise RuntimeError(f"{metadata_type}: repomd payload checksum must be SHA-256")
+        entries.append((href, checksum_value, metadata_type))
+    if not entries:
+        raise RuntimeError("repomd.xml contains no metadata payload entries")
+    if sum(1 for _, _, metadata_type in entries if metadata_type == "primary") != 1:
+        raise RuntimeError("repomd.xml must contain exactly one primary metadata entry")
+    return entries
+
+
 def primary_metadata_url(repomd_url: str, href: str) -> str:
     # Fedora repomd.xml lives under repodata/, while href is relative to repo root.
     parsed_href = urllib.parse.urlparse(href)
@@ -186,11 +223,15 @@ def verify_local_snapshot(root: Path, indexed: dict[str, dict[str, str]]) -> Non
         revision, href, primary_sha256, _ = parse_repomd(repomd)
         if revision != entry["revision"] or href != entry["primary_href"] or primary_sha256 != entry["primary_sha256"]:
             raise RuntimeError(f"{repo_id}: local repomd.xml identity differs from locked snapshot")
-        primary_path = (repository_path / urllib.parse.unquote(href)).resolve(strict=True)
-        if not primary_path.is_relative_to(repository_path):
-            raise RuntimeError(f"{repo_id}: local primary metadata path escapes repository root")
-        if sha256(primary_path.read_bytes()) != entry["primary_sha256"]:
-            raise RuntimeError(f"{repo_id}: local primary metadata SHA-256 differs from locked snapshot")
+        for metadata_href, expected_digest, metadata_type in parse_repomd_metadata(repomd):
+            metadata_path = (repository_path / urllib.parse.unquote(metadata_href)).resolve(strict=True)
+            if not metadata_path.is_relative_to(repository_path):
+                raise RuntimeError(f"{repo_id}: {metadata_type} metadata path escapes repository root")
+            actual_digest = sha256(metadata_path.read_bytes())
+            if actual_digest != expected_digest:
+                raise RuntimeError(
+                    f"{repo_id}: {metadata_type} metadata SHA-256 differs from repomd.xml"
+                )
 
 
 
