@@ -1,0 +1,41 @@
+name: Remote-control conformance specification validation
+
+on:
+  push:
+    branches:
+      - agent/08-remote-control
+    paths:
+      - "remote-control/verification/**"
+      - ".github/workflows/remote-control-conformance.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "remote-control/verification/**"
+      - ".github/workflows/remote-control-conformance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: remote-control-conformance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance-specifications:
+    name: Documentation conformance integrity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator and tests
+        run: python -m py_compile remote-control/verification/validate_conformance_specs.py remote-control/verification/test_validate_conformance_specs.py
+      - name: Run validator unit tests
+        run: python -m unittest discover -s remote-control/verification -p 'test_*.py' -v
+      - name: Validate committed conformance tables
+        run: python remote-control/verification/validate_conformance_specs.py --json
