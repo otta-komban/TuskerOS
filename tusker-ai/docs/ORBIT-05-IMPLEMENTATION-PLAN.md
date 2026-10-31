@@ -190,3 +190,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added a regression with small message content and oversized metadata against an unreachable loopback endpoint, proving the size check wins before network dispatch.
 - Provider body-limit commit: `ddfef92c6ff7279ed8d683267c1ebdea7522bcd6`; regression test: `2a6c5216f103bf6b41a352d13e6d888ba8d973a7`; explicit limit constant correction: `923b9b73707f2a5ae0141df23129e5f953b10ad8`.
 - Live Ollama remains NOT RUN.
+
+
+## Iteration 18 — aggregate provider stream response bound
+
+- Added an 8 MiB cumulative byte ceiling across an Ollama NDJSON response, in addition to the existing per-frame limit. This prevents a provider from bypassing the frame guard by sending an unbounded number of individually valid frames.
+- The adapter returns a safe `PROVIDER_DISCONNECTED` error once the cumulative response exceeds the ceiling; already-streamed events remain streamed and no shared daemon is terminated.
+- Added an HTTP fixture that emits multiple sub-limit frames whose aggregate exceeds the ceiling, with a regression asserting the typed failure.
+- Provider commit: `20ecde5bde19bc93ae5c9c2c9f1bda7bf32b54e5`; test commit: `fe2084f7d89ddb9f309d8dbbef894ec3750cdf1f`.
+- Latest-head CI pending. Live Ollama remains NOT RUN.
