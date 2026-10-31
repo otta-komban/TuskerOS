@@ -188,6 +188,13 @@ class CatalogEntryValidationTests(unittest.TestCase):
 
     def test_schema_anchored_patterns_reject_trailing_line_terminators(self):
         schema = json.loads((ROOT / "schemas/catalog-entry.schema.json").read_text())
+        samples = (
+            ("^[a-z0-9]", "valid-id"),
+            ("^(0|[1-9]", "1.2.3"),
+            ("^[a-fA-F0-9]", "a" * 64),
+            ("^[0-9]{4}-", "2026-10-31T00:00:00Z"),
+            ("^https://", "https://example.invalid/path"),
+        )
 
         def patterns(value):
             if isinstance(value, dict):
@@ -201,10 +208,12 @@ class CatalogEntryValidationTests(unittest.TestCase):
                     yield from patterns(item)
 
         for pattern in patterns(schema):
-            if pattern.startswith("^") and pattern.endswith("(?![\\s\\S])"):
-                expression = re.compile(pattern)
-                with self.subTest(pattern=pattern):
-                    self.assertIsNone(expression.search("valid-value\\n"))
+            if pattern.startswith("^"):
+                sample = next((sample for prefix, sample in samples if pattern.startswith(prefix)), None)
+                if sample is not None:
+                    with self.subTest(pattern=pattern):
+                        self.assertIsNotNone(re.search(pattern, sample))
+                        self.assertIsNone(re.search(pattern, sample + "\\n"))
 
 
 if __name__ == "__main__":
