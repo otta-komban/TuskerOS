@@ -1273,3 +1273,37 @@ def test_security_store_closes_sqlite_connection_when_schema_initialization_fail
     with pytest.raises(sqlite3.ProgrammingError, match="closed"):
         connection.execute("SELECT 1")
 
+def test_reissuing_authorization_revokes_previous_reference_atomically():
+    import hashlib
+
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid),
+            now=NOW) == "APPROVED"
+
+        first_ref = db.issue_authorization(rid, current_binding=BINDING,
+            current_policy_version="policy-1", audit_context=audit_for_approval(db, rid), now=NOW)
+        second_ref = db.issue_authorization(rid, current_binding=BINDING,
+            current_policy_version="policy-1", audit_context=audit_for_approval(db, rid), now=NOW)
+        assert first_ref != second_ref
+
+        first_hash = hashlib.sha256(first_ref.encode("utf-8")).hexdigest()
+        second_hash = hashlib.sha256(second_ref.encode("utf-8")).hexdigest()
+        states = {row["token_hash"]: row["state"] for row in db._db.execute(
+            "SELECT token_hash, state FROM auth_refs WHERE request_id=?", (rid,))}
+        assert states == {first_hash: "REVOKED", second_hash: "ISSUED"}
+
+        # The superseded bearer reference cannot consume, while the latest
+        # reference remains eligible for exactly one successful consume.
+        assert consume(db, first_ref).outcome == "REVOKED"
+        result = consume(db, second_ref)
+        assert result.outcome == "CONSUMED"
+        assert result.grant is not None
+        final_states = {row["token_hash"]: row["state"] for row in db._db.execute(
+            "SELECT token_hash, state FROM auth_refs WHERE request_id=?", (rid,))}
+        assert final_states == {first_hash: "REVOKED", second_hash: "CONSUMED"}
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
