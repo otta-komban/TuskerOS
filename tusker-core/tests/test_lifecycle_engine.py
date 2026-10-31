@@ -421,6 +421,50 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(self.store._tasks, {})
         self.assertEqual(self.store._events, {})
 
+    def test_store_create_rejects_boolean_version_and_sequence(self):
+        task = {"task_id": "task-1", "version": True}
+        event = {"event_id": "event-1", "task_id": "task-1", "sequence": 1}
+        with self.assertRaisesRegex(LifecycleError, "must be integers"):
+            self.store.create(task, event)
+        task["version"] = 1
+        event["sequence"] = True
+        with self.assertRaisesRegex(LifecycleError, "must be integers"):
+            self.store.create(task, event)
+        self.assertEqual(self.store._tasks, {})
+
+    def test_store_create_rejects_non_string_identity(self):
+        with self.assertRaisesRegex(LifecycleError, "non-empty strings"):
+            self.store.create(
+                {"task_id": 123, "version": 1},
+                {"event_id": "event-1", "task_id": "123", "sequence": 1},
+            )
+        self.assertEqual(self.store._tasks, {})
+
+    def test_store_transition_rejects_boolean_version_and_sequence_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        candidate = {**before_task, "state": "planning", "version": 2}
+        event = self.engine._event(candidate, "task.state_changed", sequence=2)
+        with self.assertRaisesRegex(LifecycleError, "expected_version must be an integer"):
+            self.store.transition(task_id, True, candidate, event, None, None)
+        with self.assertRaisesRegex(LifecycleError, "must be integers"):
+            self.store.transition(task_id, 1, {**candidate, "version": True}, event, None, None)
+        with self.assertRaisesRegex(LifecycleError, "must be integers"):
+            self.store.transition(task_id, 1, candidate, {**event, "sequence": True}, None, None)
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
+    def test_store_transition_rejects_non_string_event_identity_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        candidate = {**before_task, "state": "planning", "version": 2}
+        event = self.engine._event(candidate, "task.state_changed", sequence=2)
+        event["event_id"] = 123
+        with self.assertRaisesRegex(LifecycleError, "event_id must be a non-empty string"):
+            self.store.transition(task_id, 1, candidate, event, None, None)
+        self.assertEqual(self.store.get(task_id), before_task)
+
     def test_store_transition_rejects_non_mapping_records_without_mutation(self):
         task_id = self.task["task_id"]
         before_task = self.store.get(task_id)
