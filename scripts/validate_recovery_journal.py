@@ -105,7 +105,7 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         elif record["operation_id"] != operation_id:
             errors.append(f"record {index}: operation_id changed within journal")
         state = record["state"]
-        if state not in STATES:
+        if not isinstance(state, str) or state not in STATES:
             errors.append(f"record {index}: unknown state {state!r}")
         elif previous_state is not None and state not in TRANSITIONS[previous_state]:
             errors.append(f"record {index}: illegal transition {previous_state} -> {state}")
@@ -135,8 +135,17 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
     )
 
 
+def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise JournalValidationError(f"duplicate JSON key {key!r}")
+        result[key] = value
+    return result
+
+
 def parse_jsonl(text: str) -> list[dict[str, Any]]:
-    """Parse complete JSONL records; blank lines and truncated records are rejected."""
+    """Parse complete JSONL records; blank, duplicate-key and truncated records fail."""
     if not isinstance(text, str) or not text:
         raise JournalValidationError("journal must be non-empty text")
     lines = text.splitlines()
@@ -145,8 +154,10 @@ def parse_jsonl(text: str) -> list[dict[str, Any]]:
         if not line.strip():
             raise JournalValidationError(f"line {number}: blank records are not allowed")
         try:
-            item = json.loads(line, parse_constant=lambda value: (_ for _ in ()).throw(
-                JournalValidationError(f"non-standard JSON constant {value}")))
+            item = json.loads(
+                line, object_pairs_hook=_unique_object,
+                parse_constant=lambda value: (_ for _ in ()).throw(
+                    JournalValidationError(f"non-standard JSON constant {value}")))
         except (json.JSONDecodeError, JournalValidationError) as exc:
             raise JournalValidationError(f"line {number}: {exc}") from exc
         if not isinstance(item, dict):
