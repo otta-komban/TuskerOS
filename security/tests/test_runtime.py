@@ -188,3 +188,25 @@ def test_broker_gate_returns_a_narrow_grant_only_after_consume():
                                      "session_binding", "device_binding", "action_digest", "registry_version",
                                      "precondition_digest"}
     finally: db.close()
+def test_reconciliation_is_bound_to_original_principal_session_and_device():
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        first = consume(db, ref)
+        assert first.outcome == "CONSUMED"
+        mismatches = [
+            {"authenticated": True, "principal_binding": D4, "session_binding": D2, "device_binding": D3},
+            {"authenticated": True, "principal_binding": D1, "session_binding": D4, "device_binding": D3},
+            {"authenticated": True, "principal_binding": D1, "session_binding": D2, "device_binding": D4},
+        ]
+        for identity in mismatches:
+            db._peer_authenticator = lambda _credentials, identity=identity: identity
+            result = db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42})
+            assert result.outcome == "CALLER_UNAUTHORIZED"
+            assert result.consumption_id is None
+        db._peer_authenticator = peer
+        legitimate = db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42})
+        assert legitimate.outcome == "ALREADY_CONSUMED"
+        assert legitimate.consumption_id == first.consumption_id
+    finally:
+        db.close()
