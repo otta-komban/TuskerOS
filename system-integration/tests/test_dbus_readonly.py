@@ -227,6 +227,19 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertFalse(process.killed)
 
+    async def test_sub_millisecond_timeout_rounds_up_for_busctl(self):
+        process = FakeProcess(stdout=b'{"type":"s","data":["0123456789abcdef0123456789abcdef"]}')
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), timeout_seconds=0.0001
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ) as spawn:
+            await adapter._call("GetId")
+
+        self.assertEqual(spawn.await_args.args[4], "1ms")
+
     async def test_subprocess_is_killed_on_stdout_overflow(self):
         process = FakeProcess(stdout=b"x" * 129, returncode=None)
         adapter = ReadOnlySystemBusAdapter(
