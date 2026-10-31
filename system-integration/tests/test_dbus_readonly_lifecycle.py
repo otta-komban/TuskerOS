@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
-from adapters.dbus_readonly import AuthorizationDenied, ReadOnlySystemBusAdapter
+from adapters.dbus_readonly import AdapterError, AuthorizationDenied, ReadOnlySystemBusAdapter
 
 
 class ReadOnlySystemBusLifecycleTests(unittest.IsolatedAsyncioTestCase):
@@ -41,6 +41,23 @@ class ReadOnlySystemBusLifecycleTests(unittest.IsolatedAsyncioTestCase):
 
         gate.assert_awaited_once_with("system.bus.id.read")
         adapter._call.assert_not_awaited()
+
+    async def test_snapshot_does_not_return_partial_result_when_second_read_fails(self):
+        gate = AsyncMock(return_value=True)
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock(side_effect=["bus-id", AdapterError("bus call failed")])
+
+        with self.assertRaises(AdapterError):
+            await adapter.snapshot()
+
+        self.assertEqual(
+            [call.args for call in gate.await_args_list],
+            [("system.bus.id.read",), ("system.bus.names.read",)],
+        )
+        self.assertEqual(
+            [call.args for call in adapter._call.await_args_list],
+            [("GetId",), ("ListNames",)],
+        )
 
     async def test_snapshot_stops_when_second_authorization_is_denied(self):
         gate = AsyncMock(side_effect=[True, False])
