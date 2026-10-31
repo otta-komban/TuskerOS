@@ -153,8 +153,6 @@ def verify_lock(path: Path, *, require_repositories: bool = True) -> dict[str, d
     indexed = validate_lock(payload, require_repositories=require_repositories)
     for repo_id, entry in indexed.items():
         repomd = fetch_https(entry["repomd_url"])
-        if not repomd_path.with_name("repomd.xml.asc").is_file():
-            raise RuntimeError(f"{repo_id}: local snapshot is missing repomd.xml.asc required for Fedora metadata signature verification")
         actual_repomd_sha256 = sha256(repomd)
         if actual_repomd_sha256 != entry["repomd_sha256"]:
             raise RuntimeError(f"{repo_id}: repomd.xml SHA-256 changed: {actual_repomd_sha256}")
@@ -180,6 +178,8 @@ def verify_local_snapshot(root: Path, indexed: dict[str, dict[str, str]]) -> Non
             repomd = repomd_path.read_bytes()
         except OSError as exc:
             raise RuntimeError(f"{repo_id}: local snapshot is missing repodata/repomd.xml: {exc}") from exc
+        if not repomd_path.with_name("repomd.xml.asc").is_file():
+            raise RuntimeError(f"{repo_id}: local snapshot is missing repomd.xml.asc required for Fedora metadata signature verification")
         actual_repomd_sha256 = sha256(repomd)
         if actual_repomd_sha256 != entry["repomd_sha256"]:
             raise RuntimeError(f"{repo_id}: local repomd.xml SHA-256 differs from locked snapshot")
