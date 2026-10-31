@@ -32,12 +32,15 @@ class KiwiBundleContractTests(unittest.TestCase):
         self.assertIn('SNAPSHOT_LOCK="${ROOT}/os/repository-snapshot.lock.json"', SCRIPT)
         self.assertIn('"$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"', SCRIPT)
         self.assertIn('"repository_snapshot_preflight_verified": True', SCRIPT)
+        self.assertIn('"repository_snapshot_consumed_by_dnf5": True', SCRIPT)
         self.assertIn('"repository_snapshot_consumed_by_kiwi": False', SCRIPT)
+        self.assertIn('--download-metadata --destdir="$SNAPSHOT_ROOT" --arch=x86_64 --arch=noarch --gpgcheck', SCRIPT)
+        self.assertIn('--snapshot-root "$SNAPSHOT_ROOT"', SCRIPT)
 
     def test_metadata_does_not_overclaim_reproducibility(self):
         self.assertIn('"repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run"', SCRIPT)
         self.assertIn('"reproducible_build_claim": False', SCRIPT)
-        self.assertIn("KIWI and DNF5 still need to consume a frozen local repository snapshot; preflight verification alone does not pin later package downloads", SCRIPT)
+        self.assertIn("KIWI still downloads from its upstream repository definitions; only DNF5 package resolution consumes the verified local repository copies", SCRIPT)
         self.assertIn("RPM payload checksums are not yet recorded in the package lock", SCRIPT)
         self.assertIn("Fedora repository metadata signatures are not yet verified against Fedora signing keys", SCRIPT)
         self.assertIn("Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified", SCRIPT)
