@@ -111,3 +111,6 @@
 - [ ] **AISEC-007 — Model manifest path boundary:** constrain `files[].filename` to safe relative paths; reject traversal/absolute/drive/backslash forms, duplicate names and target-filesystem normalization collisions; add schema and runtime containment/race tests. Owner follow-up posted to ORBIT-05 issue #28 (comment 6534573189). Current finding is source-review only; no ModelStore runtime exploit or test is claimed.
 
 - [x] **C0053 — Remote audit data-minimization regression:** expanded AUD-REMOTE-006 to 11 negative schema cases for raw device/session identifiers, key/credential/signature/pairing material and task/prompt/completion payload fields. CI run 41165765657 passed on test commit 98aff2c0b4393e40e3661946d8fd16b59a1a8b1d. Schema-only evidence; live adapter redaction, durable audit storage and access-control/integrity remain unverified. Candidate v0.2.0 producer migration remains pending NEXUS-07/TUSKER-04 agreement; remote approval disabled for MVP.
+
+
+- [ ] **SEC-SCHEMA-007 — Policy-decision constraints vocabulary:** `policy-decision.schema.json` currently accepts any nested object under `constraints`; define the bounded typed vocabulary with policy-engine/broker owners, reject unknown keys, and add schema plus consumer fail-closed tests. Tracked in issue #31. No schema change or runtime behavior claimed.
