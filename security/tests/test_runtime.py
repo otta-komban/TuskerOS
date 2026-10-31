@@ -121,6 +121,16 @@ def test_policy_deny_default_allow_read_require_approval_and_deny_r5():
     engine = PolicyEngine("policy-1", identity_verifier=lambda c: c.get("authenticated") is True,
         registry_verifier=lambda r, v: bool(r) and v == "registry-1", argument_validator=lambda a, x: True,
         resource_resolver=lambda r: list(r), precondition_verifier=lambda p, r: D4)
+    for invalid_id in (proposal["proposal_id"].upper(), "{" + proposal["proposal_id"] + "}",
+                       proposal["proposal_id"].replace("-", "")):
+        malformed = dict(proposal, proposal_id=invalid_id)
+        assert engine.evaluate(malformed, context, [dict(
+            schema_version="0.1.0", action_id="system.info.read", operation_schema_version="1.0.0",
+            arguments_schema_ref="schemas/arguments/system-info.json", preconditions=[],
+            postcondition_verifier="verify.system.info", allowed_origins=["local"],
+            allowed_principal_classes=["user"], resources=[{"kind": "system", "access_modes": ["read"]}],
+            minimum_risk_class="R0", approval_mode="never", broker_operation_id="broker.system.info.read",
+            timeout_ms=1000, idempotency="optional_read_only")], "registry-1").reason_code == "POLICY_INVALID_ARGUMENTS"
     assert engine.evaluate(proposal, context, [], "registry-1").status == "DENY"
     reg = {"schema_version": "0.1.0", "action_id": "system.info.read", "operation_schema_version": "1.0.0",
         "arguments_schema_ref": "schemas/arguments/system-info.json",
