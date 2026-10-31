@@ -781,3 +781,12 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **AEGIS records:** Added SEC-INST-001 to `security/SCHEMA_CONSISTENCY_AUDIT.md` and `security/PHASE1_CHECKLIST.md`.
 - **Verification boundary:** No PHOENIX files modified; no PHOENIX tests run. AEGIS fixture vectors are not production JCS evidence. Destructive installer execution remains blocked pending correction and runtime verification.
 - **Commits:** audit `1b7dc7883b3ea8eed868c5b5e48105accd75538f`; checklist `8a435b7dd5603206cfa598f8b00a89b2c9ba72be`; JSONL `15abe1f1ece96c3fe40faf597e5970aeb38ed42d`.
+
+
+## C0069 — NEXUS provenance revalidation
+- Response completions: 21/100 (+1; C0068=20). One complete assistant response equals one completion.
+- Engineering tasks: 49 cumulative (+0).
+- Revalidated NEXUS invocation schema, valid fixture, interface example, authorization-boundary note and tests. The schema accepts optional arbitrary `authorization_context`; the valid fixture omits it but the prose example includes it. The transport injection mechanism is deferred and authority-smuggling tests are absent.
+- This is a contract/provenance ambiguity, not evidence of a demonstrated exploit. No NEXUS files changed; no NEXUS tests/runtime executed.
+- AEGIS audit and checklist updated. Required NEXUS fix: public/internal envelope separation or authenticated transport proof, four negative authority-field tests and one positive trusted-context test. Mutations remain fail-closed.
+- Commits: audit `9b0651052500e0aa3323b8a424437a8dcfaa9dd8`; checklist `1f65ce041e80ad7e0f1dd504bffb4573513c1af1`; JSONL `eac1e3d38d30657a6474b1521d71f8582c886190`.
