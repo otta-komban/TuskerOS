@@ -19,7 +19,7 @@ The gate is an internal composition seam only; it is **not** the AEGIS wire cont
 
 ## Failure behavior
 
-- Timeout, process startup failure, nonzero exit, malformed JSON/signature, invalid result shape, and output overflow produce a stable generic adapter error.
+- Timeout, process startup failure, nonzero exit, malformed or ambiguous JSON (including duplicate object keys and non-standard numeric constants), invalid signature, invalid result shape, and output overflow produce a stable generic adapter error.
 - Cancellation propagates and terminates the child process.
 - Health returns `degraded` when authorization or the bus probe is unavailable; it never treats inability to authorize as readiness.
 - This prototype does not implement mutation, arbitrary D-Bus introspection, signal subscriptions, retry, or operation reconciliation because it performs no mutations.
