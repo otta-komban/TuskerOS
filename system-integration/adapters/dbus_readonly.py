@@ -94,7 +94,11 @@ class ReadOnlySystemBusAdapter:
     async def get_bus_id(self) -> str:
         await self._authorize("system.bus.id.read")
         value = await self._call("GetId")
-        if not isinstance(value, str) or not value or len(value) > 128:
+        if (
+            not isinstance(value, str)
+            or len(value) != 32
+            or any(character not in "0123456789abcdefABCDEF" for character in value)
+        ):
             raise AdapterError("invalid bus identifier response")
         return value
 
