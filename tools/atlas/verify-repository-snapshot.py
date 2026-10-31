@@ -166,6 +166,31 @@ def verify_lock(path: Path, *, require_repositories: bool = True) -> dict[str, d
     return indexed
 
 
+def verify_local_snapshot(root: Path, indexed: dict[str, dict[str, str]]) -> None:
+    """Require the staged local repositories to contain the exact locked metadata bytes."""
+    snapshot_root = root.resolve(strict=True)
+    for repo_id, entry in indexed.items():
+        repository_path = (snapshot_root / repo_id).resolve(strict=True)
+        if not repository_path.is_relative_to(snapshot_root):
+            raise RuntimeError(f"{repo_id}: local repository path escapes snapshot root")
+        repomd_path = repository_path / "repodata" / "repomd.xml"
+        try:
+            repomd = repomd_path.read_bytes()
+        except OSError as exc:
+            raise RuntimeError(f"{repo_id}: local snapshot is missing repodata/repomd.xml: {exc}") from exc
+        actual_repomd_sha256 = sha256(repomd)
+        if actual_repomd_sha256 != entry["repomd_sha256"]:
+            raise RuntimeError(f"{repo_id}: local repomd.xml SHA-256 differs from locked snapshot")
+        revision, href, primary_sha256, _ = parse_repomd(repomd)
+        if revision != entry["revision"] or href != entry["primary_href"] or primary_sha256 != entry["primary_sha256"]:
+            raise RuntimeError(f"{repo_id}: local repomd.xml identity differs from locked snapshot")
+        primary_path = (repository_path / urllib.parse.unquote(href)).resolve(strict=True)
+        if not primary_path.is_relative_to(repository_path):
+            raise RuntimeError(f"{repo_id}: local primary metadata path escapes repository root")
+        if sha256(primary_path.read_bytes()) != entry["primary_sha256"]:
+            raise RuntimeError(f"{repo_id}: local primary metadata SHA-256 differs from locked snapshot")
+
+
 
 def verify_manifest_snapshot_pins(manifest_path: Path, indexed: dict[str, dict[str, str]]) -> int:
     try:
@@ -198,6 +223,7 @@ def main() -> int:
     parser.add_argument("--lock", type=Path, default=Path("os/repository-snapshot.lock.json"))
     parser.add_argument("--validate-only", action="store_true", help="validate lock structure without network access")
     parser.add_argument("--manifest", type=Path, help="also require every package row to reference its exact verified repository snapshot")
+    parser.add_argument("--local-root", type=Path, help="verify the staged local repository copies against the same lock")
     parser.add_argument("--capture", action="append", default=[], metavar="REPO_ID=REPOMD_URL",
                         help="capture one repository's repomd.xml and primary metadata identity")
     args = parser.parse_args()
@@ -227,6 +253,8 @@ def main() -> int:
         print(f"Validated repository snapshot lock structure: {len(indexed)} repository entries")
         return 0
     indexed = verify_lock(args.lock)
+    if args.local_root:
+        verify_local_snapshot(args.local_root, indexed)
     package_count = verify_manifest_snapshot_pins(args.manifest, indexed) if args.manifest else None
     suffix = f" and {package_count} package snapshot pins" if package_count is not None else ""
     print(f"Verified immutable repomd.xml and primary metadata for {len(indexed)} Fedora 44 repositories{suffix}")
