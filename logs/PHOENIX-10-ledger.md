@@ -3,14 +3,15 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 12  
+Current authorized cohort count: 13  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0021  
+Last completion: PHOENIX-10-C0022  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
-| PHOENIX-10-C0021 | P2 | recovery-journal-state-and-digest-invariants | Require `planned` initial state, stable idempotency declaration and lowercase SHA-256 encodings; regression tests added; PHOENIX CI `41187263494` passed. | validator, tests, docs; commits `6873234f`, `07a5e757`, `99b89182`; PR #55. |
+| PHOENIX-10-C0022 | P2 | recovery-journal-parser-and-state-robustness | Guard unknown states from transition lookup crashes; parse LF/CRLF JSONL boundaries while preserving U+2028 string data; PHOENIX CI `41187813890` and unified CI `41187818792` passed. | validator, tests, docs; commits `e185cd53`, `58e1793f`, `12d977cf`; PR #55. |
+| PHOENIX-10-C0021 | P2 | recovery-journal-state-and-digest-invariants | Require `planned` initial state, stable idempotency declaration and lowercase SHA-256 encodings; PHOENIX CI `41187263494` passed. | validator, tests, docs; commits `6873234f`, `07a5e757`, `99b89182`; PR #55. |
 | PHOENIX-10-C0020 | P2 | recovery-journal-resource-bounds | Added 4 MiB / 64 KiB / 10,000-record input bounds and bounded iterable validation; fixed the JSONL boundary test fixture; CI `41186648724` passed. | `scripts/validate_recovery_journal.py`; tests; docs; PR #55. |
 | PHOENIX-10-C0019 | P2 | read-only-recovery-journal-validation | Added strict read-only journal validation, state transitions, checksum-chain checks and advisory replay gates; PHOENIX CI `41186199820` passed. | `scripts/validate_recovery_journal.py`; `tests/test_validate_recovery_journal.py`; `docs/RECOVERY-JOURNAL-VALIDATION.md`; workflow; PR #55. |
 | PHOENIX-10-C0018 | P2 | installer-jcs-unicode-conformance | Corrected stale NFC digest rule; added AEGIS Unicode reference-vector tests and CI coverage; PHOENIX CI 41185982568 passed. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; `tests/test_installer_jcs_unicode_vectors.py`; workflow; PR #55. |
@@ -35,7 +36,7 @@ Last updated: 2026-10-31
 ## Current authorized cohort accounting
 
 - Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
-- Counted responses in this cohort: **12** — C0010 through C0021.
+- Counted responses in this cohort: **13** — C0010 through C0022.
 - Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
@@ -109,4 +110,7 @@ C0017 limitation: this response repaired a regression-test assertion and updated
 C0018 limitation: the Unicode fixture test covers two string-only vectors and strict UTF-8 rejection; it is not a full RFC 8785 implementation or production approval-digest integration test. The actual policy/broker digest path still requires AEGIS/NEXUS integration and tests. No installer runtime, image build, VM boot/install, recovery runtime or storage mutation was performed.
 
 
-C0021 limitation: this response adds three local recovery-journal invariants and tests only. CI for these new tests is pending; no persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed. The checksum remains unkeyed and unauthenticated; runtime integration remains blocked on accepted NEXUS-07/AEGIS-06 contracts.
+C0021 limitation: this response added three local recovery-journal invariants and tests only. PHOENIX CI `41187263494` passed; no persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed. The checksum remains unkeyed and unauthenticated; runtime integration remains blocked on accepted NEXUS-07/AEGIS-06 contracts.
+
+
+C0022 limitation: this response hardened in-memory JSONL parsing and malformed-state validation only. The first CI attempt failed due to incorrectly escaped test-fixture newline strings; corrected fixtures passed PHOENIX CI `41187813890` and unified validation `41187818792`. No journal persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed.
