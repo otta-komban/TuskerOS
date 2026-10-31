@@ -115,7 +115,8 @@
           "version": {
             "type": "string",
             "minLength": 1,
-            "description": "Required dependency release constraint: exact MAJOR.MINOR.PATCH or comma-conjoined comparisons using >=, >, <=, <, or = (for example >=1.2.0,<2.0.0)."
+            "maxLength": 512,
+            "description": "Required dependency release constraint: exact MAJOR.MINOR.PATCH or comma-conjoined comparisons using >=, >, <=, <, or = (for example >=1.2.0,<2.0.0); maximum 512 characters."
           }
         }
       }
