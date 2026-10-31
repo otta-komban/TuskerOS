@@ -239,7 +239,7 @@ POL-CON-001/002 have schema-level regression coverage: `constraints` is required
 |---|---|---|---|
 | POL-DEC-005a | Decision omits `constraints` | Reject | `test_policy_decision_constraints_must_be_present_and_empty` |
 | POL-DEC-005b | Decision includes an empty `constraints` object | Accept | `test_policy_decision_constraints_must_be_present_and_empty` |
-| POL-DEC-005c | Decision includes any non-empty or nested constraint object | Reject | `test_policy_decision_rejects_non_empty_constraints` |
+| POL-DEC-005c | Decision includes any non-empty or nested constraint object | Reject | `test_policy_decision_rejects_non_empty_or_non_object_constraints` |
 
 This is an interim fail-closed contract, not the final constraint vocabulary. The v0.1.0 schema now requires an empty object and rejects non-empty/non-object values. It does not prove policy-engine producer or broker-consumer enforcement at runtime.
 
