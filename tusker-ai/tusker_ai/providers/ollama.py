@@ -98,6 +98,11 @@ class OllamaProvider:
                 RuntimeErrorCode.INVALID_REQUEST,
                 "Inference request contains data that cannot be encoded for the local provider",
             ) from None
+        if len(encoded_payload) > _MAX_REQUEST_BODY_BYTES:
+            raise TuskerRuntimeError(
+                RuntimeErrorCode.INVALID_REQUEST,
+                "Inference request exceeds the local provider payload limit",
+            )
         req = Request(
             self._base + "/api/chat",
             data=encoded_payload,
