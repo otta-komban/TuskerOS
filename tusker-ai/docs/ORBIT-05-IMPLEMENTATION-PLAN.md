@@ -43,6 +43,12 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - Added a regression test that injects a probe exception and confirms a subsequent request can still acquire the single available slot.
 - GitHub Actions passed on code revision `454d10d4ad13f7ab5ddb659866e9727bd8d7854f`: runtime unit tests run 69, PHOENIX manifest integrity run 240, unified validation run 546, and AI contract tests run 91.
 
+## Stream deadline enforcement iteration
+
+- Added a provider-level deadline check immediately after each socket read, before parsing or emitting the returned NDJSON frame. This closes a gap where a frame could arrive after the deadline but before a longer socket timeout expired.
+- Added a delayed-frame HTTP fixture and regression test that expects `DEADLINE_EXCEEDED` when the first frame arrives after the request deadline.
+- Branch-head CI is running on code revision `3f02ca50dbfb5de0b390b0b34e3a8436fc4ca5a3`; results are pending.
+
 ## Remaining work sequence
 
 1. Keep full runtime/contract/unified validation green as further implementation changes land; all four required workflows passed on the latest code revision.
