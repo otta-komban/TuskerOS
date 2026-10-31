@@ -37,6 +37,29 @@ class RuntimeTests(unittest.TestCase):
         values.update(kwargs)
         return InferenceRequest(**values)
 
+    def test_runtime_limits_reject_invalid_types_and_non_finite_timeout(self):
+        invalid = (
+            {"max_concurrent_requests": True},
+            {"max_input_characters": 1.5},
+            {"max_output_tokens": False},
+            {"max_context_tokens": "4096"},
+            {"minimum_available_memory_bytes": -0.5},
+            {"minimum_available_memory_bytes": True},
+            {"request_timeout_seconds": True},
+            {"request_timeout_seconds": float("nan")},
+            {"request_timeout_seconds": float("inf")},
+            {"request_timeout_seconds": float("-inf")},
+            {"request_timeout_seconds": 0},
+        )
+        for changes in invalid:
+            with self.subTest(changes=changes):
+                with self.assertRaises(ValueError):
+                    RuntimeLimits(**changes)
+
+    def test_runtime_limits_accept_finite_positive_timeout(self):
+        self.assertEqual(RuntimeLimits(request_timeout_seconds=0.5).request_timeout_seconds, 0.5)
+        self.assertEqual(RuntimeLimits(request_timeout_seconds=10).request_timeout_seconds, 10)
+
     def test_successful_stream_has_one_terminal(self):
         events = list(InferenceRuntime(FakeProvider()).infer(self.request()))
         self.assertEqual([e.event_type for e in events], ["started", "text_delta", "completed"])
