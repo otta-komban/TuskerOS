@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -65,7 +66,7 @@ def _text(value: object, path: str, errors: list[str], *, maximum: int = 512) ->
 def _https(value: object, path: str, errors: list[str]) -> None:
     if not _text(value, path, errors):
         return
-    if any(character.isspace() or ord(character) < 32 for character in value):
+    if any(character.isspace() or unicodedata.category(character) == "Cc" for character in value):
         errors.append(f"{path}: URL must not contain whitespace or control characters")
         return
     try:
