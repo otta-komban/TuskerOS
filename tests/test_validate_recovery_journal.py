@@ -36,6 +36,17 @@ class HostileKey:
         raise RuntimeError("repr must not be called")
 
 
+class HostileValue:
+    def __repr__(self):
+        raise RuntimeError("repr must not be called")
+
+    def __str__(self):
+        raise RuntimeError("str must not be called")
+
+    def __eq__(self, other):
+        raise RuntimeError("eq must not be called")
+
+
 class RecoveryJournalTests(unittest.TestCase):
     def test_journal_must_begin_in_planned_state(self):
         report = validate_journal(chain(["interrupted"]))
@@ -168,6 +179,20 @@ class RecoveryJournalTests(unittest.TestCase):
         hostile = HostileJournalDict(chain(["planned"])[0])
         with self.assertRaisesRegex(JournalValidationError, "plain dictionary"):
             record_checksum(hostile)
+
+    def test_malformed_scalar_values_are_rejected_without_custom_hooks(self):
+        record = chain(["planned"])[0]
+        record["sequence"] = HostileValue()
+        record["operation_id"] = HostileValue()
+        record["state"] = HostileValue()
+        record["previous_checksum"] = HostileValue()
+        record["checksum"] = HostileValue()
+        report = validate_journal([record])
+        self.assertFalse(report.valid)
+        self.assertTrue(any("sequence must be a positive integer" in e
+                            for e in report.errors))
+        self.assertTrue(any("state must be a plain string" in e
+                            for e in report.errors))
 
     def test_replay_requires_all_external_gates(self):
         record = chain(["planned", "prepared", "executing", "interrupted"],
