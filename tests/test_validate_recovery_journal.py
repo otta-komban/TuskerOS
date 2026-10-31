@@ -70,11 +70,20 @@ class RecoveryJournalTests(unittest.TestCase):
         self.assertFalse(report.valid)
         self.assertTrue(any("missing fields" in e for e in report.errors))
 
-    def test_jsonl_rejects_truncated_and_blank_records(self):
+    def test_jsonl_rejects_truncated_blank_and_duplicate_key_records(self):
         with self.assertRaises(JournalValidationError):
             parse_jsonl('{"sequence":1')
         with self.assertRaises(JournalValidationError):
             parse_jsonl('{"sequence":1}\n\n')
+        with self.assertRaises(JournalValidationError):
+            parse_jsonl('{"sequence":1,"sequence":2}')
+
+    def test_non_string_state_is_rejected_without_crashing(self):
+        records = chain(["planned"])
+        records[0]["state"] = []
+        report = validate_journal(records)
+        self.assertFalse(report.valid)
+        self.assertTrue(any("unknown state" in e for e in report.errors))
 
     def test_replay_requires_all_external_gates(self):
         record = chain(["planned", "prepared", "executing", "interrupted"],
