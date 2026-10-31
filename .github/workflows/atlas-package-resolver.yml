@@ -87,7 +87,64 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
       - name: Install Fedora DNF5 and Python
-        run: dnf5 install -y dnf5 python3
+        run: dnf5 install -y dnf5 dnf5-plugins distribution-gpg-keys python3 git
+      - name: Validate Fedora reposync plugin and pinned signing key
+        run: |
+          dnf5 reposync --help > /dev/null
+          test -s /usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-44-primary
+      - name: Exercise local KIWI overlay against pinned Fedora 44 source
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          import json
+          import subprocess
+          import tempfile
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          source_lock = json.loads(Path("os/image-source.lock.json").read_text(encoding="utf-8"))
+          source = source_lock["source"]
+          helper_path = Path("tools/atlas/prepare-kiwi-snapshot.py")
+          spec = importlib.util.spec_from_file_location("atlas_kiwi_snapshot", helper_path)
+          helper = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(helper)
+
+          with tempfile.TemporaryDirectory(prefix="atlas-kiwi-overlay-") as temporary:
+              root = Path(temporary)
+              upstream = root / "upstream"
+              upstream.mkdir()
+              subprocess.run(["git", "init", str(upstream)], check=True, capture_output=True, text=True)
+              subprocess.run(["git", "-C", str(upstream), "remote", "add", "origin", source["repository"]], check=True)
+              subprocess.run(["git", "-C", str(upstream), "fetch", "--depth=1", "--no-tags", "origin", source["commit"]], check=True)
+              subprocess.run(["git", "-C", str(upstream), "checkout", "--detach", "FETCH_HEAD"], check=True)
+
+              snapshot = root / "snapshot"
+              for repository_id in ("fedora", "updates"):
+                  repodata = snapshot / repository_id / "repodata"
+                  repodata.mkdir(parents=True)
+                  (repodata / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
+                  (repodata / "repomd.xml.asc").write_text("signature-fixture", encoding="utf-8")
+              lock = root / "snapshot-lock.json"
+              lock.write_text(json.dumps({
+                  "schema_version": 1,
+                  "fedora_release": "44",
+                  "architecture": "x86_64",
+                  "repositories": [{"repository_id": "fedora"}, {"repository_id": "updates"}],
+              }), encoding="utf-8")
+
+              prepared = helper.prepare_overlay(upstream, snapshot, lock)
+              assert set(prepared) == {"fedora", "updates"}, prepared
+              core = ET.parse(upstream / "repositories" / "core.xml").getroot()
+              for repository in core.findall("repository"):
+                  source_node = repository.find("source")
+                  assert source_node.attrib["path"].startswith("file://"), source_node.attrib
+                  assert repository.attrib["repository_gpgcheck"] == "true"
+                  assert repository.attrib["package_gpgcheck"] == "true"
+                  signing_key = Path(source_node.find("signing").attrib["key"].removeprefix("file://"))
+                  assert signing_key.is_file(), signing_key
+                  assert "$releasever" not in str(signing_key)
+              print("Pinned Fedora 44 KIWI overlay uses only local snapshots and the installed Fedora signing key")
+          PY
       - name: Query real Fedora 44 package metadata and validate DNF5 output
         run: |
           python3 - <<'PY'
