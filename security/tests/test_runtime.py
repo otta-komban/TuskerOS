@@ -261,3 +261,27 @@ def test_reconciliation_is_bound_to_original_principal_session_and_device():
         assert legitimate.consumption_id == first.consumption_id
     finally:
         db.close()
+
+
+def test_consumed_replay_disclosure_is_bound_to_original_peer_identity():
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        first = consume(db, ref)
+        assert first.outcome == "CONSUMED"
+        mismatches = [
+            {"authenticated": True, "principal_binding": D4, "session_binding": D2, "device_binding": D3},
+            {"authenticated": True, "principal_binding": D1, "session_binding": D4, "device_binding": D3},
+            {"authenticated": True, "principal_binding": D1, "session_binding": D2, "device_binding": D4},
+        ]
+        for identity in mismatches:
+            db._peer_authenticator = lambda _credentials, identity=identity: identity
+            replay = consume(db, ref)
+            assert replay.outcome == "CALLER_UNAUTHORIZED"
+            assert replay.consumption_id is None
+        db._peer_authenticator = peer
+        legitimate_replay = consume(db, ref)
+        assert legitimate_replay.outcome == "ALREADY_CONSUMED"
+        assert legitimate_replay.consumption_id == first.consumption_id
+    finally:
+        db.close()
