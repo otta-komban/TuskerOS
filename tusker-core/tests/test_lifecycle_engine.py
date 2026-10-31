@@ -228,5 +228,37 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(len(self.store.events("00000000-0000-4000-8000-000000000001")), 2)
 
 
+    def test_store_rejects_non_atomic_version_sequence_pair(self):
+        task_id = self.task["task_id"]
+        current = self.store.get(task_id)
+        candidate = {**current, "state": "planning", "version": 2}
+        event = self.engine._event(candidate, "task.state_changed", sequence=3)
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        with self.assertRaisesRegex(ValueError, "advance together"):
+            self.store.transition(task_id, 1, candidate, event, None, None)
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
+    def test_store_rejects_cross_task_event_without_mutation(self):
+        task_id = self.task["task_id"]
+        current = self.store.get(task_id)
+        candidate = {**current, "state": "planning", "version": 2}
+        event = self.engine._event(candidate, "task.state_changed", sequence=2)
+        event["task_id"] = "00000000-0000-4000-8000-000000000099"
+        with self.assertRaisesRegex(ValueError, "match the transition task_id"):
+            self.store.transition(task_id, 1, candidate, event, None, None)
+        self.assertEqual(self.store.get(task_id), current)
+        self.assertEqual(len(self.store.events(task_id)), 1)
+
+    def test_event_sequence_tracks_task_version_through_cancellation(self):
+        self.move("planning")
+        self.move("running")
+        self.engine.request_cancellation(self.task["task_id"], expected_version=3)
+        stream = self.engine.replay(self.task["task_id"])["events"]
+        self.assertEqual([event["sequence"] for event in stream], [1, 2, 3, 4])
+        self.assertEqual(self.store.get(self.task["task_id"])["version"], 4)
+
+
 if __name__ == "__main__":
     unittest.main()
