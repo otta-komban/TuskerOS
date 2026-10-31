@@ -1,7 +1,7 @@
 # TuskerOS Desktop — NOVA-02
 
 **Owner:** NOVA-02 — Desktop & KDE Engineer  
-**Branch:** `02-desktop-shell`  
+**Branch:** `agent/02-desktop-shell`  
 **Owned scope:** `desktop/`, desktop-specific configuration, desktop UI tests, and desktop documentation.
 
 ## Purpose
@@ -122,7 +122,7 @@ Installer unit tests cover installation, no-overwrite, symlink refusal, marked r
 
 ## Automated desktop CI
 
-The `.github/workflows/desktop-validation.yml` workflow runs on desktop-related pushes to `02-desktop-shell`, pull requests targeting `main`, and manual dispatch. It runs the full desktop unittest discovery suite, both static package/template validators, and `node --check` for the panel layout script. The first hosted run passed all 15 unit tests and all validation steps; this does not exercise a Plasma session.
+The `.github/workflows/desktop-validation.yml` workflow runs on desktop-related pushes to `agent/02-desktop-shell`, pull requests targeting `main`, and manual dispatch. It runs the full desktop unittest discovery suite, both static package/template validators, and `node --check` for the panel layout script. The first hosted run passed all 15 unit tests and all validation steps; this does not exercise a Plasma session.
 
 The workflow uses GitHub-hosted Ubuntu with Python 3.12 and Node.js 22, requests read-only repository contents permission, and does not start a Plasma session or claim runtime validation. Check the Actions run for the actual result; workflow creation alone is not a passing CI result.
 
@@ -135,3 +135,21 @@ ATLAS-01 has proposed Fedora 44 / Plasma 6.6.4 / Wayland-first as the provisiona
 ## Desktop preferences foundation
 
 The dependency-free settings module at `desktop/config/settings.py` provides schema-v1 defaults, strict validation, partial-default merging, safe fallback for invalid files, and atomic user-scoped persistence (mode `0600`, symlink refusal). The assistant panel is disabled by default. The caller supplies the config path; the recommended location is `$XDG_CONFIG_HOME/tuskeros/desktop.json` or `~/.config/tuskeros/desktop.json`. See [the settings contract](config/README.md). This is a settings foundation only; it is not yet wired into Plasma UI or a settings migration framework.
+
+
+## Reproducible Plasma Wayland session
+
+The package now includes an opt-in SDDM session descriptor and a thin launcher for
+the stock Plasma 6 Wayland session. Package
+`desktop/session/launch.py` as
+`/usr/libexec/tuskeros/session-launcher` (mode 0755) and
+`desktop/session/tuskeros-wayland.desktop` as
+`/usr/share/wayland-sessions/tuskeros-wayland.desktop` (mode 0644).
+The launcher preserves the login-manager environment and directly execs
+`/usr/bin/startplasma-wayland`; it does not replace Plasma or start privileged
+services. See [the session integration runbook](session/README.md).
+
+The launcher unit tests exercise environment setup, direct exec, argument
+forwarding, missing executable handling and startup failure recovery. They do
+not prove a graphical session starts. A disposable Fedora KDE Wayland VM smoke
+test remains required before runtime acceptance.
