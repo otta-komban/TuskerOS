@@ -259,6 +259,10 @@ class LifecycleEngine:
         events = self.store.events(task_id)
         if not events:
             raise LifecycleError("event stream is empty")
+        if not isinstance(task, Mapping):
+            raise LifecycleError("task snapshot is not a valid mapping")
+        if any(not isinstance(event, Mapping) for event in events):
+            raise LifecycleError("event stream contains a malformed event record")
         if any(type(event.get("sequence")) is not int or event.get("sequence") != index
                for index, event in enumerate(events, 1)):
             raise LifecycleError("event sequence is not contiguous")
