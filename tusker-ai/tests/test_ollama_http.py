@@ -51,7 +51,7 @@ class Handler(BaseHTTPRequestHandler):
             for index, chunk in enumerate(chunks):
                 if request.get("model") in {"late-frame", "cancel-frame"} and index == 0:
                     time.sleep(0.08)
-                raw = (b"[" * 1200 + b"0" + b"]" * 1200 + b"\\n") if request.get("model") == "deep-json" else (json.dumps(chunk) + "\\n").encode()
+                raw = (b"[" * 1200 + b"0" + b"]" * 1200 + b"\n") if request.get("model") == "deep-json" else (json.dumps(chunk) + "\n").encode()
                 self.wfile.write(raw); self.wfile.flush()
                 if request.get("model") == "slow" and index == 0:
                     time.sleep(0.12)
