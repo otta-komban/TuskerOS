@@ -3,7 +3,7 @@ import asyncio
 import pathlib
 import sys
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
@@ -13,6 +13,30 @@ from adapters.dbus_readonly import (
     ReadOnlySystemBusAdapter,
     _OutputLimitExceeded,
 )
+
+
+class FakeProcess:
+    def __init__(self, stdout=b"", stderr=b"", returncode=0):
+        self.stdout = asyncio.StreamReader()
+        self.stderr = asyncio.StreamReader()
+        self.stdout.feed_data(stdout)
+        self.stdout.feed_eof()
+        self.stderr.feed_data(stderr)
+        self.stderr.feed_eof()
+        self.returncode = returncode
+        self.killed = False
+        self._exited = asyncio.Event()
+        if returncode is not None:
+            self._exited.set()
+
+    async def wait(self):
+        await self._exited.wait()
+        return self.returncode
+
+    def kill(self):
+        self.killed = True
+        self.returncode = -9
+        self._exited.set()
 
 
 class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
@@ -116,6 +140,41 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(_OutputLimitExceeded):
             await ReadOnlySystemBusAdapter._read_bounded(stream, 128)
+
+    async def test_subprocess_uses_only_fixed_system_bus_arguments(self):
+        process = FakeProcess(stdout=b'{"type":"s","data":["bus-123"]}')
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ) as spawn:
+            result = await adapter._call("GetId")
+
+        self.assertEqual(result, "bus-123")
+        self.assertEqual(
+            spawn.await_args.args,
+            (
+                "/usr/bin/busctl", "--system", "--json=short", "--timeout",
+                "3000ms", "call", "org.freedesktop.DBus",
+                "/org/freedesktop/DBus", "org.freedesktop.DBus", "GetId",
+            ),
+        )
+        self.assertFalse(process.killed)
+
+    async def test_subprocess_is_killed_on_stdout_overflow(self):
+        process = FakeProcess(stdout=b"x" * 129, returncode=None)
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), max_stdout=128
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus response exceeded output limit")
+        self.assertTrue(process.killed)
 
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
