@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "fedora_release": "44",
+  "architecture": "x86_64",
+  "repositories": [],
+  "verification": "Each approved repository entry pins the SHA-256 of repomd.xml and its primary metadata payload.",
+  "signature_verification": "not_performed",
+  "note": "No repository entries are approved yet. Capture and review immutable Fedora 44 repository metadata after the package owners provide the RPM inventory. An empty lock is schema-valid but cannot pass a production verification."
+}
