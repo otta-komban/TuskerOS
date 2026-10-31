@@ -55,7 +55,7 @@
       "type": "object", "additionalProperties": false, "required": ["tuskeros", "api"],
       "properties": {
         "tuskeros": {"type": "object", "additionalProperties": false, "required": ["min", "max"], "properties": {"min": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}, "max": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}}},
-        "api": {"type": "object", "additionalProperties": false, "required": ["min", "max"], "properties": {"min": {"type": "string"}, "max": {"type": "string"}}}
+        "api": {"type": "object", "additionalProperties": false, "required": ["min", "max"], "properties": {"min": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}, "max": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}}}
       }
     },
     "trust": {
