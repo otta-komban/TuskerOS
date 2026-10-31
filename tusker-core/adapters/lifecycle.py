@@ -164,8 +164,6 @@ class LifecycleEngine:
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
-        if event_type not in ALLOWED_EVENT_TYPES:
-            raise LifecycleError(f"event type is not defined by the task-event schema: {event_type}")
         fingerprint = event_type + ":" + target
         # An exact replay is returned even though its original write advanced the
         # version. Check the idempotency record before rejecting stale retries.
@@ -173,6 +171,8 @@ class LifecycleEngine:
             prior = self.store.idempotent_result(task_id, idempotency_key, fingerprint)
             if prior is not None:
                 return prior
+        if event_type not in ALLOWED_EVENT_TYPES:
+            raise LifecycleError(f"event type is not defined by the task-event schema: {event_type}")
         # Reject stale callers before validating against a newer state snapshot.
         # The store repeats this check atomically to close the read/write race.
         if current["version"] != expected_version:
