@@ -118,3 +118,11 @@ Replay validates the runtime types of event IDs and event types before set membe
 Replay applies the same type-before-enum check to persisted task-state values. A non-string state (including a list or object) and an unknown string state are rejected as lifecycle corruption with `LifecycleError`; malformed persisted values must not escape as interpreter-level type errors.
 
 Replay validates the outer shape of the persisted snapshot and event stream before reading fields. Non-mapping task snapshots and non-mapping event records are rejected with `LifecycleError`, not leaked attribute/type errors.
+
+The in-memory store also validates write-boundary record shapes before field
+access. Creation requires mapping-shaped task/event records with task and event
+identity fields; transitions require mapping-shaped records and an event ID.
+Malformed inputs are rejected with `LifecycleError` before any snapshot, event,
+or idempotency state is changed. This protects the adapter boundary from
+interpreter-level `TypeError`/`KeyError` leaks; it does not expand the wire
+schema or define new lifecycle semantics.
