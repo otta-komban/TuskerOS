@@ -76,12 +76,14 @@ Issue #50 remains open. NOVA-02's preview-only review on Issue #30 is not approv
 
 ## Iteration 2 — isolated accessibility diagnostics
 
-**Deliverable:** `ACCESSIBILITY-AUDIT.md`, `runtime/accessibility_audit.py`, and `tests/test_accessibility_audit.py`.
+**Deliverable:** `ACCESSIBILITY-AUDIT.md`, `tests/support/accessibility_audit.py`, and `tests/test_accessibility_audit.py`.
 
-- Added an opt-in diagnostic for semantic text, accent, focus and border color pairs. It does not gate pack validation or activation and does not modify the shared theme schema.
+- Added a test-only diagnostic helper for semantic text, accent, focus and border color pairs. It lives under `tests/support/`, is not imported by product runtime code, does not gate pack validation or activation, and does not modify the shared theme schema.
 - Text and accent pairs use a 4.5:1 static threshold; focus pairs use 3:1. Alpha colors return `not_evaluated` because the effective result depends on compositing.
 - Border contrast returns `review`, not pass/fail, because the manifest alone cannot tell whether a border is decorative or communicates a meaningful UI component boundary.
 - Test coverage: known black/white 21:1 reference, all three starter theme color sets, a low-contrast negative case, alpha handling, missing roles, malformed color values and non-mapping input.
-- Local scratch-fixture test result: **7 tests passed**. The fixture used the semantic color values copied from the three branch starter packs; this was not a full repository checkout or full Theme Studio test-suite run.
+- Local scratch-fixture test result: **7 tests passed** after moving the helper into the isolated test support directory. The fixture used the semantic color values copied from the three branch starter packs; this was not a full repository checkout or full Theme Studio test-suite run.
 - No desktop rendering, Plasma runtime, apply/reload, or rollback behavior was tested. This diagnostic is not a WCAG conformance certification.
 - Issue #50 remains open; no shared contract or schema changes were made.
+
+- Scope correction: the helper was moved out of `runtime/` and into `tests/support/` to keep this iteration strictly within the role guide's isolated-test allowance while Issue #50 remains open. The runtime helper was deleted from this branch.
