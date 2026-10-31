@@ -411,5 +411,37 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("NET: specification not found", message)
 
 
+    def test_repository_validation_aggregates_filesystem_read_errors(self):
+        from unittest.mock import patch
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            pair_path = root / validator.SPECS["PAIR"][0]
+            sess_path = root / validator.SPECS["SESS"][0]
+            pair_path.parent.mkdir(parents=True, exist_ok=True)
+            sess_path.parent.mkdir(parents=True, exist_ok=True)
+            pair_path.write_text("| PAIR-C01 | Condition | Assertion |\\n", encoding="utf-8")
+            sess_path.write_text("", encoding="utf-8")
+            original_read_text = Path.read_text
+
+            def controlled_read_text(path, *args, **kwargs):
+                if path == pair_path:
+                    raise PermissionError("simulated read denial")
+                return original_read_text(path, *args, **kwargs)
+
+            with patch.object(Path, "read_text", autospec=True,
+                              side_effect=controlled_read_text):
+                with self.assertRaises(validator.SpecError) as raised:
+                    validator.validate_repository(root)
+
+        message = str(raised.exception)
+        self.assertIn("PAIR: simulated read denial", message)
+        self.assertIn("SESS: SESS-C01", message)
+        self.assertIn("NET: specification not found", message)
+        positions = [message.index(prefix + ":") for prefix in ("PAIR", "SESS", "NET")]
+        self.assertEqual(positions, sorted(positions))
+
+
 if __name__ == "__main__":
     unittest.main()
