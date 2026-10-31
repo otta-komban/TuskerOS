@@ -118,6 +118,37 @@ class LifecycleEngineTests(unittest.TestCase):
         stopped = self.engine.confirm_cancellation("00000000-0000-4000-8000-000000000001", expected_version=4, operation_stopped=True)
         self.assertEqual(stopped["state"], "cancelled")
 
+    def test_cancellation_apis_reject_malformed_arguments_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        invalid_requests = (
+            ([], 1, "user_requested", "task_id must be a non-empty string"),
+            (task_id, True, "user_requested", "expected_version must be an integer"),
+            (task_id, 1, [], "cancellation reason must be a string"),
+        )
+        for candidate_id, version, reason, message in invalid_requests:
+            with self.subTest(task_id=candidate_id, version=version, reason=reason):
+                with self.assertRaisesRegex(LifecycleError, message):
+                    self.engine.request_cancellation(
+                        candidate_id, expected_version=version, reason=reason
+                    )
+        invalid_confirmations = (
+            ([], 1, True, "task_id must be a non-empty string"),
+            (task_id, True, True, "expected_version must be an integer"),
+            (task_id, 1, "yes", "operation_stopped must be a boolean"),
+            (task_id, 1, 1, "operation_stopped must be a boolean"),
+        )
+        for candidate_id, version, stopped, message in invalid_confirmations:
+            with self.subTest(task_id=candidate_id, version=version, stopped=stopped):
+                with self.assertRaisesRegex(LifecycleError, message):
+                    self.engine.confirm_cancellation(
+                        candidate_id, expected_version=version,
+                        operation_stopped=stopped,
+                    )
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
     def test_partial_requires_known_side_effects(self):
         self.move("planning")
         self.move("running")
