@@ -1,5 +1,5 @@
 layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_repository_url,upstream_url
 # Add only owner-reviewed Fedora 44 RPM package names. Each row must pin an exact NEVRA and source provenance. Keep optional layers out of the default profile.
-# repository_snapshot must identify the immutable Fedora metadata snapshot selected for the build; digest verification is not yet implemented.
+# repository_snapshot must exactly match the verified snapshot_id in os/repository-snapshot.lock.json.
 # source_repository_url is the Fedora dist-git HTTPS URL; upstream_url must match RPM metadata or use NOASSERTION when absent.
 # Do not add package rows until the owning desktop/system agents approve the dependency list.
