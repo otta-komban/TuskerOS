@@ -199,10 +199,33 @@ def verify_pin(
             raise RuntimeError(f"resolved {field} {actual!r} does not match pinned value {pinned!r}")
 
 
+def snapshot_repo_args(snapshot_root: Path, repository_ids: set[str]) -> list[str]:
+    """Build DNF5 options that expose only verified local repository copies."""
+    root = snapshot_root.resolve(strict=True)
+    arguments: list[str] = []
+    for repository_id in sorted(repository_ids):
+        if not REPOSITORY_RE.fullmatch(repository_id):
+            raise RuntimeError(f"Invalid repository ID for local snapshot: {repository_id!r}")
+        repository_path = (root / repository_id).resolve(strict=True)
+        if not repository_path.is_relative_to(root):
+            raise RuntimeError(f"Local repository path escapes snapshot root: {repository_id}")
+        if not (repository_path / "repodata" / "repomd.xml").is_file():
+            raise RuntimeError(f"Local repository snapshot is missing repodata/repomd.xml: {repository_id}")
+        arguments.extend([
+            f"--repofrompath={repository_id},{repository_path.as_uri()}",
+            f"--setopt={repository_id}.gpgcheck=1",
+            f"--repo={repository_id}",
+        ])
+    if not arguments:
+        raise RuntimeError("No package repositories were selected for local snapshot resolution")
+    return arguments
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=Path("os/package-manifest.csv"))
     parser.add_argument("--output", type=Path, default=Path("build/package-resolution.json"))
+    parser.add_argument("--snapshot-root", type=Path, help="root containing one verified local repository directory per repository_id")
     parser.add_argument(
         "--validate-only",
         action="store_true",
@@ -215,6 +238,9 @@ def main() -> int:
         print(f"Validated package manifest schema and {len(rows)} package rows")
         return 0
 
+    if args.snapshot_root is None:
+        raise RuntimeError("--snapshot-root is required; live repository resolution is prohibited")
+
     release = fedora_release()
     arch = platform.machine()
     if release != EXPECTED_RELEASE or arch != EXPECTED_ARCH:
@@ -225,13 +251,14 @@ def main() -> int:
         raise RuntimeError("dnf5 is required; install/use the Fedora 44 DNF5 client.")
 
     rows = read_manifest(args.manifest, require_pins=True)
-    repo_evidence = run(["dnf5", "repo", "info"])
+    repo_args = snapshot_repo_args(args.snapshot_root, {row["repository_id"].strip() for row in rows})
+    repo_evidence = run(["dnf5", *repo_args, "repo", "info"])
     resolved: list[dict[str, str]] = []
     failures: list[str] = []
 
     for row in rows:
         output = run([
-            "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
+            "dnf5", *repo_args, "repoquery", "--available", "--arch=x86_64,noarch",
             "--latest-limit=1", "--qf", QUERY_FORMAT, row["pinned_nevra"].strip()
         ])
         try:
@@ -269,7 +296,8 @@ def main() -> int:
         "dnf5_version": run(["dnf5", "--version"]).splitlines()[0],
         "enabled_repository_evidence": repo_evidence,
         "packages": resolved,
-        "note": "Repository evidence is captured, but this file does not snapshot repository metadata or RPM payloads.",
+        "repository_snapshot_root": str(args.snapshot_root.resolve()),
+        "note": "Package metadata was resolved only from local repository snapshots; RPM payload checksum inventory remains a separate build gate.",
     }
     write_json_atomic(args.output, result)
     print(f"Resolved {len(resolved)} package/repository records to {args.output}")
