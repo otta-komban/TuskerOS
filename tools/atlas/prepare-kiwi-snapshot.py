@@ -73,7 +73,6 @@ def prepare_overlay(description_root: Path, snapshot_root: Path, lock_path: Path
         if not signing_key_path.is_file():
             raise RuntimeError(f"{repository_id}: Fedora RPM signing key is not a regular file: {signing_key_path}")
         signing.set("key", signing_key_path.as_uri())
-        repository.set("repository_gpgcheck", "true")
         repository.set("package_gpgcheck", "true")
         repository_path = (snapshots / repository_id).resolve(strict=True)
         if not repository_path.is_relative_to(snapshots):
@@ -81,8 +80,6 @@ def prepare_overlay(description_root: Path, snapshot_root: Path, lock_path: Path
         repodata_path = repository_path / "repodata"
         if not (repodata_path / "repomd.xml").is_file():
             raise RuntimeError(f"{repository_id}: local snapshot lacks repodata/repomd.xml")
-        if not (repodata_path / "repomd.xml.asc").is_file():
-            raise RuntimeError(f"{repository_id}: local snapshot lacks repodata/repomd.xml.asc")
         source.set("path", repository_path.as_uri())
         source.attrib.pop("sourcetype", None)
         output[repository_id] = repository_path.as_uri()
