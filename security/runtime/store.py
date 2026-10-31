@@ -45,23 +45,42 @@ class SecurityStore:
         self._audit_key, self._peer_authenticator = audit_key, peer_authenticator
         self._approver_authenticator, self._policy_rechecker = approver_authenticator, policy_rechecker
         self.path = str(database)
+        database_fd = None
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
             # Approval bindings, token hashes and audit metadata are security
-            # state. Create/open the database without following a final
-            # symlink and enforce owner-only access before SQLite sees it.
+            # state. Keep the no-follow descriptor open while SQLite opens the
+            # path, then compare inode identity before issuing any SQL. Closing
+            # it before connect would leave a path-swap window in which SQLite
+            # could be redirected to a different database.
             flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
             try:
-                fd = os.open(self.path, flags, 0o600)
-                try:
-                    if not stat.S_ISREG(os.fstat(fd).st_mode):
-                        raise SecurityStoreError("security database must be a regular file")
-                    os.fchmod(fd, 0o600)
-                finally:
-                    os.close(fd)
+                database_fd = os.open(self.path, flags, 0o600)
+                descriptor_stat = os.fstat(database_fd)
+                if not stat.S_ISREG(descriptor_stat.st_mode):
+                    raise SecurityStoreError("security database must be a regular file")
+                os.fchmod(database_fd, 0o600)
             except OSError as exc:
+                if database_fd is not None:
+                    os.close(database_fd)
                 raise SecurityStoreError("security database could not be opened privately") from exc
-        self._db = sqlite3.connect(self.path, timeout=10, isolation_level=None)
+        try:
+            self._db = sqlite3.connect(self.path, timeout=10, isolation_level=None)
+            if database_fd is not None:
+                try:
+                    descriptor_stat = os.fstat(database_fd)
+                    path_stat = os.stat(self.path, follow_symlinks=False)
+                    if (not stat.S_ISREG(path_stat.st_mode)
+                            or (descriptor_stat.st_dev, descriptor_stat.st_ino)
+                            != (path_stat.st_dev, path_stat.st_ino)):
+                        self._db.close()
+                        raise SecurityStoreError("security database path changed during open")
+                except OSError as exc:
+                    self._db.close()
+                    raise SecurityStoreError("security database path changed during open") from exc
+        finally:
+            if database_fd is not None:
+                os.close(database_fd)
         self._db.row_factory = sqlite3.Row
         self._db.execute("PRAGMA foreign_keys=ON")
         self._db.execute("PRAGMA busy_timeout=10000")
