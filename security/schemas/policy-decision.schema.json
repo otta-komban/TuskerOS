@@ -86,7 +86,8 @@
     },
     "constraints": {
       "type": "object",
-      "maxProperties": 0
+      "maxProperties": 0,
+      "additionalProperties": false
     },
     "authorization_ref": {
       "type": [
