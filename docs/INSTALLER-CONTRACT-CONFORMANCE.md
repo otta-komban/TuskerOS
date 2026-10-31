@@ -32,7 +32,7 @@ Read-only storage inventory; read-only target preflight; install-plan preview; r
 
 ## Digest ownership
 
-AEGIS-06's draft specifies RFC 8785 JCS, SHA-256, NFC normalization and deterministic resource ordering. AEGIS-06 owns the canonical envelope and digest implementation; PHOENIX-10 consumes it and must not invent a competing hash format.
+AEGIS-06's current draft specifies RFC 8785 JCS, SHA-256, exact Unicode code-point preservation, and deterministic resource ordering. Do not apply NFC, NFD, NFKC, NFKD, case-folding, trimming, or any other generic text rewrite as JCS preprocessing. Preserve parsed JSON strings and property names exactly; reject invalid Unicode, including unpaired surrogates. Any operation-specific identifier normalization belongs in the trusted resource resolver: retain the original validated argument in the digest envelope and separately bind the resolver-produced canonical resource identifier. AEGIS-06 owns the canonical envelope and digest implementation; PHOENIX-10 consumes it and must not invent a competing hash format. See `security/POLICY_ENGINE_SPEC.md` §5 and `security/JCS_UNICODE_TEST_VECTORS.json` on `06-security-gatekeeper`.
 
 ## Planned negative/race tests
 
@@ -72,3 +72,17 @@ After reviewing the current owner drafts, PHOENIX-10 posted explicit decision re
 - ATLAS-01 issue #2 remains open for the current Fedora Forge KIWI clone URL, immutable Fedora 44 ref, profile path and exact build wrapper. No replacement source is assumed.
 
 These are requests for owner decisions, not accepted contracts. The implementation gates in this document remain unchanged.
+
+
+## Unicode digest conformance vectors (SEC-INST-001)
+
+The installer consumer must preserve the exact JSON string data covered by the approval/action digest. The following AEGIS-owned RFC 8785 reference cases are mandatory integration vectors:
+
+| Vector | Input string code points | Canonical UTF-8 hex | SHA-256 |
+|---|---|---|---|
+| JCS-UNICODE-001 | U+00E9 (precomposed `é`) | `7b226e616d65223a22c3a9227d` | `2f16b8477146a1b2ba7d6bb7cf7c9979c191cc2838a107dbf5f0d920b4cb3ba1` |
+| JCS-UNICODE-002 | U+0065 U+0301 (decomposed `é`) | `7b226e616d65223a2265cc81227d` | `6a547588c4055916e090ed61467326046dd52810679d03bfb84d862a7123522e` |
+
+The two inputs are canonically equivalent under Unicode normalization but MUST remain distinct for JCS and produce the distinct byte sequences and digests above. Reject invalid Unicode/unpaired surrogates before digest creation. Operation-specific identifier resolution is separate from JCS and must not rewrite the original argument.
+
+The PHOENIX fixture test added alongside this correction verifies these two string-only reference vectors and invalid-surrogate UTF-8 rejection. It is not a full RFC 8785 implementation test and does not establish that an installer/policy/broker runtime uses a conforming canonicalizer. NEXUS/AEGIS integration tests must run the vectors through the actual production digest path before any destructive operation is enabled.
