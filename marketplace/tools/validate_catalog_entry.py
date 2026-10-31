@@ -15,6 +15,12 @@ from urllib.parse import urlsplit
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{1,127}$")
 SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+# RFC 3339 date-time syntax; calendar validity is checked by datetime below.
+DATE_TIME_RE = re.compile(
+    r"^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])[Tt]"
+    r"([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
+    r"(\\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+)
 # Semantic Versioning 2.0.0: prerelease identifiers cannot be empty or
 # numeric with leading zeroes; build identifiers may contain leading zeroes.
 _PRE_ID = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
@@ -68,11 +74,14 @@ def _date_time(value: object, path: str, errors: list[str]) -> None:
     if not _text(value, path, errors):
         return
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if not DATE_TIME_RE.fullmatch(value):
+            raise ValueError("invalid RFC 3339 syntax")
+        normalized = value[:-1] + "+00:00" if value.endswith(("Z", "z")) else value
+        parsed = datetime.fromisoformat(normalized)
         if parsed.tzinfo is None:
             raise ValueError("timezone required")
     except ValueError:
-        errors.append(f"{path}: expected timezone-aware ISO-8601 date-time")
+        errors.append(f"{path}: expected RFC 3339 date-time with explicit timezone")
 
 
 def validate_catalog_entry(entry: object) -> list[str]:
