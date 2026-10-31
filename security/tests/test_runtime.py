@@ -1542,9 +1542,10 @@ def test_consume_commit_response_loss_reconciles_committed_consumption_without_g
         assert reconciled.outcome == "ALREADY_CONSUMED"
         assert reconciled.consumption_id == result.consumption_id
         assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "CONSUMED"
-        assert db._db.execute("SELECT state, consumption_id FROM auth_refs").fetchone() == {
-            "state": "CONSUMED", "consumption_id": result.consumption_id
-        }
+        persisted_ref = db._db.execute(
+            "SELECT state, consumption_id FROM auth_refs"
+        ).fetchone()
+        assert tuple(persisted_ref) == ("CONSUMED", result.consumption_id)
         assert len(db.audit_events()) == 3
         assert db.verify_audit_chain()
     finally:
