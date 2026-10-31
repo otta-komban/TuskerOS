@@ -48,7 +48,10 @@ def decide_and_issue(db):
                                   audit_context=audit(), now=NOW)
 
 def audit_for_ref(db, ref):
-    token_hash = __import__("hashlib").sha256(ref.encode("utf-8")).hexdigest()
+    try:
+        token_hash = __import__("hashlib").sha256(ref.encode("utf-8", "strict")).hexdigest()
+    except UnicodeEncodeError:
+        return audit()
     row = db._db.execute("""SELECT a.*, r.state AS ref_state FROM auth_refs r
         JOIN approvals a ON a.request_id=r.request_id WHERE r.token_hash=?""", (token_hash,)).fetchone()
     # Invalid/oversized references intentionally have no row; the consume
