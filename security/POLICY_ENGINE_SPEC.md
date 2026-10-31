@@ -59,7 +59,7 @@ Risk escalation predicates MUST be deterministic and testable. Unknown resource 
 
 The v0.1.0 policy-decision schema now enforces the conservative interim shape: `constraints` is required and must be an empty object (`maxProperties: 0`, `additionalProperties: false`). The repository has not ratified a canonical non-empty vocabulary. Until policy-engine and broker owners agree a bounded, versioned vocabulary:
 
-- A policy producer MUST emit `constraints: {}` only.
+- A policy producer MUST emit `constraints: {}` only. The JSON Schema rejects missing, non-object, or non-empty values before a decision is accepted.
 - A consumer MUST reject a decision with a non-empty `constraints` object rather than silently ignore or drop unknown keys.
 - A consumer MUST NOT infer additional permission, broaden operation/resource scope, or relax broker-side limits from an unrecognized constraint.
 - Missing, malformed, or unsupported constraint data MUST result in DENY and zero executor/broker handler calls.
