@@ -15,6 +15,7 @@ if SPEC is None or SPEC.loader is None:
 RESOLVER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(RESOLVER)
 parse_query_matches = RESOLVER.parse_query_matches
+verify_pin = RESOLVER.verify_pin
 write_json_atomic = RESOLVER.write_json_atomic
 read_manifest = RESOLVER.read_manifest
 
@@ -65,6 +66,12 @@ class QueryResultTests(unittest.TestCase):
             )
 
 
+    def test_nonzero_epoch_is_preserved(self):
+        self.assertEqual(
+            parse_query_matches("kernel-core-2:6.12.1-1.fc44.x86_64\tfedora", "kernel-core"),
+            ("kernel-core-2:6.12.1-1.fc44.x86_64", "fedora"),
+        )
+
     def test_expected_package_accepts_full_nevra(self):
         self.assertEqual(
             parse_query_matches(
@@ -78,6 +85,45 @@ class QueryResultTests(unittest.TestCase):
             parse_query_matches(
                 "bash-completion-0:2.11-1.fc44.noarch\tfedora", "bash"
             )
+
+
+class PinnedManifestTests(unittest.TestCase):
+    def test_pin_requires_all_provenance_fields(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.csv"
+            path.write_text(
+                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_url\n"
+                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(read_manifest(path, require_pins=True)[0]["pinned_nevra"], "bash-0:5.2.26-3.fc44.x86_64")
+
+    def test_invalid_source_rpm_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.csv"
+            path.write_text(
+                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_url\n"
+                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,GPL-3.0-or-later,bash.rpm,https://src.fedoraproject.org/rpms/bash\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(RuntimeError, "source_rpm"):
+                read_manifest(path, require_pins=True)
+
+
+class PinVerificationTests(unittest.TestCase):
+    def setUp(self):
+        self.row = {"pinned_nevra": "bash-0:5.2.26-3.fc44.x86_64", "repository_id": "fedora"}
+
+    def test_exact_nevra_and_repository_are_accepted(self):
+        verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "fedora")
+
+    def test_version_or_epoch_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned NEVRA"):
+            verify_pin(self.row, "bash-1:5.2.26-3.fc44.x86_64", "fedora")
+
+    def test_repository_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "does not match pinned repository"):
+            verify_pin(self.row, "bash-0:5.2.26-3.fc44.x86_64", "updates")
 
 
 class ManifestTests(unittest.TestCase):
@@ -147,8 +193,8 @@ class ResolverCliTests(unittest.TestCase):
         self.manifest = self.root / "manifest.csv"
         self.output = self.root / "nested" / "resolution.json"
         self.manifest.write_text(
-            "layer,package,owner,required,rationale\n"
-            "base-core,bash,ATLAS-01,true,base shell\n",
+            "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_url\n"
+            "base-core,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash\n",
             encoding="utf-8",
         )
 
