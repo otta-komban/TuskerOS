@@ -1460,3 +1460,48 @@ def test_approval_expiry_transition_rolls_back_when_audit_write_fails():
         assert db.verify_audit_chain()
     finally:
         db.close()
+
+
+
+def test_consume_commit_failure_is_reconcilable_without_issuing_grant():
+    import sqlite3
+
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        real_connection = db._db
+
+        class CommitFailingConnection:
+            def __init__(self, connection):
+                self.connection = connection
+                self.fail_commit = True
+
+            def execute(self, sql, *args, **kwargs):
+                if sql.strip().upper() == "COMMIT" and self.fail_commit:
+                    self.fail_commit = False
+                    raise sqlite3.OperationalError("injected ambiguous commit failure")
+                return self.connection.execute(sql, *args, **kwargs)
+
+            def __getattr__(self, name):
+                return getattr(self.connection, name)
+
+        db._db = CommitFailingConnection(real_connection)
+        result = consume(db, ref)
+
+        assert result.outcome == "CONSUME_OUTCOME_UNKNOWN"
+        assert result.grant is None
+        assert result.consumption_id is not None
+        assert not db._db.in_transaction
+
+        # The injected failure happened before SQLite committed. Reconciliation
+        # is authoritative and reports the persisted reference as still ISSUED;
+        # the tentative consumption identifier is not disclosed as committed.
+        reconciled = db.reconcile(ref, peer_credentials=PEER)
+        assert reconciled.outcome == "ISSUED"
+        assert reconciled.consumption_id is None
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT state FROM auth_refs").fetchone()["state"] == "ISSUED"
+        assert len(db.audit_events()) == 3
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
