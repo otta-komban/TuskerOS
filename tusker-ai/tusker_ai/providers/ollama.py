@@ -92,7 +92,7 @@ class OllamaProvider:
             "options": {"num_predict": request.max_output_tokens, "num_ctx": request.context_limit},
         }
         try:
-            encoded_payload = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+            encoded_payload = json.dumps(payload, separators=(",", ":"), allow_nan=False).encode("utf-8")
         except (TypeError, ValueError, RecursionError, UnicodeEncodeError):
             raise TuskerRuntimeError(
                 RuntimeErrorCode.INVALID_REQUEST,
