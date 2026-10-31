@@ -117,12 +117,13 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         sequence = record["sequence"]
         if type(sequence) is not int or sequence < 1:
             errors.append(f"record {index}: sequence must be a positive integer")
-        elif sequence in seen_sequences:
-            errors.append(f"record {index}: duplicate sequence {sequence}")
         else:
-            seen_sequences.add(sequence)
-        if sequence != index:
-            errors.append(f"record {index}: expected sequence {index}, got {sequence}")
+            if sequence in seen_sequences:
+                errors.append(f"record {index}: duplicate sequence {sequence}")
+            else:
+                seen_sequences.add(sequence)
+            if sequence != index:
+                errors.append(f"record {index}: expected sequence {index}, got {sequence}")
         if type(record["operation_id"]) is not str or not record["operation_id"]:
             errors.append(f"record {index}: operation_id must be non-empty")
         elif operation_id is None:
@@ -130,9 +131,11 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         elif record["operation_id"] != operation_id:
             errors.append(f"record {index}: operation_id changed within journal")
         state = record["state"]
-        if index == 1 and state != "planned":
+        if type(state) is not str:
+            errors.append(f"record {index}: state must be a plain string")
+        elif index == 1 and state != "planned":
             errors.append("record 1: initial state must be planned")
-        if type(state) is not str or state not in STATES:
+        elif state not in STATES:
             errors.append(f"record {index}: unknown state {state!r}")
         elif previous_state is not None and state not in TRANSITIONS[previous_state]:
             errors.append(f"record {index}: illegal transition {previous_state} -> {state}")
