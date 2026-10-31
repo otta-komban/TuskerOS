@@ -218,6 +218,28 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("utf-8", payload["error"].lower())
         self.assertFalse(payload["runtime_security_tested"])
 
+    def test_text_cli_reports_invalid_utf8_without_traceback(self):
+        from contextlib import redirect_stderr, redirect_stdout
+        import io
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            relative_path, _ = validator.SPECS["PAIR"]
+            spec_path = root / relative_path
+            spec_path.parent.mkdir(parents=True, exist_ok=True)
+            spec_path.write_bytes(b"\\xff\\xfe")
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                result = validator.main(["--root", temporary_root])
+
+        self.assertEqual(result, 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("FAIL PAIR:", stderr.getvalue())
+        self.assertIn("utf-8", stderr.getvalue().lower())
+        self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_json_cli_reports_missing_spec_from_supplied_root(self):
         from contextlib import redirect_stdout
         import io
