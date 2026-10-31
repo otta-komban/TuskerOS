@@ -115,3 +115,44 @@ Issue #50 remains open. NOVA-02's preview-only review on Issue #30 is not approv
 Keep parsing/validation separate from compatibility acceptance. First validate the manifest against a known schema version; then evaluate the declared engine API and required desktop/surface capabilities against an explicit engine support table. Unknown schema versions and unsupported required capabilities should not be guessed or silently downgraded. Optional capability omission should produce structured diagnostics only if the Chief Architect and NOVA-02 explicitly approve that behavior. Do not infer same-major compatibility merely from the version string shape.
 
 No implementation or compatibility tests were added: expected acceptance outcomes are not yet authorized by an approved policy, so tests would prematurely encode a shared decision. Issue #50 remains open. This iteration is static repository/issue inspection only; no runtime or test result is claimed.
+
+
+## Iteration 4 — proposed compatibility decision packet (review-only)
+
+**Status:** Recommended defaults for Chief Architect / NOVA-02 / ATLAS-01 review. These are not approved policy, are not encoded in schemas or runtime code, and do not lift Issue #50.
+
+### Proposed decision matrix
+
+| Area | Recommended default for review | Compatibility consequence | Required approver(s) |
+|---|---|---|---|
+| Pack schema version | Accept only an explicitly supported exact schema version. Unknown versions reject with `unsupported_schema_version`; do not auto-migrate on load. | A pack authored for a newer schema cannot be guessed into the current shape. Future migration must be a separately versioned, deterministic, bounded operation. | Chief Architect + PIXEL-03 |
+| Engine API version | Treat the pack's major.minor declaration as a minimum required engine API. Accept only when major matches and runtime minor is greater than or equal to the declared minor. | A newer runtime minor may load an older-minor pack only if the project guarantees additive, backward-compatible minor releases. Major mismatch or runtime minor below requirement rejects. | Chief Architect + PIXEL-03 + NOVA-02 |
+| Version spelling | Parse numeric components as integers and require canonical decimal spelling (no signs, whitespace or leading zeroes except `0`). | Prevents ambiguous string comparisons such as `1.10` versus `1.9`. Existing schema regex may need a future approved tightening; do not change it now. | Chief Architect + PIXEL-03 |
+| Desktop compatibility IDs | Treat declared desktop IDs as an allowlist/target constraint, not as an optional feature request. Unknown or non-matching required desktop targets reject. | Avoids activating a pack on an unclaimed desktop environment. Exact semantics need confirmation against sample packs and ATLAS platform IDs. | Chief Architect + ATLAS-01 |
+| Required surfaces | Require every declared `required_surfaces` ID to be supported by the selected adapter set; otherwise reject before prepare/apply. | No silent partial activation for a surface the pack explicitly requires. | Chief Architect + NOVA-02 |
+| Optional effects/namespaces | Omit only capabilities explicitly classified as optional by the frozen contract; return structured per-capability diagnostics. Never infer optionality from an unknown identifier. | Allows graceful degradation without hiding missing required functionality. The current manifest does not encode a general required/optional flag for every namespace. | Chief Architect + NOVA-02 + PIXEL-03 |
+| Consumer projection | Define a versioned normalized snapshot; keep manifest storage paths private. Preserve `icon_set` as an asset role unless reviewers explicitly approve a separate icon namespace. | Adapter contracts can evolve independently of manifest JSON layout. Surface IDs are negotiated separately from token namespaces. | Chief Architect + NOVA-02 + PIXEL-03 |
+| Accessibility | Keep accessibility policy engine-enforced and outside optional namespace negotiation. User/system high-contrast and reduced-motion overrides take precedence over pack values. | An adapter cannot downgrade accessibility requirements by omitting a capability. | Chief Architect + NOVA-02 |
+| Migration | No implicit migration in the activation path. If later approved, migrations must be explicit, deterministic, bounded, version-to-version steps and validated again after transformation. | Unknown source/target paths reject rather than best-effort mutate. | Chief Architect + PIXEL-03 |
+
+### Acceptance examples reviewers should confirm
+
+Assuming the recommended engine API rule is approved:
+
+- Runtime `1.4` with pack requirement `1.2`: accept the API-version check.
+- Runtime `1.2` with pack requirement `1.4`: reject as engine API too old.
+- Runtime `2.0` with pack requirement `1.4`: reject major mismatch; no implicit cross-major compatibility.
+- Runtime `1.10` with pack requirement `1.9`: accept numeric minor comparison, not lexicographic comparison.
+- Pack schema `1.0.0`: validate only through the explicitly supported v1 schema.
+- Pack schema `1.1.0` or `2.0.0`: reject until a corresponding schema and migration/compatibility policy is explicitly supported.
+- A missing required surface: reject before any adapter mutation; retain the last-known-good active snapshot.
+- An unsupported optional effect: omit with a diagnostic only after the contract classifies that effect as optional.
+
+### Approval checklist
+
+1. Chief Architect: approve/reject the schema-version rule, engine API comparison rule, migration stance, and task ID.
+2. NOVA-02: approve/revise required-surface behavior, normalized namespace projection, optional-effect reporting, and adapter capability semantics.
+3. ATLAS-01: publish canonical desktop/platform IDs and supported Fedora/Plasma/Qt baseline.
+4. Coordinator/repository administrator: verify required checks are enforced and confirm the shared-contract baseline, then resolve Issue #50.
+
+Until those approvals are recorded, all examples above remain proposals. No compatibility implementation, schema edits, activation/apply/reload code, or contract conformance claim is authorized by this document.
