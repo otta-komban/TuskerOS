@@ -37,6 +37,41 @@ jobs:
           python tools/atlas/resolve-package-manifest.py --validate-only --manifest os/package-manifest.csv
           python -m json.tool os/image-source.lock.json > /dev/null
           bash -n tools/atlas/build-image.sh
+      - name: Verify pinned Fedora KIWI source commit and blobs
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          lock = json.loads(Path("os/image-source.lock.json").read_text(encoding="utf-8"))
+          source = lock["source"]
+          with tempfile.TemporaryDirectory(prefix="atlas-kiwi-lock-") as temporary:
+              repo = Path(temporary) / "upstream"
+              repo.mkdir()
+              subprocess.run(["git", "init", str(repo)], check=True, capture_output=True, text=True)
+              subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", source["repository"]], check=True)
+              subprocess.run(["git", "-C", str(repo), "fetch", "--depth=1", "--no-tags", "origin", source["commit"]], check=True)
+              subprocess.run(["git", "-C", str(repo), "checkout", "--detach", "FETCH_HEAD"], check=True)
+              actual_commit = subprocess.run(
+                  ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                  check=True, capture_output=True, text=True,
+              ).stdout.strip()
+              assert actual_commit == source["commit"], (actual_commit, source["commit"])
+              for path_key, blob_key in (
+                  ("description_file", "description_blob"),
+                  ("wrapper_file", "wrapper_blob"),
+                  ("kde_profile_file", "kde_profile_blob"),
+              ):
+                  actual_blob = subprocess.run(
+                      ["git", "-C", str(repo), "rev-parse", f"HEAD:{source[path_key]}"],
+                      check=True, capture_output=True, text=True,
+                  ).stdout.strip()
+                  assert actual_blob == source[blob_key], (path_key, actual_blob, source[blob_key])
+                  print(f"Verified {source[path_key]}: {actual_blob}")
+              print(f"Verified Fedora KIWI source commit: {actual_commit}")
+          PY
       - name: Run resolver and image-lock unit tests
         run: python -m unittest discover -s tools/atlas -p 'test_*.py' -v
 
