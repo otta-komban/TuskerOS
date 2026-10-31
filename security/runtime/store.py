@@ -64,9 +64,15 @@ class SecurityStore:
                 if descriptor_stat.st_nlink != 1:
                     raise SecurityStoreError("security database must not have hard links")
                 os.fchmod(database_fd, 0o600)
-            except OSError as exc:
+            except Exception as exc:
                 if database_fd is not None:
-                    os.close(database_fd)
+                    try:
+                        os.close(database_fd)
+                    except OSError:
+                        pass
+                    database_fd = None
+                if isinstance(exc, SecurityStoreError):
+                    raise
                 raise SecurityStoreError("security database could not be opened privately") from exc
         try:
             self._db = sqlite3.connect(self.path, timeout=10, isolation_level=None)
