@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `3d2755b88cf94d9fbf20404b19e1555fe94800d8` (ATLAS CI passed 92 tests, Fedora 44 DNF5 5.4.3.0 queryformat/RPM-location smoke, reposync plugin/key checks and pinned-source KIWI overlay integration; unified validation passed all 8 jobs).  
+**Latest code/test evidence head:** `7e3373d8c6a6ec10c7fe1ea786bf278c8943b0ec` (ATLAS CI passed 93 tests, Fedora 44 DNF5 5.4.3.0 queryformat/RPM-location smoke, reposync plugin/key checks and pinned-source KIWI overlay integration; unified validation passed all 8 jobs).  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -41,7 +41,7 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest code/test head: 3d2755b88cf94d9fbf20404b19e1555fe94800d8; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 175 ahead / 0 behind main.
+- Latest code/test head: 7e3373d8c6a6ec10c7fe1ea786bf278c8943b0ec; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 177 ahead / 0 behind main.
 - ATLAS run [41197460809](https://github.com/otta-komban/TuskerOS/actions/runs/41197460809): resolver-tests job passed **92 tests**, including the two new output-isolation regressions; Fedora 44 DNF5 5.4.3.0 smoke passed, including a real repoquery result with RPM location.
 - Unified validation [41197460810](https://github.com/otta-komban/TuskerOS/actions/runs/41197460810) passed all 8 jobs on exact code head `3d2755b88cf94d9fbf20404b19e1555fe94800d8`.
 - Build script now allocates a unique `mktemp` run directory and clears each target's prior output/intermediate directories before starting, preventing stale ISO/QCOW2 files from passing artifact existence checks.
@@ -110,6 +110,11 @@
 - The resolver now hashes each RPM file from its local repository location and checks the required manifest rpm_sha256 pin. The repomd verifier also checks every metadata payload SHA-256 referenced by repomd.xml.
 - Unified validation [41192831693](https://github.com/otta-komban/TuskerOS/actions/runs/41192831693) is pending for the current branch head. Earlier unified run [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054) passed all 8 jobs on the KIWI overlay code head.
 - Fedora repository metadata is not detached-signature verified; RPM package signatures remain enforced. No full DNF5 reposync, KIWI build, repeat-build comparison or VM boot has been performed.
+
+## Latest build metadata provenance hardening
+
+- `build-metadata.json` now records SHA-256 digests for the repository snapshot lock, resolved package report, generated KIWI repository overlay (`repositories/core.xml`) and exported `SHA256SUMS` manifest, in addition to the source lock digest. This binds build evidence to the exact repository/package inputs and generated repository configuration.
+- Regression coverage verifies all four new metadata fields. ATLAS run 41197718324 passed 93 tests plus Fedora 44 DNF5 queryformat/RPM-location smoke and KIWI overlay integration; unified run 41197718316 passed 8/8.
 
 ## Latest build-output isolation hardening
 
