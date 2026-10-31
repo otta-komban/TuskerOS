@@ -144,8 +144,31 @@ def parse_dependency_constraint(value: str) -> tuple[tuple[str, Version], ...]:
 
 def satisfies_dependency_constraints(version: str | Version, constraints: Iterable[str]) -> bool:
     """Return whether a release satisfies every supplied edge constraint."""
-    actual = parse_release_version(version) if isinstance(version, str) else version
-    for constraint in constraints:
+    if isinstance(version, str):
+        actual = parse_release_version(version)
+    elif isinstance(version, Version):
+        if any(
+            isinstance(part, bool) or not isinstance(part, int) or part < 0
+            for part in (version.major, version.minor, version.patch)
+        ):
+            raise CatalogResolutionError("version components must be non-negative integers")
+        if not isinstance(version.prerelease, tuple) or any(
+            not isinstance(part, str)
+            or not re.fullmatch(r"[0-9A-Za-z-]+", part)
+            or (part.isascii() and part.isdigit() and len(part) > 1 and part.startswith("0"))
+            for part in version.prerelease
+        ):
+            raise CatalogResolutionError("version contains invalid prerelease identifiers")
+        actual = version
+    else:
+        raise CatalogResolutionError("version must be a SemVer string or Version")
+    if isinstance(constraints, (str, bytes)):
+        raise CatalogResolutionError("constraints must be an iterable of constraint strings, not text")
+    try:
+        constraint_values = list(constraints)
+    except TypeError as exc:
+        raise CatalogResolutionError("constraints must be an iterable of constraint strings") from exc
+    for constraint in constraint_values:
         for operator, expected in parse_dependency_constraint(constraint):
             comparison = actual._compare(expected)
             if operator == "=" and comparison != 0:
