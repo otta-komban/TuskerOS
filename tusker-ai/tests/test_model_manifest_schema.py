@@ -56,6 +56,32 @@ def test_invalid_nested_manifest_fields_are_rejected(mutate):
     assert list(VALIDATOR.iter_errors(candidate))
 
 
+
+@pytest.mark.parametrize("filename", [
+    "../outside.gguf",
+    "weights/../../outside.gguf",
+    "/absolute/model.gguf",
+    "C:/models/model.gguf",
+    "\\\\server\\share\\model.gguf",
+    "weights\\\\model.gguf",
+    "./model.gguf",
+    "weights//model.gguf",
+    "weights/./model.gguf",
+    "weights/../model.gguf",
+    "",
+])
+def test_unsafe_manifest_filename_paths_are_rejected(filename):
+    candidate = deepcopy(FIXTURE)
+    candidate["files"][0]["filename"] = filename
+    assert list(VALIDATOR.iter_errors(candidate))
+
+
+def test_manifest_allows_nested_relative_posix_filename():
+    candidate = deepcopy(FIXTURE)
+    candidate["files"][0]["filename"] = "weights/model-q4_k_m.gguf"
+    assert list(VALIDATOR.iter_errors(candidate)) == []
+
+
 def test_invalid_uri_format_is_rejected():
     candidate = deepcopy(FIXTURE)
     candidate["source"] = "not a URI"
