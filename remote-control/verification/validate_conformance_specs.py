@@ -18,7 +18,7 @@ SPECS = {
     "SESS": ("remote-control/verification/SESSION-PROOF-AND-REVOCATION-CONFORMANCE.md", 40),
     "NET": ("remote-control/verification/TRANSPORT-AND-EXPOSURE-CONFORMANCE.md", 42),
 }
-CASE_ID = re.compile(r"^(PAIR|SESS|NET)-C(\d{2})$")
+CASE_ID = re.compile(r"^(PAIR|SESS|NET)-C([0-9]{2})$")
 
 
 class SpecError(ValueError):
