@@ -220,3 +220,14 @@ The policy-decision contract now states that producers emit an empty `constraint
 - Added a pytest regression test for the string-only reference vectors and JCS-UNICODE-001–004 acceptance rows to the security test matrix.
 
 **Verification boundary:** The pytest regression checks the reference vectors for these simple string-only JSON objects. It is not a full JCS implementation test and does not establish runtime digest correctness. AEGIS/NEXUS must run these vectors against the actual policy/broker canonicalizer and add invalid-surrogate and operation-specific resolver tests before privileged operations are enabled.
+
+
+## SEC-INT-008 — NEXUS public invocation authorization-context regression (cross-branch review, 2026-10-31)
+
+**Finding:** Re-fetched the live `07-system-integration` branch at `a0cc0a74242070135b6b7937bd7605c7861fe7d8`. Contrary to the prior C0049 review note, `system-integration/contracts/tool-invocation.schema.json` currently declares an optional top-level `authorization_context` object with `additionalProperties: true`. The public invocation schema therefore permits arbitrary caller-reachable authorization-context JSON. `system-integration/tests/test_contracts.py` has no direct negative cases for caller-supplied `authorization_context`, `principal`, `decision`, or `authorization_ref`. The prose calls the field trusted/opaque, but the public schema does not encode that provenance.
+
+**Risk:** A caller can submit an object at the public boundary that downstream code may mistake for broker-injected authorization context. Schema shape alone cannot establish trusted provenance. This conflicts with the earlier C0049 review record and requires a correction rather than relying on the previous claim.
+
+**Owner follow-up:** Posted correction and requested NEXUS-owned resolution on [issue #17 comment 6539261475](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6539261475). NEXUS must either remove the field from the public caller envelope and use an out-of-band/separately typed internal boundary, or demonstrate a transport boundary that makes caller population impossible. Required tests: reject caller-supplied authority fields and prove only independently authenticated broker context reaches the AEGIS consume path.
+
+**Verification boundary:** Source/schema review only; no NEXUS files were changed and no NEXUS tests were executed. Authenticated peer binding, atomic consume-before-dispatch, and zero-handler-call behavior remain unproven. Keep provider mutations fail-closed until owner implementation and tests exist.
