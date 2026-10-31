@@ -3,7 +3,13 @@ import tempfile
 import unittest
 
 from desktop.config.controller import SettingsController
-from desktop.settings.app import SettingsBackend
+
+try:
+    from desktop.settings.app import SettingsBackend
+except ModuleNotFoundError as exc:
+    if exc.name != "PySide6":
+        raise
+    SettingsBackend = None
 
 APP = Path(__file__).resolve().parents[1] / "settings"
 
@@ -24,6 +30,7 @@ class SettingsAppTests(unittest.TestCase):
         self.assertNotIn("subprocess", source)
         self.assertNotIn("os.system", source)
 
+    @unittest.skipIf(SettingsBackend is None, "PySide6 is installed in the Qt runtime CI job")
     def test_backend_recovery_round_trip_requires_explicit_reset(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "desktop.json"
