@@ -27,21 +27,22 @@
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 - Added `os/repository-snapshot.lock.json` and `tools/atlas/verify-repository-snapshot.py` to capture and preflight-check Fedora 44 `repomd.xml` plus primary metadata SHA-256 identities. The verifier rejects digest drift, malformed/unsafe metadata paths, non-HTTPS URLs and repository-origin escapes.
 - Added package-manifest snapshot binding: every build package row must reference the exact `snapshot_id` recorded for its repository in the lock.
-- Gated `build-image.sh` on repository snapshot preflight verification. It now stages each locked repository with DNF5 `reposync --download-metadata` (x86_64/noarch, RPM GPG checking enabled), verifies the local `repomd.xml` and primary metadata bytes against the lock, and resolves packages only through DNF5 `--repofrompath` entries pointing at those local copies. The resolver rejects missing local repositories and enables only the pinned repository IDs.
-- Build metadata now distinguishes `repository_snapshot_consumed_by_dnf5: true` from `repository_snapshot_consumed_by_kiwi: false`. The upstream KIWI description still has remote repository definitions; local snapshot consumption by KIWI, full metadata payload inventory, Fedora metadata signature verification and RPM payload checksum lock remain open. A full reposync can require substantial disk/network capacity.
+- Gated `build-image.sh` on repository snapshot preflight verification. It stages each locked repository with DNF5 `reposync --download-metadata` for x86_64/noarch, enables package and repository metadata GPG checks, verifies local `repomd.xml` and primary metadata bytes, and requires `repomd.xml.asc`. DNF5 package resolution uses only local `--repofrompath` entries with both `gpgcheck=1` and `repo_gpgcheck=1`, explicitly pointing to the Fedora 44 primary signing key.
+- Added `tools/atlas/prepare-kiwi-snapshot.py`. It creates a clean export of the pinned upstream KIWI commit, resolves the pinned `repositories/core.xml` symlink, requires exact alias parity with the snapshot lock, rewrites each source to its local `file://` snapshot path, resolves the Fedora `$releasever` key macro to the installed Fedora 44 primary key, and enables KIWI `repository_gpgcheck` and `package_gpgcheck`. The wrapper now builds from this derived overlay, not the unmodified upstream checkout.
+- Build metadata now records `repository_snapshot_consumed_by_dnf5: true` and `repository_snapshot_consumed_by_kiwi: true`, and records metadata signature verification as true only after the enforced DNF5 sync and KIWI build path completes successfully. The trusted Fedora key fingerprint is not separately recorded in the snapshot lock, and RPM payload checksums are not individually pinned. A full reposync can require substantial disk/network capacity.
 
 ## Repository snapshot preflight
 
 - Lock: `os/repository-snapshot.lock.json`; it is intentionally empty until NOVA-02/NEXUS-07 approve package inputs and the selected Fedora repository endpoints are reviewed.
 - Capture reviewed endpoints with `python3 tools/atlas/verify-repository-snapshot.py --capture REPO_ID=REPOMD_URL --lock os/repository-snapshot.lock.json`. Repeat `--capture` for each approved repository in one invocation; the command fetches `repomd.xml` and its primary metadata and records SHA-256 identities.
 - Verify the committed lock and manifest pins with `python3 tools/atlas/verify-repository-snapshot.py --lock os/repository-snapshot.lock.json --manifest os/package-manifest.csv`.
-- The verifier pins `repomd.xml` and primary metadata only, and checks the same bytes in the staged local repository. DNF5 package resolution now consumes those local copies. The verifier does not yet inventory every repodata payload or RPM checksum, and KIWI itself still downloads from upstream repository definitions. Fedora repository metadata GPG signatures are not yet verified by the ATLAS lock verifier.
+- The lock verifier pins `repomd.xml` and primary metadata only, and checks the same bytes plus the presence of `repomd.xml.asc` in the staged repository. DNF5 `repo_gpgcheck` validates repository metadata signatures during sync and local resolution; KIWI `repository_gpgcheck` validates them during image construction, both using the Fedora 44 primary key. The lock does not yet pin the key fingerprint, every repodata payload or individual RPM payload checksums.
 
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest validated PR head: `63f796d31bd05ca8c0709e6186fcd03d18d19bf8`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`; branch divergence: 97 ahead / 0 behind `main`.
-- Draft remains open for review. ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669) passed 78 tests, manifest/lock checks, upstream KIWI source checks and live Fedora 44 DNF5 smoke; unified validation run [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664) passed all 8 jobs on the exact same head. The PR is not merge-ready until package rows are approved, KIWI consumes the frozen repository snapshot, metadata signatures and RPM payload checksums are verified, the image is built, and PHOENIX VM install/boot evidence is available.
+- Latest previously validated PR head: `63f796d31bd05ca8c0709e6186fcd03d18e98750`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`. Local KIWI snapshot overlay changes are under validation; refresh this line after CI completes.
+- Draft remains open for review. Earlier ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669) passed 78 tests and Fedora 44 DNF5 smoke; unified validation [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664) passed all 8 jobs on the then-current code. The new local KIWI overlay implementation and its tests require fresh CI evidence. The PR is not merge-ready until package rows are approved, the complete build is exercised, RPM payload checksums are locked, and PHOENIX VM install/boot evidence is available.
 
 ## Evidence
 
@@ -104,7 +105,7 @@
 
 - ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669): **78 tests passed**, Fedora 44 DNF5 smoke passed, and upstream KIWI source commit/blob verification passed on `63f796d31bd05ca8c0709e6186fcd03d18d19bf8`.
 - Unified run [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664): **all 8 jobs passed** on the same exact branch head.
-- This validates the local snapshot resolver code and CI contracts; it does not execute a full `dnf5 reposync` of Fedora repositories or a KIWI build.
+- This validates the earlier DNF local snapshot resolver code and CI contracts; it does not execute a full `dnf5 reposync` of Fedora repositories or a KIWI build. The newer KIWI overlay is pending CI validation.
 
 ## Image/build/runtime status
 
