@@ -17,6 +17,9 @@ from pathlib import Path
 EXPECTED_RELEASE = "44"
 EXPECTED_ARCH = "x86_64"
 REQUIRED_COLUMNS = {"layer", "package", "owner", "required", "rationale"}
+PINNED_COLUMNS = {"pinned_nevra", "repository_id", "repository_snapshot", "rpm_license", "source_rpm", "source_url"}
+REPOSITORY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+SOURCE_RPM_RE = re.compile(r"^[A-Za-z0-9+_.:-]+\.src\.rpm$")
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9+_.:-]*$")
 QUERY_FORMAT = "%{name}-%{epoch}:%{version}-%{release}.%{arch}\t%{repoid}"
 
@@ -65,7 +68,7 @@ def fedora_release() -> str:
     return values.get("VERSION_ID", "")
 
 
-def read_manifest(path: Path) -> list[dict[str, str]]:
+def read_manifest(path: Path, *, require_pins: bool = False) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as stream:
         lines = (line for line in stream if line.strip() and not line.lstrip().startswith("#"))
         reader = csv.DictReader(lines)
@@ -74,6 +77,7 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
             or any(not name or not name.strip() for name in reader.fieldnames)
             or len(reader.fieldnames) != len(set(reader.fieldnames))
             or not REQUIRED_COLUMNS.issubset(reader.fieldnames)
+            or (require_pins and not PINNED_COLUMNS.issubset(reader.fieldnames))
         ):
             raise RuntimeError(
                 f"Manifest header must contain unique, non-empty columns including: "
@@ -99,6 +103,21 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
             raise RuntimeError(f"owner must be non-empty: {row!r}")
         if not (row.get("rationale") or "").strip():
             raise RuntimeError(f"rationale must be non-empty: {row!r}")
+        if require_pins:
+            pin = (row.get("pinned_nevra") or "").strip()
+            suffix = pin[len(package) + 1:] if pin.startswith(f"{package}-") else ""
+            if not re.match(r"^[0-9]+:.+\.(?:x86_64|noarch)$", suffix):
+                raise RuntimeError(f"pinned_nevra must pin {package} to epoch/version/release and supported arch: {pin!r}")
+            repository_id = (row.get("repository_id") or "").strip()
+            if not REPOSITORY_RE.fullmatch(repository_id):
+                raise RuntimeError(f"repository_id is invalid: {repository_id!r}")
+            for column in ("repository_snapshot", "rpm_license", "source_rpm", "source_url"):
+                if not (row.get(column) or "").strip():
+                    raise RuntimeError(f"{column} must be non-empty for pinned package {package}")
+            if not SOURCE_RPM_RE.fullmatch(row["source_rpm"].strip()):
+                raise RuntimeError("source_rpm must be an RPM source package filename")
+            if not row["source_url"].strip().startswith("https://"):
+                raise RuntimeError("source_url must use HTTPS")
         key = (layer, package)
         if key in seen:
             raise RuntimeError(f"Duplicate package in layer: {layer}/{package}")
@@ -141,6 +160,15 @@ def parse_query_matches(output: str, expected_package: str | None = None) -> tup
     return next(iter(parsed))
 
 
+def verify_pin(row: dict[str, str], actual_nevra: str, actual_repository: str) -> None:
+    expected_nevra = row["pinned_nevra"].strip()
+    expected_repository = row["repository_id"].strip()
+    if actual_nevra != expected_nevra:
+        raise RuntimeError(f"resolved NEVRA {actual_nevra!r} does not match pinned NEVRA {expected_nevra!r}")
+    if actual_repository != expected_repository:
+        raise RuntimeError(f"resolved repository {actual_repository!r} does not match pinned repository {expected_repository!r}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=Path("os/package-manifest.csv"))
@@ -156,7 +184,7 @@ def main() -> int:
     if not shutil_which("dnf5"):
         raise RuntimeError("dnf5 is required; install/use the Fedora 44 DNF5 client.")
 
-    rows = read_manifest(args.manifest)
+    rows = read_manifest(args.manifest, require_pins=True)
     repo_evidence = run(["dnf5", "repo", "info"])
     resolved: list[dict[str, str]] = []
     failures: list[str] = []
@@ -164,10 +192,11 @@ def main() -> int:
     for row in rows:
         output = run([
             "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
-            "--latest-limit=1", "--qf", QUERY_FORMAT, row["package"]
+            "--latest-limit=1", "--qf", QUERY_FORMAT, row["pinned_nevra"].strip()
         ])
         try:
             nevra, repo_id = parse_query_matches(output, row["package"])
+            verify_pin(row, nevra, repo_id)
         except RuntimeError as exc:
             failures.append(f"{row['layer']}/{row['package']}: {exc}")
             continue
@@ -179,6 +208,11 @@ def main() -> int:
             "rationale": row["rationale"].strip(),
             "nevra": nevra,
             "repository_id": repo_id,
+            "pinned_nevra": row["pinned_nevra"].strip(),
+            "repository_snapshot": row["repository_snapshot"].strip(),
+            "rpm_license": row["rpm_license"].strip(),
+            "source_rpm": row["source_rpm"].strip(),
+            "source_url": row["source_url"].strip(),
         })
 
     if failures:
