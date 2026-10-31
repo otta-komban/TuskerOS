@@ -198,12 +198,40 @@ def select_catalog_release(
     All matching entries must pass structural validation. Equal-precedence
     duplicates are rejected, including releases differing only by build metadata.
     """
+    if not isinstance(package_id, str) or not package_id.strip():
+        raise CatalogResolutionError("package_id must be a non-empty string")
+    if not isinstance(include_prerelease, bool):
+        raise CatalogResolutionError("include_prerelease must be a boolean")
+    # Materialize once: callers may pass a generator, and every candidate must
+    # be checked against the exact same complete constraint set.
+    if isinstance(version_constraints, (str, bytes, Mapping)):
+        raise CatalogResolutionError(
+            "version_constraints must be an iterable of constraint strings, not text or a mapping"
+        )
+    try:
+        constraint_values = tuple(version_constraints)
+    except TypeError as exc:
+        raise CatalogResolutionError("version_constraints must be an iterable") from exc
+    for constraint in constraint_values:
+        parse_dependency_constraint(constraint)
+    if isinstance(candidates, (str, bytes, Mapping)):
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries, not text or a mapping")
+    try:
+        candidate_values = tuple(candidates)
+    except TypeError as exc:
+        raise CatalogResolutionError("candidates must be an iterable of catalog entries") from exc
+    # Reject malformed target versions even when the candidate collection is
+    # empty, so invalid caller input cannot masquerade as an absent release.
+    parse_compat_version(tuskeros_version)
+    parse_compat_version(api_version)
     matching: list[tuple[Version, Mapping[str, Any]]] = []
-    for candidate in candidates:
+    for candidate in candidate_values:
         if not isinstance(candidate, Mapping):
-            continue
+            raise CatalogResolutionError("candidate entries must be mappings")
         package = candidate.get("package")
-        if not isinstance(package, Mapping) or package.get("id") != package_id:
+        if not isinstance(package, Mapping) or not isinstance(package.get("id"), str):
+            raise CatalogResolutionError("candidate package metadata must contain a string package ID")
+        if package.get("id") != package_id:
             continue
         errors = validate_catalog_entry(candidate)
         if errors:
@@ -221,7 +249,7 @@ def select_catalog_release(
         version = parse_release_version(candidate["release"]["version"])
         if version.prerelease and not include_prerelease:
             continue
-        if is_compatible(candidate, tuskeros_version, api_version) and satisfies_dependency_constraints(version, version_constraints):
+        if is_compatible(candidate, tuskeros_version, api_version) and satisfies_dependency_constraints(version, constraint_values):
             matching.append((version, candidate))
     if not matching:
         raise CatalogResolutionError(f"no compatible release found for {package_id}")
