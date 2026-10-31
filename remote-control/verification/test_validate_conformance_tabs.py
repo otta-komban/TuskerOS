@@ -16,7 +16,7 @@ class TabFenceBoundaryTests(unittest.TestCase):
         markdown = (
             "| PAIR-C01 | Real case | Reject |\n"
             "\t```markdown\n"
-            "| PAIR-C01 | Tab-indented code example | Ignored |\n"
+            "    | PAIR-C01 | Tab-indented code example | Ignored |\n"
             "| PAIR-C02 | Outside code block | Reject |\n"
         )
         self.assertEqual(
@@ -44,7 +44,7 @@ class TabFenceBoundaryTests(unittest.TestCase):
         markdown = (
             "| PAIR-C01 | Before indented code | Reject |\n"
             " \t```markdown\n"
-            "| PAIR-C02 | Tab-stop indented example | Ignored |\n"
+            "    | PAIR-C02 | Tab-stop indented example | Ignored |\n"
             "   \t```\n"
             "| PAIR-C03 | After indented code | Reject |\n"
         )
