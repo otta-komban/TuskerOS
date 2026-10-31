@@ -190,6 +190,14 @@ def select_catalog_release(
             raise CatalogResolutionError(
                 f"invalid catalog entry for {package_id}: " + "; ".join(errors)
             )
+        # Revocation/rejection is a hard exclusion even during metadata-only
+        # planning. Pending/unverified entries may still be previewed, but this
+        # resolver never treats them as trusted or install-authorized.
+        trust = candidate["trust"]
+        if trust["review_status"] in {"rejected", "quarantined", "revoked"}:
+            continue
+        if trust["signature_status"] in {"invalid", "revoked"}:
+            continue
         version = parse_release_version(candidate["release"]["version"])
         if version.prerelease and not include_prerelease:
             continue
