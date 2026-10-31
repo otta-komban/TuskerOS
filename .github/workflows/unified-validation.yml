@@ -1,0 +1,108 @@
+name: TuskerOS unified validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tuskeros-unified-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Core contract schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r tusker-core/requirements-dev.txt
+      - run: python -m unittest discover -s tusker-core/tests -v
+
+  security:
+    name: Security contract validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r security/requirements-test.txt
+      - run: python -m pytest -q security/tests
+
+  system-integration:
+    name: System integration contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r system-integration/requirements-test.txt
+      - run: python -m unittest discover -s system-integration/tests -v
+
+  ai:
+    name: AI model and inference contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r tusker-ai/requirements-test.txt
+      - run: python -m pytest -q tusker-ai/tests
+
+  desktop:
+    name: Desktop static validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: python -m unittest discover -s desktop/tests -v
+      - run: python desktop/tools/validate_plasmoid.py desktop/plasmoid/package
+      - run: python desktop/tools/validate_panel_template.py desktop/panel-template
+      - run: node --check desktop/panel-template/contents/layout.js
+
+  themes:
+    name: Theme pack validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r theme-studio/requirements-dev.txt
+      - run: python -m unittest discover -s theme-studio/tests -v
+
+  fedora-package-resolver:
+    name: Fedora package resolver
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py
+      - run: python -m unittest discover -s tools/atlas -p 'test_*.py' -v
+
+  marketplace:
+    name: Marketplace transaction lifecycle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s marketplace/tests -p 'test_transaction_state.py' -v
