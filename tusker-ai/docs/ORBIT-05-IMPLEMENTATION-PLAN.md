@@ -41,11 +41,11 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 
 - Moved the available-memory probe inside the runtime semaphore's `try/finally` scope. Previously, an unexpected exception from the probe itself could bypass the release path and strand a concurrency slot.
 - Added a regression test that injects a probe exception and confirms a subsequent request can still acquire the single available slot.
-- Latest-head CI is running; no result is claimed until all required workflows finish.
+- GitHub Actions passed on code revision `454d10d4ad13f7ab5ddb659866e9727bd8d7854f`: runtime unit tests run 69, PHOENIX manifest integrity run 240, unified validation run 546, and AI contract tests run 91.
 
 ## Remaining work sequence
 
-1. Keep the full runtime/contract/unified validation green as further implementation changes land.
+1. Keep full runtime/contract/unified validation green as further implementation changes land; all four required workflows passed on the latest code revision.
 2. Review provider cancellation/deadline behavior and add focused tests for request isolation without terminating the shared daemon.
 3. Verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
 4. Keep model install/remove fail-closed until the approved AEGIS action/session/device/resource/precondition authorization is integrated and tested.
@@ -57,7 +57,7 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - [x] Historical work and Issue #57 reconciled against current main with exact SHAs and no blind history import.
 - [x] Proxy environment and redirect isolation added to the local Ollama adapter with regression tests.
 - [x] Focused HTTP adapter tests and compile checks pass in the isolated local harness.
-- [x] Runtime unit tests, contract/schema tests, unified validation, and PHOENIX manifest integrity passed on corrected code revision `141bcbb52037c25ec8b099c05dea709da5615fef`.
+- [x] Runtime unit tests, contract/schema tests, unified validation, and PHOENIX manifest integrity passed on code revision `454d10d4ad13f7ab5ddb659866e9727bd8d7854f`.
 - [ ] Any model install/remove path remains deny-by-default unless exact AEGIS authorization is integrated and tested.
 - [ ] Resource limits distinguish admission control from enforced process isolation; live cancellation is tested without killing a shared daemon.
 - [ ] Live inference report includes model digest, provider version, host metadata and reproducible command output, or is explicitly NOT RUN.
