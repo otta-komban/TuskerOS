@@ -22,6 +22,8 @@ class Handler(BaseHTTPRequestHandler):
         request = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
         if request.get("model") == "oversized":
             chunks = [{"message": {"content": "x" * (1024 * 1024 + 100)}, "done": False}]
+        elif request.get("model") == "aggregate-oversized":
+            chunks = [{"message": {"content": "x" * 900_000}, "done": False} for _ in range(10)]
         elif request.get("model") == "bad-shape":
             chunks = [[]]
         elif request.get("model") == "bad-message":
@@ -119,6 +121,18 @@ class OllamaHttpTests(unittest.TestCase):
                 with self.assertRaises(TuskerRuntimeError) as ctx:
                     list(provider.infer(request, CancellationToken()))
                 self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_aggregate_stream_response_size_is_bounded(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        provider = OllamaProvider(self.endpoint, read_timeout=2)
+        request = InferenceRequest(
+            "aggregate-oversized",
+            "aggregate-oversized",
+            [{"role": "user", "content": "hello"}],
+        )
+        with self.assertRaises(TuskerRuntimeError) as caught:
+            list(provider.infer(request, CancellationToken()))
+        self.assertEqual(caught.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
 
     def test_version_health_rejects_non_object_and_oversized_responses(self):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
