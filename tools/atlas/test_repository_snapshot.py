@@ -250,7 +250,7 @@ class LocalSnapshotVerificationTests(unittest.TestCase):
 
     def test_local_snapshot_rejects_changed_primary_payload(self):
         (self.repository / "repodata" / "primary.xml.gz").write_bytes(b"changed")
-        with self.assertRaisesRegex(RuntimeError, "local primary metadata SHA-256 differs"):
+        with self.assertRaisesRegex(RuntimeError, "primary metadata SHA-256 differs from repomd.xml"):
             MODULE.verify_local_snapshot(self.root, self.indexed)
 
     def test_local_snapshot_rejects_missing_repository(self):
