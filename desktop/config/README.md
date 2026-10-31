@@ -22,9 +22,9 @@ preferences to schema v1. Migration reads at most 64 KiB from a regular file,
 rejects final-component symlinks and duplicate JSON keys, validates the full
 candidate and uses the same mode-0600 atomic writer as normal updates.
 Malformed, duplicate-key, symlinked, oversized, excessively nested and unsupported future-version
-files are not rewritten. When settings are invalid, normal UI updates remain
-blocked; only the separately confirmed Restore defaults action can replace
-them. A failed migration write preserves the original file for recovery.
+files are not rewritten. When settings are invalid, the preference groups are disabled in the UI and
+normal updates remain blocked; only the separately confirmed Restore defaults
+action can replace them. A failed migration write preserves the original file for recovery.
 Future schema changes require a new migration and regression tests; unknown
 future versions must never be silently downgraded.
 
