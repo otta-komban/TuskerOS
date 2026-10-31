@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from scripts.validate_release_report import validate_report
+from scripts.validate_release_report import DuplicateJSONKeyError, strict_json_loads, validate_report
 
 DIGEST = "a" * 64
 
@@ -27,6 +27,17 @@ def valid_report():
 
 
 class ReleaseReportSemanticTests(unittest.TestCase):
+    def test_strict_json_parser_accepts_unique_nested_keys(self):
+        self.assertEqual(strict_json_loads('{"outer":{"inner":1}}'), {"outer": {"inner": 1}})
+
+    def test_strict_json_parser_rejects_duplicate_top_level_key(self):
+        with self.assertRaises(DuplicateJSONKeyError):
+            strict_json_loads('{"status":"passed","status":"failed"}')
+
+    def test_strict_json_parser_rejects_duplicate_nested_key(self):
+        with self.assertRaises(DuplicateJSONKeyError):
+            strict_json_loads('{"subject":{"manifest_sha256":"a","manifest_sha256":"b"}}')
+
     def test_accepts_consistent_report(self):
         self.assertEqual(validate_report(valid_report()), [])
 
