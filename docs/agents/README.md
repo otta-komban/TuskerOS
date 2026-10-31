@@ -31,8 +31,10 @@ Ten specialist roles own bounded areas. The role IDs are stable; names are role 
 4. Record a task plan and dependencies before implementation.
 5. Keep the task branch clean and submit a focused PR when acceptance criteria pass.
 
-## Reauthorization gate
-The ten branch names exist, but branch existence alone does not authorize implementation. Before work starts, a repository administrator must enable and verify branch protection / required checks on `main`; the coordinator must verify the rules through an authorized GitHub permission context; and the owner/coordinator must publish the task assignments and confirm the shared contract baseline. Until then, agents may read, plan, and prepare proposals only—no implementation pushes.
+## Current authorization and safety gate
+The owner authorization and Chief Architect suspension-lift decisions are recorded in Issues #35 and #34. The ten replacement agents may perform branch-isolated implementation on their assigned `agent/NN-...` branches. This authorization does not permit direct pushes to `main`, self-merging, force-push/history rewrite, branch deletion, or unapproved shared-contract/security-boundary changes. PIXEL-03 must resolve its specific Issue #50 blocker before theme implementation depending on the shared theme contract. Sensitive, privileged, destructive, irreversible, or externally consequential actions still require explicit owner approval.
+
+Before each task, verify the live `main` SHA, assigned branch, dependencies, and applicable approvals. Branch-protection / required-check enforcement must be reported as unverified unless the live ruleset proves otherwise. The existence of a branch or an active ruleset alone is not proof that required checks are enforced.
 
 ## Baseline facts
 At the recorded baseline, unified validation run `41174359784` passed 8/8 jobs. This validates the configured contract/static suites only. It is not evidence of bootable image, VM runtime, production broker, live inference, or release readiness. See `BUILD_AND_CI.md`.
