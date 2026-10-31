@@ -5,74 +5,288 @@
   "description": "Public discovery metadata. Trust decisions require separately verified signatures and policy checks.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["catalog_version", "package", "publisher", "release", "compatibility", "trust"],
+  "required": [
+    "catalog_version",
+    "package",
+    "publisher",
+    "release",
+    "compatibility",
+    "trust"
+  ],
   "properties": {
-    "catalog_version": {"const": 1},
+    "catalog_version": {
+      "const": 1
+    },
     "package": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "name", "kind", "summary", "license"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "summary",
+        "license"
+      ],
       "properties": {
-        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
-        "name": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": ".*\\S.*"},
-        "kind": {"enum": ["extension", "theme", "layout", "workflow", "bundle"]},
-        "summary": {"type": "string", "minLength": 1, "maxLength": 280, "pattern": ".*\\S.*"},
-        "description_uri": {"type": "string", "maxLength": 512, "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
-        "license": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": ".*\\S.*"},
-        "categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 48, "pattern": ".*\\S.*"}},
-        "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 32, "pattern": ".*\\S.*"}},
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": ".*\\S.*"
+        },
+        "kind": {
+          "enum": [
+            "extension",
+            "theme",
+            "layout",
+            "workflow",
+            "bundle"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280,
+          "pattern": ".*\\S.*"
+        },
+        "description_uri": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri",
+          "pattern": "^https://[^/@]+(?:/|$)"
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": ".*\\S.*"
+        },
+        "categories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 48,
+            "pattern": ".*\\S.*"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": ".*\\S.*"
+          }
+        },
         "conflicts": {
           "type": "array",
           "description": "Package IDs that cannot coexist with this package in one resolved plan.",
           "uniqueItems": true,
-          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"}
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+          }
         }
       }
     },
     "publisher": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "display_name"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "display_name"
+      ],
       "properties": {
-        "id": {"type": "string", "maxLength": 64, "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
-        "display_name": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": ".*\\S.*"},
-        "homepage": {"type": "string", "maxLength": 512, "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
-        "verified": {"type": "boolean"}
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": ".*\\S.*"
+        },
+        "homepage": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri",
+          "pattern": "^https://[^/@]+(?:/|$)"
+        },
+        "verified": {
+          "type": "boolean"
+        }
       }
     },
     "release": {
-      "type": "object", "additionalProperties": false,
-      "required": ["version", "manifest_uri", "artifact_uri", "sha256", "published_at"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "manifest_uri",
+        "artifact_uri",
+        "sha256",
+        "published_at"
+      ],
       "properties": {
-        "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-([0]|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\\.([0]|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"},
-        "manifest_uri": {"type": "string", "maxLength": 512, "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
-        "artifact_uri": {"type": "string", "maxLength": 512, "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-        "signature_uri": {"type": "string", "maxLength": 512, "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"},
-        "published_at": {"type": "string", "format": "date-time"},
-        "changelog_uri": {"type": "string", "maxLength": 512, "format": "uri", "pattern": "^https://[^/@]+(?:/|$)"}
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-([0]|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\\.([0]|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+        },
+        "manifest_uri": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri",
+          "pattern": "^https://[^/@]+(?:/|$)"
+        },
+        "artifact_uri": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri",
+          "pattern": "^https://[^/@]+(?:/|$)"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "signature_uri": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri",
+          "pattern": "^https://[^/@]+(?:/|$)"
+        },
+        "published_at": {
+          "type": "string",
+          "maxLength": 64,
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+        },
+        "changelog_uri": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri",
+          "pattern": "^https://[^/@]+(?:/|$)"
+        }
       }
     },
     "compatibility": {
-      "type": "object", "additionalProperties": false, "required": ["tuskeros", "api"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tuskeros",
+        "api"
+      ],
       "properties": {
-        "tuskeros": {"type": "object", "additionalProperties": false, "required": ["min", "max"], "properties": {"min": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}, "max": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}}},
-        "api": {"type": "object", "additionalProperties": false, "required": ["min", "max"], "properties": {"min": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}, "max": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}}}
+        "tuskeros": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": ".*\\S.*"
+            },
+            "max": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": ".*\\S.*"
+            }
+          }
+        },
+        "api": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": ".*\\S.*"
+            },
+            "max": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": ".*\\S.*"
+            }
+          }
+        }
       }
     },
     "trust": {
-      "type": "object", "additionalProperties": false, "required": ["review_status", "signature_status"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_status",
+        "signature_status"
+      ],
       "properties": {
-        "review_status": {"enum": ["pending", "approved", "rejected", "quarantined", "revoked"]},
-        "signature_status": {"enum": ["unverified", "valid", "invalid", "revoked"]},
-        "reviewed_at": {"type": "string", "format": "date-time"},
-        "review_policy_version": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": ".*\\S.*"}
+        "review_status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected",
+            "quarantined",
+            "revoked"
+          ]
+        },
+        "signature_status": {
+          "enum": [
+            "unverified",
+            "valid",
+            "invalid",
+            "revoked"
+          ]
+        },
+        "reviewed_at": {
+          "type": "string",
+          "maxLength": 64,
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+        },
+        "review_policy_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": ".*\\S.*"
+        }
       }
     },
     "community": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "rating_average": {"type": "number", "minimum": 0, "maximum": 5},
-        "rating_count": {"type": "integer", "minimum": 0},
-        "download_count": {"type": "integer", "minimum": 0}
+        "rating_average": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "rating_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "download_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     }
   }
