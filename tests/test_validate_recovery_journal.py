@@ -116,14 +116,14 @@ class RecoveryJournalTests(unittest.TestCase):
     def test_jsonl_preserves_unicode_line_separator_inside_string(self):
         record = seal_record(sequence=1, operation_id="install\u2028one",
                              state="planned", idempotent=False)
-        encoded = __import__("json").dumps(record, ensure_ascii=False) + "\\n"
+        encoded = __import__("json").dumps(record, ensure_ascii=False) + "\n"
         parsed = parse_jsonl(encoded)
         self.assertEqual(parsed[0]["operation_id"], "install\u2028one")
 
     def test_jsonl_accepts_crlf_and_one_final_newline(self):
         record = seal_record(sequence=1, operation_id="install-001",
                              state="planned", idempotent=False)
-        encoded = __import__("json").dumps(record) + "\\r\\n"
+        encoded = __import__("json").dumps(record) + "\r\n"
         self.assertEqual(parse_jsonl(encoded), [record])
 
     def test_non_string_state_is_rejected_without_crashing(self):
