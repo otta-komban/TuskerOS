@@ -162,15 +162,17 @@ class LifecycleEngine:
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
-        # Reject stale callers before validating against a newer state snapshot.
-        # The store repeats this check atomically to close the read/write race.
-        if current["version"] != expected_version:
-            raise VersionConflict(f"expected version {expected_version}, found {current['version']}")
         fingerprint = event_type + ":" + target
+        # An exact replay is returned even though its original write advanced the
+        # version. Check the idempotency record before rejecting stale retries.
         if idempotency_key:
             prior = self.store.idempotent_result(task_id, idempotency_key, fingerprint)
             if prior is not None:
                 return prior
+        # Reject stale callers before validating against a newer state snapshot.
+        # The store repeats this check atomically to close the read/write race.
+        if current["version"] != expected_version:
+            raise VersionConflict(f"expected version {expected_version}, found {current['version']}")
         source = current["state"]
         if event_id is not None:
             try:
