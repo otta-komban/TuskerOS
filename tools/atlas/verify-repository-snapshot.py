@@ -212,7 +212,10 @@ def verify_local_snapshot(root: Path, indexed: dict[str, dict[str, str]]) -> Non
             raise RuntimeError(f"{repo_id}: local repository path escapes snapshot root")
         repomd_path = repository_path / "repodata" / "repomd.xml"
         try:
-            repomd = repomd_path.read_bytes()
+            resolved_repomd_path = repomd_path.resolve(strict=True)
+            if not resolved_repomd_path.is_relative_to(repository_path):
+                raise RuntimeError(f"{repo_id}: local repomd.xml path escapes repository root")
+            repomd = resolved_repomd_path.read_bytes()
         except OSError as exc:
             raise RuntimeError(f"{repo_id}: local snapshot is missing repodata/repomd.xml: {exc}") from exc
         actual_repomd_sha256 = sha256(repomd)

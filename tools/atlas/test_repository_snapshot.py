@@ -237,6 +237,22 @@ class LocalSnapshotVerificationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "filelists metadata SHA-256 differs"):
             MODULE.verify_local_snapshot(self.root, indexed)
 
+    def test_local_snapshot_rejects_repomd_symlink_escape(self):
+        outside = self.root / "outside-repomd.xml"
+        outside.write_bytes(REPOMD)
+        (self.repository / "repodata" / "repomd.xml").unlink()
+        (self.repository / "repodata" / "repomd.xml").symlink_to(outside)
+        with self.assertRaisesRegex(RuntimeError, "repomd.xml path escapes repository root"):
+            MODULE.verify_local_snapshot(self.root, self.indexed)
+
+    def test_local_snapshot_rejects_metadata_payload_symlink_escape(self):
+        outside = self.root / "outside-primary.xml.gz"
+        outside.write_bytes(PRIMARY)
+        (self.repository / "repodata" / "primary.xml.gz").unlink()
+        (self.repository / "repodata" / "primary.xml.gz").symlink_to(outside)
+        with self.assertRaisesRegex(RuntimeError, "metadata path escapes repository root"):
+            MODULE.verify_local_snapshot(self.root, self.indexed)
+
     def test_local_snapshot_rejects_changed_repomd(self):
         (self.repository / "repodata" / "repomd.xml").write_bytes(REPOMD + b"changed")
         with self.assertRaisesRegex(RuntimeError, "local repomd.xml SHA-256 differs"):
