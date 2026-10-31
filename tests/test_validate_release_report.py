@@ -91,6 +91,15 @@ class ReleaseReportSemanticTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("cannot decode report as UTF-8:", stderr)
 
+    def test_cli_missing_file_exits_two(self):
+        with tempfile.TemporaryDirectory() as directory:
+            missing_path = Path(directory) / "missing.json"
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with patch("sys.argv", ["validate_release_report.py", str(missing_path)]), redirect_stdout(stdout), redirect_stderr(stderr):
+                exit_code = main()
+            self.assertEqual(exit_code, 2)
+            self.assertIn("cannot read report:", stderr)
+
     def test_cli_semantic_failure_exits_one(self):
         report = valid_report()
         report["overall_status"] = "blocked"
