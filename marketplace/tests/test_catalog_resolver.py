@@ -74,6 +74,14 @@ class CatalogResolverTests(unittest.TestCase):
         parsed = [parse_release_version(value) for value in versions]
         self.assertEqual(parsed, sorted(parsed))
 
+    def test_dependency_constraint_parser_enforces_512_character_bound(self):
+        from marketplace.tools.catalog_resolver import parse_dependency_constraint
+        valid = ">=" + "1" * 124 + ".0.0"
+        self.assertEqual(len(valid), 130)
+        self.assertEqual(len(parse_dependency_constraint(valid)), 1)
+        with self.assertRaisesRegex(CatalogResolutionError, "max 512"):
+            parse_dependency_constraint(">=" + "1" * 507)
+
     def test_dependency_constraint_operators_are_inclusive_or_exclusive_as_named(self):
         from marketplace.tools.catalog_resolver import satisfies_dependency_constraints
         self.assertTrue(satisfies_dependency_constraints("1.2.0", [">=1.2.0", "<=1.2.0"]))
