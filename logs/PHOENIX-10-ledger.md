@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 17  
+Current authorized cohort count: 18  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0026  
+Last completion: PHOENIX-10-C0027  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0027 | P2 | recovery-journal-parser-input-hardening | Require plain text input; convert deep JSON recursion and oversized-token parser errors into validation failures; add hostile string and parser-limit tests. PHOENIX CI passed; unified validation pending. | validator `afaed817`; tests `941dbb01`, `97c75988`; docs `c6cc450c`; PR #55. |
 | PHOENIX-10-C0026 | P2 | recovery-journal-nested-json-bounds | Reject nested custom containers/values and cycles; bound depth, nodes and in-memory record size; add hostile-input/resource-limit tests and docs. PHOENIX + unified CI passed. | validator `2729e248`, `201b290d`; tests `a5e00ef9`, `0a703ac3`, `59ea2e81`; docs `bbab5f62`, `bfe0c574`; PR #55. |
 | PHOENIX-10-C0025 | P2 | recovery-journal-hostile-object-hardening | Reject dict subclasses, non-plain keys and hostile malformed values without invoking custom hooks; add regression coverage and docs; latest-head CI pending after diagnostic compatibility repair. | validator `67ea9b5b` (hardening commits `00285d27`, `573d55c1`, `653156f7`, `355130e2`); tests `83b8eeed`, `6040c225`; docs `83c7382e`; PR #55. |
 | PHOENIX-10-C0024 | P2 | recovery-journal-iterator-failure-hardening | Return structured validation failure when caller iterator creation/consumption raises; add generator regression and docs; CI pending. | validator `daa12aac`, test `3d815ec5`, docs `b3c9b412`; PR #55. |
@@ -40,11 +41,13 @@ Last updated: 2026-10-31
 ## Current authorized cohort accounting
 
 - Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
-- Counted responses in this cohort: **15** — C0010 through C0024.
+- Counted responses in this cohort: **18** — C0010 through C0027.
 - Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
+
+- [x] C0027 response completion logged; parser rejects string subclasses and structures decoder recursion/oversized-token errors; PHOENIX CI passed, unified validation pending.
 
 - [x] C0026 response completion logged; nested recovery-journal JSON values are strictly validated and resource-bounded; PHOENIX and unified CI passed.
 
@@ -136,3 +139,6 @@ C0025 limitation: this response hardens only bounded in-memory recovery-journal 
 
 
 C0026 limitation: bounded in-memory validation only. The journal is not persisted; no atomic writes, locking, fsync, broker integration, recovery dispatch, disk access/write, image build or VM test was performed. The SHA-256 chain is unkeyed integrity evidence, not authentication or authorization. NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0027 limitation: read-only parser boundary hardening and regression tests only. The initial 1,100-level nesting fixture did not reach CPython 3.12's JSON decoder recursion limit; corrected to 12,000 levels and PHOENIX CI run 41197383993 passed. Unified validation run 41197388866 was pending at ledger update time. No journal persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites.
