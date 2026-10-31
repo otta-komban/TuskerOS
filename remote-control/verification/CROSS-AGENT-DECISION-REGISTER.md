@@ -119,3 +119,10 @@ The NEXUS handoff records these findings at [issue #17 comment 6546229617](https
 NEXUS's latest response accepts semantic ownership and security invariants but does not select a production transport, runtime language, wire schema, service identity or store. Its `AF_UNIX SOCK_SEQPACKET` / `SO_PEERCRED` suggestion remains a recommendation only. No audit v0.2 migration is approved. The public invocation schema's caller-reachable `authorization_context` and direct authority-smuggling negative tests remain open. See [NEXUS handoff comment 6546134969](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6546134969).
 
 **PILOT-08 disposition:** update the decision register only. No AEGIS schema, public invocation contract, broker envelope, transport, runtime or privileged dispatch behavior was changed. The remote runtime gate remains **NO-GO** until the named owners approve the exact interfaces and executable evidence exists.
+
+
+## C0016 — scoped implementation authorization clarification (2026-10-31)
+
+The owner authorized all replacement agents to perform scoped implementation, tests, documentation and commits on their assigned `agent/NN-*` branches; the coordinator confirmed this supersedes the stale repository reauthorization hold. Evidence: [owner authorization](https://github.com/otta-komban/TuskerOS/issues/35#issuecomment-6540346389) and [coordinator clarification](https://github.com/otta-komban/TuskerOS/issues/35#issuecomment-6540745614).
+
+This authorization is not a contract disposition and closes none of DEC-AEG-004/006 schema sub-gates, DEC-TUS-001..004/006..007, DEC-NOV-001..004, or DEC-INT-001. It does not select the AEGIS/NEXUS transport, envelope, runtime, authority/store, or registry provenance; it does not authorize a remote listener, pairing/session middleware, protected mutation route, privileged dispatch, or release. Keep the decision statuses above unchanged and retain **NO-GO for remote runtime and release** until the applicable owner decisions and executable acceptance evidence are complete. Branch-protection/required-check configuration remains unverified.
