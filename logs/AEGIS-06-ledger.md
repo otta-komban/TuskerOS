@@ -8,12 +8,12 @@
 ## Current state
 
 - **Full historical conversation count:** Unverified
-- **Verified visible-segment completions:** 9 / 100 after C0057
-- **Historical JSONL records:** 57 (`C0001`–`C0057`); these are work/response records, not proof of 57 distinct user/assistant pairs
-- **Latest historical record:** `AEGIS-06-C0057`
+- **Verified visible-segment completions:** 10 / 100 after C0058
+- **Historical JSONL records:** 58 (`C0001`–`C0058`); these are work/response records, not proof of 58 distinct user/assistant pairs
+- **Latest historical record:** `AEGIS-06-C0058`
 - **Current phase:** P1 security integration review — SEC-SCHEMA-007 interim empty-only schema enforced; policy/broker consumer fail-closed evidence and owner approval remain pending
-- **Engineering tasks completed:** 47 (separate from visible conversation completions and commits)
-- **Latest log commit:** `e61d774d6eddd603138225ac83acdb1aff21ddb9`
+- **Engineering tasks completed:** 48 (separate from visible conversation completions and commits)
+- **Latest log commit:** `53067324c8f3c9ba8c0e45769b62d06b33146346`
 
 ## Historical work/response record index (not a verified conversation-completion count)
 
@@ -78,6 +78,7 @@
 | AEGIS-06-C0055 | policy-constraints-interim-contract | Specified interim empty-only constraints producer/consumer rule and owner-review criteria. | SECURITY_CONTRACTS.md; POLICY_ENGINE_SPEC.md; issue #31 |
 | AEGIS-06-C0056 | policy-constraints-schema-regression | Enforced required empty constraints object in policy-decision schema and added positive/negative schema tests. | Schema `f811ba4`; tests `130ba23`; CI 41165953314 success |
 | AEGIS-06-C0057 | policy-constraints-schema-documentation-reconciliation | Explicitly closed constraints object, expanded invalid-type tests, reconciled stale docs and recorded 163-test CI pass. | Schema `6818ca1`; tests `d030108`; CI 41166079444 success |
+| AEGIS-06-C0058 | rfc8785-unicode-preservation-correction | Corrected the policy-engine spec's global NFC preprocessing rule, added exact Unicode JCS reference vectors and regression coverage, reconciled the audit/checklist, and passed 164 security tests. | RFC 8785 §3.1; `security/JCS_UNICODE_TEST_VECTORS.json`; CI run 41167759653 passed 164 tests; draft PR #33; issues #31/#32 |
 
 ## C0007 — Privileged operations release gate
 
@@ -651,3 +652,17 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **CI:** [Run 41166079444](https://github.com/otta-komban/TuskerOS/actions/runs/41166079444) passed **163 security tests in 2.72s** on Python 3.12; validation job 124433828665 succeeded.
 - **Commits:** schema `6818ca11b25d9e95ec38a235686315521c973e7f`; tests `07421cb1216af15e68884c862bbe3fdeeee10d4d` and `d030108de2ecad303ea20f6e924d6ec7a5901fd2`; policy spec `074eeed98c3a2fbf8aa3d0cc78703e7f7019781c`; audit `e5e3a60764a8d8aa9f2d8d9b0e00455227c37765`; matrix `7d1f1c23edf13d568c270adc89cbdbc4b4b875d4`; checklist `7ac93a0c6abcb30ced0f59378aa87d0c5bcfb197`; JSONL `e61d774d6eddd603138225ac83acdb1aff21ddb9`.
 - **Limits/blocker:** Schema validation only. No policy-engine producer or broker consumer was exercised, and no zero-handler-call runtime evidence exists. SEC-SCHEMA-007 remains open pending owner agreement on any future bounded vocabulary and executable consumer fail-closed tests.
+
+
+## C0058 — RFC 8785 Unicode preservation correction
+
+- **Visible-segment completion:** 10 / 100. This counts the directly verified user-message/complete-assistant-response pair for this response; historical JSONL rows are not used to infer prior pairs.
+- **Historical work/response record:** C0058 (JSONL now contains 58 unique sequential records C0001–C0058).
+- **Engineering tasks completed:** 48 cumulative (+1 this response).
+- **Finding:** `security/POLICY_ENGINE_SPEC.md` previously required global NFC normalization before claiming RFC 8785 JCS. RFC 8785 §3.1 requires parsed JSON string data to remain unchanged.
+- **Fix:** The spec now preserves exact code points, rejects invalid Unicode, and keeps operation-specific trusted resource resolution distinct from JCS preprocessing.
+- **Regression:** Added `security/JCS_UNICODE_TEST_VECTORS.json` for composed U+00E9 and decomposed U+0065 U+0301 with distinct canonical UTF-8 bytes and SHA-256 digests; added the pytest fixture-integrity check and JCS-UNICODE-001–004 matrix cases.
+- **CI:** [Run 41167759653](https://github.com/otta-komban/TuskerOS/actions/runs/41167759653) passed **164 tests in 2.50s** on Python 3.12, commit `16fdb5179847b79115d9cbe3ec955059ad3d8fb3`.
+- **Tracking:** Issue #31 now accurately records schema mitigation complete but remains open pending actual producer/consumer fail-closed tests. Issue #32 tracks runtime JCS conformance. Draft PR [#33](https://github.com/otta-komban/TuskerOS/pull/33) is open.
+- **Commits:** policy spec `6599d7101155b05fedcdef104342d890b6c9ff82`; tests `e91adea7155c7228ec97517ea2901482b6354a08`; vectors `cc3a309c24a65840153b4ed5e89465165eb8dec1`; matrix `21f975e485f05791eb566d22cf732cbe5b458f9f`; audit `d5c2e0cd6dd17b4fe650776988373ec8697572ba`; checklist `16fdb5179847b79115d9cbe3ec955059ad3d8fb3`; JSONL `53067324c8f3c9ba8c0e45769b62d06b33146346`.
+- **Limits:** Reference-fixture CI is not evidence of production JCS, policy-engine, broker, durable audit or privileged handler behavior. NEXUS-07/TUSKER-04 implementation and end-to-end conformance remain release blockers.
