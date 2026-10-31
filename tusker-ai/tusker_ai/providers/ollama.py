@@ -17,6 +17,7 @@ from ..types import (
 
 _MAX_STREAM_FRAME_BYTES = 1_048_576
 _MAX_REQUEST_BODY_BYTES = 4_194_304
+_MAX_STREAM_RESPONSE_BYTES = 8_388_608
 
 
 class _NoRedirectHandler(HTTPRedirectHandler):
@@ -111,6 +112,7 @@ class OllamaProvider:
             method="POST",
         )
         seq = 0
+        stream_bytes = 0
         deadline = time.monotonic() + request.timeout_seconds
         try:
             with self._opener.open(req, timeout=min(request.timeout_seconds, self._read_timeout)) as response:
@@ -129,6 +131,9 @@ class OllamaProvider:
                         if time.monotonic() >= deadline:
                             raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
                         continue
+                    stream_bytes += len(raw_line)
+                    if stream_bytes > _MAX_STREAM_RESPONSE_BYTES:
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider stream exceeded the response size limit")
                     if cancellation.cancelled:
                         yield InferenceEvent(request.request_id, seq, "cancelled", {"reason": "caller_cancelled"})
                         return
