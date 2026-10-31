@@ -16,6 +16,14 @@
 4. AEGIS-06 must review signature/trust policy before any Secure Boot claim. `firmware="efi"` does not assert Secure Boot support.
 5. KIWI NG's installed version must be recorded and the description validated with that exact version before build.
 
+## Repository snapshot consumption boundary
+
+- `tools/atlas/build-image.sh` verifies the committed repository lock, then stages each locked repository under `build/atlas/repository-snapshot/<repo-id>` with DNF5 `reposync --download-metadata` for `x86_64` and `noarch`. RPM package signature checks are enabled during sync; Fedora 44 does not publish detached repomd.xml.asc signatures at the inspected official fedora/updates endpoints.
+- The staged `repomd.xml` and primary metadata bytes are checked against the lock; every metadata payload referenced by `repomd.xml` is SHA-256 checked locally. DNF5 package resolution uses only local `--repofrompath` repositories, with `gpgcheck=1` and the Fedora 44 primary key explicitly configured. Repository metadata is content-pinned, not detached-signature verified.
+- The build exports the pinned upstream Git commit into a clean derived KIWI source tree. `tools/atlas/prepare-kiwi-snapshot.py` resolves the pinned `repositories/core.xml` symlink, requires the repository aliases to match the lock exactly, and rewrites the Fedora 44 `fedora` and `updates` source paths to local `file://` snapshot directories. It preserves the Fedora signing-key references, resolves the `$releasever` macro to the Fedora 44 key file, and enables KIWI `package_gpgcheck`.
+- Both DNF5 resolution and KIWI image construction are therefore configured to consume the same staged local repositories. RPM package signatures are enforced by DNF5/KIWI using the Fedora 44 primary key. The Fedora 44 official fedora/updates endpoints inspected for this task return 404 for `repomd.xml.asc`; metadata authenticity is therefore not established by a detached signature. Instead, the committed snapshot lock pins the `repomd.xml` digest, the verifier checks every metadata payload against the checksums in that file, and capture uses HTTPS. Build metadata records `repository_metadata_signature_verified: false` and `repository_snapshot_consumed_by_kiwi: true`. The signing-key fingerprint is not separately recorded in the snapshot lock. The package manifest now requires an rpm_sha256 pin for each approved package. DNF5 repoquery supplies the local RPM location, and the resolver hashes that actual file inside the staged repository and compares it with the manifest pin before the build proceeds.
+- The build host must have the DNF5 `reposync` plugin (`dnf5-plugins`) and Fedora 44 `distribution-gpg-keys` installed. Full repository sync and KIWI image build have not yet been run; the full sync may require substantial disk space and network transfer.
+
 ## Validation and build gate
 
 - XML well-formedness can be checked with Python's standard-library XML parser.

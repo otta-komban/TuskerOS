@@ -10,7 +10,7 @@ The KDE/session package set is waiting on NOVA-02's exact Fedora 44 requirements
 
 ## Source manifest
 
-The initial source of truth will be a CSV file with these columns:
+The source of truth is a CSV file. In addition to the request fields below, every approved row must carry an exact package/build pin: full NEVRA, repository ID, repository snapshot ID, RPM SHA-256, license, source RPM, Fedora dist-git URL and upstream project URL.
 
 | Column | Meaning |
 |---|---|
@@ -31,7 +31,7 @@ Keep optional layers separate from the default profile. AI runtime, developer to
 5. Review the resolved set with the owning agent, then use the same resolved inputs for the KIWI ISO and virtual-disk profiles.
 6. Refresh the lock only through a reviewed dependency update; record the source manifest revision and repository metadata evidence.
 
-The resolver is an evidence-gathering tool, not a repository snapshotter. For reproducible release builds, the selected repository metadata and RPM payloads must also be retained or referenced by immutable snapshot/checksum.
+The resolver consumes only staged local repository snapshots. It obtains the RPM location from DNF5 repoquery, hashes the actual RPM file inside the matching local repository, and requires the resulting SHA-256 to match the manifest rpm_sha256 pin. The repository lock pins repomd.xml and the verifier checks every metadata payload referenced by it. Fedora 44 repository metadata is not detached-signature verified at the inspected official endpoints; RPM package signatures remain enforced with the Fedora primary key.
 
 ## Build gating
 

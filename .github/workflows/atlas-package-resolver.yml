@@ -3,17 +3,19 @@ name: ATLAS package resolver tests
 on:
   push:
     branches:
-      - 01-fedora-base
+      - agent/01-fedora-base
     paths:
       - "tools/atlas/**"
       - "os/package-manifest.csv"
+      - "os/repository-snapshot.lock.json"
       - ".github/workflows/atlas-package-resolver.yml"
   pull_request:
     branches:
-      - 01-fedora-base
+      - main
     paths:
       - "tools/atlas/**"
       - "os/package-manifest.csv"
+      - "os/repository-snapshot.lock.json"
       - ".github/workflows/atlas-package-resolver.yml"
   workflow_dispatch:
 
@@ -31,6 +33,150 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile resolver and tests
-        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py
-      - name: Run resolver unit tests
+        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py tools/atlas/verify-repository-snapshot.py tools/atlas/test_repository_snapshot.py tools/atlas/prepare-kiwi-snapshot.py tools/atlas/test_prepare_kiwi_snapshot.py
+      - name: Validate package manifest, image source lock and build script syntax
+        run: |
+          python tools/atlas/resolve-package-manifest.py --validate-only --manifest os/package-manifest.csv
+          python -m json.tool os/image-source.lock.json > /dev/null
+          python -m json.tool os/repository-snapshot.lock.json > /dev/null
+          python tools/atlas/verify-repository-snapshot.py --validate-only --lock os/repository-snapshot.lock.json
+          bash -n tools/atlas/build-image.sh
+      - name: Verify pinned Fedora KIWI source commit and blobs
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          lock = json.loads(Path("os/image-source.lock.json").read_text(encoding="utf-8"))
+          source = lock["source"]
+          with tempfile.TemporaryDirectory(prefix="atlas-kiwi-lock-") as temporary:
+              repo = Path(temporary) / "upstream"
+              repo.mkdir()
+              subprocess.run(["git", "init", str(repo)], check=True, capture_output=True, text=True)
+              subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", source["repository"]], check=True)
+              subprocess.run(["git", "-C", str(repo), "fetch", "--depth=1", "--no-tags", "origin", source["commit"]], check=True)
+              subprocess.run(["git", "-C", str(repo), "checkout", "--detach", "FETCH_HEAD"], check=True)
+              actual_commit = subprocess.run(
+                  ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                  check=True, capture_output=True, text=True,
+              ).stdout.strip()
+              assert actual_commit == source["commit"], (actual_commit, source["commit"])
+              for path_key, blob_key in (
+                  ("description_file", "description_blob"),
+                  ("wrapper_file", "wrapper_blob"),
+                  ("kde_profile_file", "kde_profile_blob"),
+              ):
+                  actual_blob = subprocess.run(
+                      ["git", "-C", str(repo), "rev-parse", f"HEAD:{source[path_key]}"],
+                      check=True, capture_output=True, text=True,
+                  ).stdout.strip()
+                  assert actual_blob == source[blob_key], (path_key, actual_blob, source[blob_key])
+                  print(f"Verified {source[path_key]}: {actual_blob}")
+              print(f"Verified Fedora KIWI source commit: {actual_commit}")
+          PY
+      - name: Run resolver and image-lock unit tests
         run: python -m unittest discover -s tools/atlas -p 'test_*.py' -v
+
+  fedora44-dnf5-smoke:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:44
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install Fedora DNF5 and Python
+        run: dnf5 install -y dnf5 dnf5-plugins distribution-gpg-keys python3 git
+      - name: Validate Fedora reposync plugin and pinned signing key
+        run: |
+          dnf5 reposync --help > /dev/null
+          dnf5 reposync --help | grep -q -- '--download-metadata'
+          dnf5 reposync --help | grep -q -- '--destdir'
+          dnf5 reposync --help | grep -q -- '--arch'
+          dnf5 reposync --help | grep -q -- '--gpgcheck'
+          dnf5 --help | grep -q -- '--repo'
+          test -s /usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-44-primary
+      - name: Exercise local KIWI overlay against pinned Fedora 44 source
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          import json
+          import subprocess
+          import tempfile
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          source_lock = json.loads(Path("os/image-source.lock.json").read_text(encoding="utf-8"))
+          source = source_lock["source"]
+          helper_path = Path("tools/atlas/prepare-kiwi-snapshot.py")
+          spec = importlib.util.spec_from_file_location("atlas_kiwi_snapshot", helper_path)
+          helper = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(helper)
+
+          with tempfile.TemporaryDirectory(prefix="atlas-kiwi-overlay-") as temporary:
+              root = Path(temporary)
+              upstream = root / "upstream"
+              upstream.mkdir()
+              subprocess.run(["git", "init", str(upstream)], check=True, capture_output=True, text=True)
+              subprocess.run(["git", "-C", str(upstream), "remote", "add", "origin", source["repository"]], check=True)
+              subprocess.run(["git", "-C", str(upstream), "fetch", "--depth=1", "--no-tags", "origin", source["commit"]], check=True)
+              subprocess.run(["git", "-C", str(upstream), "checkout", "--detach", "FETCH_HEAD"], check=True)
+
+              snapshot = root / "snapshot"
+              for repository_id in ("fedora", "updates"):
+                  repodata = snapshot / repository_id / "repodata"
+                  repodata.mkdir(parents=True)
+                  (repodata / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
+              lock = root / "snapshot-lock.json"
+              lock.write_text(json.dumps({
+                  "schema_version": 1,
+                  "fedora_release": "44",
+                  "architecture": "x86_64",
+                  "repositories": [{"repository_id": "fedora"}, {"repository_id": "updates"}],
+              }), encoding="utf-8")
+
+              prepared = helper.prepare_overlay(upstream, snapshot, lock)
+              assert set(prepared) == {"fedora", "updates"}, prepared
+              core = ET.parse(upstream / "repositories" / "core.xml").getroot()
+              for repository in core.findall("repository"):
+                  source_node = repository.find("source")
+                  assert source_node.attrib["path"].startswith("file://"), source_node.attrib
+                  assert "repository_gpgcheck" not in repository.attrib
+                  assert repository.attrib["package_gpgcheck"] == "true"
+                  signing_key = Path(source_node.find("signing").attrib["key"].removeprefix("file://"))
+                  assert signing_key.is_file(), signing_key
+                  assert "$releasever" not in str(signing_key)
+              print("Pinned Fedora 44 KIWI overlay uses only local snapshots and enforces RPM package signatures with the installed Fedora signing key")
+          PY
+      - name: Query real Fedora 44 package metadata and validate DNF5 output
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          import subprocess
+          from pathlib import Path
+
+          path = Path("tools/atlas/resolve-package-manifest.py")
+          spec = importlib.util.spec_from_file_location("atlas_resolver", path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+
+          print(subprocess.run(["dnf5", "--version"], check=True, text=True, capture_output=True).stdout)
+          output = subprocess.run(
+              [
+                  "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
+                  "--latest-limit=1", "--qf", module.QUERY_FORMAT, "bash",
+              ],
+              check=True,
+              text=True,
+              capture_output=True,
+          ).stdout
+          nevra, repo, license_expression, source_rpm, upstream_url, location = module.parse_query_matches(output, "bash")
+          assert nevra.startswith("bash-0:"), nevra
+          assert repo, "DNF5 did not return a repository ID"
+          assert license_expression, "DNF5 did not return an RPM license"
+          assert source_rpm.endswith(".src.rpm"), source_rpm
+          assert location and not location.startswith("/"), location
+          assert upstream_url == "NOASSERTION" or upstream_url.startswith("https://"), upstream_url
+          print(f"Validated Fedora 44 DNF5 metadata: {nevra} from {repo}; source RPM {source_rpm}; RPM location {location}")
+          PY

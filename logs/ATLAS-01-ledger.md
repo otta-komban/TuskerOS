@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 14
+Current verified count: 25
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -22,4 +22,26 @@ Current verified count: 14
 | 13 | ATLAS-01-C0013 | P1 | status | recorded | Adopted compact progress dashboard; record reconciled into JSONL during C0014; no code change |
 | 14 | ATLAS-01-C0014 | P1 | implementation | partial | DNF5 resolver now rejects package-name mismatches and unsupported architectures; two regression tests; docs updated; CI runs 41124667670 and 41124688115 queued at check; Fedora DNF5 runtime pending; commits ace17cd, 415f1a7, ba5395e, 61534cd, ff8afe9, 5b90ee1, e670627; final CI run 41124925504 queued |
 
+| 15 | ATLAS-01-C0015 | P1 | status | recorded | Resumed Fedora base-image work; verified branch comparison, 49-test/8-job CI evidence, pinned KIWI source and still-open NOVA/NEXUS package handoffs; no package rows or build claims added |
+
+| 16 | ATLAS-01-C0016 | P1 | implementation | partial | Added Fedora repository snapshot capture/preflight, manifest snapshot binding, build gate and 20+ regression checks; ATLAS CI run 41185951919 passed 70 tests plus live Fedora 44 DNF5 smoke and unified run 41185951924 passed all 8 jobs on `8f594cb`; KIWI/DNF snapshot consumption, metadata signatures, RPM checksums and actual image build remain open |
+
+| 17 | ATLAS-01-C0017 | P1 | implementation | partial | DNF5 now stages locked Fedora repositories locally, verifies local repomd/primary metadata, and resolves only from local DNF repo paths; 78 tests + Fedora 44 DNF5 smoke passed in run 41190197697; unified 8/8 passed in 41190201562; KIWI still uses upstream remotes; no image build |
+
+| 18 | ATLAS-01-C0018 | P1 | implementation | partial | KIWI now builds from a clean pinned-source overlay whose Fedora repository definitions point only to verified local fedora/updates snapshots; metadata/package signature checks enabled with Fedora 44 primary key; CI run 41191712051 passed 86 tests plus real-source overlay smoke and DNF5 smoke; unified run 41191712054 passed 8/8; no full reposync or image build |
+
+| 19 | ATLAS-01-C0019 | P1 | implementation | partial | Local snapshot verifier now checks every repomd-referenced metadata payload SHA-256. Corrected Fedora signature policy after official fedora/updates repomd.xml.asc endpoints returned 404: detached metadata signature verification is not claimed; RPM package GPG checks remain enabled. ATLAS run 41192287443 passed 85 tests + Fedora 44 DNF5 and pinned-source KIWI overlay smoke; unified run 41192287352 pending; no full reposync/image build. Supersedes C0018's metadata-signature assumption. |
+
+| 20 | ATLAS-01-C0020 | P1 | implementation | partial | Package manifest now requires rpm_sha256; DNF5 repoquery returns local RPM location and resolver hashes that staged file, confines path to repository, and compares digest to pin. ATLAS run 41192831799 passed 90 tests, Fedora 44 DNF5 location smoke and KIWI overlay integration; unified run 41192831693 passed 8/8 on the same code head; no package rows/full sync/image build. Supersedes C0019's separate-RPM-lock limitation. |
+
 Counts include only actual assistant responses. Never backfill or fabricate entries.
+
+| 21 | ATLAS-01-C0021 | P1 | implementation | partial | KIWI build outputs now use a collision-resistant per-run directory; each ISO/QCOW2 build target clears stale result/intermediate directories before execution. Two regression tests added. ATLAS run 41197460809 passed 92 tests, Fedora 44 DNF5 5.4.3.0 queryformat/RPM-location smoke and pinned-source KIWI overlay integration; unified run 41197460810 passed 8/8. No full reposync/image build. |
+
+| 22 | ATLAS-01-C0022 | P1 | implementation | partial | Build metadata now binds repository snapshot lock, resolved package report, generated KIWI repository overlay and exported SHA256SUMS manifest by SHA-256. Regression test added. ATLAS run 41197718324 passed 93 tests, Fedora 44 DNF5 smoke and KIWI overlay integration; unified run 41197718316 passed 8/8. No full reposync/image build. |
+
+| 23 | ATLAS-01-C0023 | P1 | validation | partial | Fedora 44 CI now checks the exact DNF5 reposync flags and global repo-selection option used by the build script. Removed obsolete repomd.xml.asc fixture files; KIWI overlay test now explicitly passes without detached metadata signatures while RPM package GPG checks remain enabled. ATLAS run 41197942774 passed 93 tests and Fedora 44 smoke; unified run 41197942886 passed 8/8. No full reposync/image build. |
+
+| 24 | ATLAS-01-C0024 | P1 | implementation | partial | Moved snapshot+manifest production preflight and DNF5 reposync plugin check before upstream KIWI clone/fetch; empty/invalid package inputs now fail before network/source work. Added two ordering regression tests. ATLAS run 41198325237 passed 95 tests and Fedora 44 DNF5 smoke; unified run 41198328542 passed 8/8 on same code head. No full reposync/image build. |
+
+| 25 | ATLAS-01-C0025 | P1 | security | partial | Local repository snapshot verifier now resolves repomd.xml and rejects symlink targets outside the repository root; added repomd and metadata payload symlink-escape tests. ATLAS run 41198494806 passed 97 tests plus Fedora 44 DNF5 smoke; unified run 41198494782 passed 8/8. No full reposync/image build. |

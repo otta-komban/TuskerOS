@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import hashlib
 import json
 import os
 import platform
@@ -12,13 +13,19 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 from pathlib import Path
 
 EXPECTED_RELEASE = "44"
 EXPECTED_ARCH = "x86_64"
+DEFAULT_FEDORA_GPG_KEY = Path("/usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-44-primary")
 REQUIRED_COLUMNS = {"layer", "package", "owner", "required", "rationale"}
+PINNED_COLUMNS = {"pinned_nevra", "repository_id", "repository_snapshot", "rpm_sha256", "rpm_license", "source_rpm", "source_repository_url", "upstream_url"}
+REPOSITORY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+SOURCE_RPM_RE = re.compile(r"^[A-Za-z0-9+_.:-]+\.src\.rpm$")
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9+_.:-]*$")
-QUERY_FORMAT = "%{name}-%{epoch}:%{version}-%{release}.%{arch}\t%{repoid}"
+QUERY_FORMAT = "%{full_nevra}\t%{repoid}\t%{license}\t%{sourcerpm}\t%{url}\t%{location}"
+RPM_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def run(command: list[str]) -> str:
@@ -65,7 +72,9 @@ def fedora_release() -> str:
     return values.get("VERSION_ID", "")
 
 
-def read_manifest(path: Path) -> list[dict[str, str]]:
+def read_manifest(
+    path: Path, *, require_pins: bool = False, allow_empty: bool = False
+) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as stream:
         lines = (line for line in stream if line.strip() and not line.lstrip().startswith("#"))
         reader = csv.DictReader(lines)
@@ -74,13 +83,14 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
             or any(not name or not name.strip() for name in reader.fieldnames)
             or len(reader.fieldnames) != len(set(reader.fieldnames))
             or not REQUIRED_COLUMNS.issubset(reader.fieldnames)
+            or (require_pins and not PINNED_COLUMNS.issubset(reader.fieldnames))
         ):
             raise RuntimeError(
                 f"Manifest header must contain unique, non-empty columns including: "
                 f"{', '.join(sorted(REQUIRED_COLUMNS))}"
             )
         rows = list(reader)
-    if not rows:
+    if not rows and not allow_empty:
         raise RuntimeError("Manifest contains no package rows; obtain owner-reviewed package names first.")
     seen: set[tuple[str, str]] = set()
     for row in rows:
@@ -99,6 +109,27 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
             raise RuntimeError(f"owner must be non-empty: {row!r}")
         if not (row.get("rationale") or "").strip():
             raise RuntimeError(f"rationale must be non-empty: {row!r}")
+        if require_pins:
+            pin = (row.get("pinned_nevra") or "").strip()
+            suffix = pin[len(package) + 1:] if pin.startswith(f"{package}-") else ""
+            if not re.match(r"^[0-9]+:.+\.(?:x86_64|noarch)$", suffix):
+                raise RuntimeError(f"pinned_nevra must pin {package} to epoch/version/release and supported arch: {pin!r}")
+            repository_id = (row.get("repository_id") or "").strip()
+            if not REPOSITORY_RE.fullmatch(repository_id):
+                raise RuntimeError(f"repository_id is invalid: {repository_id!r}")
+            for column in ("repository_snapshot", "rpm_sha256", "rpm_license", "source_rpm", "source_repository_url", "upstream_url"):
+                if not (row.get(column) or "").strip():
+                    raise RuntimeError(f"{column} must be non-empty for pinned package {package}")
+            if not RPM_SHA256_RE.fullmatch(row["rpm_sha256"].strip()):
+                raise RuntimeError("rpm_sha256 must be a 64-character lowercase SHA-256 digest")
+            if not SOURCE_RPM_RE.fullmatch(row["source_rpm"].strip()):
+                raise RuntimeError("source_rpm must be an RPM source package filename")
+            source_repository_url = row["source_repository_url"].strip()
+            if not source_repository_url.startswith("https://src.fedoraproject.org/rpms/"):
+                raise RuntimeError("source_repository_url must be a Fedora dist-git HTTPS URL")
+            upstream_url = row["upstream_url"].strip()
+            if upstream_url != "NOASSERTION" and not upstream_url.startswith("https://"):
+                raise RuntimeError("upstream_url must be HTTPS or the explicit NOASSERTION sentinel")
         key = (layer, package)
         if key in seen:
             raise RuntimeError(f"Duplicate package in layer: {layer}/{package}")
@@ -108,17 +139,23 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
     return rows
 
 
-def parse_query_matches(output: str, expected_package: str | None = None) -> tuple[str, str]:
-    """Return one unambiguous NEVRA/repository pair from DNF5 query output."""
-    matches = {line.strip() for line in output.splitlines() if line.strip()}
+def parse_query_matches(
+    output: str, expected_package: str | None = None
+) -> tuple[str, str, str, str, str, str]:
+    """Return one unambiguous NEVRA/repository/provenance/location tuple."""
+    # Preserve a trailing tab: an RPM with no upstream URL has an empty
+    # fifth field, which is normalized to the explicit NOASSERTION sentinel.
+    matches = {line.rstrip("\r\n") for line in output.splitlines() if line.strip()}
     if not matches:
         raise RuntimeError("no available match")
-    parsed: set[tuple[str, str]] = set()
+    parsed: set[tuple[str, str, str, str, str]] = set()
     for match in matches:
         fields = match.split("\t")
-        if len(fields) != 2 or not all(field.strip() for field in fields):
+        if len(fields) != 6 or not all(field.strip() for field in fields[:4]) or not fields[5].strip():
             raise RuntimeError(f"unexpected DNF5 query output row: {match!r}")
-        nevra, repository = (field.strip() for field in fields)
+        nevra, repository, license_expression, source_rpm, upstream_url, location = (field.strip() for field in fields)
+        if upstream_url in {"", "(none)", "None"}:
+            upstream_url = "NOASSERTION"
         if not nevra.endswith((".x86_64", ".noarch")):
             raise RuntimeError(f"DNF5 returned unsupported architecture in NEVRA: {nevra!r}")
         if expected_package is not None and not re.match(
@@ -128,9 +165,13 @@ def parse_query_matches(output: str, expected_package: str | None = None) -> tup
                 f"DNF5 returned package outside requested name or malformed NEVRA "
                 f"for {expected_package!r}: {nevra!r}"
             )
-        parsed.add((nevra, repository))
-    nevras = {nevra for nevra, _repo in parsed}
-    repositories = {repo for _nevra, repo in parsed}
+        if not SOURCE_RPM_RE.fullmatch(source_rpm):
+            raise RuntimeError(f"DNF5 returned invalid source RPM metadata: {source_rpm!r}")
+        if upstream_url != "NOASSERTION" and not upstream_url.startswith("https://"):
+            raise RuntimeError(f"DNF5 returned a non-HTTPS upstream URL: {upstream_url!r}")
+        parsed.add((nevra, repository, license_expression, source_rpm, upstream_url, location))
+    nevras = {item[0] for item in parsed}
+    repositories = {item[1] for item in parsed}
     if len(nevras) != 1:
         raise RuntimeError(f"ambiguous NEVRA results: {', '.join(sorted(nevras))}")
     if len(repositories) != 1:
@@ -138,14 +179,108 @@ def parse_query_matches(output: str, expected_package: str | None = None) -> tup
             f"ambiguous repository results for {next(iter(nevras))}: "
             f"{', '.join(sorted(repositories))}"
         )
+    if len(parsed) != 1:
+        raise RuntimeError(f"conflicting package provenance metadata for {next(iter(nevras))}")
     return next(iter(parsed))
+
+
+def verify_pin(
+    row: dict[str, str],
+    actual_nevra: str,
+    actual_repository: str,
+    actual_license: str,
+    actual_source_rpm: str,
+    actual_upstream_url: str,
+    actual_rpm_sha256: str,
+) -> None:
+    expected = {
+        "pinned_nevra": actual_nevra,
+        "repository_id": actual_repository,
+        "rpm_license": actual_license,
+        "source_rpm": actual_source_rpm,
+        "upstream_url": actual_upstream_url,
+        "rpm_sha256": actual_rpm_sha256,
+    }
+    for field, actual in expected.items():
+        pinned = row[field].strip()
+        if actual != pinned:
+            raise RuntimeError(f"resolved {field} {actual!r} does not match pinned value {pinned!r}")
+
+
+def local_rpm_sha256(snapshot_root: Path, repository_id: str, location: str) -> str:
+    """Hash the RPM payload at a DNF5 repoquery location inside the local snapshot."""
+    if not REPOSITORY_RE.fullmatch(repository_id):
+        raise RuntimeError(f"Invalid repository ID for RPM checksum: {repository_id!r}")
+    parsed = urllib.parse.urlparse(location)
+    decoded = urllib.parse.unquote(location)
+    relative = Path(decoded)
+    if (
+        not location or parsed.scheme or parsed.netloc or parsed.query or parsed.fragment
+        or relative.is_absolute() or "\\" in location or ".." in relative.parts
+    ):
+        raise RuntimeError(f"Unsafe RPM package location from DNF5: {location!r}")
+    root = snapshot_root.resolve(strict=True)
+    repository_path = (root / repository_id).resolve(strict=True)
+    if not repository_path.is_relative_to(root):
+        raise RuntimeError(f"RPM repository path escapes snapshot root: {repository_id}")
+    rpm_path = (repository_path / relative).resolve(strict=True)
+    if not rpm_path.is_relative_to(repository_path) or not rpm_path.is_file():
+        raise RuntimeError(f"RPM package location escapes repository or is not a file: {location!r}")
+    return hashlib.sha256(rpm_path.read_bytes()).hexdigest()
+
+
+def snapshot_repo_args(
+    snapshot_root: Path, repository_ids: set[str], gpg_key_path: Path = DEFAULT_FEDORA_GPG_KEY
+) -> list[str]:
+    """Build DNF5 options that expose only verified local repositories with Fedora trust."""
+    root = snapshot_root.resolve(strict=True)
+    key_path = gpg_key_path.resolve(strict=True)
+    if not key_path.is_file():
+        raise RuntimeError(f"Fedora repository signing key is not a regular file: {key_path}")
+    key_uri = key_path.as_uri()
+    arguments: list[str] = []
+    for repository_id in sorted(repository_ids):
+        if not REPOSITORY_RE.fullmatch(repository_id):
+            raise RuntimeError(f"Invalid repository ID for local snapshot: {repository_id!r}")
+        try:
+            repository_path = (root / repository_id).resolve(strict=True)
+        except OSError as exc:
+            raise RuntimeError(f"Local repository snapshot is missing: {repository_id}") from exc
+        if not repository_path.is_relative_to(root):
+            raise RuntimeError(f"Local repository path escapes snapshot root: {repository_id}")
+        if not (repository_path / "repodata" / "repomd.xml").is_file():
+            raise RuntimeError(f"Local repository snapshot is missing repodata/repomd.xml: {repository_id}")
+        arguments.extend([
+            f"--repofrompath={repository_id},{repository_path.as_uri()}",
+            f"--setopt={repository_id}.gpgcheck=1",
+            f"--setopt={repository_id}.gpgkey={key_uri}",
+            f"--repo={repository_id}",
+        ])
+    if not arguments:
+        raise RuntimeError("No package repositories were selected for local snapshot resolution")
+    return arguments
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=Path("os/package-manifest.csv"))
     parser.add_argument("--output", type=Path, default=Path("build/package-resolution.json"))
+    parser.add_argument("--snapshot-root", type=Path, help="root containing one verified local repository directory per repository_id")
+    parser.add_argument("--gpg-key", type=Path, default=DEFAULT_FEDORA_GPG_KEY, help="installed Fedora 44 RPM/repodata signing key")
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="validate the pinned manifest schema/rows without requiring Fedora or querying DNF5",
+    )
     args = parser.parse_args()
+
+    if args.validate_only:
+        rows = read_manifest(args.manifest, require_pins=True, allow_empty=True)
+        print(f"Validated package manifest schema and {len(rows)} package rows")
+        return 0
+
+    if args.snapshot_root is None:
+        raise RuntimeError("--snapshot-root is required; live repository resolution is prohibited")
 
     release = fedora_release()
     arch = platform.machine()
@@ -156,18 +291,21 @@ def main() -> int:
     if not shutil_which("dnf5"):
         raise RuntimeError("dnf5 is required; install/use the Fedora 44 DNF5 client.")
 
-    rows = read_manifest(args.manifest)
-    repo_evidence = run(["dnf5", "repo", "info"])
+    rows = read_manifest(args.manifest, require_pins=True)
+    repo_args = snapshot_repo_args(args.snapshot_root, {row["repository_id"].strip() for row in rows}, args.gpg_key)
+    repo_evidence = run(["dnf5", *repo_args, "repo", "info"])
     resolved: list[dict[str, str]] = []
     failures: list[str] = []
 
     for row in rows:
         output = run([
-            "dnf5", "repoquery", "--available", "--arch=x86_64,noarch",
-            "--latest-limit=1", "--qf", QUERY_FORMAT, row["package"]
+            "dnf5", *repo_args, "repoquery", "--available", "--arch=x86_64,noarch",
+            "--latest-limit=1", "--qf", QUERY_FORMAT, row["pinned_nevra"].strip()
         ])
         try:
-            nevra, repo_id = parse_query_matches(output, row["package"])
+            nevra, repo_id, rpm_license, source_rpm, upstream_url, location = parse_query_matches(output, row["package"])
+            rpm_sha256 = local_rpm_sha256(args.snapshot_root, repo_id, location)
+            verify_pin(row, nevra, repo_id, rpm_license, source_rpm, upstream_url, rpm_sha256)
         except RuntimeError as exc:
             failures.append(f"{row['layer']}/{row['package']}: {exc}")
             continue
@@ -179,6 +317,14 @@ def main() -> int:
             "rationale": row["rationale"].strip(),
             "nevra": nevra,
             "repository_id": repo_id,
+            "pinned_nevra": row["pinned_nevra"].strip(),
+            "repository_snapshot": row["repository_snapshot"].strip(),
+            "rpm_license": rpm_license,
+            "rpm_sha256": rpm_sha256,
+            "rpm_location": location,
+            "source_rpm": source_rpm,
+            "source_repository_url": row["source_repository_url"].strip(),
+            "upstream_url": upstream_url,
         })
 
     if failures:
@@ -194,7 +340,8 @@ def main() -> int:
         "dnf5_version": run(["dnf5", "--version"]).splitlines()[0],
         "enabled_repository_evidence": repo_evidence,
         "packages": resolved,
-        "note": "Repository evidence is captured, but this file does not snapshot repository metadata or RPM payloads.",
+        "repository_snapshot_root": str(args.snapshot_root.resolve()),
+        "note": "Package metadata and RPM payload SHA-256 were verified from local repository snapshots against the pinned package manifest.",
     }
     write_json_atomic(args.output, result)
     print(f"Resolved {len(resolved)} package/repository records to {args.output}")
