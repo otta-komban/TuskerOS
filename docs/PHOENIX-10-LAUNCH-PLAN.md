@@ -3,8 +3,8 @@
 **Agent:** PHOENIX-10 — Installer & Recovery  
 **Assigned branch:** `10-PHOENIX`  
 **Verified base / live main:** `345fc5a3d0f831fc714bae0cc88fa842cd9bed79`  
-**Branch comparison:** `10-PHOENIX` is identical to `main` (0 ahead / 0 behind).  
-**Planning status:** Read-only baseline complete; next implementation task awaits Chief Architect assignment.  
+**Branch comparison (verified 2026-10-31):** `10-PHOENIX` is 13 commits ahead / 0 behind `main`; latest head before this planning update was `98458939a0843d60644c5314956d63ee080f247e`.  
+**Planning status:** Read-only baseline and cross-agent handoff refresh complete; next implementation task awaits Chief Architect assignment.  
 **Assignment blocker:** [Issue #78](https://github.com/otta-komban/TuskerOS/issues/78)
 
 ## 1. Verified baseline
@@ -96,7 +96,32 @@ A fresh read of `06-security-gatekeeper/security/SCHEMA_CONSISTENCY_AUDIT.md` an
 
 **PHOENIX action:** consume only owner-approved, versioned schemas and runtime interfaces. Do not copy candidate schemas into the installer, invent lifecycle event names, or claim schema-fixture CI proves runtime safety. Privileged storage execution remains blocked.
 
-## 5. Stop conditions
+
+## 5. Cross-agent handoff refresh (2026-10-31)
+
+### AEGIS-06 — security schema consistency report
+
+The supplied AEGIS-06 report confirms two schema consistency gaps:
+- **High:** The approval schema does not fully represent the session/device, registry, resource and precondition bindings required by the lifecycle contract.
+- **Medium:** The audit schema does not require `task_id` and `step_id`, although the normative contract lists them as minimum fields.
+
+AEGIS reports that it documented these findings in `security/SCHEMA_CONSISTENCY_AUDIT.md`, updated its checklist and logs, and made no unreviewed schema changes. PHOENIX treats this as a security-owner audit, not an accepted schema revision. Obtain AEGIS owner resolution and NEXUS/TUSKER consumer compatibility before installer integration.
+
+### NOVA-02 — settings persistence handoff
+
+The supplied NOVA-02 report describes a startup consistency fix: `SettingsController` now reads the settings file once through a bounded, no-follow read, and validation plus migration use the same snapshot. A regression test checks the single-open behavior; persistence documentation was updated. The report records 86 passing desktop tests, 10 passing unified validation jobs, and release-manifest validation passing at code head `e3c1d6b`; PR #76 remains open and unmerged.
+
+Outstanding NOVA acceptance remains Fedora 44 graphical-session validation, real GUI restart testing, keyboard/screen-reader checks, and ATLAS confirmation of the exact Plasma package dependency. These are useful desktop integration signals but do not constitute installer, image, boot or recovery evidence.
+
+### PHOENIX disposition
+
+- Keep AEGIS schema remediation with AEGIS and shared consumer compatibility with NEXUS/TUSKER.
+- Keep settings persistence implementation with NOVA; PHOENIX consumes its released package/session behavior only after owner acceptance.
+- No PHOENIX code, shared schema, privileged workflow or runtime claim is authorized by these handoffs.
+- Issue #78 still requests a bounded PHOENIX task ID; until the Chief Architect assigns one, continue read-only audits and planning.
+
+
+## 6. Stop conditions
 
 Until task assignment and required dependencies are accepted:
 - No privileged installer or broker integration.
@@ -105,11 +130,11 @@ Until task assignment and required dependencies are accepted:
 - No ISO/QCOW2 build, boot, install, Secure Boot or recovery success claim without actual reproducible evidence.
 - No edits to shared schemas, security boundaries or cross-agent contracts without Chief Architect approval.
 
-## 6. Next action
+## 7. Next action
 
 Chief Architect: assign the next PHOENIX-10 task ID and bounded acceptance criteria, or designate an existing handoff issue as the authorized next deliverable. See [Issue #78](https://github.com/otta-komban/TuskerOS/issues/78).
 
-## 7. Evidence references
+## 8. Evidence references
 
 - [PHOENIX-10 role guide](https://github.com/otta-komban/TuskerOS/blob/10-PHOENIX/docs/agents/launch/10-PHOENIX-10.md)
 - [Issue #52 — REL-001](https://github.com/otta-komban/TuskerOS/issues/52)
@@ -121,5 +146,6 @@ Chief Architect: assign the next PHOENIX-10 task ID and bounded acceptance crite
 - [Live package manifest (still header/comments only)](https://github.com/otta-komban/TuskerOS/blob/main/os/package-manifest.csv)
 - [NEXUS storage handoff / Issue #3](https://github.com/otta-komban/TuskerOS/issues/3)
 - [AEGIS installer and release trust / Issue #4](https://github.com/otta-komban/TuskerOS/issues/4)
+- [NOVA-02 settings persistence handoff / PR #76](https://github.com/otta-komban/TuskerOS/pull/76)
 
 **Validation note:** This is a repository and coordination audit. No local test command, image build, VM boot, installer run or destructive operation was executed during this planning pass.
