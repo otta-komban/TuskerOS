@@ -135,8 +135,11 @@ class RuntimeTests(unittest.TestCase):
     def test_provider_failure_releases_concurrency_slot(self):
         class FailingProvider(FakeProvider):
             def infer(self, request, cancellation):
+                if request.request_id == "r1":
+                    yield InferenceEvent(request.request_id, 0, "started", {})
+                    raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "fixture failure")
                 yield InferenceEvent(request.request_id, 0, "started", {})
-                raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "fixture failure")
+                yield InferenceEvent(request.request_id, 1, "completed", {})
 
         runtime = InferenceRuntime(FailingProvider(), RuntimeLimits(max_concurrent_requests=1))
         with self.assertRaises(TuskerRuntimeError):
@@ -149,7 +152,7 @@ class RuntimeTests(unittest.TestCase):
         stream = runtime.infer(self.request())
         self.assertEqual(next(iter(stream)).event_type, "started")
         stream.close()
-        events = list(runtime.infer(self.request(request_id="after-close")))
+        events = list(runtime.infer(self.request()))
         self.assertEqual(events[-1].event_type, "completed")
 
     def test_cancel_before_dispatch_returns_typed_error_without_start_event(self):
