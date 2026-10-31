@@ -1317,24 +1317,29 @@ def test_two_concurrent_approval_decisions_have_one_winner(tmp_path):
     context = audit_for_approval(setup, rid)
     setup.close()
 
-    def decide(approve):
-        db = store(path)
-        try:
-            return db.decide(
-                rid,
-                approve=approve,
-                current_binding=BINDING,
-                approver_credentials={"uid": 1000},
-                audit_context=dict(context),
-                now=NOW,
-            )
-        finally:
+    # Initialize both connections before racing the state transition. This
+    # isolates the concurrency assertion from simultaneous WAL setup.
+    connections = [store(path), store(path)]
+
+    def decide(args):
+        db, approve = args
+        return db.decide(
+            rid,
+            approve=approve,
+            current_binding=BINDING,
+            approver_credentials={"uid": 1000},
+            audit_context=dict(context),
+            now=NOW,
+        )
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(decide, zip(connections, (True, False))))
+        assert sorted(outcomes) == ["APPROVED", "NOT_PENDING"]
+    finally:
+        for db in connections:
             db.close()
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        outcomes = list(pool.map(decide, (True, False)))
-
-    assert sorted(outcomes) == ["APPROVED", "NOT_PENDING"]
     verify = store(path)
     try:
         state = verify._db.execute(
