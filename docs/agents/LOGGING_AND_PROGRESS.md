@@ -95,6 +95,12 @@ The coordinator validates:
 
 The coordinator must not turn one response into multiple completions because it mentions multiple deliverables. Duplicate or unsupported records are flagged and excluded; source logs are never rewritten to hide the issue.
 
-## 6. Historical cohort
+## 6. New-cohort start boundary and historical records
 
-Old-cohort records remain frozen and separate. Do not merge the unresolved historical 124 vs 135 figures into this new cohort. The new cohort starts at zero canonical records; only verifiable new-cohort responses may be added.
+The controlled new-cohort implementation window begins at **2026-10-31T07:39:00Z**, the verified suspension-lift time in Issue #34. Count only qualifying assistant responses after this timestamp. Responses and log entries before it belong to the frozen historical cohort, even if they appear in a replacement branch or use a new branch name.
+
+Do not renumber, delete, or rewrite historical entries. In a legacy log whose IDs continue from the old cohort, derive the new-cohort dashboard count only from qualifying response records timestamped at or after the start boundary. The sequence label is not the count: for example, PHOENIX-10 C0010 at 07:42:02Z is new-cohort completion 1, and C0011 at 07:50:30Z is new-cohort completion 2. Earlier C0001-C0009 remain excluded.
+
+If a qualifying post-boundary response was not logged at the time, the agent may append a clearly identified late-recorded entry using the actual current append timestamp and a reference to the original response evidence. Never backdate the record. The coordinator audits the original response time from the evidence reference and prevents duplicate counting.
+
+Old-cohort figures 124/1,000 and 135/1,000 remain frozen, separate, and unreconciled. The new cohort starts at zero at the boundary above; only validated post-boundary response records count.
