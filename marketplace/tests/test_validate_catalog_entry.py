@@ -186,5 +186,26 @@ class CatalogEntryValidationTests(unittest.TestCase):
         self.assertTrue(any("$.package.tags" in e for e in validate_catalog_entry(entry)))
 
 
+    def test_schema_anchored_patterns_reject_trailing_line_terminators(self):
+        schema = json.loads((ROOT / "schemas/catalog-entry.schema.json").read_text())
+
+        def patterns(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key == "pattern" and isinstance(item, str):
+                        yield item
+                    else:
+                        yield from patterns(item)
+            elif isinstance(value, list):
+                for item in value:
+                    yield from patterns(item)
+
+        for pattern in patterns(schema):
+            if pattern.startswith("^") and pattern.endswith("(?![\\s\\S])"):
+                expression = re.compile(pattern)
+                with self.subTest(pattern=pattern):
+                    self.assertIsNone(expression.search("valid-value\\n"))
+
+
 if __name__ == "__main__":
     unittest.main()
