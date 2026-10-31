@@ -16,6 +16,12 @@ class MigrationTests(unittest.TestCase):
     def test_future_version_is_rejected_without_downgrade(self):
         candidate, errors, changed=migrate_settings({"schema_version":99})
         self.assertEqual(candidate,{}); self.assertTrue(errors); self.assertFalse(changed)
+    def test_deepcopy_recursion_is_returned_as_migration_error(self):
+        with patch("desktop.config.migrations.deepcopy", side_effect=RecursionError):
+            candidate, errors, changed = migrate_settings({"panel": {"icon_size": 64}})
+        self.assertEqual(candidate, {})
+        self.assertIn("nesting", " ".join(errors))
+        self.assertFalse(changed)
     def test_controller_persists_legacy_migration(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/"desktop.json"; path.write_text(json.dumps({"panel":{"icon_size":64}}))
