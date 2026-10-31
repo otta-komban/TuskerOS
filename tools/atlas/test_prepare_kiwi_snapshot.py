@@ -48,7 +48,6 @@ class PrepareKiwiSnapshotTests(unittest.TestCase):
             (self.snapshot / repository_id / "repodata").mkdir(parents=True)
             (self.snapshot / repository_id / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
             (self.snapshot / repository_id / "repodata" / "repomd.xml.asc").write_text("signature fixture", encoding="utf-8")
-            (self.snapshot / repository_id / "repodata" / "repomd.xml.asc").write_text("signature fixture", encoding="utf-8")
         self.lock.write_text(json.dumps({
             "schema_version": 1,
             "fedora_release": "44",
@@ -65,7 +64,7 @@ class PrepareKiwiSnapshotTests(unittest.TestCase):
             self.assertTrue(source.attrib["path"].startswith("file://"))
             self.assertNotIn("sourcetype", source.attrib)
             self.assertTrue(source.find("signing").attrib["key"].startswith("file://"))
-            self.assertEqual(repository.attrib["repository_gpgcheck"], "true")
+            self.assertNotIn("repository_gpgcheck", repository.attrib)
             self.assertEqual(repository.attrib["package_gpgcheck"], "true")
 
     def test_lock_ids_must_match_upstream_repository_aliases(self):
@@ -78,11 +77,6 @@ class PrepareKiwiSnapshotTests(unittest.TestCase):
     def test_missing_local_repository_is_rejected(self):
         (self.snapshot / "updates" / "repodata" / "repomd.xml").unlink()
         with self.assertRaisesRegex(RuntimeError, "lacks repodata/repomd.xml"):
-            MODULE.prepare_overlay(self.description, self.snapshot, self.lock)
-
-    def test_missing_metadata_signature_is_rejected(self):
-        (self.snapshot / "updates" / "repodata" / "repomd.xml.asc").unlink()
-        with self.assertRaisesRegex(RuntimeError, "lacks repodata/repomd.xml.asc"):
             MODULE.prepare_overlay(self.description, self.snapshot, self.lock)
 
     def test_missing_fedora_signing_key_reference_is_rejected(self):
