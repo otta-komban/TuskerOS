@@ -52,6 +52,11 @@ class HostileValue:
         raise RuntimeError("eq must not be called")
 
 
+class HostileText(str):
+    def encode(self, *args, **kwargs):
+        raise RuntimeError("overridden encode must not be called")
+
+
 class RecoveryJournalTests(unittest.TestCase):
     def test_journal_must_begin_in_planned_state(self):
         report = validate_journal(chain(["interrupted"]))
@@ -270,6 +275,20 @@ class RecoveryJournalTests(unittest.TestCase):
             record, preconditions_verified=True, authorization_current=True)
         self.assertFalse(eligible)
 
+
+    def test_parser_rejects_string_subclasses_without_calling_overrides(self):
+        with self.assertRaisesRegex(JournalValidationError, "plain text"):
+            parse_jsonl(HostileText('{"sequence":1}'))
+
+    def test_parser_converts_deep_json_recursion_into_validation_error(self):
+        deeply_nested = '{"payload":' + ("[" * 1100) + "0" + ("]" * 1100) + "}"
+        with self.assertRaisesRegex(JournalValidationError, "invalid JSON"):
+            parse_jsonl(deeply_nested)
+
+    def test_parser_converts_oversized_integer_token_into_validation_error(self):
+        oversized_integer = '{"sequence":' + ("9" * 5000) + "}"
+        with self.assertRaisesRegex(JournalValidationError, "invalid JSON"):
+            parse_jsonl(oversized_integer)
 
     def test_parser_enforces_total_size_limit(self):
         with self.assertRaisesRegex(JournalValidationError, "maximum size"):
