@@ -26,17 +26,10 @@ class ContrastCheck:
 
 
 _REQUIRED_ROLES = (
-    "background",
-    "surface",
-    "surface_alt",
-    "foreground",
-    "muted",
-    "accent",
-    "accent_foreground",
-    "border",
-    "focus",
+    "background", "surface", "surface_alt", "foreground", "muted",
+    "accent", "accent_foreground", "border", "focus",
 )
-_HEX_COLOR = re.compile(r"^#[0-9A-Fa-F]{6}(?:[0-9A-Fa-f]{2})?$")
+_HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?$")
 
 
 def _linear_channel(channel: int) -> float:
@@ -59,7 +52,7 @@ def _relative_luminance(color: str) -> float:
 
 
 def contrast_ratio(first: str, second: str) -> float:
-    """Return the WCAG relative-luminance contrast ratio for opaque sRGB colors."""
+    """Return WCAG relative-luminance contrast ratio for opaque sRGB colors."""
     first_luminance = _relative_luminance(first)
     second_luminance = _relative_luminance(second)
     lighter, darker = sorted((first_luminance, second_luminance), reverse=True)
@@ -67,12 +60,7 @@ def contrast_ratio(first: str, second: str) -> float:
 
 
 def audit_theme_colors(colors: Mapping[str, str]) -> list[ContrastCheck]:
-    """Audit semantic text, accent, focus and boundary color pairs.
-
-    Text pairs use a 4.5:1 diagnostic threshold. Focus and boundary pairs use
-    3:1. These are conservative static checks, not a substitute for rendered
-    component testing or a complete WCAG conformance assessment.
-    """
+    """Audit semantic text, accent, focus and boundary color pairs."""
     if not isinstance(colors, Mapping):
         raise AccessibilityAuditError("colors must be a mapping")
 
@@ -108,9 +96,18 @@ def audit_theme_colors(colors: Mapping[str, str]) -> list[ContrastCheck]:
                 "alpha channel requires the actual composited render surface",
             ))
             continue
+
         ratio = contrast_ratio(foreground, background)
+        # A border may be decorative or may communicate a component boundary.
+        # The rendered UI is needed to decide whether the 3:1 criterion applies.
+        status = "review" if foreground_role == "border" else (
+            "pass" if ratio >= minimum else "fail"
+        )
+        reason = (
+            "confirm this border conveys a meaningful UI boundary before applying a 3:1 requirement"
+            if status == "review" else None
+        )
         checks.append(ContrastCheck(
-            foreground_role, background_role, minimum, ratio,
-            "pass" if ratio >= minimum else "fail",
+            foreground_role, background_role, minimum, ratio, status, reason,
         ))
     return checks
