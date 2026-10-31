@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime
 from typing import Any, Mapping
 
@@ -22,11 +23,40 @@ AUDIT_DETAIL_KEYS = {
     "package_count", "reason_code", "error_code", "rollback_status", "duration_ms"
 }
 ROLLBACK_STATES = {"not_required", "rolled_back", "rollback_failed", "partial"}
+SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+AUDIT_TIMESTAMP_RE = re.compile(
+    r"^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])[Tt]"
+    r"([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
+    r"(\\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+)
 
 
 def _text(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise TransactionContractError(f"{field} must be a non-empty string")
+    return value
+
+
+def _audit_digest(value: object, field: str) -> str:
+    value = _text(value, field)
+    if not SHA256_RE.fullmatch(value):
+        raise TransactionContractError(f"{field} must be a lowercase SHA-256 digest")
+    return value
+
+
+def _audit_timestamp(value: object) -> str:
+    value = _text(value, "timestamp")
+    if not AUDIT_TIMESTAMP_RE.fullmatch(value):
+        raise TransactionContractError("timestamp must be an RFC 3339 date-time with timezone")
+    normalized = value[:-1] + "+00:00" if value.endswith(("Z", "z")) else value
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise TransactionContractError(
+            "timestamp must be an RFC 3339 date-time with timezone"
+        ) from exc
+    if parsed.tzinfo is None:
+        raise TransactionContractError("timestamp must include a timezone")
     return value
 
 
@@ -193,19 +223,26 @@ def build_audit_event(
     if not isinstance(details, Mapping) or set(details) - AUDIT_DETAIL_KEYS:
         raise TransactionContractError("audit details contain unsupported or sensitive fields")
     for key, value in details.items():
-        if isinstance(value, bool) or not isinstance(value, (str, int)):
-            raise TransactionContractError(f"audit detail {key} must be a string or integer")
-        if isinstance(value, str) and len(value) > 128:
-            raise TransactionContractError(f"audit detail {key} is too long")
-        if isinstance(value, int) and value < 0:
-            raise TransactionContractError(f"audit detail {key} cannot be negative")
+        if key in {"package_count", "duration_ms"}:
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise TransactionContractError(f"audit detail {key} must be a non-negative integer")
+            if value < 0:
+                raise TransactionContractError(f"audit detail {key} cannot be negative")
+        elif key in {"reason_code", "error_code"}:
+            if not isinstance(value, str):
+                raise TransactionContractError(f"audit detail {key} must be a string")
+            if len(value) > 128:
+                raise TransactionContractError(f"audit detail {key} is too long")
+        elif key == "rollback_status":
+            if not isinstance(value, str) or value not in ROLLBACK_STATES:
+                raise TransactionContractError(f"audit detail {key} has an unsupported value")
     return {
         "transaction_id": _text(transaction_id, "transaction_id"),
-        "timestamp": _text(timestamp, "timestamp"),
+        "timestamp": _audit_timestamp(timestamp),
         "actor": _text(actor, "actor"),
         "event": _text(event, "event"),
-        "plan_digest": _text(plan_digest, "plan_digest"),
-        "snapshot_digest": _text(snapshot_digest, "snapshot_digest"),
+        "plan_digest": _audit_digest(plan_digest, "plan_digest"),
+        "snapshot_digest": _audit_digest(snapshot_digest, "snapshot_digest"),
         "outcome": _text(outcome, "outcome"),
         "details": dict(details),
     }
