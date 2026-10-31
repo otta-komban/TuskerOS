@@ -18,8 +18,14 @@
         "summary": {"type": "string", "minLength": 1, "maxLength": 280},
         "description_uri": {"type": "string", "format": "uri"},
         "license": {"type": "string", "minLength": 1, "maxLength": 80},
-        "categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "maxLength": 48}},
-        "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "maxLength": 32}}
+        "categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 48}},
+        "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 32}},
+        "conflicts": {
+          "type": "array",
+          "description": "Package IDs that cannot coexist with this package in one resolved plan.",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"}
+        }
       }
     },
     "publisher": {
