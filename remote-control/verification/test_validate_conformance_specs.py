@@ -710,5 +710,23 @@ class RepositoryValidationTests(unittest.TestCase):
         )
 
 
+    def test_invalid_fence_openers_do_not_hide_following_case_rows(self):
+        markdown = (
+            "| PAIR-C01 | Before invalid openers | Reject |\\n"
+            "``\\n"
+            "| PAIR-C01 | After too-short opener | Reject |\\n"
+            "```python`invalid\\n"
+            "| PAIR-C01 | After backtick in info string | Reject |\\n"
+        )
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [
+                ("PAIR-C01", "Before invalid openers", "Reject"),
+                ("PAIR-C01", "After too-short opener", "Reject"),
+                ("PAIR-C01", "After backtick in info string", "Reject"),
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
