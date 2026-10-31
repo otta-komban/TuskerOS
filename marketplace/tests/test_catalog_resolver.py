@@ -176,6 +176,35 @@ class CatalogResolverTests(unittest.TestCase):
                 with self.assertRaises(CatalogResolutionError):
                     resolve_catalog_plan(roots, [], {}, "0.5.0", "1.2.0")
 
+    def test_catalog_plan_rejects_malformed_candidate_collection(self):
+        for candidates in ("not-a-candidate-list", {"entry": {}}, None):
+            with self.subTest(candidates=candidates):
+                with self.assertRaises(CatalogResolutionError):
+                    resolve_catalog_plan(
+                        ["org.tuskeros.apps.demo"], candidates,
+                        {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0"
+                    )
+
+    def test_catalog_plan_rejects_non_mapping_dependency_constraints(self):
+        for constraints in ([], "not-a-mapping", None):
+            if constraints is None:
+                continue  # None explicitly means constraints are omitted.
+            with self.subTest(constraints=constraints):
+                with self.assertRaisesRegex(CatalogResolutionError, "dependency_constraints must be a mapping"):
+                    resolve_catalog_plan(
+                        ["org.tuskeros.apps.demo"], [],
+                        {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0",
+                        dependency_constraints=constraints,
+                    )
+
+    def test_catalog_plan_rejects_invalid_constraint_parent_id(self):
+        with self.assertRaisesRegex(CatalogResolutionError, "parent IDs"):
+            resolve_catalog_plan(
+                ["org.tuskeros.apps.demo"], [],
+                {"org.tuskeros.apps.demo": []}, "0.5.0", "1.2.0",
+                dependency_constraints={"": {}},
+            )
+
     def test_catalog_plan_rejects_malformed_dependency_graph(self):
         invalid_graphs = (
             [],
