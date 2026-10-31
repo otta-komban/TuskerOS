@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json, tempfile, unittest
+import json, os, tempfile, unittest
 from pathlib import Path
 from unittest.mock import patch
 from desktop.config.controller import SettingsController
@@ -9,6 +9,13 @@ class SettingsControllerTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name) / "desktop.json"
+    def test_startup_reads_settings_once_for_validation_and_migration(self):
+        self.path.write_text(json.dumps(DEFAULT_SETTINGS))
+        with patch("desktop.config.settings.os.open", wraps=os.open) as open_file:
+            controller = SettingsController(self.path)
+        self.assertEqual(open_file.call_count, 1)
+        self.assertEqual(controller.load_errors, [])
+        self.assertEqual(controller.read(), DEFAULT_SETTINGS)
     def test_update_persists_across_controller_restart(self):
         SettingsController(self.path).update({"panel":{"icon_size":72},"accessibility":{"high_contrast":True}})
         restarted = SettingsController(self.path)
