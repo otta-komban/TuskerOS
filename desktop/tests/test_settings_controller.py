@@ -45,6 +45,27 @@ class SettingsControllerTests(unittest.TestCase):
         self.assertEqual(self.path.read_text(),original)
         self.assertEqual(controller.read(),before)
         self.assertEqual(controller.load_errors,[])
+    def test_directory_sync_failure_rolls_back_recovery_reset(self):
+        original='{"panel":{"edge":"unsafe"}}'
+        self.path.write_text(original)
+        controller=SettingsController(self.path)
+        self.assertTrue(controller.load_errors)
+        from desktop.config.settings import _fsync_directory as real_fsync_directory
+        calls=0
+        def fail_once(directory):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise OSError("simulated directory sync failure")
+            return real_fsync_directory(directory)
+        with patch("desktop.config.settings._fsync_directory", side_effect=fail_once):
+            with self.assertRaisesRegex(OSError, "directory sync failure"):
+                controller.reset()
+        self.assertEqual(self.path.read_text(), original)
+        self.assertTrue(controller.load_errors)
+        with self.assertRaisesRegex(ValueError, "restore defaults"):
+            controller.update({"panel":{"icon_size":64}})
+
     def test_failed_recovery_reset_keeps_original_file_and_edit_lock(self):
         original='{"panel":{"edge":"unsafe"}}'
         self.path.write_text(original)
