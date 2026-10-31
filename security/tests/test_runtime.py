@@ -1121,3 +1121,25 @@ def test_security_database_rejection_closes_open_file_descriptor(tmp_path, monke
     with pytest.raises(OSError):
         os.fstat(opened[0])
     assert target.read_bytes() == b"preserve external file"
+
+def test_security_database_closes_connection_when_initialization_fails(tmp_path, monkeypatch):
+    import sqlite3
+    from security.runtime import store as store_module
+
+    path = tmp_path / "corrupt-security.db"
+    path.write_bytes(b"not a sqlite database")
+    opened = []
+    real_connect = sqlite3.connect
+
+    def capture_connect(*args, **kwargs):
+        connection = real_connect(*args, **kwargs)
+        opened.append(connection)
+        return connection
+
+    monkeypatch.setattr(store_module.sqlite3, "connect", capture_connect)
+    with pytest.raises(SecurityStoreError, match="initialization failed closed"):
+        SecurityStore(path, audit_key=KEY)
+
+    assert len(opened) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+        opened[0].execute("SELECT 1")
