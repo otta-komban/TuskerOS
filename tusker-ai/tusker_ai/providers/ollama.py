@@ -6,12 +6,19 @@ import time
 from typing import Iterable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import Request, ProxyHandler, HTTPRedirectHandler, build_opener
 
 from ..types import (
     CancellationToken, InferenceEvent, InferenceRequest, ProviderCapabilities,
     RuntimeError as TuskerRuntimeError, RuntimeErrorCode,
 )
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    """A local inference endpoint must not redirect prompts to another host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 class OllamaProvider:
@@ -29,6 +36,10 @@ class OllamaProvider:
             raise ValueError("read_timeout must be positive")
         self._base = endpoint.rstrip("/")
         self._read_timeout = read_timeout
+        # Local inference must not inherit HTTP(S)_PROXY / ALL_PROXY from the
+        # user's shell, and a local endpoint must not redirect prompt-bearing
+        # requests to a different host.
+        self._opener = build_opener(ProxyHandler({}), _NoRedirectHandler())
 
     def capabilities(self) -> ProviderCapabilities:
         # Do not advertise a provider capability as supported until a pinned live
@@ -38,7 +49,7 @@ class OllamaProvider:
     def version(self) -> str | None:
         try:
             req = Request(self._base + "/api/version", method="GET")
-            with urlopen(req, timeout=self._read_timeout) as response:
+            with self._opener.open(req, timeout=self._read_timeout) as response:
                 data = json.loads(response.read(65536))
                 value = data.get("version")
                 return value if isinstance(value, str) else None
@@ -66,7 +77,7 @@ class OllamaProvider:
         seq = 0
         deadline = time.monotonic() + request.timeout_seconds
         try:
-            with urlopen(req, timeout=min(request.timeout_seconds, self._read_timeout)) as response:
+            with self._opener.open(req, timeout=min(request.timeout_seconds, self._read_timeout)) as response:
                 yield InferenceEvent(request.request_id, seq, "started", {"provider_id": self.provider_id, "model_id": request.model})
                 seq += 1
                 while True:
