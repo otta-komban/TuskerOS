@@ -98,11 +98,12 @@ jobs:
       - run: python -m unittest discover -s tools/atlas -p 'test_*.py' -v
 
   marketplace:
-    name: Marketplace transaction lifecycle
+    name: Marketplace catalog and transaction validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m unittest discover -s marketplace/tests -p 'test_transaction_state.py' -v
+      - name: Run all marketplace contract tests
+        run: python -m unittest discover -s marketplace/tests -v
