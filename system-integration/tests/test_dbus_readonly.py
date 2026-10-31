@@ -333,6 +333,20 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(str(caught.exception), "invalid bus response")
 
+    async def test_unexpected_json_response_fields_are_rejected(self):
+        process = FakeProcess(
+            stdout=b'{"type":"s","data":["bus-123"],"metadata":{"trusted":true}}'
+        )
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "invalid bus response")
+
     async def test_wrong_dbus_signature_is_rejected(self):
         process = FakeProcess(stdout=b'{"type":"as","data":[["name"]]}')
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
