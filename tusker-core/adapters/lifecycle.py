@@ -353,7 +353,12 @@ class LifecycleEngine:
             origin = event.get("origin")
             origin_kind = origin.get("kind") if isinstance(origin, Mapping) else None
             if (not isinstance(origin_kind, str)
-                    or origin_kind not in {"local", "remote", "extension", "system"}):
+                    or origin_kind not in {"local", "remote", "extension", "system"}
+                    or set(origin) - {"kind", "display_label"}):
+                raise LifecycleError("event stream contains an invalid origin")
+            if ("display_label" in origin
+                    and (not isinstance(origin["display_label"], str)
+                         or len(origin["display_label"]) > 80)):
                 raise LifecycleError("event stream contains an invalid origin")
         if any(type(event.get("sequence")) is not int or event.get("sequence") != index
                for index, event in enumerate(events, 1)):
