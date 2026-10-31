@@ -17,12 +17,12 @@ ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{1,127}$")
 SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 # Semantic Versioning 2.0.0: prerelease identifiers cannot be empty or
 # numeric with leading zeroes; build identifiers may contain leading zeroes.
-_PRE_ID = r"(?:0|[1-9]\\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+_PRE_ID = r"(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 _BUILD_ID = r"[0-9A-Za-z-]+"
 SEMVER_RE = re.compile(
-    r"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
-    rf"(?:-({_PRE_ID}(?:\\.{_PRE_ID})*))?"
-    rf"(?:\\+({_BUILD_ID}(?:\\.{_BUILD_ID})*))?$"
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    rf"(?:-({_PRE_ID}(?:\.{_PRE_ID})*))?"
+    rf"(?:\+({_BUILD_ID}(?:\.{_BUILD_ID})*))?$"
 )
 KINDS = {"extension", "theme", "layout", "workflow", "bundle"}
 REVIEW = {"pending", "approved", "rejected", "quarantined", "revoked"}
@@ -175,7 +175,7 @@ def main(argv: list[str]) -> int:
         return 2
     errors = validate_catalog_entry(entry)
     if errors:
-        print("\\n".join(errors), file=sys.stderr)
+        print("\n".join(errors), file=sys.stderr)
         return 1
     print("catalog metadata valid (trust and install authorization not evaluated)")
     return 0
