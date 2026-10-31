@@ -82,6 +82,10 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         materialized = list(islice(iterator, MAX_RECORDS + 1))
     except TypeError:
         return JournalReport(False, 0, 0, None, "", ("journal records must be iterable",))
+    except Exception as exc:
+        return JournalReport(
+            False, 0, 0, None, "",
+            (f"journal iteration failed: {type(exc).__name__}: {exc}",))
     if len(materialized) > MAX_RECORDS:
         materialized = materialized[:MAX_RECORDS]
         errors.append(f"journal exceeds maximum record count ({MAX_RECORDS})")
