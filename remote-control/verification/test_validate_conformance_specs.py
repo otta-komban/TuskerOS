@@ -408,6 +408,21 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertNotIn("Traceback", diagnostic)
 
 
+    def test_regular_file_root_reports_all_specs_as_missing(self):
+        import tempfile
+
+        with tempfile.NamedTemporaryFile() as invalid_root:
+            with self.assertRaises(validator.SpecError) as raised:
+                validator.validate_repository(Path(invalid_root.name))
+
+        message = str(raised.exception)
+        self.assertIn("PAIR: specification not found", message)
+        self.assertIn("SESS: specification not found", message)
+        self.assertIn("NET: specification not found", message)
+        positions = [message.index(prefix + ":") for prefix in ("PAIR", "SESS", "NET")]
+        self.assertEqual(positions, sorted(positions))
+
+
     def test_repository_aggregate_diagnostics_follow_specification_order(self):
         import tempfile
 
