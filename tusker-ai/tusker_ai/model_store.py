@@ -122,6 +122,16 @@ class ModelStore:
             if token.cancelled:
                 raise TuskerRuntimeError(RuntimeErrorCode.CANCELLED, "Model installation was cancelled")
 
+            pointer = self.active / f"{artifact_id}.json"
+            previous_pointer = None
+            if pointer.is_symlink():
+                raise TuskerRuntimeError(RuntimeErrorCode.PERMISSION_DENIED, "Active model pointer must not be a symlink")
+            if pointer.exists():
+                current = self.active_revision(artifact_id)
+                if current is None or not self.verify_active(artifact_id):
+                    raise TuskerRuntimeError(RuntimeErrorCode.PERMISSION_DENIED, "Existing active model state is invalid; recovery is required")
+                previous_pointer = pointer.read_bytes()
+
             destination = self.models / artifact_id / revision
             destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
             if destination.parent.is_symlink() or not destination.parent.resolve().is_relative_to(self.models.resolve()):
@@ -130,9 +140,9 @@ class ModelStore:
                 raise TuskerRuntimeError(RuntimeErrorCode.PERMISSION_DENIED, "Model revision already exists")
             os.replace(stage, destination)
             self._fsync_dir(destination.parent)
-            pointer = self.active / f"{artifact_id}.json"
             temporary = self.active / f".{artifact_id}.{txid}.tmp"
             payload = json.dumps({"artifact_id": artifact_id, "revision": revision, "filename": filename, "sha256": digest.lower()}, sort_keys=True).encode("utf-8")
+            switched = False
             try:
                 with temporary.open("xb") as handle:
                     handle.write(payload)
@@ -140,7 +150,25 @@ class ModelStore:
                     os.fsync(handle.fileno())
                 # Cancellation is deferred across this atomic activation boundary.
                 os.replace(temporary, pointer)
+                switched = True
                 self._fsync_dir(self.active)
+            except Exception:
+                if switched:
+                    rollback = self.active / f".{artifact_id}.{txid}.rollback"
+                    try:
+                        if previous_pointer is None:
+                            pointer.unlink(missing_ok=True)
+                        else:
+                            with rollback.open("xb") as handle:
+                                handle.write(previous_pointer)
+                                handle.flush()
+                                os.fsync(handle.fileno())
+                            os.replace(rollback, pointer)
+                        self._fsync_dir(self.active)
+                    except OSError:
+                        # Leave both immutable revisions intact if rollback durability is uncertain.
+                        pass
+                raise
             finally:
                 if temporary.exists():
                     temporary.unlink()
@@ -194,7 +222,10 @@ class ModelStore:
             raise ValueError("invalid artifact ID or revision")
         if not self.authorize("model.remove", artifact_id):
             raise TuskerRuntimeError(RuntimeErrorCode.PERMISSION_DENIED, "Model removal was not authorized")
+        pointer = self.active / f"{artifact_id}.json"
         active = self.active_revision(artifact_id)
+        if (pointer.exists() or pointer.is_symlink()) and active is None:
+            raise TuskerRuntimeError(RuntimeErrorCode.PERMISSION_DENIED, "Active model pointer is invalid; recovery is required")
         if active and active.get("revision") == revision:
             raise TuskerRuntimeError(RuntimeErrorCode.PERMISSION_DENIED, "Deactivate a model before removing its active revision")
         target = self.models / artifact_id / revision
