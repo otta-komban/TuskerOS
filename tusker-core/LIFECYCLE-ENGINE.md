@@ -94,3 +94,14 @@ event IDs are UUIDs, and each subsequent state change follows the declared
 transition graph. A `task.cancel_requested` event must preserve state, while
 `task.cancelled` must carry the cancelled state. This is validation only; replay
 does not repair or re-execute.
+
+## Cancellation race guarantees
+
+The in-memory reference engine is exercised under two concurrent races: a
+cancellation request versus an ordinary state transition, and executor stop
+confirmation versus ordinary progression after a cancellation request. Both
+compete at the same expected task version. Exactly one write may win; the
+losing caller receives a version/transition conflict, and the event stream and
+snapshot advance together by one. These tests validate local compare-and-swap
+behavior only; a production adapter must pass the same conformance suite using
+its durable transaction boundary.

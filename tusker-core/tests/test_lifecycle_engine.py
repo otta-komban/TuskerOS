@@ -231,6 +231,69 @@ class LifecycleEngineTests(unittest.TestCase):
         events[0]["state"] = "failed"
         self.assertEqual(self.store.events("00000000-0000-4000-8000-000000000001")[0]["state"], "queued")
 
+    def _race_cancellation_operation(self, cancel_action, operation_action):
+        barrier = threading.Barrier(2)
+        outcomes = []
+        lock = threading.Lock()
+
+        def run(label, action):
+            barrier.wait(timeout=2)
+            try:
+                result = action()
+                outcome = (label, "ok", result["state"])
+            except (VersionConflict, InvalidTransition) as exc:
+                outcome = (label, "conflict", type(exc).__name__)
+            with lock:
+                outcomes.append(outcome)
+
+        threads = [
+            threading.Thread(target=run, args=("cancel", cancel_action)),
+            threading.Thread(target=run, args=("operation", operation_action)),
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=3)
+        self.assertTrue(all(not thread.is_alive() for thread in threads))
+        self.assertEqual(sum(outcome[1] == "ok" for outcome in outcomes), 1)
+        self.assertEqual(sum(outcome[1] == "conflict" for outcome in outcomes), 1)
+        return outcomes
+
+    def test_cancel_request_racing_with_state_transition_has_one_winner(self):
+        self.move("planning")
+        self.move("running")
+        task_id = self.task["task_id"]
+        outcomes = self._race_cancellation_operation(
+            lambda: self.engine.request_cancellation(task_id, expected_version=3),
+            lambda: self.engine.transition(task_id, "verifying", expected_version=3),
+        )
+        task = self.store.get(task_id)
+        events = self.store.events(task_id)
+        self.assertEqual(task["version"], 4)
+        self.assertEqual(len(events), 4)
+        self.assertIn(task["state"], {"running", "verifying"})
+        self.assertIn(events[-1]["type"], {"task.cancel_requested", "task.state_changed"})
+        self.assertEqual(sum(item[1] == "ok" for item in outcomes), 1)
+
+    def test_cancel_confirmation_racing_with_progression_has_one_winner(self):
+        self.move("planning")
+        self.move("running")
+        task_id = self.task["task_id"]
+        self.engine.request_cancellation(task_id, expected_version=3)
+        outcomes = self._race_cancellation_operation(
+            lambda: self.engine.confirm_cancellation(
+                task_id, expected_version=4, operation_stopped=True
+            ),
+            lambda: self.engine.transition(task_id, "verifying", expected_version=4),
+        )
+        task = self.store.get(task_id)
+        events = self.store.events(task_id)
+        self.assertEqual(task["version"], 5)
+        self.assertEqual(len(events), 5)
+        self.assertIn(task["state"], {"cancelled", "verifying"})
+        self.assertIn(events[-1]["type"], {"task.cancelled", "task.state_changed"})
+        self.assertEqual(sum(item[1] == "ok" for item in outcomes), 1)
+
     def test_concurrent_writers_have_one_winner(self):
         barrier = threading.Barrier(2)
         outcomes = []
