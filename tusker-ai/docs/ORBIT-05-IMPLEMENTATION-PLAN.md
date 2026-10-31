@@ -35,7 +35,7 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 
 - Added tests proving the runtime semaphore is released when a provider raises after starting and when a consumer closes a partially consumed inference stream.
 - These cases exercise the existing `finally` cleanup guarantee without changing runtime behavior or shared contracts. They guard against a stuck capacity slot that would otherwise block all later inference when configured concurrency is one.
-- The new tests are committed; branch-head CI has not yet reported results for this revision.
+- The first branch-head CI run exposed two fixture mistakes in the new tests (the reusable fake provider emitted a hard-coded request ID and the failure fixture failed every request). The fixtures were corrected so follow-up requests use their own IDs and only the first request fails. The corrected tests are committed; CI is running on the corrected head.
 
 ## Remaining work sequence
 
