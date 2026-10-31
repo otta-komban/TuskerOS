@@ -1,9 +1,16 @@
 import copy
+import io
+import json
+import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+from unittest.mock import patch
 
 from scripts.validate_release_report import (
     DuplicateJSONKeyError,
     NonJSONConstantError,
+    main,
     strict_json_loads,
     validate_report,
 )
@@ -48,6 +55,48 @@ class ReleaseReportSemanticTests(unittest.TestCase):
             with self.subTest(constant=constant):
                 with self.assertRaises(NonJSONConstantError):
                     strict_json_loads('{"value":' + constant + '}')
+
+    def _run_cli(self, report_bytes):
+        with tempfile.TemporaryDirectory() as directory:
+            report_path = Path(directory) / "report.json"
+            report_path.write_bytes(report_bytes)
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with patch("sys.argv", ["validate_release_report.py", str(report_path)]), redirect_stdout(stdout), redirect_stderr(stderr):
+                exit_code = main()
+            return exit_code, stdout.getvalue(), stderr.getvalue()
+
+    def test_cli_valid_report_exits_zero(self):
+        code, stdout, stderr = self._run_cli(json.dumps(valid_report()).encode("utf-8"))
+        self.assertEqual(code, 0)
+        self.assertIn("PASS:", stdout)
+        self.assertEqual(stderr, "")
+
+    def test_cli_rejects_malformed_json_with_exit_two(self):
+        code, stdout, stderr = self._run_cli(b'{"subject":')
+        self.assertEqual(code, 2)
+        self.assertIn("invalid JSON:", stderr)
+
+    def test_cli_rejects_duplicate_key_with_exit_two(self):
+        code, stdout, stderr = self._run_cli(b'{"status":"passed","status":"failed"}')
+        self.assertEqual(code, 2)
+        self.assertIn("duplicate JSON object key", stderr)
+
+    def test_cli_rejects_non_standard_constant_with_exit_two(self):
+        code, stdout, stderr = self._run_cli(b'{"value":NaN}')
+        self.assertEqual(code, 2)
+        self.assertIn("non-standard JSON constant", stderr)
+
+    def test_cli_rejects_invalid_utf8_with_exit_two(self):
+        code, stdout, stderr = self._run_cli(b'{"value":"' + bytes([255]) + b'"}')
+        self.assertEqual(code, 2)
+        self.assertIn("cannot decode report as UTF-8:", stderr)
+
+    def test_cli_semantic_failure_exits_one(self):
+        report = valid_report()
+        report["overall_status"] = "blocked"
+        code, stdout, stderr = self._run_cli(json.dumps(report).encode("utf-8"))
+        self.assertEqual(code, 1)
+        self.assertIn("FAILED:", stderr)
 
     def test_accepts_consistent_report(self):
         self.assertEqual(validate_report(valid_report()), [])
