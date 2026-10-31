@@ -12,18 +12,20 @@ KEY = b"test-only-audit-key-material-32-bytes!!"
 BINDING = {"session_binding": D2, "device_binding": D3, "registry_version": "registry-1",
            "resource_scope": ["disk:wwn-123"], "precondition_digest": D4}
 
-def audit():
-    return {"timestamp_utc": NOW.isoformat().replace("+00:00", "Z"), "event_type": "requested",
-            "principal_binding": D1, "origin": "local", "proposal_id": str(uuid.uuid4()),
-            "decision_id": str(uuid.uuid4()), "operation_id": "broker.disk.erase", "risk_class": "R3",
-            "policy_version": "policy-1", "action_digest": D4, "result_status": "accepted",
-            "correlation_id": str(uuid.uuid4()), "task_id": "task-1", "step_id": "step-1",
-            "registry_version": "registry-1", "executor_id": None, "reason_code": None,
-            "registry_status": "resolved"}
+def audit(**overrides):
+    event = {"timestamp_utc": NOW.isoformat().replace("+00:00", "Z"), "event_type": "requested",
+             "principal_binding": D1, "origin": "local", "proposal_id": str(uuid.uuid4()),
+             "decision_id": str(uuid.uuid4()), "operation_id": "broker.disk.erase", "risk_class": "R3",
+             "policy_version": "policy-1", "action_digest": D4, "result_status": "accepted",
+             "correlation_id": str(uuid.uuid4()), "task_id": "task-1", "step_id": "step-1",
+             "registry_version": "registry-1", "executor_id": None, "reason_code": None,
+             "registry_status": "resolved"}
+    event.update(overrides)
+    return event
 
 def peer(credentials):
     if credentials != {"uid": 1000, "pid": 42}: raise PermissionError
-    return {"authenticated": True, "principal_binding": D1, "session_binding": D2, "device_binding": D3}
+    return {"authenticated": True, "principal_binding": D1, "session_binding": D2, "device_binding": D3, "origin": "local"}
 
 def store(path=":memory:"):
     return SecurityStore(path, audit_key=KEY, peer_authenticator=peer,
@@ -31,10 +33,12 @@ def store(path=":memory:"):
         policy_rechecker=lambda r, b, v: b == BINDING and v == "policy-1")
 
 def approval(db):
+    proposal_id = str(uuid.uuid4())
     return db.create_approval(action_id="system.disk.erase", broker_operation_id="broker.disk.erase",
-        action_digest=D4, proposal_id=str(uuid.uuid4()), principal_binding=D1,
+        action_digest=D4, proposal_id=proposal_id, principal_binding=D1,
         policy_version="policy-1", risk_class="R3", task_id="task-1", step_id="step-1",
-        binding=BINDING, expires_at=NOW + timedelta(minutes=2), audit_context=audit(), now=NOW)
+        binding=BINDING, expires_at=NOW + timedelta(minutes=2),
+        audit_context=audit(proposal_id=proposal_id), now=NOW)
 
 def decide_and_issue(db):
     rid = approval(db)
@@ -43,10 +47,21 @@ def decide_and_issue(db):
     return db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
                                   audit_context=audit(), now=NOW)
 
+def audit_for_ref(db, ref):
+    token_hash = __import__("hashlib").sha256(ref.encode("utf-8")).hexdigest()
+    row = db._db.execute("""SELECT a.*, r.state AS ref_state FROM auth_refs r
+        JOIN approvals a ON a.request_id=r.request_id WHERE r.token_hash=?""", (token_hash,)).fetchone()
+    binding = __import__("json").loads(bytes(row["binding_json"]).decode("utf-8"))
+    return audit(principal_binding=row["principal_binding"], proposal_id=row["proposal_id"],
+        operation_id=row["broker_operation_id"], risk_class=row["risk_class"],
+        policy_version=row["policy_version"], action_digest=row["action_digest"],
+        task_id=row["task_id"], step_id=row["step_id"],
+        registry_version=binding["registry_version"])
+
 def consume(db, ref, **changes):
     args = dict(operation_id="broker.disk.erase", resource_scope=["disk:wwn-123"], action_digest=D4,
         policy_version="policy-1", registry_version="registry-1", precondition_digest=D4,
-        peer_credentials={"uid": 1000, "pid": 42}, audit_context=audit(), now=NOW)
+        peer_credentials={"uid": 1000, "pid": 42}, audit_context=audit_for_ref(db, ref), now=NOW)
     args.update(changes)
     return db.consume(ref, **args)
 
@@ -339,6 +354,35 @@ def test_atomic_consume_replay_and_authenticated_reconciliation():
         assert db.verify_audit_chain()
     finally: db.close()
 
+@pytest.mark.parametrize("field,value", [
+    ("principal_binding", D4),
+    ("proposal_id", str(uuid.uuid4())),
+    ("operation_id", "broker.other.operation"),
+    ("risk_class", "R1"),
+    ("policy_version", "policy-other"),
+    ("action_digest", D1),
+    ("task_id", "task-other"),
+    ("step_id", "step-other"),
+    ("registry_version", "registry-other"),
+    ("registry_status", "unavailable"),
+    ("origin", "remote"),
+])
+def test_consume_rejects_unbound_audit_context_without_consuming_authorization(field, value):
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        before = len(db.audit_events())
+        context = audit_for_ref(db, ref)
+        context[field] = value
+        result = consume(db, ref, audit_context=context)
+        assert result.outcome == "BINDING_MISMATCH"
+        assert len(db.audit_events()) == before
+        assert db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42}).outcome == "ISSUED"
+        assert consume(db, ref).outcome == "CONSUMED"
+    finally:
+        db.close()
+
+
 def test_expired_approval_stale_resource_and_wrong_operation_are_denied():
     db = store()
     try:
@@ -426,7 +470,7 @@ def test_broker_gate_returns_a_narrow_grant_only_after_consume():
         ref = decide_and_issue(db)
         request = BrokerAuthorizationRequest(ref, "broker.disk.erase", D4, "policy-1", ("disk:wwn-123",),
                                              "registry-1", D4, {"uid": 1000, "pid": 42})
-        result = BrokerAuthorizationGate(db).authorize(request, audit(), now=NOW)
+        result = BrokerAuthorizationGate(db).authorize(request, audit_for_ref(db, ref), now=NOW)
         assert result.outcome == "CONSUMED"
         assert set(result.grant) == {"consumption_id", "operation_id", "resource_scope", "principal_binding",
                                      "session_binding", "device_binding", "action_digest", "registry_version",
