@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `b4998fc346b48b9f8023ae9f7dda36c2e64e39b1` (ATLAS CI passed 90 tests, Fedora 44 DNF5 queryformat smoke including RPM location, pinned-source local KIWI overlay integration, full repomd payload checksum validation and per-package RPM SHA-256 checks).  
+**Latest code/test evidence head:** `3d2755b88cf94d9fbf20404b19e1555fe94800d8` (ATLAS resolver test job passed 92 tests including build-output isolation regressions; unified validation passed all 8 jobs; Fedora 44 DNF5 smoke was still in progress at log time).  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -41,9 +41,10 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest code/test head: b4998fc346b48b9f8023ae9f7dda36c2e64e39b1; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 171 ahead / 0 behind main.
-- ATLAS run [41192831799](https://github.com/otta-komban/TuskerOS/actions/runs/41192831799) passed **90 tests**, Fedora 44 DNF5 queryformat smoke including %{location}, reposync plugin/key checks and the pinned-source KIWI overlay integration. The resolver hashes the actual RPM file in the local snapshot and compares it to the manifest rpm_sha256 pin.
-- Unified validation [41192831693](https://github.com/otta-komban/TuskerOS/actions/runs/41192831693) is pending for this branch head. The preceding unified run [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054) passed all 8 jobs on the earlier overlay implementation head.
+- Latest code/test head: 3d2755b88cf94d9fbf20404b19e1555fe94800d8; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165; branch divergence: 173 ahead / 0 behind main.
+- ATLAS run [41197460809](https://github.com/otta-komban/TuskerOS/actions/runs/41197460809): resolver-tests job passed **92 tests**, including the two new output-isolation regressions; Fedora 44 DNF5 smoke was still in progress at log time.
+- Unified validation [41197460810](https://github.com/otta-komban/TuskerOS/actions/runs/41197460810) passed all 8 jobs on exact code head `3d2755b88cf94d9fbf20404b19e1555fe94800d8`.
+- Build script now allocates a unique `mktemp` run directory and clears each target's prior output/intermediate directories before starting, preventing stale ISO/QCOW2 files from passing artifact existence checks.
 - The package manifest remains empty pending NOVA-02/NEXUS-07. No full reposync or image build has been run.
 
 ## Evidence
@@ -109,6 +110,11 @@
 - The resolver now hashes each RPM file from its local repository location and checks the required manifest rpm_sha256 pin. The repomd verifier also checks every metadata payload SHA-256 referenced by repomd.xml.
 - Unified validation [41192831693](https://github.com/otta-komban/TuskerOS/actions/runs/41192831693) is pending for the current branch head. Earlier unified run [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054) passed all 8 jobs on the KIWI overlay code head.
 - Fedora repository metadata is not detached-signature verified; RPM package signatures remain enforced. No full DNF5 reposync, KIWI build, repeat-build comparison or VM boot has been performed.
+
+## Latest build-output isolation hardening
+
+- `build-image.sh` now creates a collision-resistant per-run directory with `mktemp -d`; `build_pair` removes prior ISO/disk bundles and KIWI intermediate directories before building. This prevents stale artifacts from satisfying post-build checks after a retry or timestamp collision.
+- Two static regression tests cover unique run directories and stale-output cleanup. ATLAS resolver test job passed 92 tests; unified validation passed 8/8. Fedora 44 DNF5 smoke was pending at the time of this status update.
 
 ## Image/build/runtime status
 

@@ -35,3 +35,5 @@ Current verified count: 20
 | 20 | ATLAS-01-C0020 | P1 | implementation | partial | Package manifest now requires rpm_sha256; DNF5 repoquery returns local RPM location and resolver hashes that staged file, confines path to repository, and compares digest to pin. ATLAS run 41192831799 passed 90 tests, Fedora 44 DNF5 location smoke and KIWI overlay integration; unified run 41192831693 passed 8/8 on the same code head; no package rows/full sync/image build. Supersedes C0019's separate-RPM-lock limitation. |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
+
+| 21 | ATLAS-01-C0021 | P1 | implementation | partial | KIWI build outputs now use a collision-resistant per-run directory; each ISO/QCOW2 build target clears stale result/intermediate directories before execution. Two regression tests added. ATLAS run 41197460809 resolver-tests passed 92 tests; unified run 41197460810 passed 8/8. Fedora 44 DNF5 smoke was still in progress at log time; no full reposync/image build. |
