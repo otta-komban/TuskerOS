@@ -53,6 +53,18 @@ class CatalogEntryValidationTests(unittest.TestCase):
         }
         self.assertEqual(validate_catalog_entry(entry), [])
 
+    def test_non_string_unknown_keys_fail_closed_without_sorting_exception(self):
+        entry = copy.deepcopy(self.fixture)
+        entry["package"][1] = "unexpected"
+        entry["package"]["also_unexpected"] = "value"
+        errors = validate_catalog_entry(entry)
+        self.assertTrue(any("$.package.1" in error for error in errors))
+        self.assertTrue(any("$.package.'also_unexpected'" in error for error in errors))
+
+        malformed_top_level = {1: "unexpected", "other": "unexpected"}
+        errors = validate_catalog_entry(malformed_top_level)
+        self.assertTrue(any("$." in error and "unsupported field" in error for error in errors))
+
     def test_unknown_field_fails_closed(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["install_script"] = "do-not-run"
