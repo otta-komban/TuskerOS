@@ -16,6 +16,13 @@
 4. AEGIS-06 must review signature/trust policy before any Secure Boot claim. `firmware="efi"` does not assert Secure Boot support.
 5. KIWI NG's installed version must be recorded and the description validated with that exact version before build.
 
+## Repository snapshot consumption boundary
+
+- `tools/atlas/build-image.sh` first verifies the committed remote snapshot lock, then uses `dnf5 reposync --download-metadata` to stage each locked repository under `build/atlas/repository-snapshot/<repo-id>` for `x86_64` and `noarch` packages. This mirrors the selected repositories in full and may require substantial disk space and network transfer.
+- The build re-verifies the staged `repomd.xml` and primary metadata bytes against the lock. The package resolver uses DNF5 `--repofrompath` and `--repo` options to expose only those local copies, with RPM signature checking enabled.
+- This closes the DNF5 package-resolution path only. The upstream Fedora `Fedora.kiwi` description still contains its own remote repository definitions, so **KIWI image construction is not yet consuming the staged local snapshot**. Build metadata records this as `repository_snapshot_consumed_by_kiwi: false`; no reproducibility claim is allowed.
+- The build host must have the DNF5 `reposync` plugin (`dnf5-plugins`) installed. No actual full repository sync or KIWI image build has been run yet.
+
 ## Validation and build gate
 
 - XML well-formedness can be checked with Python's standard-library XML parser.
