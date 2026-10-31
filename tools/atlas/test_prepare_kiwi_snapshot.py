@@ -47,7 +47,6 @@ class PrepareKiwiSnapshotTests(unittest.TestCase):
         for repository_id in ("fedora", "updates"):
             (self.snapshot / repository_id / "repodata").mkdir(parents=True)
             (self.snapshot / repository_id / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
-            (self.snapshot / repository_id / "repodata" / "repomd.xml.asc").write_text("signature fixture", encoding="utf-8")
         self.lock.write_text(json.dumps({
             "schema_version": 1,
             "fedora_release": "44",
@@ -55,7 +54,7 @@ class PrepareKiwiSnapshotTests(unittest.TestCase):
             "repositories": [{"repository_id": "fedora"}, {"repository_id": "updates"}],
         }), encoding="utf-8")
 
-    def test_overlay_rewrites_every_source_to_local_file_uri_and_enforces_signatures(self):
+    def test_overlay_rewrites_sources_and_enforces_rpm_signatures_without_repo_signatures(self):
         result = MODULE.prepare_overlay(self.description, self.snapshot, self.lock)
         self.assertEqual(set(result), {"fedora", "updates"})
         root = ET.parse(self.repositories / "core-nonrawhide.xml").getroot()

@@ -91,6 +91,11 @@ jobs:
       - name: Validate Fedora reposync plugin and pinned signing key
         run: |
           dnf5 reposync --help > /dev/null
+          dnf5 reposync --help | grep -q -- '--download-metadata'
+          dnf5 reposync --help | grep -q -- '--destdir'
+          dnf5 reposync --help | grep -q -- '--arch'
+          dnf5 reposync --help | grep -q -- '--gpgcheck'
+          dnf5 --help | grep -q -- '--repo'
           test -s /usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-44-primary
       - name: Exercise local KIWI overlay against pinned Fedora 44 source
         run: |
@@ -123,7 +128,6 @@ jobs:
                   repodata = snapshot / repository_id / "repodata"
                   repodata.mkdir(parents=True)
                   (repodata / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
-                  (repodata / "repomd.xml.asc").write_text("signature-fixture", encoding="utf-8")
               lock = root / "snapshot-lock.json"
               lock.write_text(json.dumps({
                   "schema_version": 1,
