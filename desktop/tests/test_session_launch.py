@@ -37,6 +37,35 @@ class SessionLaunchTests(unittest.TestCase):
             self.assertEqual(result[key], value)
         self.assertNotIn("DISPLAY", result)
 
+    def test_session_environment_overrides_conflicting_login_metadata(self) -> None:
+        source = {
+            "HOME": "/home/tester",
+            "XDG_SESSION_TYPE": "x11",
+            "XDG_CURRENT_DESKTOP": "GNOME",
+            "XDG_SESSION_DESKTOP": "GNOME",
+            "KDE_FULL_SESSION": "false",
+            "KDE_SESSION_VERSION": "5",
+        }
+        original = dict(source)
+        result = build_session_environment(source)
+        self.assertEqual(source, original)
+        for key, value in SESSION_ENVIRONMENT.items():
+            self.assertEqual(result[key], value)
+
+    def test_execve_gets_a_private_environment_snapshot(self) -> None:
+        source = {"HOME": "/home/tester", "XDG_SESSION_TYPE": "x11"}
+        execve = Mock()
+        main(
+            [], environ=source, executable=self.executable,
+            is_executable=self.available, execve=execve,
+            stdout=io.StringIO(), stderr=io.StringIO(),
+        )
+        self.assertEqual(source, {"HOME": "/home/tester", "XDG_SESSION_TYPE": "x11"})
+        passed_environment = execve.call_args.args[2]
+        self.assertEqual(passed_environment["XDG_SESSION_TYPE"], "wayland")
+        self.assertEqual(passed_environment["HOME"], "/home/tester")
+        self.assertIsNot(passed_environment, source)
+
     def test_check_mode_reports_ready_without_starting_session(self) -> None:
         output, errors = io.StringIO(), io.StringIO()
         execve = Mock()
