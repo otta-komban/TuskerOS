@@ -44,14 +44,14 @@ class ParseCaseRowsTests(unittest.TestCase):
         markdown = r"| PAIR-C01 | Two slashes \\ before delimiter | Reject |" + "\n"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
-            [( "PAIR-C01", r"Two slashes \ before delimiter", "Reject")],
+            [( "PAIR-C01", r"Two slashes \\ before delimiter", "Reject")],
         )
 
     def test_odd_backslash_run_escapes_pipe_and_preserves_pairs(self):
         markdown = r"| PAIR-C01 | Three slashes \\\| then text | Reject |" + "\n"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
-            [("PAIR-C01", r"Two slashes \\| then text", "Reject")],
+            [("PAIR-C01", r"Three slashes \\| then text", "Reject")],
         )
 
     def test_pipe_delimiter_parity_for_one_through_six_backslashes(self):
@@ -288,7 +288,8 @@ class RepositoryValidationTests(unittest.TestCase):
 
         self.assertEqual(result, 1)
         self.assertEqual(stdout.getvalue(), "")
-        self.assertIn("FAIL PAIR:", stderr.getvalue())
+        self.assertIn("FAIL repository validation failed", stderr.getvalue())
+        self.assertIn("PAIR:", stderr.getvalue())
         self.assertIn("utf-8", stderr.getvalue().lower())
         self.assertNotIn("Traceback", stderr.getvalue())
 
@@ -494,7 +495,7 @@ class RepositoryValidationTests(unittest.TestCase):
 
         message = str(raised.exception)
         self.assertIn("PAIR: simulated read denial", message)
-        self.assertIn("SESS: SESS-C01", message)
+        self.assertIn("SESS: missing SESS-C01", message)
         self.assertIn("NET: specification not found", message)
         positions = [message.index(prefix + ":") for prefix in ("PAIR", "SESS", "NET")]
         self.assertEqual(positions, sorted(positions))
