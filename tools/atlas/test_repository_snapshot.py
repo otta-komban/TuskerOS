@@ -221,6 +221,23 @@ class LocalSnapshotVerificationTests(unittest.TestCase):
     def test_local_snapshot_accepts_exact_metadata(self):
         MODULE.verify_local_snapshot(self.root, self.indexed)
 
+    def test_every_repomd_metadata_payload_is_verified(self):
+        filelists = b"immutable filelists fixture\\n"
+        entry = (
+            b'<data type="filelists"><checksum type="sha256">'
+            + hashlib.sha256(filelists).hexdigest().encode()
+            + b'</checksum><location href="repodata/filelists.xml.gz"/></data>'
+        )
+        repomd = REPOMD.replace(b"</repomd>", entry + b"</repomd>")
+        (self.repository / "repodata" / "repomd.xml").write_bytes(repomd)
+        (self.repository / "repodata" / "filelists.xml.gz").write_bytes(filelists)
+        indexed = { "fedora": dict(self.indexed["fedora"]) }
+        indexed["fedora"]["repomd_sha256"] = hashlib.sha256(repomd).hexdigest()
+        MODULE.verify_local_snapshot(self.root, indexed)
+        (self.repository / "repodata" / "filelists.xml.gz").write_bytes(b"tampered")
+        with self.assertRaisesRegex(RuntimeError, "filelists metadata SHA-256 differs"):
+            MODULE.verify_local_snapshot(self.root, indexed)
+
     def test_local_snapshot_requires_metadata_signature_file(self):
         (self.repository / "repodata" / "repomd.xml.asc").unlink()
         with self.assertRaisesRegex(RuntimeError, "missing repomd.xml.asc"):
