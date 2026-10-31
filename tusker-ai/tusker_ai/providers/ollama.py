@@ -50,8 +50,7 @@ class OllamaProvider:
 
     def infer(self, request: InferenceRequest, cancellation: CancellationToken) -> Iterable[InferenceEvent]:
         if cancellation.cancelled:
-            yield InferenceEvent(request.request_id, 0, "cancelled", {"reason": "caller_cancelled"})
-            return
+            raise TuskerRuntimeError(RuntimeErrorCode.CANCELLED, "Inference was cancelled before dispatch")
         payload = {
             "model": request.model,
             "messages": list(request.messages),
