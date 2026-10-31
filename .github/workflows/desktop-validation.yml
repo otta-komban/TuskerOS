@@ -3,7 +3,7 @@ name: Desktop validation
 on:
   push:
     branches:
-      - agent/02-desktop-shell
+      - 02-NOVA
     paths:
       - "desktop/**"
       - ".github/workflows/desktop-validation.yml"
