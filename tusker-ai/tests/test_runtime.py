@@ -245,5 +245,41 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.CANCELLED)
 
 
+    def test_rejects_malformed_text_delta_payloads(self):
+        for payload in ({}, {"delta": None}, {"delta": 7}, {"delta": ""}):
+            provider = FakeProvider([
+                InferenceEvent("r1", 0, "started", {}),
+                InferenceEvent("r1", 1, "text_delta", payload),
+            ])
+            with self.subTest(payload=payload):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(provider).infer(self.request()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_rejects_malformed_usage_and_finish_reason_payloads(self):
+        cases = (
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "usage", {"input_tokens": True})],
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "usage", {"output_tokens": -1})],
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "completed", {"finish_reason": []})],
+            [InferenceEvent("r1", 0, "started", {}), InferenceEvent("r1", 1, "completed", {"finish_reason": "invalid"})],
+        )
+        for events in cases:
+            with self.subTest(events=events):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(InferenceRuntime(FakeProvider(events)).infer(self.request()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
+
+    def test_accepts_validated_event_payloads(self):
+        events = [
+            InferenceEvent("r1", 0, "started", {}),
+            InferenceEvent("r1", 1, "text_delta", {"delta": "hello"}),
+            InferenceEvent("r1", 2, "usage", {"input_tokens": 3, "output_tokens": 2}),
+            InferenceEvent("r1", 3, "completed", {"finish_reason": "stop"}),
+        ]
+        result = list(InferenceRuntime(FakeProvider(events)).infer(self.request()))
+        self.assertEqual(result[-1].event_type, "completed")
+
+
+
 if __name__ == "__main__":
     unittest.main()
