@@ -145,6 +145,21 @@ class ModelStoreTests(unittest.TestCase):
         self.assertEqual(report["orphan_revisions"], ["fixture-model/rev-orphan"])
         self.assertTrue(report["requires_operator_review"])
 
+    def test_recovery_inspection_reports_symlinked_and_unexpected_revision_entries(self):
+        self.install_fixture()
+        revision = self.store.models / "fixture-model" / "rev-001"
+        unexpected = revision / "extra.bin"
+        unexpected.write_bytes(b"not in active manifest")
+        linked = revision / "linked.bin"
+        linked.symlink_to(unexpected)
+        report = self.store.inspect_recovery()
+        findings = {(item["name"], item["reason"]) for item in report["unsafe_entries"]}
+        self.assertIn(("extra.bin", "unexpected_revision_content"), findings)
+        self.assertIn(("linked.bin", "symlink"), findings)
+        self.assertTrue(report["requires_operator_review"])
+        self.assertTrue(unexpected.exists())
+        self.assertTrue(linked.is_symlink())
+
     def test_recovery_inspection_reports_invalid_active_pointer(self):
         pointer = self.store.active / "fixture-model.json"
         pointer.write_text("{not-json")
