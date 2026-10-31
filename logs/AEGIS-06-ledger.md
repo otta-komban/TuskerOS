@@ -7,7 +7,8 @@
 
 ## Current state
 
-- **Verified conversation completions:** 0 historically verified from the full transcript; 4 directly visible pairs after this audit response (see `logs/AEGIS-06-conversation-audit.md`)
+- **Full historical conversation count:** Unverified
+- **Verified visible-segment completions:** 4 / 100 after this audit response
 - **Historical JSONL records:** 52 (`C0001`–`C0052`); these are not proof of 52 distinct user/assistant pairs
 - **Latest historical record:** `AEGIS-06-C0052`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
@@ -583,4 +584,4 @@ The previous statement "Verified completion count: 52" was unsupported and is wi
 
 The transcript directly available in the active conversation shows three complete assistant responses before the current accounting response. Counting this complete response makes **4 directly verified pairs in the visible segment**. This is a verified visible-segment count, not a claim that the entire historical conversation contained only four exchanges. Earlier project-history excerpts show user prompts but do not expose enough paired assistant responses to count them.
 
-Do not backfill missing historical pairs from timestamps, IDs, commits, engineering tasks, or tool calls. The 52 historical JSONL records remain preserved as work/response records pending transcript-level reconciliation. See `logs/AEGIS-06-conversation-audit.md`.
+Do not backfill missing historical pairs from timestamps, IDs, commits, engineering tasks, or tool calls. The 52 historical JSONL records remain preserved as work/response records pending transcript-level reconciliation. This correction is recorded in this ledger; no separate transcript artifact was available to attach.
