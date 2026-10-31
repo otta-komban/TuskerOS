@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -104,6 +105,23 @@ class CatalogEntryValidationTests(unittest.TestCase):
                 entry = copy.deepcopy(self.fixture)
                 entry[section][field] = invalid
                 self.assertTrue(any(f"$.{section}.{field}" in e for e in validate_catalog_entry(entry)))
+
+    def test_schema_https_patterns_reject_whitespace_anywhere_in_url(self):
+        schema = json.loads((ROOT / "schemas/catalog-entry.schema.json").read_text())
+        url_locations = (
+            schema["properties"]["package"]["properties"]["description_uri"],
+            schema["properties"]["publisher"]["properties"]["homepage"],
+            schema["properties"]["release"]["properties"]["manifest_uri"],
+            schema["properties"]["release"]["properties"]["artifact_uri"],
+            schema["properties"]["release"]["properties"]["signature_uri"],
+            schema["properties"]["release"]["properties"]["changelog_uri"],
+        )
+        for definition in url_locations:
+            pattern = re.compile(definition["pattern"])
+            for value in ("https://example.invalid/a b", "https://example.invalid/\\tpath"):
+                with self.subTest(value=value, pattern=definition["pattern"]):
+                    self.assertIsNone(pattern.fullmatch(value))
+            self.assertIsNotNone(pattern.fullmatch("https://example.invalid/a%20b"))
 
     def test_optional_metadata_urls_require_https(self):
         for section, field in (
