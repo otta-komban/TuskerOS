@@ -21,7 +21,7 @@ PINNED_COLUMNS = {"pinned_nevra", "repository_id", "repository_snapshot", "rpm_l
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 SOURCE_RPM_RE = re.compile(r"^[A-Za-z0-9+_.:-]+\.src\.rpm$")
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9+_.:-]*$")
-QUERY_FORMAT = "%{name}-%{epoch}:%{version}-%{release}.%{arch}\t%{repoid}"
+QUERY_FORMAT = "%{full_nevra}\t%{repoid}\t%{license}\t%{sourcerpm}"
 
 
 def run(command: list[str]) -> str:
@@ -127,17 +127,19 @@ def read_manifest(path: Path, *, require_pins: bool = False) -> list[dict[str, s
     return rows
 
 
-def parse_query_matches(output: str, expected_package: str | None = None) -> tuple[str, str]:
-    """Return one unambiguous NEVRA/repository pair from DNF5 query output."""
+def parse_query_matches(
+    output: str, expected_package: str | None = None
+) -> tuple[str, str, str, str]:
+    """Return one unambiguous NEVRA/repository/license/source-RPM tuple."""
     matches = {line.strip() for line in output.splitlines() if line.strip()}
     if not matches:
         raise RuntimeError("no available match")
-    parsed: set[tuple[str, str]] = set()
+    parsed: set[tuple[str, str, str, str]] = set()
     for match in matches:
         fields = match.split("\t")
-        if len(fields) != 2 or not all(field.strip() for field in fields):
+        if len(fields) != 4 or not all(field.strip() for field in fields):
             raise RuntimeError(f"unexpected DNF5 query output row: {match!r}")
-        nevra, repository = (field.strip() for field in fields)
+        nevra, repository, license_expression, source_rpm = (field.strip() for field in fields)
         if not nevra.endswith((".x86_64", ".noarch")):
             raise RuntimeError(f"DNF5 returned unsupported architecture in NEVRA: {nevra!r}")
         if expected_package is not None and not re.match(
@@ -147,9 +149,11 @@ def parse_query_matches(output: str, expected_package: str | None = None) -> tup
                 f"DNF5 returned package outside requested name or malformed NEVRA "
                 f"for {expected_package!r}: {nevra!r}"
             )
-        parsed.add((nevra, repository))
-    nevras = {nevra for nevra, _repo in parsed}
-    repositories = {repo for _nevra, repo in parsed}
+        if not SOURCE_RPM_RE.fullmatch(source_rpm):
+            raise RuntimeError(f"DNF5 returned invalid source RPM metadata: {source_rpm!r}")
+        parsed.add((nevra, repository, license_expression, source_rpm))
+    nevras = {item[0] for item in parsed}
+    repositories = {item[1] for item in parsed}
     if len(nevras) != 1:
         raise RuntimeError(f"ambiguous NEVRA results: {', '.join(sorted(nevras))}")
     if len(repositories) != 1:
@@ -157,16 +161,28 @@ def parse_query_matches(output: str, expected_package: str | None = None) -> tup
             f"ambiguous repository results for {next(iter(nevras))}: "
             f"{', '.join(sorted(repositories))}"
         )
+    if len(parsed) != 1:
+        raise RuntimeError(f"conflicting package provenance metadata for {next(iter(nevras))}")
     return next(iter(parsed))
 
 
-def verify_pin(row: dict[str, str], actual_nevra: str, actual_repository: str) -> None:
-    expected_nevra = row["pinned_nevra"].strip()
-    expected_repository = row["repository_id"].strip()
-    if actual_nevra != expected_nevra:
-        raise RuntimeError(f"resolved NEVRA {actual_nevra!r} does not match pinned NEVRA {expected_nevra!r}")
-    if actual_repository != expected_repository:
-        raise RuntimeError(f"resolved repository {actual_repository!r} does not match pinned repository {expected_repository!r}")
+def verify_pin(
+    row: dict[str, str],
+    actual_nevra: str,
+    actual_repository: str,
+    actual_license: str,
+    actual_source_rpm: str,
+) -> None:
+    expected = {
+        "pinned_nevra": actual_nevra,
+        "repository_id": actual_repository,
+        "rpm_license": actual_license,
+        "source_rpm": actual_source_rpm,
+    }
+    for field, actual in expected.items():
+        pinned = row[field].strip()
+        if actual != pinned:
+            raise RuntimeError(f"resolved {field} {actual!r} does not match pinned value {pinned!r}")
 
 
 def main() -> int:
@@ -195,8 +211,8 @@ def main() -> int:
             "--latest-limit=1", "--qf", QUERY_FORMAT, row["pinned_nevra"].strip()
         ])
         try:
-            nevra, repo_id = parse_query_matches(output, row["package"])
-            verify_pin(row, nevra, repo_id)
+            nevra, repo_id, rpm_license, source_rpm = parse_query_matches(output, row["package"])
+            verify_pin(row, nevra, repo_id, rpm_license, source_rpm)
         except RuntimeError as exc:
             failures.append(f"{row['layer']}/{row['package']}: {exc}")
             continue
@@ -210,8 +226,8 @@ def main() -> int:
             "repository_id": repo_id,
             "pinned_nevra": row["pinned_nevra"].strip(),
             "repository_snapshot": row["repository_snapshot"].strip(),
-            "rpm_license": row["rpm_license"].strip(),
-            "source_rpm": row["source_rpm"].strip(),
+            "rpm_license": rpm_license,
+            "source_rpm": source_rpm,
             "source_url": row["source_url"].strip(),
         })
 
