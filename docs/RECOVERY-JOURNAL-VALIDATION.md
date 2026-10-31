@@ -34,7 +34,7 @@ An interrupted record remains unresolved. This validator does not infer that rol
 
 ## Resource bounds
 
-The local parser rejects journals larger than 4 MiB, more than 10,000 records, or any individual JSONL record larger than 64 KiB. The in-memory validator also consumes at most 10,001 iterable entries to detect and reject record-count overflow without materializing an unbounded generator. These are conservative local defaults, not a cross-agent production contract; integration must review appropriate limits for the real operation lifecycle.
+The local parser rejects journals larger than 4 MiB, more than 10,000 records, or any individual JSONL record larger than 64 KiB. The in-memory validator also consumes at most 10,001 iterable entries to detect and reject record-count overflow without materializing an unbounded generator. If obtaining or consuming the iterator raises an ordinary exception, validation returns a structured failure report rather than propagating that exception. These are conservative local defaults, not a cross-agent production contract; integration must review appropriate limits for the real operation lifecycle.
 
 ## Validation scope and limitations
 
