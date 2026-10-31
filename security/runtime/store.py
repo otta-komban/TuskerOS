@@ -390,6 +390,9 @@ class SecurityStore:
         Store the returned object outside this database (e.g. remote append-only
         storage). A local-only checkpoint cannot detect database rollback.
         """
+        # Never use a newly generated MAC to bless already-corrupted database state.
+        if not self.verify_audit_chain():
+            raise SecurityStoreError("cannot checkpoint an invalid audit chain")
         row = self._db.execute("SELECT seq,event_hash FROM audit_events ORDER BY seq DESC LIMIT 1").fetchone()
         seq, event_hash = (row["seq"], row["event_hash"]) if row else (0, "0" * 64)
         payload = {"schema_version": "1", "sequence": seq, "event_hash": event_hash}

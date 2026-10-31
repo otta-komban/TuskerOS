@@ -4,7 +4,7 @@ import uuid
 import pytest
 from security.runtime.canonical import CanonicalizationError, canonical_bytes, digest
 from security.runtime.policy import PolicyEngine
-from security.runtime.store import SecurityStore
+from security.runtime.store import SecurityStore, SecurityStoreError
 
 NOW = datetime(2026, 10, 31, 6, 0, tzinfo=timezone.utc)
 D1, D2, D3, D4 = ["sha256:" + c * 64 for c in "1234"]
@@ -562,5 +562,16 @@ def test_audit_chain_rejects_boolean_checkpoint_sequence_and_sequence_gaps():
         # and the HMAC chain untouched. The verifier must still detect the gap.
         db._db.execute("UPDATE audit_events SET seq=3 WHERE seq=2")
         assert not db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+def test_audit_checkpoint_refuses_to_sign_a_tampered_chain():
+    db = store()
+    try:
+        db._audit(audit())
+        db._db.execute("UPDATE audit_events SET event_json=? WHERE seq=1", (b'{"tampered":true}',))
+        with pytest.raises(SecurityStoreError, match="invalid audit chain"):
+            db.audit_checkpoint()
     finally:
         db.close()
