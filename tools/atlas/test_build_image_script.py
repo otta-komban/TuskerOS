@@ -28,6 +28,11 @@ class KiwiBundleContractTests(unittest.TestCase):
     def test_repeat_build_compares_normalized_bundle_checksums(self):
         self.assertIn('diff -u "$RUN_DIR/first/SHA256SUMS" "$RUN_DIR/repeat/SHA256SUMS"', SCRIPT)
 
+    def test_metadata_does_not_overclaim_reproducibility(self):
+        self.assertIn('"repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run"', SCRIPT)
+        self.assertIn('"reproducible_build_claim": False', SCRIPT)
+        self.assertIn("repository metadata snapshots and repomd.xml digests are not yet locked and verified", SCRIPT)
+
 
 if __name__ == "__main__":
     unittest.main()
