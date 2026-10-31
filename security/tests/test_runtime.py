@@ -119,6 +119,21 @@ def test_create_approval_rejects_mismatched_audit_context(field, value):
     {"action_id": "a" * 161},
     {"broker_operation_id": "b" * 161},
 ])
+def test_security_store_time_rejects_tzinfo_without_utc_offset():
+    from datetime import tzinfo
+
+    class PseudoTimezone(tzinfo):
+        def utcoffset(self, dt):
+            return None
+
+        def dst(self, dt):
+            return None
+
+    pseudo_aware = datetime(2026, 10, 31, 12, 0, tzinfo=PseudoTimezone())
+    with pytest.raises(ValueError, match="timezone-aware"):
+        SecurityStore._time(pseudo_aware)
+
+
 def test_create_approval_rejects_malformed_typed_inputs_with_security_error(overrides):
     db = store()
     try:
