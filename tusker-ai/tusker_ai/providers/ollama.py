@@ -31,8 +31,17 @@ class OllamaProvider:
 
     def __init__(self, endpoint: str = "http://127.0.0.1:11434", *, read_timeout: float = 2.0):
         parsed = urlsplit(endpoint)
-        if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
-            raise ValueError("Ollama endpoint must use HTTP on loopback")
+        try:
+            port = parsed.port
+        except ValueError:
+            raise ValueError("Ollama endpoint has an invalid port") from None
+        if (
+            parsed.scheme != "http"
+            or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}
+            or parsed.path not in {"", "/"}
+            or (port is not None and not 1 <= port <= 65535)
+        ):
+            raise ValueError("Ollama endpoint must use HTTP on loopback with a valid port and no path")
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError("Ollama endpoint must not contain credentials or query data")
         if read_timeout <= 0:
@@ -53,10 +62,15 @@ class OllamaProvider:
         try:
             req = Request(self._base + "/api/version", method="GET")
             with self._opener.open(req, timeout=self._read_timeout) as response:
-                data = json.loads(response.read(65536))
+                raw = response.read(65537)
+                if len(raw) > 65536:
+                    return None
+                data = json.loads(raw)
+                if not isinstance(data, dict):
+                    return None
                 value = data.get("version")
-                return value if isinstance(value, str) else None
-        except (OSError, URLError, HTTPError, socket.timeout, json.JSONDecodeError):
+                return value if isinstance(value, str) and value else None
+        except (OSError, URLError, HTTPError, socket.timeout, json.JSONDecodeError, UnicodeDecodeError):
             return None
 
     def health(self) -> bool:
