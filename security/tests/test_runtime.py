@@ -564,7 +564,6 @@ def test_consumed_replay_disclosure_is_bound_to_original_peer_identity():
         db.close()
 
 
-
 def test_consume_rejects_oversized_or_non_utf8_authorization_reference():
     db = store()
     try:
@@ -632,7 +631,6 @@ def test_registry_invalid_unmatched_entry_invalidates_entire_registry():
         [entry("system.info.read"), entry("other.info.read", "not-semver")], "registry-1")
     assert decision.status == "DENY"
     assert decision.reason_code == "POLICY_REGISTRY_INVALID"
-
 
 
 def test_audit_checkpoint_rejects_non_genesis_hash_at_sequence_zero():
@@ -1056,9 +1054,6 @@ def test_policy_rejects_truthy_non_boolean_registry_verifier(callback_result):
 
 
 @pytest.mark.parametrize("callback_result", [1, "verified", [], {}])
-
-
-@pytest.mark.parametrize("callback_result", [1, "verified", [], {}])
 def test_policy_rejects_truthy_non_boolean_identity_verifier(callback_result):
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
         "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
@@ -1080,9 +1075,6 @@ def test_policy_rejects_truthy_non_boolean_identity_verifier(callback_result):
     result = engine.evaluate(proposal, context, registry, "registry-1")
     assert result.status == "DENY"
     assert result.reason_code == "POLICY_UNKNOWN_PRINCIPAL"
-
-
-@pytest.mark.parametrize("callback_result", [1, "valid", [], {}])
 
 
 @pytest.mark.parametrize("callback_result", [1, "valid", [], {}])
