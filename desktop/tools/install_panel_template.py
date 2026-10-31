@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -13,6 +14,8 @@ from pathlib import Path
 PLUGIN_ID = "com.tuskeros.desktop.dock"
 MARKER = ".tuskeros-managed"
 MARKER_CONTENT = "TuskerOS managed Plasma layout template; safe to remove with this installer.\n"
+MAX_SOURCE_FILES = 256
+MAX_SOURCE_BYTES = 8 * 1024 * 1024
 
 
 def default_destination() -> Path:
@@ -20,10 +23,45 @@ def default_destination() -> Path:
     return data_home / "plasma" / "layout-templates" / PLUGIN_ID
 
 
+def _validate_source_entry(path: Path, totals: list[int]) -> None:
+    """Reject links/special files and bound the amount of data copied."""
+    try:
+        mode = path.lstat().st_mode
+    except OSError as exc:
+        raise ValueError(f"cannot inspect panel template source entry: {path}: {exc}") from exc
+
+    if stat.S_ISDIR(mode):
+        try:
+            children = sorted(path.iterdir(), key=lambda child: child.name)
+        except OSError as exc:
+            raise ValueError(f"cannot read panel template source directory: {path}: {exc}") from exc
+        for child in children:
+            _validate_source_entry(child, totals)
+        return
+
+    if not stat.S_ISREG(mode):
+        raise ValueError(f"panel template source contains a symlink or special file: {path}")
+
+    totals[0] += 1
+    totals[1] += mode_size(path, mode)
+    if totals[0] > MAX_SOURCE_FILES:
+        raise ValueError(f"panel template source exceeds {MAX_SOURCE_FILES} files")
+    if totals[1] > MAX_SOURCE_BYTES:
+        raise ValueError(f"panel template source exceeds {MAX_SOURCE_BYTES} bytes")
+
+
+def mode_size(path: Path, mode: int) -> int:
+    # lstat was used above, so this size is from the same non-following metadata.
+    return path.lstat().st_size
+
+
 def install(source: Path, destination: Path) -> None:
     source = source.resolve()
-    if not (source / "metadata.desktop").is_file() or not (source / "contents" / "layout.js").is_file():
-        raise ValueError(f"invalid panel template source: {source}")
+    metadata = source / "metadata.desktop"
+    contents = source / "contents"
+    totals = [0, 0]
+    _validate_source_entry(metadata, totals)
+    _validate_source_entry(contents, totals)
     if destination.is_symlink():
         raise FileExistsError(f"refusing symlink destination: {destination}")
     if destination.exists():
@@ -34,8 +72,8 @@ def install(source: Path, destination: Path) -> None:
     staging: Path | None = None
     try:
         staging = Path(tempfile.mkdtemp(prefix=".tusker-dock-staging-", dir=parent))
-        shutil.copy2(source / "metadata.desktop", staging / "metadata.desktop")
-        shutil.copytree(source / "contents", staging / "contents")
+        shutil.copy2(metadata, staging / "metadata.desktop")
+        shutil.copytree(contents, staging / "contents")
         (staging / MARKER).write_text(MARKER_CONTENT, encoding="utf-8")
         # Destination is required not to exist; rename publishes the complete tree atomically.
         os.replace(staging, destination)
