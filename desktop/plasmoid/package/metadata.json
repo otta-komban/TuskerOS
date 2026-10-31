@@ -1,0 +1,18 @@
+{
+  "KPlugin": {
+    "Id": "org.tuskeros.desktop.shellstatus",
+    "Name": "TuskerOS Desktop",
+    "Description": "A lightweight entry point for the TuskerOS desktop shell",
+    "Icon": "computer",
+    "Category": "System Information",
+    "Version": "0.1.0",
+    "License": "MIT",
+    "Authors": [
+      {
+        "Name": "TuskerOS Contributors"
+      }
+    ]
+  },
+  "X-Plasma-API-Minimum-Version": "6.0",
+  "KPackageStructure": "Plasma/Applet"
+}

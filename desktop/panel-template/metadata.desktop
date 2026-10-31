@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=TuskerOS Dock
+Comment=Optional bottom dock using native KDE Plasma launcher and task manager widgets
+Type=Service
+X-KDE-ServiceTypes=Plasma/LayoutTemplate
+X-KDE-PluginInfo-Author=TuskerOS NOVA-02
+X-KDE-PluginInfo-License=GPL-3.0-or-later
+X-KDE-PluginInfo-Name=com.tuskeros.desktop.dock
+X-KDE-PluginInfo-Version=0.1.0
+X-KDE-PluginInfo-Website=https://github.com/otta-komban/TuskerOS
+X-Plasma-API=javascript

@@ -1,0 +1,49 @@
+name: Desktop validation
+
+on:
+  push:
+    branches:
+      - 02-desktop-shell
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-validation.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-static-validation:
+    name: Desktop static validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run desktop unit tests
+        run: python -m unittest discover -s desktop/tests -v
+
+      - name: Validate Plasma applet package
+        run: python desktop/tools/validate_plasmoid.py desktop/plasmoid/package
+
+      - name: Validate native dock template
+        run: python desktop/tools/validate_panel_template.py desktop/panel-template
+
+      - name: Check dock-template JavaScript syntax
+        run: node --check desktop/panel-template/contents/layout.js
