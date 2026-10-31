@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 5  
+Current authorized cohort count: 6  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0014  
+Last completion: PHOENIX-10-C0015  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0015 | P2 | release-report-strict-json-constant-validation | Reject non-standard JSON constants; add regression coverage, UTF-8 CLI error handling, documentation and branch-specific CI trigger. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; workflow commit `1c4893df`; parser smoke checks; JSONL C0015. |
 | PHOENIX-10-C0014 | P2 | release-report-strict-json-parsing | Reject duplicate JSON member names at all nesting depths; added three parser regression tests, documented and updated PR #55. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; CI `41184742602` success; JSONL C0014. |
 | PHOENIX-10-C0013 | P2 | release-report-semantic-validation-hardening | Hardened report digest argument handling and exact integer summary counters; added three regressions, extended PHOENIX CI to run both release validator suites, documented and updated PR #55. | `scripts/validate_release_report.py`; `tests/test_validate_release_report.py`; workflow `.github/workflows/phoenix-release-validation.yml`; CI `41184321235` success; JSONL C0013. |
 | PHOENIX-10-C0012 | P2 | release-evidence-no-follow-hardening | Replaced resolve-then-open evidence hashing with component-by-component no-follow descriptor opens; rejects symlinks, special files and ambiguous path components; added five regression tests and updated PR #55. | `scripts/verify_release_manifest.py`; `tests/test_verify_release_manifest.py`; `docs/PHOENIX-10-RELEASE-VERIFIER.md`; CI `41183117967` 20/20; unified validation `41183117936`; JSONL C0012. |
@@ -28,12 +29,15 @@ Last updated: 2026-10-31
 ## Current authorized cohort accounting
 
 - Suspension lift / cohort start: `2026-10-31T07:39:06Z`.
-- Counted responses in this cohort: **3** — C0010, C0011, C0012.
+- Counted responses in this cohort: **6** — C0010 through C0015.
 - Historical entries C0001–C0009 are preserved above but predate the authorized cohort and are excluded from the 100-response quota.
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
 
+- [x] C0015 response completion logged; strict JSON parsing rejects non-standard numeric constants and has focused parser smoke evidence (full CI for this head pending).
+- [x] C0014 response completion logged; duplicate JSON object keys rejected at every nesting depth.
+- [x] C0013 response completion logged; semantic report counters and digest argument validation hardened.
 - [x] C0012 response completion logged; release evidence paths now use no-follow descriptor opens and five path-hardening regressions pass CI.
 - [x] C0011 response completion logged; ATLAS-01 pinned Fedora Forge source/build-script handoff documented (no image build/runtime acceptance claimed).
 - [x] C0010 response completion logged; branch/base and PR #55 CI evidence re-verified. No new runtime acceptance claimed.
@@ -81,3 +85,6 @@ C0012 limitation: GitHub Actions run 41183117967 executed the verifier tests on 
 C0013 limitation: this response hardened semantic validation of release reports and added focused CI coverage only. It does not verify cryptographic signatures, authorize release promotion, build an image, boot/install a VM, exercise recovery runtime or perform storage operations. The unified validation run triggered by the final branch push was still in progress at ledger update time; the PHOENIX-specific run 41184321235 completed successfully.
 
 C0014 limitation: strict JSON parsing and focused release-report regression coverage only. No cryptographic signature verification, release promotion, image build, VM boot/install, recovery runtime or disk mutation was performed.
+
+
+C0015 limitation: this response added strict rejection of NaN/Infinity/-Infinity and UTF-8 decode error handling, plus regression tests and documentation. Parser smoke checks passed, but the complete repository unittest suites and py_compile have not yet been confirmed on this branch head. No signature verification, release promotion, image build, VM boot/install, recovery runtime or disk mutation was performed.
