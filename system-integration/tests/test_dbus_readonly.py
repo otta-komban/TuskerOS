@@ -353,6 +353,18 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(caught.exception), "bus client unavailable")
         spawn.assert_not_awaited()
 
+    def test_non_finite_and_boolean_timeouts_are_rejected(self):
+        for timeout in (float("nan"), float("inf"), float("-inf"), True):
+            with self.subTest(timeout=timeout):
+                with self.assertRaises(ValueError):
+                    ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=timeout)
+
+    def test_non_integer_output_limits_are_rejected(self):
+        for keyword, value in (("max_stdout", 128.5), ("max_stderr", True)):
+            with self.subTest(keyword=keyword, value=value):
+                with self.assertRaises(ValueError):
+                    ReadOnlySystemBusAdapter(AsyncMock(), **{keyword: value})
+
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
             ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=31)
