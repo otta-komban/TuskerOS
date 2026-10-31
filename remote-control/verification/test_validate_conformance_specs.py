@@ -691,15 +691,15 @@ class RepositoryValidationTests(unittest.TestCase):
 
     def test_fence_closers_require_matching_marker_and_no_info_string(self):
         markdown = (
-            "| PAIR-C01 | Before fence | Reject |\\n"
-            "```markdown\\n"
-            "| PAIR-C01 | Inside fence | Ignored |\\n"
-            "~~~\\n"
-            "| PAIR-C01 | Still inside after different marker | Ignored |\\n"
-            "``` trailing-text\\n"
-            "| PAIR-C01 | Still inside after invalid closer | Ignored |\\n"
-            "```   \\n"
-            "| PAIR-C01 | After valid closer | Reject |\\n"
+            "| PAIR-C01 | Before fence | Reject |\n"
+            "```markdown\n"
+            "| PAIR-C01 | Inside fence | Ignored |\n"
+            "~~~\n"
+            "| PAIR-C01 | Still inside after different marker | Ignored |\n"
+            "``` trailing-text\n"
+            "| PAIR-C01 | Still inside after invalid closer | Ignored |\n"
+            "```   \n"
+            "| PAIR-C01 | After valid closer | Reject |\n"
         )
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
