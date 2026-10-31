@@ -133,7 +133,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         results = validate_repository(args.root)
-    except (OSError, SpecError) as exc:
+    except (OSError, UnicodeError, SpecError) as exc:
         if args.json:
             print(json.dumps({
                 "ok": False,
