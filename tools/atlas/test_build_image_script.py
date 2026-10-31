@@ -49,6 +49,12 @@ class KiwiBundleContractTests(unittest.TestCase):
         self.assertIn('--download-metadata --destdir="$SNAPSHOT_ROOT" --arch=x86_64 --arch=noarch --gpgcheck', SCRIPT)
         self.assertIn('--snapshot-root "$SNAPSHOT_ROOT"', SCRIPT)
 
+    def test_build_metadata_binds_snapshot_resolution_overlay_and_artifact_manifest(self):
+        self.assertIn('"repository_snapshot_lock_sha256": file_sha256(snapshot_path)', SCRIPT)
+        self.assertIn('"package_resolution_sha256": file_sha256(resolution_path)', SCRIPT)
+        self.assertIn('"kiwi_repository_overlay_sha256": file_sha256(overlay_path)', SCRIPT)
+        self.assertIn('"artifact_checksum_manifest_sha256": file_sha256(Path(output_path).with_name("SHA256SUMS"))', SCRIPT)
+
     def test_metadata_does_not_overclaim_reproducibility(self):
         self.assertIn('"repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run"', SCRIPT)
         self.assertIn('"reproducible_build_claim": False', SCRIPT)

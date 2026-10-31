@@ -153,10 +153,12 @@ if [[ "$REPRO_CHECK" == 1 ]]; then
 fi
 
 cp "$RUN_DIR/first/SHA256SUMS" "$OUTPUT_ROOT/SHA256SUMS"
-python3 - "$LOCK" "$SNAPSHOT_LOCK" "$BUILD_ROOT/package-resolution.json" "$OUTPUT_ROOT/build-metadata.json" "$ACTUAL_COMMIT" "$KIWI_VERSION" "$DNF_VERSION" "$SOURCE_DATE_EPOCH" "$RUN_ID" "$REPRO_CHECK" <<'PY'
-import datetime, json, platform, sys
+python3 - "$LOCK" "$SNAPSHOT_LOCK" "$BUILD_ROOT/package-resolution.json" "$OUTPUT_ROOT/build-metadata.json" "$ACTUAL_COMMIT" "$KIWI_VERSION" "$DNF_VERSION" "$SOURCE_DATE_EPOCH" "$RUN_ID" "$REPRO_CHECK" "$KIWI_BUILD_DIR/repositories/core.xml" <<'PY'
+import datetime, hashlib, json, platform, sys
 from pathlib import Path
-lock_path, snapshot_path, resolution_path, output_path, commit, kiwi, dnf, epoch, run_id, repro = sys.argv[1:]
+lock_path, snapshot_path, resolution_path, output_path, commit, kiwi, dnf, epoch, run_id, repro, overlay_path = sys.argv[1:]
+def file_sha256(path: str) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 lock = json.loads(Path(lock_path).read_text(encoding="utf-8"))
 snapshot_lock = json.loads(Path(snapshot_path).read_text(encoding="utf-8"))
 resolution = json.loads(Path(resolution_path).read_text(encoding="utf-8"))
@@ -165,7 +167,11 @@ metadata = {
     "run_id": run_id,
     "created_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     "source_commit": commit,
-    "source_lock_sha256": __import__("hashlib").sha256(Path(lock_path).read_bytes()).hexdigest(),
+    "source_lock_sha256": file_sha256(lock_path),
+    "repository_snapshot_lock_sha256": file_sha256(snapshot_path),
+    "package_resolution_sha256": file_sha256(resolution_path),
+    "kiwi_repository_overlay_sha256": file_sha256(overlay_path),
+    "artifact_checksum_manifest_sha256": file_sha256(Path(output_path).with_name("SHA256SUMS")),
     "fedora_release": lock["platform"]["fedora_release"],
     "architecture": platform.machine(),
     "firmware_target": lock["platform"]["firmware"],
