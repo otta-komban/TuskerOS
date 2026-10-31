@@ -15,6 +15,7 @@
     "action_digest",
     "principal_binding",
     "evaluated_at",
+    "constraints",
     "expires_at",
     "approval_request_id",
     "authorization_ref"
@@ -84,7 +85,8 @@
       "format": "uuid"
     },
     "constraints": {
-      "type": "object"
+      "type": "object",
+      "maxProperties": 0
     },
     "authorization_ref": {
       "type": [
