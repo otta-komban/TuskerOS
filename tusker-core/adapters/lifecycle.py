@@ -205,6 +205,24 @@ class LifecycleEngine:
                    event_id: str | None = None, verified: bool = False,
                    operation_stopped: bool = False, side_effects: bool = False,
                    details: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        # Validate public-call shapes before dictionary/set membership or store access;
+        # malformed caller values must fail as LifecycleError, never leak TypeError.
+        if not isinstance(task_id, str) or not task_id:
+            raise LifecycleError("task_id must be a non-empty string")
+        if type(expected_version) is not int:
+            raise LifecycleError("expected_version must be an integer")
+        if not isinstance(target, str):
+            raise LifecycleError("target state must be a string")
+        if not isinstance(event_type, str):
+            raise LifecycleError("event type must be a string")
+        if idempotency_key is not None and (
+            not isinstance(idempotency_key, str) or not idempotency_key
+        ):
+            raise LifecycleError("idempotency_key must be a non-empty string when supplied")
+        if details is not None and not isinstance(details, Mapping):
+            raise LifecycleError("transition details must be a mapping")
+        if any(type(flag) is not bool for flag in (verified, operation_stopped, side_effects)):
+            raise LifecycleError("transition guard flags must be booleans")
         current = self.store.get(task_id)
         if current is None:
             raise LifecycleError(f"unknown task: {task_id}")
