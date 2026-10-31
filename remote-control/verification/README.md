@@ -71,6 +71,9 @@ invalid UTF-8 specification files.
 These checks do not prove pairing, cryptographic authentication, session expiry,
 revocation, request authorization, transport security, broker behavior, or safe task
 execution. They do not freeze shared contracts or authorize runtime implementation.
-Treat runtime security as unverified until the project reauthorization gate is met,
-the cross-agent P0 contracts are resolved, and the separately required runtime
+The owner has authorized scoped, branch-isolated implementation by the replacement
+agent cohort (Issue #35 comments 6540346389 and 6540745614). That workforce
+authorization does not close PILOT-08's cross-agent P0 contracts or authorize remote
+runtime, listeners, protected routes, or privileged dispatch. Treat runtime security
+as unverified until those P0 contracts are resolved and the separately required runtime
 security tests have been implemented and executed with reviewable evidence.
