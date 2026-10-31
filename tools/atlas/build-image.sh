@@ -100,7 +100,7 @@ build_pair() {
     ./kiwi-build --kiwi-file=Fedora.kiwi --image-type=iso --image-profile="$ISO_PROFILE" --output-dir "$destination/iso"
     ./kiwi-build --kiwi-file=Fedora.kiwi --image-type=oem --image-profile="$DISK_PROFILE" --output-dir "$destination/disk"
   )
-  find "$destination" -type f -print0 | sort -z | xargs -0 -r sha256sum > "$destination/SHA256SUMS"
+  (cd "$destination" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS)
   [[ -s "$destination/SHA256SUMS" ]] || fail "KIWI produced no files in $destination"
 }
 
