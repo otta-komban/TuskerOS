@@ -211,5 +211,41 @@ class ModelStoreTests(unittest.TestCase):
         self.assertTrue(pointer.exists())
 
 
+    def test_activation_pointer_replace_failure_keeps_previous_revision_active(self):
+        self.install_fixture()
+        second_payload = b"second verified revision"
+        second = dict(self.manifest)
+        second["revision"] = "rev-002"
+        second["files"] = [{
+            "filename": "model.gguf",
+            "size_bytes": len(second_payload),
+            "sha256": hashlib.sha256(second_payload).hexdigest(),
+        }]
+        real_replace = os.replace
+        replace_calls = 0
+
+        def fail_activation(source, target):
+            nonlocal replace_calls
+            replace_calls += 1
+            if replace_calls == 2:
+                raise OSError("simulated activation pointer replacement failure")
+            return real_replace(source, target)
+
+        with (
+            patch("tusker_ai.model_store._open_https", return_value=Response(second_payload)),
+            patch("tusker_ai.model_store.os.replace", side_effect=fail_activation),
+        ):
+            with self.assertRaisesRegex(OSError, "activation pointer replacement failure"):
+                self.store.install(second, consent=True)
+
+        self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-001")
+        self.assertTrue(self.store.verify_active("fixture-model"))
+        self.assertTrue((self.store.models / "fixture-model" / "rev-002" / "model.gguf").exists())
+        report = self.store.inspect_recovery()
+        self.assertIn("fixture-model/rev-002", report["orphan_revisions"])
+        self.assertEqual(report["activation_temporary_files"], [])
+        self.assertTrue(report["requires_operator_review"])
+
+
 if __name__ == "__main__":
     unittest.main()
