@@ -80,7 +80,7 @@ class ParseCaseRowsTests(unittest.TestCase):
             validator.parse_case_rows(markdown, "PAIR")
 
     def test_rejects_non_ascii_digits_in_case_identifier(self):
-        markdown = "| PAIR-C٠١ | Non-ASCII digits | Reject |" + "\\n"
+        markdown = "| PAIR-C٠١ | Non-ASCII digits | Reject |" + "\n"
         with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
             validator.parse_case_rows(markdown, "PAIR")
 
@@ -127,9 +127,9 @@ class ValidateSpecTests(unittest.TestCase):
     def test_multiple_duplicate_ids_report_all_lines_in_stable_id_order(self):
         markdown = (
             "| PAIR-C02 | First C02 condition | First C02 assertion |\n"
-            "| PAIR-C01 | First C01 condition | First C01 assertion |\\n"
-            "| PAIR-C02 | Second C02 condition | Second C02 assertion |\\n"
-            "| PAIR-C01 | Second C01 condition | Second C01 assertion |\\n"
+            "| PAIR-C01 | First C01 condition | First C01 assertion |\n"
+            "| PAIR-C02 | Second C02 condition | Second C02 assertion |\n"
+            "| PAIR-C01 | Second C01 condition | Second C01 assertion |\n"
         )
         with self.assertRaises(validator.SpecError) as caught:
             validator.validate_spec(markdown, "PAIR", 2)
@@ -456,7 +456,7 @@ class RepositoryValidationTests(unittest.TestCase):
             sess_path = root / validator.SPECS["SESS"][0]
             pair_path.parent.mkdir(parents=True, exist_ok=True)
             sess_path.parent.mkdir(parents=True, exist_ok=True)
-            pair_path.write_text("| PAIR-C01 | Condition | Assertion |\\n", encoding="utf-8")
+            pair_path.write_text("| PAIR-C01 | Condition | Assertion |\n", encoding="utf-8")
             sess_path.write_text("", encoding="utf-8")
             original_read_text = Path.read_text
 
@@ -489,7 +489,7 @@ class RepositoryValidationTests(unittest.TestCase):
             root = Path(temporary_root)
             pair_path = root / validator.SPECS["PAIR"][0]
             pair_path.parent.mkdir(parents=True, exist_ok=True)
-            pair_path.write_text("| PAIR-C01 | Condition | Assertion |\\n", encoding="utf-8")
+            pair_path.write_text("| PAIR-C01 | Condition | Assertion |\n", encoding="utf-8")
             original_read_text = Path.read_text
 
             def controlled_read_text(path, *args, **kwargs):
@@ -537,7 +537,7 @@ class RepositoryValidationTests(unittest.TestCase):
                 spec_path.parent.mkdir(parents=True, exist_ok=True)
                 spec_path.write_text(
                     "".join(
-                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\\n"
+                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\n"
                         for number in range(1, case_count + 1)
                     ),
                     encoding="utf-8",
