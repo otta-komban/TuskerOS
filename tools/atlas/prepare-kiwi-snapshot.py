@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import urllib.parse
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -60,6 +61,12 @@ def prepare_overlay(description_root: Path, snapshot_root: Path, lock_path: Path
         signing = source.find("signing")
         if signing is None or not signing.attrib.get("key", "").startswith("file://"):
             raise RuntimeError(f"{repository_id}: Fedora RPM signing-key reference is missing")
+        signing_key_url = urllib.parse.urlparse(signing.attrib["key"])
+        signing_key_path = Path(urllib.parse.unquote(signing_key_url.path))
+        if not signing_key_path.is_file():
+            raise RuntimeError(f"{repository_id}: Fedora RPM signing key is not installed: {signing_key_path}")
+        repository.set("repository_gpgcheck", "true")
+        repository.set("package_gpgcheck", "true")
         repository_path = (snapshots / repository_id).resolve(strict=True)
         if not repository_path.is_relative_to(snapshots):
             raise RuntimeError(f"{repository_id}: local repository path escapes snapshot root")
