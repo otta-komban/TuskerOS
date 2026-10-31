@@ -769,3 +769,15 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **CI:** Workflow run 41171447596 completed successfully on the preceding branch head; its security-contract job succeeded. This is schema/contract CI only, not runtime enforcement evidence.
 - **Security posture:** No runtime implementation was found in the reviewed owner branches. Keep privileged/provider mutations fail-closed.
 - **JSONL:** C0067 appended as record 67; JSONL commit: `41d4ec3ac65137903cfdfa13d2a321b9781253b3`.
+
+
+## C0068 — PHOENIX installer JCS Unicode mismatch
+
+- **Response completions:** **20 / 100** (+1; C0067 recorded 19).
+- **Engineering tasks:** **50 cumulative** (+1 cross-agent security contract review).
+- **Finding SEC-INST-001:** PHOENIX-10 branch `10-installer-recovery` at `08b95273876767c7bab3c46e668f267e9d140d1c` still says installer digest uses NFC normalization. AEGIS `POLICY_ENGINE_SPEC.md` requires exact Unicode code-point preservation for RFC 8785 JCS and forbids generic NFC/NFD/NFKC/NFKD/case-fold/trim preprocessing.
+- **Risk:** Different preview/approval and execution canonicalization can produce different digests for code-point-distinct strings, undermining exact action binding.
+- **Owner follow-up:** Posted correction and requested actual digest-path Unicode tests on [issue #4 comment 6539428019](https://github.com/otta-komban/TuskerOS/issues/4#issuecomment-6539428019).
+- **AEGIS records:** Added SEC-INST-001 to `security/SCHEMA_CONSISTENCY_AUDIT.md` and `security/PHASE1_CHECKLIST.md`.
+- **Verification boundary:** No PHOENIX files modified; no PHOENIX tests run. AEGIS fixture vectors are not production JCS evidence. Destructive installer execution remains blocked pending correction and runtime verification.
+- **Commits:** audit `1b7dc7883b3ea8eed868c5b5e48105accd75538f`; checklist `8a435b7dd5603206cfa598f8b00a89b2c9ba72be`; JSONL `15abe1f1ece96c3fe40faf597e5970aeb38ed42d`.
