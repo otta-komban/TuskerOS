@@ -39,10 +39,10 @@ The following are proposed work packages within the PHOENIX role. They are not n
 - AEGIS-06 / release maintainers must select the release trust envelope and key-custody model before cryptographic verification is implemented.
 
 **Current evidence / blockers**
-- `os/image-source.lock.json` pins Fedora Forge KIWI source commit `dfc49a5a10f69941179fdadd96aa6a5984f7c677`, Fedora 44 `f44`, and the ISO/QCOW2 profile pair.
-- `os/package-manifest.csv` has no package rows. ATLAS documents that the build fails closed until reviewed exact NEVRAs and repository snapshot inputs are supplied.
-- No actual ISO/QCOW2 build, checksum production, or VM boot evidence is present in the inspected handoff.
-- AEGIS has described TUF and detached OpenPGP as alternative designs; neither is selected pending release-channel and key-custodian decisions.
+- ATLAS-01 has now confirmed the canonical Fedora Forge source `https://forge.fedoraproject.org/releng/kiwi-descriptions.git`, ref `f44`, commit `dfc49a5a10f69941179fdadd96aa6a5984f7c677`, and profiles `KDE-Desktop-Live` (`iso`) plus `KDE-Desktop-Disk` (`oem`). The live `main` lock file `os/image-source.lock.json` records these IDs and source blob hashes; it explicitly records that the upstream commit signature is **not verified**.
+- `os/package-manifest.csv` was fetched from live `main` and still contains no package rows. ATLAS says build automation fails closed until reviewed exact NEVRAs and repository snapshot inputs are supplied.
+- No actual ISO/QCOW2 build, checksum production, or VM boot evidence is present in the inspected handoff. The source/profile handoff is materially advanced, but the package inputs and actual build remain open.
+- AEGIS has described TUF and detached OpenPGP as alternative designs; neither is selected pending release-channel and key-custodian decisions. AEGIS also issued `SEC-INST-001` against a stale NFC-normalization statement in the historical PHOENIX conformance plan; any future digest implementation must preserve exact JSON Unicode code points per JCS and reject invalid surrogate sequences. This is a review finding, not a change to shared schemas or authorization to implement trust.
 
 **Acceptance**
 - Reviewed non-empty package manifest and repository snapshot lock.
@@ -104,6 +104,8 @@ Chief Architect: assign the next PHOENIX-10 task ID and bounded acceptance crite
 - [PHOENIX CI run 41181257090](https://github.com/otta-komban/TuskerOS/actions/runs/41181257090)
 - [Unified CI run 41181257048](https://github.com/otta-komban/TuskerOS/actions/runs/41181257048)
 - [ATLAS handoff / Issue #2](https://github.com/otta-komban/TuskerOS/issues/2)
+- [Live ATLAS source lock](https://github.com/otta-komban/TuskerOS/blob/main/os/image-source.lock.json)
+- [Live package manifest (still header/comments only)](https://github.com/otta-komban/TuskerOS/blob/main/os/package-manifest.csv)
 - [NEXUS storage handoff / Issue #3](https://github.com/otta-komban/TuskerOS/issues/3)
 - [AEGIS installer and release trust / Issue #4](https://github.com/otta-komban/TuskerOS/issues/4)
 
