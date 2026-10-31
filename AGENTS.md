@@ -3,46 +3,35 @@
 This file is the repository-wide operating contract for every AI or human contributor.
 
 ## Start here
-1. Read `docs/agents/README.md`.
-2. Read `docs/agents/OPERATING_RULES.md`.
-3. Read your assigned role in `docs/agents/AGENT_TASKS.md`.
-4. Read the relevant component architecture, contracts, schemas, and tests before editing.
-5. Confirm your assigned branch and the current `main` base SHA with the project coordinator.
+1. Read docs/agents/README.md.
+2. Read docs/agents/OPERATING_RULES.md.
+3. Read your assigned role in docs/agents/AGENT_TASKS.md.
+4. Read docs/agents/LAUNCH-10-AGENTS-2026-10-31.md and your matching role guide under docs/agents/launch/.
+5. Read the relevant component architecture, contracts, schemas and tests. Confirm your assigned branch and live main SHA.
 
 ## Non-negotiable rules
-- Work only on your assigned `agent/NN-...` branch. Never commit directly to `main` or another agent's branch.
-- Keep changes scoped to your role. Shared contracts, schemas, security boundaries, package trust, lifecycle semantics, and cross-component APIs require Chief Architect approval before modification.
+- For the 2026-10-31 launch cohort, work only on the exact NN-AGENT branch mapped in docs/agents/LAUNCH-10-AGENTS-2026-10-31.md. This owner-approved mapping supersedes legacy agent/NN-short-scope names for this cohort. Never commit directly to main or another agent branch.
+- Keep changes scoped. Shared contracts, schemas, security boundaries, package trust, lifecycle semantics and cross-component APIs require Chief Architect approval before modification.
 - Never overwrite another agent's work, force-push, rebase shared branches, cherry-pick blindly, or merge your own PR.
 - Make small, reviewable commits. One coherent deliverable per pull request.
-- Add or update tests with every behavior change. A test is not evidence until it has actually run; record the command, result, and commit SHA.
-- Do not weaken, skip, xfail, or delete tests merely to obtain a green build. Explain and fix the underlying issue.
-- Do not claim runtime, hardware, image, VM, inference, security, or release behavior without reproducible evidence.
-- No secrets, credentials, private keys, tokens, personal data, or sensitive logs in Git.
-- Trusted low-risk actions may proceed automatically. Sensitive, privileged, destructive, irreversible, or externally consequential actions require explicit owner approval.
-- Preserve history and forensic evidence. Do not delete branches, logs, or records unless the repository owner explicitly approves.
-- If blocked by a missing contract, dependency, credential, decision, or unsafe condition, stop at the boundary and file a concise blocker. Do not invent a substitute.
+- Add/update tests with every behavior change. Record command, result and commit SHA.
+- Do not weaken, skip, xfail or delete tests to obtain green build.
+- Do not claim runtime, hardware, image, VM, inference, security or release behavior without reproducible evidence.
+- No secrets, credentials, private keys, tokens, personal data or sensitive logs in Git.
+- Trusted low-risk actions may proceed automatically. Sensitive, privileged, destructive, irreversible or externally consequential actions require explicit owner approval.
+- Preserve history and forensic evidence. Do not delete branches, logs or records unless owner explicitly approves.
+- If blocked by missing contract, dependency, credential, decision or safe condition, stop and file a concise blocker.
 
 ## Required work cycle
 Plan -> inspect -> implement -> test -> document -> commit -> PR -> review -> merge by authorized integrator.
 
-Every task update must identify:
-- task ID and acceptance criteria;
-- branch and base SHA;
-- files changed;
-- tests actually run and exact outcomes;
-- commit SHA(s);
-- remaining risks, blockers, and rollback/migration notes.
+Every task update identifies task ID/acceptance, branch/base SHA, files changed, exact tests/results, commit SHAs, risks, blockers and rollback/migration notes.
 
 ## Response completion accounting
-- **One substantive assistant response in this agent chat = at most one completion.** Count the response once, no matter how many tasks, commits, tests, files, or milestones it contains. For this cohort, count only responses at or after `2026-10-31T07:39:00Z` (the verified suspension-lift time); pre-boundary records are frozen historical work.
-- A status-only/acknowledgement/tool-only response is zero completions.
-- Never infer the count from a C-number, task ID, milestone count, commit count, or number of deliverables. For example, `C0010` does not mean 10 completions.
-- Append exactly one record per qualifying response to your own `logs/completions/<AGENT-ID>.jsonl` on your assigned branch. Never edit another agent's file or the coordinator-owned canonical ledger.
-- Re-read your local log and derive your dashboard count from its records. Show local count and canonical validated count separately. A local record is not canonical until coordinator validation.
-- If branch-local logging cannot be committed, do not claim the log was updated or increment the count.
+Follow docs/agents/LAUNCH-LOGGING-2026-10-31.md for this launch cohort. One substantive assistant response in that agent chat equals one completion; status-only/ack/tool-only equals zero. Append one record to your own launch log only. Coordinator validates/imports canonical records. Never backdate, duplicate, rewrite or infer counts from tasks/commits/tests.
 
-## Pull request requirements
-Every PR must include the task ID, scope, design/contract impact, test evidence, risks, migration/rollback, and exact source/base SHAs. Do not merge without required checks on the exact PR head, review, and integration acceptance.
+## Pull requests
+Every PR includes task ID, scope, design/contract impact, test evidence, risks, migration/rollback and exact source/base SHAs. Do not merge without required checks on exact PR head, review and integration acceptance.
 
 ## Status honesty
-Use only verified GitHub refs and actual test output. Report unknown as unknown. Green contract CI does not imply a working OS image or runtime.
+Use verified Git refs and actual test output. Report unknown as unknown. Green contract CI does not imply a working OS image or runtime.
