@@ -692,3 +692,26 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Rule reaffirmed:** Increment the visible completion counter exactly once per directly verified complete user-message/assistant-response pair. Do not derive it from JSONL row count, task count, commits, tool calls, or activity in other project chats.
 - **Current counts:** Visible-segment completions **9 / 100**; historical JSONL records **60** (C0001–C0060, sequential); engineering tasks **49** (no task increment for this bookkeeping correction).
 - **Commit:** JSONL correction cb80bf4567a2f604e15f4e82d96224c6a8e01589. This ledger correction is appended separately.
+
+## Accounting correction — response-based completion rule
+
+- **Authoritative rule:** One complete assistant response equals exactly one completion. Engineering tasks, commits, JSONL rows, tool calls, and visible UI segments are separate measures and never alter this counter.
+- **Supersedes C0060:** C0060's visible-segment count of 9/100 and its proposed historical reinterpretation are invalid. Preserve that record for audit, but do not use its counter.
+- **Reconciliation:** C0055 was 7/100. Assistant responses C0056–C0061 are six further responses, so C0061 is 13/100. The current C0062 response is 14/100.
+- **Engineering task count:** 49 cumulative; no new engineering task was completed by this accounting correction or blocker revalidation.
+- **JSONL:** C0061 and C0062 appended as records 61 and 62. JSONL commit: `952183ab68d40a5b51190c21cfcba7687f1d182d`.
+
+## C0061 — response completion accounting correction
+
+- **Completions:** 13 / 100 (+1 response).
+- **Engineering tasks:** 49 cumulative (+0).
+- Corrected the count to the user's explicit one-response-one-completion rule. Supersedes C0060's invalid visible-segment accounting without rewriting historical records.
+- No engineering artifacts changed.
+
+## C0062 — NEXUS-07 blocker and branch revalidation
+
+- **Completions:** 14 / 100 (+1 response).
+- **Engineering tasks:** 49 cumulative (+0).
+- Re-fetched branch `06-security-gatekeeper` at `07e0e09524f1db97aaf841f0435811522758c072`; live comparison is **346 ahead / 0 behind** `main`. No merge or rebase performed.
+- Re-fetched issue #17 comments. No NEXUS-07 owner response has resolved authorization evidence transport, atomic consume, registry ownership, broker peer identity, or UNKNOWN/idempotency behavior.
+- No source changes or tests in this revalidation. Privileged execution remains blocked pending NEXUS-owned implementation and executable positive/negative evidence.
