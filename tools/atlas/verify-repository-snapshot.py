@@ -64,12 +64,17 @@ def parse_repomd(data: bytes) -> tuple[str, str, str, str]:
     return revision.strip(), href, checksum_value, checksum_type
 
 
+def primary_metadata_url(repomd_url: str, href: str) -> str:
+    # Fedora repomd.xml lives under repodata/, while href is relative to repo root.
+    return urllib.parse.urljoin(repomd_url, "../" + href)
+
+
 def capture_repository(repository_id: str, repomd_url: str) -> dict[str, str]:
     if not repository_id or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-" for c in repository_id):
         raise RuntimeError(f"invalid repository ID: {repository_id!r}")
     repomd = fetch_https(repomd_url)
     revision, primary_href, primary_sha256, _ = parse_repomd(repomd)
-    primary_url = urllib.parse.urljoin(repomd_url, primary_href)
+    primary_url = primary_metadata_url(repomd_url, primary_href)
     primary_data = fetch_https(primary_url)
     actual_primary_sha256 = sha256(primary_data)
     if actual_primary_sha256 != primary_sha256:
@@ -137,7 +142,7 @@ def verify_lock(path: Path, *, require_repositories: bool = True) -> dict[str, d
         revision, href, primary_sha256, _ = parse_repomd(repomd)
         if revision != entry["revision"] or href != entry["primary_href"] or primary_sha256 != entry["primary_sha256"]:
             raise RuntimeError(f"{repo_id}: repomd.xml revision or primary metadata identity changed")
-        primary_url = urllib.parse.urljoin(entry["repomd_url"], href)
+        primary_url = primary_metadata_url(entry["repomd_url"], href)
         actual_primary_sha256 = sha256(fetch_https(primary_url))
         if actual_primary_sha256 != entry["primary_sha256"]:
             raise RuntimeError(f"{repo_id}: primary metadata SHA-256 changed: {actual_primary_sha256}")
