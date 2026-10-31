@@ -151,3 +151,13 @@ boolean guard flags before store access or enum/set membership. Invalid caller
 values fail with `LifecycleError` and leave the snapshot/event stream unchanged.
 This is defensive API-boundary validation; it does not add fields or change the
 provisional lifecycle contract.
+
+
+## Cancellation API argument validation
+
+Cancellation requests validate task identity, expected-version type, and the
+reason's string type before idempotency lookup or store access. Stop confirmation
+validates task identity, expected-version type, and requires an actual boolean
+stop acknowledgement. Malformed values fail with `LifecycleError` rather than
+leaking dictionary/set type errors or accepting truthy non-boolean values.
+Rejected calls do not mutate the task snapshot or event stream.
