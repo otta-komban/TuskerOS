@@ -530,6 +530,13 @@ VALID_ALLOW_DECISION = {
 }
 
 
+def test_policy_decision_constraints_schema_is_explicitly_closed_and_empty_only():
+    constraint_schema = POLICY_SCHEMA["properties"]["constraints"]
+    assert constraint_schema["type"] == "object"
+    assert constraint_schema["maxProperties"] == 0
+    assert constraint_schema["additionalProperties"] is False
+
+
 def test_policy_decision_constraints_must_be_present_and_empty():
     decision = dict(VALID_ALLOW_DECISION)
     assert list(policy_validator().iter_errors(decision)) == []
@@ -537,7 +544,7 @@ def test_policy_decision_constraints_must_be_present_and_empty():
     assert list(policy_validator().iter_errors(decision))
 
 
-@pytest.mark.parametrize("constraints", [{"unknown": True}, {"timeout_ms": 1000}, {"resource_scope": ["system:*"]}])
+@pytest.mark.parametrize("constraints", [None, [], "system:*", 0, {"unknown": True}, {"timeout_ms": 1000}, {"resource_scope": ["system:*"]}])
 def test_policy_decision_rejects_non_empty_constraints(constraints):
     decision = dict(VALID_ALLOW_DECISION)
     decision["constraints"] = constraints
