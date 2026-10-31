@@ -151,13 +151,13 @@ metadata = {
     "upstream_commit": lock["source"]["commit"],
     "package_manifest_sha256": resolution["manifest_sha256"],
     "repository_snapshots": snapshot_lock["repositories"],
-    "repository_metadata_verified": True,
+    "repository_snapshot_preflight_verified": True,\n    "repository_snapshot_consumed_by_kiwi": False,
     "repository_metadata_signature_verified": snapshot_lock.get("signature_verification") == "verified",
     "resolved_packages": resolution["packages"],
     "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
     "reproducible_build_claim": False,
     "reproducibility_limitations": [
-        "RPM payload checksums are not yet recorded in the package lock",
+        "KIWI and DNF5 still need to consume a frozen local repository snapshot; preflight verification alone does not pin later package downloads",\n        "RPM payload checksums are not yet recorded in the package lock",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
     ],
     "artifact_checksums": "SHA256SUMS"
