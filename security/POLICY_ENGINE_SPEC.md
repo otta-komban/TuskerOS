@@ -55,6 +55,18 @@ Risk escalation predicates MUST be deterministic and testable. Unknown resource 
 11. On user approval, re-authenticate principal/session, re-resolve resources, recheck preconditions and current policy, then atomically consume approval once and issue a short-lived authorization reference.
 12. Executor and broker verify authorization immediately before execution, including exact digest, principal, operation, resource scope, expiry, policy version and one-time state. Any mismatch => reject and audit.
 
+## 4.1 Interim policy-constraint handling (SEC-SCHEMA-007)
+
+The current policy-decision schema leaves `constraints` structurally open and the repository has not ratified a canonical vocabulary. Until policy-engine and broker owners agree a bounded, versioned vocabulary:
+
+- A policy producer MUST emit `constraints: {}` only.
+- A consumer MUST reject a decision with a non-empty `constraints` object rather than silently ignore or drop unknown keys.
+- A consumer MUST NOT infer additional permission, broaden operation/resource scope, or relax broker-side limits from an unrecognized constraint.
+- Missing, malformed, or unsupported constraint data MUST result in DENY and zero executor/broker handler calls.
+- An empty object conveys no additional execution permission; the operation's registered schema and broker-enforced bounds remain authoritative.
+
+This is a conservative interim contract, not a claim that any current policy consumer implements it. Do not close SEC-SCHEMA-007 or promote the schema until the vocabulary, schema validation, and consumer fail-closed behavior have owner-approved tests.
+
 ## 5. Canonicalization and digest
 
 Use RFC 8785 JCS over a normalized envelope with explicit field names and no undefined values. Normalize resource ordering by (kind, canonical_id, access) before canonicalization. Reject duplicate resource tuples. Strings are Unicode-normalized to NFC before schema validation; reject invalid Unicode and ambiguous path encodings. Do not normalize case unless the resource provider defines case-insensitive identity. Include principal binding and policy/registry version in the authorization digest domain. Digest comparison is constant-time where secret-derived values are compared. Never hash raw JSON bytes or model-authored display strings as a substitute for canonical semantics.
