@@ -10,6 +10,14 @@ SCRIPT = (ROOT / "tools" / "atlas" / "build-image.sh").read_text(encoding="utf-8
 
 
 class KiwiBundleContractTests(unittest.TestCase):
+    def test_each_build_run_gets_a_unique_directory(self):
+        self.assertIn('RUN_DIR="$(mktemp -d "$BUILD_ROOT/run-$RUN_ID.XXXXXX")"', SCRIPT)
+        self.assertNotIn('RUN_DIR="$BUILD_ROOT/run-$RUN_ID"\nmkdir -p "$RUN_DIR"', SCRIPT)
+
+    def test_build_pair_removes_stale_bundle_and_intermediate_outputs(self):
+        self.assertIn('rm -rf -- "$destination/iso" "$destination/disk" "$destination/iso-build" "$destination/disk-build"', SCRIPT)
+        self.assertLess(SCRIPT.index('rm -rf -- "$destination/iso"'), SCRIPT.index('mkdir -p "$destination/iso"'))
+
     def test_both_profiles_request_result_bundle_export(self):
         self.assertIn('--image-type=iso --image-profile="$ISO_PROFILE" --image-release=0', SCRIPT)
         self.assertIn('--image-type=oem --image-profile="$DISK_PROFILE" --image-release=0', SCRIPT)

@@ -121,11 +121,13 @@ DNF_VERSION="$(dnf5 --version 2>&1 | head -n 1)"
 SOURCE_DATE_EPOCH="$(git -C "$UPSTREAM_DIR" show -s --format=%ct "$UPSTREAM_COMMIT")"
 export SOURCE_DATE_EPOCH
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
-RUN_DIR="$BUILD_ROOT/run-$RUN_ID"
-mkdir -p "$RUN_DIR"
+# mktemp adds a collision-resistant suffix if two invocations start in one second.
+RUN_DIR="$(mktemp -d "$BUILD_ROOT/run-$RUN_ID.XXXXXX")"
 
 build_pair() {
   local destination="$1"
+  # Never let a retry or a previous partial run contribute stale deliverables.
+  rm -rf -- "$destination/iso" "$destination/disk" "$destination/iso-build" "$destination/disk-build"
   mkdir -p "$destination/iso" "$destination/disk"
   (
     cd "$KIWI_BUILD_DIR"
