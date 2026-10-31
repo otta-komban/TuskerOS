@@ -34,6 +34,7 @@ Run:
 `python -m unittest desktop.tests.test_settings_controller desktop.tests.test_settings_migration desktop.tests.test_settings_ui desktop.tests.test_settings_app -v`.
 
 These tests exercise restart persistence, invalid update rejection, write
-failure recovery, reset, detached reads, bounded migration and source-level
-host/accessibility contracts. Qt runtime, keyboard navigation and screen-reader
-testing still require the supported Plasma/Qt environment.
+failure recovery, reset, detached reads, bounded migration, and the backend
+recovery round trip from rejected edits through explicit reset to successful
+updates. Qt runtime, keyboard navigation and screen-reader testing still
+require the supported Plasma/Qt environment.
