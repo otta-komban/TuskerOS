@@ -88,3 +88,9 @@ event stream, missing or duplicate event IDs, cross-task events, non-contiguous
 sequence numbers, a task version that differs from the event count, or a final
 event state that differs from the task snapshot. These checks detect corruption;
 they do not repair state or execute any operation.
+
+Replay also verifies that the first record is the queued `task.created` event,
+event IDs are UUIDs, and each subsequent state change follows the declared
+transition graph. A `task.cancel_requested` event must preserve state, while
+`task.cancelled` must carry the cancelled state. This is validation only; replay
+does not repair or re-execute.

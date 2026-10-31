@@ -131,6 +131,25 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaises(InvalidTransition):
             self.move("failed", details={"outcome_unknown": True})
 
+    def test_replay_rejects_invalid_state_transition(self):
+        task_id = self.task["task_id"]
+        self.move("planning")
+        self.store._events[task_id][1]["state"] = "completed"
+        with self.assertRaisesRegex(LifecycleError, "invalid state transition"):
+            self.engine.replay(task_id)
+
+    def test_replay_requires_creation_event_and_queued_initial_state(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["type"] = "task.state_changed"
+        with self.assertRaisesRegex(LifecycleError, "task.created"):
+            self.engine.replay(task_id)
+
+    def test_replay_rejects_malformed_event_uuid(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["event_id"] = "not-a-uuid"
+        with self.assertRaisesRegex(LifecycleError, "invalid event ID"):
+            self.engine.replay(task_id)
+
     def test_replay_rejects_unknown_task(self):
         with self.assertRaisesRegex(LifecycleError, "unknown task"):
             self.engine.replay("00000000-0000-4000-8000-000000000099")

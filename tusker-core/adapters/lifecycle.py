@@ -259,14 +259,40 @@ class LifecycleEngine:
         events = self.store.events(task_id)
         if not events:
             raise LifecycleError("event stream is empty")
-        if any(event.get("sequence") != index for index, event in enumerate(events, 1)):
+        if any(type(event.get("sequence")) is not int or event.get("sequence") != index
+               for index, event in enumerate(events, 1)):
             raise LifecycleError("event sequence is not contiguous")
         event_ids = [event.get("event_id") for event in events]
         if any(not event_id for event_id in event_ids) or len(set(event_ids)) != len(event_ids):
             raise LifecycleError("event stream contains missing or duplicate event IDs")
+        for event_id in event_ids:
+            try:
+                UUID(event_id)
+            except (ValueError, TypeError, AttributeError) as exc:
+                raise LifecycleError("event stream contains an invalid event ID") from exc
         if any(event.get("task_id") != task_id for event in events):
             raise LifecycleError("event stream contains an event for another task")
-        if task.get("version") != len(events):
+        first = events[0]
+        if first.get("type") != "task.created" or first.get("state") != "queued":
+            raise LifecycleError("event stream must begin with task.created in queued state")
+        previous_state = "queued"
+        for index, event in enumerate(events):
+            state = event.get("state")
+            if state not in TASK_STATES:
+                raise LifecycleError("event stream contains an unknown task state")
+            if index and event.get("type") == "task.created":
+                raise LifecycleError("event stream contains a duplicate task.created event")
+            if index and state != previous_state:
+                if state not in ALLOWED_TRANSITIONS.get(previous_state, set()):
+                    raise LifecycleError(
+                        f"event stream contains an invalid state transition: {previous_state} -> {state}"
+                    )
+            if event.get("type") == "task.cancel_requested" and state != previous_state:
+                raise LifecycleError("cancellation request event must not change task state")
+            if event.get("type") == "task.cancelled" and state != "cancelled":
+                raise LifecycleError("task.cancelled event must carry cancelled state")
+            previous_state = state
+        if type(task.get("version")) is not int or task.get("version") != len(events):
             raise LifecycleError("task version does not match event stream length")
         if events[-1].get("state") != task.get("state"):
             raise LifecycleError("task snapshot state does not match final event")
