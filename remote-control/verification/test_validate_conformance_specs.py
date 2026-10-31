@@ -90,6 +90,28 @@ class ParseCaseRowsTests(unittest.TestCase):
             validator.parse_case_rows(markdown, "PAIR")
 
 
+    def test_ignores_fenced_and_indented_code_example_rows(self):
+        markdown = (
+            "| PAIR-C01 | Actual specification case | Reject safely |\\n"
+            "```markdown\\n"
+            "| PAIR-C01 | Fenced example duplicate | Ignored |\\n"
+            "```\\n"
+            "~~~text\\n"
+            "| PAIR-C01 | Tilde-fenced example duplicate | Ignored |\\n"
+            "~~~\\n"
+            "    | PAIR-C01 | Indented example duplicate | Ignored |\\n"
+            "\\t| PAIR-C01 | Tab-indented example duplicate | Ignored |\\n"
+        )
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [("PAIR-C01", "Actual specification case", "Reject safely")],
+        )
+        self.assertEqual(
+            validator.validate_spec(markdown, "PAIR", 1),
+            ["PAIR-C01"],
+        )
+
+
 class ValidateSpecTests(unittest.TestCase):
     def test_accepts_contiguous_case_ids(self):
         markdown = "".join(
