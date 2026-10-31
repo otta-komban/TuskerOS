@@ -36,3 +36,8 @@ Run from repository root:
 5. Audit key provisioning/rotation, access control, external checkpoints, backup/restore and tamper recovery need platform integration.
 
 This milestone does not enable privileged execution and does not satisfy security/PRIVILEGED_RELEASE_GATE.md.
+
+
+## Security database file boundary
+
+The SQLite security-state database must be a regular file with exactly one hard link. Initialization rejects final-component symlinks and multiply-linked files before permission changes or SQL writes, tightens the database file to owner-only mode (`0600`), and checks that the pathname still resolves to the originally opened inode before issuing SQL. The containing directory and platform-level access controls remain deployment responsibilities.
