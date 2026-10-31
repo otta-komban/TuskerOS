@@ -55,7 +55,7 @@ class CatalogEntryValidationTests(unittest.TestCase):
         self.assertTrue(any("semantic version" in e for e in validate_catalog_entry(entry)))
 
     def test_semver_rejects_empty_and_leading_zero_prerelease_identifiers(self):
-        for version in ("1.2.3-alpha..1", "1.2.3-alpha.", "1.2.3-01", "1.2.3-0.01"):
+        for version in ("1.2.3-alpha..1", "1.2.3-alpha.", "1.2.3-01", "1.2.3-0.01", "1.٢.3"):
             with self.subTest(version=version):
                 entry = copy.deepcopy(self.fixture)
                 entry["release"]["version"] = version
