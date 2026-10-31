@@ -246,3 +246,15 @@ This is an interim fail-closed contract, not the final constraint vocabulary. Th
 
 | POL-CON-007 | Schema declares constraints as object, maxProperties=0 and additionalProperties=false | Pass | `test_policy_decision_constraints_schema_is_explicitly_closed_and_empty_only` |
 | POL-CON-008 | Decision supplies a non-object constraints value | Reject | `test_policy_decision_rejects_non_empty_constraints` (expanded type cases) |
+
+
+## JCS Unicode preservation vectors
+
+| ID | Scenario | Expected result | Runtime status |
+|---|---|---|---|
+| JCS-UNICODE-001 | Canonicalize a string containing U+00E9 | Preserve the exact code point and match the reference UTF-8 bytes and SHA-256 in `JCS_UNICODE_TEST_VECTORS.json` | Reference-fixture test only; runtime pending |
+| JCS-UNICODE-002 | Canonicalize the canonically equivalent U+0065 U+0301 sequence | Preserve both code points; output bytes and SHA-256 must differ from JCS-UNICODE-001 | Reference-fixture test only; runtime pending |
+| JCS-UNICODE-003 | Input contains an unpaired surrogate | Reject before digest creation; do not replace or normalize it | Runtime conformance pending |
+| JCS-UNICODE-004 | Operation-specific identifier resolution applies provider-defined canonicalization | Bind both the original validated argument and the trusted resolved resource identifier in the digest envelope | Runtime conformance pending |
+
+These rows are acceptance requirements. The current Python test verifies the string-only reference fixtures; it does not implement or certify the production JCS canonicalizer.
