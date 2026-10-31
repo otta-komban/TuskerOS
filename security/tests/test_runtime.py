@@ -72,6 +72,30 @@ def consume(db, ref, **changes):
     args.update(changes)
     return db.consume(ref, **args)
 
+@pytest.mark.parametrize("field,value", [
+    ("principal_binding", D4), ("proposal_id", str(uuid.uuid4())),
+    ("operation_id", "broker.other.op"), ("risk_class", "R4"),
+    ("policy_version", "policy-2"), ("action_digest", D3),
+    ("task_id", "other-task"), ("step_id", "other-step"),
+    ("registry_version", "registry-2"), ("registry_status", "unavailable"),
+])
+def test_create_approval_rejects_mismatched_audit_context(field, value):
+    db = store()
+    try:
+        proposal_id = str(uuid.uuid4())
+        context = audit(proposal_id=proposal_id)
+        context[field] = value
+        with pytest.raises(SecurityStoreError, match="audit context"):
+            db.create_approval(action_id="system.disk.erase", broker_operation_id="broker.disk.erase",
+                action_digest=D4, proposal_id=proposal_id, principal_binding=D1,
+                policy_version="policy-1", risk_class="R3", task_id="task-1", step_id="step-1",
+                binding=BINDING, expires_at=NOW + timedelta(minutes=2), audit_context=context, now=NOW)
+        assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
 def test_jcs_unicode_vectors_and_reject_invalid_subset():
     assert canonical_bytes({"name": "é"}).hex() == "7b226e616d65223a22c3a9227d"
     assert digest({"name": "é"}) == "sha256:2f16b8477146a1b2ba7d6bb7cf7c9979c191cc2838a107dbf5f0d920b4cb3ba1"
