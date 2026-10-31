@@ -36,9 +36,12 @@ class ModelStoreTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_download_verifies_digest_and_atomically_activates(self):
+    def install_fixture(self):
         with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
-            path = self.store.install(self.manifest, consent=True)
+            return self.store.install(self.manifest, consent=True)
+
+    def test_download_verifies_digest_and_atomically_activates(self):
+        path = self.install_fixture()
         self.assertEqual(path.read_bytes(), self.payload)
         self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-001")
         self.assertEqual(path.stat().st_mode & 0o777, 0o400)
@@ -92,15 +95,13 @@ class ModelStoreTests(unittest.TestCase):
             self.store.install(bad, consent=True)
 
     def test_verify_active_detects_post_install_tampering(self):
-        with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
-            path = self.store.install(self.manifest, consent=True)
+        path = self.install_fixture()
         path.chmod(0o600)
         path.write_bytes(b"tampered")
         self.assertFalse(self.store.verify_active("fixture-model"))
 
     def test_failed_active_pointer_fsync_rolls_back_previous_revision(self):
-        with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
-            self.store.install(self.manifest, consent=True)
+        self.install_fixture()
         second_payload = b"second verified revision"
         second = dict(self.manifest)
         second["revision"] = "rev-002"
@@ -112,8 +113,7 @@ class ModelStoreTests(unittest.TestCase):
         self.assertTrue(self.store.verify_active("fixture-model"))
 
     def test_active_revision_cannot_be_removed(self):
-        with patch("tusker_ai.model_store._open_https", return_value=Response(self.payload)):
-            self.store.install(self.manifest, consent=True)
+        self.install_fixture()
         with self.assertRaises(TuskerRuntimeError) as ctx:
             self.store.remove_revision("fixture-model", "rev-001")
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.PERMISSION_DENIED)
@@ -124,6 +124,36 @@ class ModelStoreTests(unittest.TestCase):
             _validate_remote_target("https://127.0.0.1/model.gguf")
         with self.assertRaises(ValueError):
             _validate_remote_target("http://models.example.test/model.gguf")
+
+    def test_recovery_inspection_is_read_only_and_finds_interrupted_entries(self):
+        self.install_fixture()
+        (self.store.staging / "interrupted-transaction").mkdir()
+        (self.store.active / ".fixture-model.abandoned.tmp").write_text("{}")
+        (self.store.active / ".fixture-model.abandoned.rollback").write_text("{}")
+        orphan = self.store.models / "fixture-model" / "rev-orphan"
+        orphan.mkdir()
+        (orphan / "model.gguf").write_bytes(b"unreferenced")
+        before = sorted(str(path.relative_to(self.store.root)) for path in self.store.root.rglob("*"))
+        report = self.store.inspect_recovery()
+        after = sorted(str(path.relative_to(self.store.root)) for path in self.store.root.rglob("*"))
+        self.assertEqual(before, after)
+        self.assertEqual(report["staging_entries"], ["interrupted-transaction"])
+        self.assertEqual(report["activation_temporary_files"], [
+            ".fixture-model.abandoned.rollback", ".fixture-model.abandoned.tmp"
+        ])
+        self.assertEqual(report["active_pointers"], [{"artifact_id": "fixture-model", "state": "valid"}])
+        self.assertEqual(report["orphan_revisions"], ["fixture-model/rev-orphan"])
+        self.assertTrue(report["requires_operator_review"])
+
+    def test_recovery_inspection_reports_invalid_active_pointer(self):
+        pointer = self.store.active / "fixture-model.json"
+        pointer.write_text("{not-json")
+        report = self.store.inspect_recovery()
+        self.assertEqual(report["active_pointers"], [
+            {"artifact_id": "fixture-model", "state": "invalid_pointer"}
+        ])
+        self.assertTrue(report["requires_operator_review"])
+        self.assertTrue(pointer.exists())
 
 
 if __name__ == "__main__":
