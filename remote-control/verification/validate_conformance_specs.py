@@ -74,7 +74,9 @@ def parse_case_rows(markdown: str, prefix: str) -> list[tuple[str, str, str]]:
         if not CASE_ID.fullmatch(cells[0]):
             continue
         if not cells[0].startswith(prefix + "-"):
-            continue
+            raise SpecError(
+                f"{prefix}: line {line_number}: case ID {cells[0]!r} belongs to another specification"
+            )
         if len(cells) != 3:
             raise SpecError(f"{prefix}: line {line_number}: expected 3 table cells, got {len(cells)}")
         case_id, condition, assertion = cells
