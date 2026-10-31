@@ -120,7 +120,7 @@ def read_manifest(
             for column in ("repository_snapshot", "rpm_sha256", "rpm_license", "source_rpm", "source_repository_url", "upstream_url"):
                 if not (row.get(column) or "").strip():
                     raise RuntimeError(f"{column} must be non-empty for pinned package {package}")
-            if not RPM_SHA256_RE.fullmatch(row["rpm_sha256"].strip().lower()):
+            if not RPM_SHA256_RE.fullmatch(row["rpm_sha256"].strip()):
                 raise RuntimeError("rpm_sha256 must be a 64-character lowercase SHA-256 digest")
             if not SOURCE_RPM_RE.fullmatch(row["source_rpm"].strip()):
                 raise RuntimeError("source_rpm must be an RPM source package filename")
