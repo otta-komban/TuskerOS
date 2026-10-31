@@ -3,17 +3,18 @@
 **Permanent identity:** AEGIS-06  
 **Working branch:** `06-security-gatekeeper`  
 **JSONL log:** `logs/AEGIS-06.jsonl`  
-**Target:** 100 actual assistant responses; never fabricate or backfill.
+**Target:** 100 verified user-message / complete-assistant-response pairs; never infer pairs from log rows.
 
 ## Current state
 
-- **Verified completion count:** 52
-- **Latest completion:** `AEGIS-06-C0052`
+- **Verified conversation completions:** 0 historically verified from the full transcript; 4 directly visible pairs after this audit response (see `logs/AEGIS-06-conversation-audit.md`)
+- **Historical JSONL records:** 52 (`C0001`–`C0052`); these are not proof of 52 distinct user/assistant pairs
+- **Latest historical record:** `AEGIS-06-C0052`
 - **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
 - **Engineering tasks completed:** 42 (separate from assistant responses and commits)
 - **Latest log commit:** `9aa7bd717db7327d53c01a4add28853958599406`
 
-## Completion index
+## Historical work/response record index (not a verified conversation-completion count)
 
 | ID | Category | Summary | Evidence |
 |---|---|---|---|
@@ -574,3 +575,12 @@
 - **Changes:** Added negative schema coverage for raw `device_id` and `session_id`; documented AUD-REMOTE-001–006; updated the checklist for PILOT-08's accepted DEC-AEG-001–008 security requirements. Remote approval remains disabled for MVP.
 - **Evidence:** Test `197f9fc05714ab34c6b48e376f0ab40768ea7cfa`; matrix `cdb384845a51b813afd8769d17c106a10c1bf5fb`; checklist `7ce99d5b6c25f5db4dcef6712755d4468d53d2dd`; CI [41136489429](https://github.com/otta-komban/TuskerOS/actions/runs/41136489429), Python 3.12, 145 passed; issue #13 comment 6534607436.
 - **Limits:** Schema-level validation only. Trusted digest derivation, audit persistence, pairing/session runtime, HTTP signature validation, revocation and broker consume remain unverified.
+
+
+## Conversation-count correction — 2026-10-31
+
+The previous statement "Verified completion count: 52" was unsupported and is withdrawn. The JSONL contains 52 historical records, but the available transcript does not provide a reliable one-to-one mapping from every record to a distinct user message and its complete assistant response. Some records explicitly describe administrative reconciliation, and the history includes concurrent agent writes. Therefore the historical row count must not be used as a conversation completion count.
+
+The transcript directly available in the active conversation shows three complete assistant responses before the current accounting response. Counting this complete response makes **4 directly verified pairs in the visible segment**. This is a verified visible-segment count, not a claim that the entire historical conversation contained only four exchanges. Earlier project-history excerpts show user prompts but do not expose enough paired assistant responses to count them.
+
+Do not backfill missing historical pairs from timestamps, IDs, commits, engineering tasks, or tool calls. The 52 historical JSONL records remain preserved as work/response records pending transcript-level reconciliation. See `logs/AEGIS-06-conversation-audit.md`.
