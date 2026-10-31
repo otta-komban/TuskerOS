@@ -45,3 +45,6 @@ before preferences can be edited again.
 The offscreen test is not a replacement for real Plasma session, keyboard
 navigation or screen-reader acceptance. Those checks still require the
 supported Fedora KDE/Plasma environment.
+
+
+A failed reset, including a failure to sync the parent directory after the atomic rename, restores the previous settings file before the backend reports failure. Recovery remains locked until a later reset succeeds.
