@@ -40,7 +40,7 @@ class BrokerAuthorizationGate:
         if (
             not isinstance(request.authorization_ref, str) or not 1 <= len(request.authorization_ref) <= 512
             or not isinstance(request.broker_operation_id, str) or len(request.broker_operation_id) > 160
-            or re.fullmatch(r"[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+", request.broker_operation_id) is None
+            or re.fullmatch(r"[a-z][a-z0-9]*(\.[a-z][a-z0-9_-]*)+", request.broker_operation_id) is None
             or not isinstance(request.action_digest, str) or re.fullmatch(r"sha256:[0-9a-f]{64}", request.action_digest) is None
             or not isinstance(request.policy_version, str) or not 1 <= len(request.policy_version) <= 64
             or not isinstance(scope, tuple) or not 1 <= len(scope) <= 128
