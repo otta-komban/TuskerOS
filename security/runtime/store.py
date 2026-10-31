@@ -92,30 +92,39 @@ class SecurityStore:
         finally:
             if database_fd is not None:
                 os.close(database_fd)
-        self._db.row_factory = sqlite3.Row
-        self._db.execute("PRAGMA foreign_keys=ON")
-        self._db.execute("PRAGMA busy_timeout=10000")
-        self._db.execute("PRAGMA synchronous=FULL")
-        if self.path != ":memory:": self._db.execute("PRAGMA journal_mode=WAL")
-        self._db.executescript("""
-        CREATE TABLE IF NOT EXISTS approvals (
-          request_id TEXT PRIMARY KEY, state TEXT NOT NULL,
-          binding_json BLOB NOT NULL, expires_at TEXT NOT NULL,
-          action_digest TEXT NOT NULL, action_id TEXT NOT NULL,
-          proposal_id TEXT NOT NULL, principal_binding TEXT NOT NULL, broker_operation_id TEXT NOT NULL,
-          policy_version TEXT NOT NULL, risk_class TEXT NOT NULL, task_id TEXT NOT NULL, step_id TEXT NOT NULL,
-          created_at TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS auth_refs (
-          token_hash TEXT PRIMARY KEY, request_id TEXT NOT NULL REFERENCES approvals(request_id),
-          state TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT NOT NULL, consumption_id TEXT
-        );
-        CREATE INDEX IF NOT EXISTS auth_refs_request ON auth_refs(request_id);
-        CREATE TABLE IF NOT EXISTS audit_events (
-          seq INTEGER PRIMARY KEY AUTOINCREMENT, event_json BLOB NOT NULL,
-          previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL UNIQUE
-        );
-        """)
+        try:
+            self._db.row_factory = sqlite3.Row
+            self._db.execute("PRAGMA foreign_keys=ON")
+            self._db.execute("PRAGMA busy_timeout=10000")
+            self._db.execute("PRAGMA synchronous=FULL")
+            if self.path != ":memory:": self._db.execute("PRAGMA journal_mode=WAL")
+            self._db.executescript("""
+            CREATE TABLE IF NOT EXISTS approvals (
+              request_id TEXT PRIMARY KEY, state TEXT NOT NULL,
+              binding_json BLOB NOT NULL, expires_at TEXT NOT NULL,
+              action_digest TEXT NOT NULL, action_id TEXT NOT NULL,
+              proposal_id TEXT NOT NULL, principal_binding TEXT NOT NULL, broker_operation_id TEXT NOT NULL,
+              policy_version TEXT NOT NULL, risk_class TEXT NOT NULL, task_id TEXT NOT NULL, step_id TEXT NOT NULL,
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS auth_refs (
+              token_hash TEXT PRIMARY KEY, request_id TEXT NOT NULL REFERENCES approvals(request_id),
+              state TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT NOT NULL, consumption_id TEXT
+            );
+            CREATE INDEX IF NOT EXISTS auth_refs_request ON auth_refs(request_id);
+            CREATE TABLE IF NOT EXISTS audit_events (
+              seq INTEGER PRIMARY KEY AUTOINCREMENT, event_json BLOB NOT NULL,
+              previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL UNIQUE
+            );
+            """)
+        except Exception as exc:
+            try:
+                self._db.close()
+            except Exception:
+                pass
+            if isinstance(exc, SecurityStoreError):
+                raise
+            raise SecurityStoreError("security database initialization failed closed") from exc
 
     def close(self) -> None:
         self._db.close()
