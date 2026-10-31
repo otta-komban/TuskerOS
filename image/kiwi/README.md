@@ -18,10 +18,11 @@
 
 ## Repository snapshot consumption boundary
 
-- `tools/atlas/build-image.sh` first verifies the committed remote snapshot lock, then uses `dnf5 reposync --download-metadata` to stage each locked repository under `build/atlas/repository-snapshot/<repo-id>` for `x86_64` and `noarch` packages. This mirrors the selected repositories in full and may require substantial disk space and network transfer.
-- The build re-verifies the staged `repomd.xml` and primary metadata bytes against the lock. The package resolver uses DNF5 `--repofrompath` and `--repo` options to expose only those local copies, with RPM signature checking enabled.
-- This closes the DNF5 package-resolution path only. The upstream Fedora `Fedora.kiwi` description still contains its own remote repository definitions, so **KIWI image construction is not yet consuming the staged local snapshot**. Build metadata records this as `repository_snapshot_consumed_by_kiwi: false`; no reproducibility claim is allowed.
-- The build host must have the DNF5 `reposync` plugin (`dnf5-plugins`) installed. No actual full repository sync or KIWI image build has been run yet.
+- `tools/atlas/build-image.sh` verifies the committed repository lock, then stages each locked repository under `build/atlas/repository-snapshot/<repo-id>` with DNF5 `reposync --download-metadata` for `x86_64` and `noarch`. Both RPM package and repository metadata signature checks are enabled during sync.
+- The staged `repomd.xml` and primary metadata bytes are checked against the lock, and `repomd.xml.asc` must be present. DNF5 package resolution uses only local `--repofrompath` repositories, with `gpgcheck=1`, `repo_gpgcheck=1`, and the Fedora 44 primary key explicitly configured.
+- The build exports the pinned upstream Git commit into a clean derived KIWI source tree. `tools/atlas/prepare-kiwi-snapshot.py` resolves the pinned `repositories/core.xml` symlink, requires the repository aliases to match the lock exactly, and rewrites the Fedora 44 `fedora` and `updates` source paths to local `file://` snapshot directories. It preserves the Fedora signing-key references, resolves the `$releasever` macro to the Fedora 44 key file, and enables KIWI `repository_gpgcheck` and `package_gpgcheck`.
+- Both DNF5 resolution and KIWI image construction are therefore configured to consume the same staged local repositories. Build metadata sets `repository_snapshot_consumed_by_kiwi: true` and records successful signature enforcement only after the full build succeeds. The signing-key fingerprint is not separately recorded in the snapshot lock, and RPM payload checksums are not yet individually pinned.
+- The build host must have the DNF5 `reposync` plugin (`dnf5-plugins`) and Fedora 44 `distribution-gpg-keys` installed. Full repository sync and KIWI image build have not yet been run; the full sync may require substantial disk space and network transfer.
 
 ## Validation and build gate
 
