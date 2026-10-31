@@ -34,14 +34,14 @@ class ParseCaseRowsTests(unittest.TestCase):
             validator.parse_case_rows(markdown, "PAIR")
 
     def test_preserves_escaped_pipe_inside_cell(self):
-        markdown = "| PAIR-C01 | Condition with \\| literal pipe | Reject safely |\\n"
+        markdown = r"| PAIR-C01 | Condition with \| literal pipe | Reject safely |" + "\n"
         self.assertEqual(
             validator.parse_case_rows(markdown, "PAIR"),
             [("PAIR-C01", "Condition with | literal pipe", "Reject safely")],
         )
 
     def test_rejects_malformed_case_identifier(self):
-        markdown = "| PAIR-C1 | Missing zero padding | Reject |\\n"
+        markdown = "| PAIR-C1 | Missing zero padding | Reject |" + "\n"
         with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
             validator.parse_case_rows(markdown, "PAIR")
 
