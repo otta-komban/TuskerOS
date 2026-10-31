@@ -45,6 +45,8 @@ class InferenceRuntime:
                     raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True)
                 if token.cancelled and event.event_type not in {"cancelled", "failed", "completed"}:
                     continue
+                if event.event_type not in {"started", "text_delta", "tool_call_delta", "usage", "resource", "completed", "cancelled", "failed"}:
+                    raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an unknown event type")
                 if event.request_id != request.request_id:
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned a mismatched request identifier")
                 if event.sequence <= previous_sequence:
@@ -54,7 +56,7 @@ class InferenceRuntime:
                     event_time = datetime.fromisoformat(event.timestamp.replace("Z", "+00:00"))
                     if event_time.tzinfo is None or (previous_timestamp is not None and event_time < previous_timestamp):
                         raise ValueError
-                except (TypeError, ValueError):
+                except (AttributeError, TypeError, ValueError):
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid or regressing event timestamp") from None
                 previous_timestamp = event_time
                 if not started and event.event_type != "started":
