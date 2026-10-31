@@ -133,6 +133,13 @@ class RecoveryJournalTests(unittest.TestCase):
         self.assertFalse(report.valid)
         self.assertTrue(any("unknown state" in e for e in report.errors))
 
+    def test_non_string_object_keys_are_rejected_without_crashing(self):
+        records = chain(["planned"])
+        records[0][7] = "unexpected"
+        report = validate_journal(records)
+        self.assertFalse(report.valid)
+        self.assertTrue(any("object keys must be strings" in e for e in report.errors))
+
     def test_replay_requires_all_external_gates(self):
         record = chain(["planned", "prepared", "executing", "interrupted"],
                        idempotent=True)[-1]
