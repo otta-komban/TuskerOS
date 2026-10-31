@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import socket
 import time
 from typing import Iterable
@@ -44,8 +45,13 @@ class OllamaProvider:
             raise ValueError("Ollama endpoint must use HTTP on loopback with a valid port and no path")
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError("Ollama endpoint must not contain credentials or query data")
-        if read_timeout <= 0:
-            raise ValueError("read_timeout must be positive")
+        if (
+            isinstance(read_timeout, bool)
+            or not isinstance(read_timeout, (int, float))
+            or not math.isfinite(read_timeout)
+            or read_timeout <= 0
+        ):
+            raise ValueError("read_timeout must be a finite positive number")
         self._base = endpoint.rstrip("/")
         self._read_timeout = read_timeout
         # Local inference must not inherit HTTP(S)_PROXY / ALL_PROXY from the
