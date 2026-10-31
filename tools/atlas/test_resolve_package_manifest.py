@@ -53,6 +53,19 @@ class QueryResultTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "no available match"):
             parse_query_matches("  \n")
 
+
+    def test_missing_upstream_url_is_explicit_noassertion(self):
+        result = parse_query_matches(
+            "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\t\n"
+        )
+        self.assertEqual(result[-1], "NOASSERTION")
+
+    def test_non_https_upstream_url_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "non-HTTPS upstream URL"):
+            parse_query_matches(
+                "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\thttp://example.invalid/bash"
+            )
+
     def test_unrequested_package_name_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "outside requested name"):
             parse_query_matches(
@@ -107,6 +120,29 @@ class PinnedManifestTests(unittest.TestCase):
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(RuntimeError, "source_rpm"):
+                read_manifest(path, require_pins=True)
+
+
+    def test_non_fedora_source_repository_url_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.csv"
+            path.write_text(
+                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_repository_url,upstream_url\n"
+                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://example.invalid/rpms/bash,https://www.gnu.org/software/bash/\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(RuntimeError, "Fedora dist-git"):
+                read_manifest(path, require_pins=True)
+
+    def test_non_https_upstream_url_is_rejected_in_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.csv"
+            path.write_text(
+                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_license,source_rpm,source_repository_url,upstream_url\n"
+                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash,http://example.invalid/bash\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(RuntimeError, "upstream_url"):
                 read_manifest(path, require_pins=True)
 
 
