@@ -271,6 +271,29 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(self.store.get(self.task["task_id"]), before_task)
         self.assertEqual(self.store.events(self.task["task_id"]), before_events)
 
+    def test_transition_rejects_malformed_public_arguments_without_mutation(self):
+        task_id = self.task["task_id"]
+        before_task = self.store.get(task_id)
+        before_events = self.store.events(task_id)
+        invalid_calls = (
+            ({"target": []}, "target state must be a string"),
+            ({"target": "planning", "event_type": []}, "event type must be a string"),
+            ({"target": "planning", "idempotency_key": ""}, "idempotency_key must be a non-empty string"),
+            ({"target": "planning", "details": []}, "details must be a mapping"),
+            ({"target": "planning", "verified": 1}, "guard flags must be booleans"),
+            ({"target": "planning", "side_effects": "yes"}, "guard flags must be booleans"),
+        )
+        for kwargs, message in invalid_calls:
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(LifecycleError, message):
+                    self.engine.transition(task_id, expected_version=1, **kwargs)
+        with self.assertRaisesRegex(LifecycleError, "task_id must be a non-empty string"):
+            self.engine.transition([], "planning", expected_version=1)
+        with self.assertRaisesRegex(LifecycleError, "expected_version must be an integer"):
+            self.engine.transition(task_id, "planning", expected_version=True)
+        self.assertEqual(self.store.get(task_id), before_task)
+        self.assertEqual(self.store.events(task_id), before_events)
+
     def test_duplicate_event_id_is_rejected(self):
         initial_event_id = self.store.events("00000000-0000-4000-8000-000000000001")[0]["event_id"]
         with self.assertRaises(IdempotencyConflict):
