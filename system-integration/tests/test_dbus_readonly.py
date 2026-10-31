@@ -107,6 +107,45 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AdapterError):
             await adapter.list_names()
 
+    async def test_truthy_non_boolean_authorization_is_denied(self):
+        gate = AsyncMock(return_value=1)
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock()
+
+        with self.assertRaises(AuthorizationDenied):
+            await adapter.get_bus_id()
+
+        gate.assert_awaited_once_with("system.bus.id.read")
+        adapter._call.assert_not_awaited()
+
+    async def test_bus_id_over_maximum_length_is_rejected(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value="b" * 129)
+
+        with self.assertRaises(AdapterError):
+            await adapter.get_bus_id()
+
+    async def test_bus_name_collection_over_maximum_count_is_rejected(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=["org.example.Service"] * 1025)
+
+        with self.assertRaises(AdapterError):
+            await adapter.list_names()
+
+    async def test_bus_name_over_maximum_length_is_rejected(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=["a" * 256])
+
+        with self.assertRaises(AdapterError):
+            await adapter.list_names()
+
+    async def test_empty_bus_name_is_rejected(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=[""])
+
+        with self.assertRaises(AdapterError):
+            await adapter.list_names()
+
     async def test_health_reports_degraded_when_authorization_unavailable(self):
         adapter = ReadOnlySystemBusAdapter(None)
 
