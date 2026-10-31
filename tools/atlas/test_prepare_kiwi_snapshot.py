@@ -48,6 +48,7 @@ class PrepareKiwiSnapshotTests(unittest.TestCase):
             (self.snapshot / repository_id / "repodata").mkdir(parents=True)
             (self.snapshot / repository_id / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
             (self.snapshot / repository_id / "repodata" / "repomd.xml.asc").write_text("signature fixture", encoding="utf-8")
+            (self.snapshot / repository_id / "repodata" / "repomd.xml.asc").write_text("signature fixture", encoding="utf-8")
         self.lock.write_text(json.dumps({
             "schema_version": 1,
             "fedora_release": "44",
