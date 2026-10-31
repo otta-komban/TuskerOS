@@ -7,6 +7,7 @@ on:
     paths:
       - "tools/atlas/**"
       - "os/package-manifest.csv"
+      - "os/repository-snapshot.lock.json"
       - ".github/workflows/atlas-package-resolver.yml"
   pull_request:
     branches:
@@ -31,11 +32,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile resolver and tests
-        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py
+        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py tools/atlas/verify-repository-snapshot.py tools/atlas/test_repository_snapshot.py
       - name: Validate package manifest, image source lock and build script syntax
         run: |
           python tools/atlas/resolve-package-manifest.py --validate-only --manifest os/package-manifest.csv
           python -m json.tool os/image-source.lock.json > /dev/null
+          python -m json.tool os/repository-snapshot.lock.json > /dev/null
+          python tools/atlas/verify-repository-snapshot.py --validate-only --lock os/repository-snapshot.lock.json
           bash -n tools/atlas/build-image.sh
       - name: Verify pinned Fedora KIWI source commit and blobs
         run: |
