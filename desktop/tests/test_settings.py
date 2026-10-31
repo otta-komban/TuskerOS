@@ -93,7 +93,7 @@ class SettingsTests(unittest.TestCase):
     def test_explicit_recovery_replaces_symlink_without_touching_target(self) -> None:
         self.path.parent.mkdir(parents=True)
         target = self.path.parent / "outside.json"
-        original = json.dumps({"panel": {"icon_size": 72}})
+        original = json.dumps({"panel": {"icon_size": 72}}) + chr(10)
         target.write_text(original, encoding="utf-8")
         self.path.symlink_to(target)
 
