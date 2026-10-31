@@ -47,7 +47,7 @@ class KiwiBundleContractTests(unittest.TestCase):
         self.assertIn('"repository_metadata_signature_verified": False', SCRIPT)
         self.assertIn("Fedora 44 fedora/updates endpoints do not publish repomd.xml.asc at the inspected official URLs", SCRIPT)
         self.assertIn("DNF5 and KIWI enforce RPM package signatures using the Fedora 44 primary key", SCRIPT)
-        self.assertIn("RPM payload checksums are not yet recorded in the package lock", SCRIPT)
+        self.assertIn("RPM payload SHA-256 is checked against the package manifest", SCRIPT)
         self.assertIn("Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified", SCRIPT)
 
 
