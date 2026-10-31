@@ -1017,6 +1017,24 @@ def test_audit_rejects_noncanonical_uuid_identifiers(field, value):
         db.close()
 
 
+def test_create_approval_rejects_oversized_resource_scope():
+    db = store()
+    try:
+        proposal_id = str(uuid.uuid4())
+        binding = dict(BINDING)
+        binding["resource_scope"] = [f"resource:{index}" for index in range(129)]
+        with pytest.raises(SecurityStoreError, match="oversized approval binding"):
+            db.create_approval(action_id="system.disk.erase", broker_operation_id="broker.disk.erase",
+                action_digest=D4, proposal_id=proposal_id, principal_binding=D1,
+                policy_version="policy-1", risk_class="R3", task_id="task-1", step_id="step-1",
+                binding=binding, expires_at=NOW + timedelta(minutes=2),
+                audit_context=audit(proposal_id=proposal_id), now=NOW)
+        assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
 def test_create_approval_rejects_noncanonical_proposal_uuid():
     db = store()
     try:
