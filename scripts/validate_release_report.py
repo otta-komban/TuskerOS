@@ -47,7 +47,7 @@ def validate_report(report: Any, expected_manifest_digest: str | None = None) ->
     if not isinstance(digest, str) or not DIGEST_RE.fullmatch(digest):
         errors.append("subject.manifest_sha256: expected 64 lowercase hexadecimal characters")
     if expected_manifest_digest is not None:
-        if not DIGEST_RE.fullmatch(expected_manifest_digest):
+        if not isinstance(expected_manifest_digest, str) or not DIGEST_RE.fullmatch(expected_manifest_digest):
             errors.append("--expected-manifest-digest: expected 64 lowercase hexadecimal characters")
         elif digest != expected_manifest_digest:
             errors.append("subject.manifest_sha256: does not match the expected manifest digest")
@@ -113,8 +113,9 @@ def validate_report(report: Any, expected_manifest_digest: str | None = None) ->
         "not_run": counts["not_run"],
     }
     for key, expected in expected_counts.items():
-        if summary.get(key) != expected or isinstance(summary.get(key), bool):
-            errors.append(f"summary.{key}: expected {expected}")
+        actual = summary.get(key)
+        if type(actual) is not int or actual != expected:
+            errors.append(f"summary.{key}: expected integer {expected}")
 
     if counts["failed"]:
         derived = "failed"
