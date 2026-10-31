@@ -17,11 +17,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         request = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
-        chunks = [
-            {"message": {"content": "Tusker "}, "done": False},
+        if request.get("model") == "oversized":
+            chunks = [{"message": {"content": "x" * (1024 * 1024 + 100)}, "done": False}]
+        elif request.get("model") == "bad-shape":
+            chunks = [[]]
+        elif request.get("model") == "bad-message":
+            chunks = [{"message": "not-an-object", "done": False}]
+        else:
+            chunks = [
+                {"message": {"content": "Tusker "}, "done": False},
             {"message": {"content": "runtime"}, "done": False},
-            {"done": True, "done_reason": "stop", "prompt_eval_count": 8, "eval_count": 2},
-        ]
+                {"done": True, "done_reason": "stop", "prompt_eval_count": 8, "eval_count": 2},
+            ]
         self.send_response(200); self.send_header("Content-Type", "application/x-ndjson"); self.end_headers()
         try:
             for index, chunk in enumerate(chunks):
@@ -89,6 +96,16 @@ class OllamaHttpTests(unittest.TestCase):
         with self.assertRaises(TuskerRuntimeError) as ctx:
             list(provider.infer(req, CancellationToken()))
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.DEADLINE_EXCEEDED)
+
+    def test_oversized_and_malformed_frames_are_typed_provider_errors(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        provider = OllamaProvider(self.endpoint, read_timeout=2)
+        for model in ("oversized", "bad-shape", "bad-message"):
+            request = InferenceRequest(model, model, [{"role": "user", "content": "hello"}])
+            with self.subTest(model=model):
+                with self.assertRaises(TuskerRuntimeError) as ctx:
+                    list(provider.infer(request, CancellationToken()))
+                self.assertEqual(ctx.exception.code, RuntimeErrorCode.PROVIDER_DISCONNECTED)
 
     def test_version_health_stream_and_usage(self):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
