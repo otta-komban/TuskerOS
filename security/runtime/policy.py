@@ -54,7 +54,8 @@ class PolicyEngine:
                 if not isinstance(context.get(field), str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", context[field]):
                     return deny("POLICY_IDENTITY_UNAVAILABLE")
             origin, principal_class = context.get("origin"), context.get("principal_class")
-            if origin not in _ORIGINS or not isinstance(principal_class, str):
+            if (origin not in _ORIGINS or not isinstance(principal_class, str)
+                or not 1 <= len(principal_class) <= 64):
                 return deny("POLICY_UNKNOWN_PRINCIPAL")
             required = {"schema_version", "action_id", "proposal_id", "task_id", "step_id", "arguments", "resources", "requested_at"}
             if not required.issubset(proposal) or set(proposal) - (required | {"idempotency_key"}):
@@ -86,7 +87,12 @@ class PolicyEngine:
                 or not _ACTION.fullmatch(entry.get("broker_operation_id", ""))
                 or not isinstance(entry.get("timeout_ms"), int) or not 1 <= entry["timeout_ms"] <= 3600000
                 or not isinstance(entry.get("allowed_origins"), list) or not entry.get("allowed_origins")
+                or any(not isinstance(value, str) or value not in _ORIGINS for value in entry["allowed_origins"])
+                or len(entry["allowed_origins"]) != len(set(entry["allowed_origins"]))
                 or not isinstance(entry.get("allowed_principal_classes"), list) or not entry.get("allowed_principal_classes")
+                or any(not isinstance(value, str) or not 1 <= len(value) <= 64
+                       for value in entry["allowed_principal_classes"])
+                or len(entry["allowed_principal_classes"]) != len(set(entry["allowed_principal_classes"]))
                 or not isinstance(entry.get("resources"), list) or not entry.get("resources")):
                 return deny("POLICY_REGISTRY_INVALID")
             minimum = entry["minimum_risk_class"]
