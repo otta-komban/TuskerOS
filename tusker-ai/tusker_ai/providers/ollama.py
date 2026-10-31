@@ -14,6 +14,9 @@ from ..types import (
 )
 
 
+_MAX_STREAM_FRAME_BYTES = 1_048_576
+
+
 class _NoRedirectHandler(HTTPRedirectHandler):
     """A local inference endpoint must not redirect prompts to another host."""
 
@@ -85,7 +88,7 @@ class OllamaProvider:
                         yield InferenceEvent(request.request_id, seq, "cancelled", {"reason": "caller_cancelled"})
                         return
                     try:
-                        raw_line = response.readline()
+                        raw_line = response.readline(_MAX_STREAM_FRAME_BYTES + 1)
                     except socket.timeout:
                         if cancellation.cancelled:
                             yield InferenceEvent(request.request_id, seq, "cancelled", {"reason": "caller_cancelled"})
@@ -98,6 +101,8 @@ class OllamaProvider:
                         return
                     if time.monotonic() >= deadline:
                         raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
+                    if len(raw_line) > _MAX_STREAM_FRAME_BYTES:
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider stream frame exceeded the size limit")
                     if not raw_line:
                         break
                     if not raw_line.strip():
@@ -105,8 +110,12 @@ class OllamaProvider:
                     try:
                         chunk = json.loads(raw_line)
                     except (UnicodeDecodeError, json.JSONDecodeError):
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame") from None
+                    if not isinstance(chunk, dict):
                         raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
                     message = chunk.get("message") or {}
+                    if not isinstance(message, dict):
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
                     delta = message.get("content")
                     if isinstance(delta, str) and delta:
                         yield InferenceEvent(request.request_id, seq, "text_delta", {"delta": delta})
