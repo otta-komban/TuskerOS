@@ -150,7 +150,8 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         elif supplied != actual:
             errors.append(f"record {index}: checksum mismatch")
         previous = supplied if isinstance(supplied, str) else ""
-        previous_state = state if isinstance(state, str) else None
+        # Never index TRANSITIONS with an unrecognized state on the next record.
+        previous_state = state if isinstance(state, str) and state in STATES else None
 
     last = materialized[-1] if materialized and isinstance(materialized[-1], dict) else {}
     return JournalReport(
@@ -182,7 +183,11 @@ def parse_jsonl(text: str) -> list[dict[str, Any]]:
         raise JournalValidationError("journal contains invalid Unicode") from exc
     if encoded_size > MAX_JOURNAL_BYTES:
         raise JournalValidationError(f"journal exceeds maximum size ({MAX_JOURNAL_BYTES} bytes)")
-    lines = text.splitlines()
+    # JSON Lines uses LF (optionally preceded by CR), not every Unicode
+    # separator recognized by str.splitlines(); U+2028 is valid string data.
+    lines = text.split("\n")
+    if lines[-1] == "":
+        lines.pop()  # one final line terminator is permitted
     if len(lines) > MAX_RECORDS:
         raise JournalValidationError(f"journal exceeds maximum record count ({MAX_RECORDS})")
     records = []
