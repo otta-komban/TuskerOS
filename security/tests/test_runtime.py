@@ -105,6 +105,37 @@ def test_create_approval_rejects_mismatched_audit_context(field, value):
         db.close()
 
 
+def test_approval_lifecycle_methods_fail_closed_on_invalid_timestamps():
+    from datetime import tzinfo
+
+    class PseudoTimezone(tzinfo):
+        def utcoffset(self, dt):
+            return None
+
+        def dst(self, dt):
+            return None
+
+    invalid_now = datetime(2026, 10, 31, 12, 0, tzinfo=PseudoTimezone())
+    db = store()
+    try:
+        with pytest.raises(SecurityStoreError, match="decision timestamp"):
+            db.decide("not-a-request", approve=True, current_binding=BINDING,
+                      approver_credentials={"uid": 1000}, audit_context={}, now=invalid_now)
+        with pytest.raises(SecurityStoreError, match="authorization timestamp"):
+            db.issue_authorization("not-a-request", current_binding=BINDING,
+                                   current_policy_version="policy-1", audit_context={}, now=invalid_now)
+        result = db.consume("not-a-token", operation_id="broker.disk.erase", resource_scope=BINDING["resource_scope"],
+                            action_digest=D4, policy_version="policy-1", registry_version="registry-1",
+                            precondition_digest=D4, peer_credentials={"uid": 1000, "pid": 42},
+                            audit_context={}, now=invalid_now)
+        assert result.outcome == "BINDING_MISMATCH"
+        assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs").fetchone()[0] == 0
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
 def test_security_store_time_rejects_tzinfo_without_utc_offset():
     from datetime import tzinfo
 
