@@ -117,3 +117,5 @@
 
 - [x] **SEC-SCHEMA-007 interim fail-closed contract:** documented that producers emit only an empty `constraints` object and consumers reject non-empty/unsupported constraint data until policy-engine and broker owners ratify a bounded vocabulary; added POL-CON-001–006 acceptance criteria. This is documentation/contract hardening only. The active schema still permits arbitrary nested constraints, consumer enforcement is unverified, and SEC-SCHEMA-007 remains open pending owner agreement and executable tests.
 
+
+- [x] **SEC-SCHEMA-007 interim guard:** policy-decision v0.1.0 requires an empty `constraints` object; schema tests reject omission and non-empty values. The final typed vocabulary remains pending policy-engine/broker owner agreement in issue #31; runtime enforcement is not claimed.
