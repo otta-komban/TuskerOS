@@ -71,6 +71,7 @@ class InferenceRuntime:
                 except (AttributeError, TypeError, ValueError):
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid or regressing event timestamp") from None
                 previous_timestamp = event_time
+                self._validate_event_payload(event)
                 if not started and event.event_type != "started":
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider stream did not begin with a started event")
                 if event.event_type == "started":
@@ -90,6 +91,36 @@ class InferenceRuntime:
         finally:
             _LOG.info("inference_finished", extra={"request_id": request.request_id, "elapsed_ms": int((time.monotonic() - start) * 1000)})
             self._slots.release()
+
+    @staticmethod
+    def _validate_event_payload(event: InferenceEvent) -> None:
+        payload = event.payload
+        valid = True
+        if event.event_type == "text_delta":
+            delta = payload.get("delta")
+            valid = isinstance(delta, str) and bool(delta)
+        elif event.event_type == "completed":
+            reason = payload.get("finish_reason")
+            valid = reason is None or (
+                isinstance(reason, str)
+                and reason in {"stop", "output_limit", "tool_calls", "cancelled", "provider_specific", "unknown"}
+            )
+        elif event.event_type == "usage":
+            for key in ("input_tokens", "output_tokens"):
+                value = payload.get(key)
+                if value is not None and (
+                    isinstance(value, bool) or not isinstance(value, int) or value < 0
+                ):
+                    valid = False
+                    break
+        elif event.event_type == "cancelled":
+            reason = payload.get("reason")
+            valid = reason is None or isinstance(reason, str)
+        if not valid:
+            raise TuskerRuntimeError(
+                RuntimeErrorCode.PROVIDER_DISCONNECTED,
+                "Provider returned a malformed inference event payload",
+            )
 
     @staticmethod
     def _available_memory_bytes() -> int | None:
