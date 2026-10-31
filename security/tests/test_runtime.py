@@ -1482,3 +1482,76 @@ def test_policy_fails_closed_when_trusted_dependency_raises(failing_dependency):
     decision = engine.evaluate(proposal, context, registry, "registry-1")
     assert decision.status == "DENY"
     assert decision.reason_code == "POLICY_INTERNAL_ERROR"
+
+
+def test_broker_gate_rejects_grants_that_do_not_match_the_request():
+    import uuid
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    from security.runtime.store import ConsumeResult
+
+    request = BrokerAuthorizationRequest(
+        authorization_ref="opaque-token", broker_operation_id="broker.disk.erase",
+        action_digest=D4, policy_version="policy-1", canonical_resource_scope=("disk:wwn-123",),
+        registry_version="registry-1", precondition_digest=D4,
+        peer_credentials={"uid": 1000, "pid": 42},
+    )
+    valid_grant = {
+        "consumption_id": str(uuid.uuid4()), "operation_id": "broker.disk.erase",
+        "resource_scope": ["disk:wwn-123"], "principal_binding": D1,
+        "session_binding": D2, "device_binding": D3, "action_digest": D4,
+        "registry_version": "registry-1", "precondition_digest": D4,
+    }
+
+    class Authority:
+        def __init__(self, grant):
+            self.grant = grant
+
+        def consume(self, *args, **kwargs):
+            return ConsumeResult("CONSUMED", self.grant["consumption_id"], self.grant)
+
+    mutations = [
+        {"operation_id": "broker.other.action"},
+        {"resource_scope": ["disk:attacker-selected"]},
+        {"action_digest": D3},
+        {"registry_version": "registry-2"},
+        {"precondition_digest": D3},
+        {"principal_binding": "not-a-digest"},
+        {"session_binding": "not-a-digest"},
+        {"device_binding": "not-a-digest"},
+    ]
+    for mutation in mutations:
+        bad_grant = dict(valid_grant)
+        bad_grant.update(mutation)
+        response = BrokerAuthorizationGate(Authority(bad_grant)).authorize(request, {})
+        assert response.outcome == "AUTHORITY_UNAVAILABLE"
+        assert response.grant is None
+
+
+def test_broker_gate_returns_detached_immutable_grant():
+    import uuid
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    from security.runtime.store import ConsumeResult
+
+    request = BrokerAuthorizationRequest(
+        authorization_ref="opaque-token", broker_operation_id="broker.disk.erase",
+        action_digest=D4, policy_version="policy-1", canonical_resource_scope=("disk:wwn-123",),
+        registry_version="registry-1", precondition_digest=D4,
+        peer_credentials={"uid": 1000, "pid": 42},
+    )
+    source_grant = {
+        "consumption_id": str(uuid.uuid4()), "operation_id": "broker.disk.erase",
+        "resource_scope": ["disk:wwn-123"], "principal_binding": D1,
+        "session_binding": D2, "device_binding": D3, "action_digest": D4,
+        "registry_version": "registry-1", "precondition_digest": D4,
+    }
+
+    class Authority:
+        def consume(self, *args, **kwargs):
+            return ConsumeResult("CONSUMED", source_grant["consumption_id"], source_grant)
+
+    response = BrokerAuthorizationGate(Authority()).authorize(request, {})
+    assert response.outcome == "CONSUMED"
+    source_grant["resource_scope"][0] = "disk:attacker-selected"
+    assert response.grant["resource_scope"] == ("disk:wwn-123",)
+    with pytest.raises(TypeError):
+        response.grant["operation_id"] = "broker.attacker.action"
