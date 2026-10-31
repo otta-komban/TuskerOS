@@ -26,7 +26,7 @@ class QueryResultTests(unittest.TestCase):
         result = parse_query_matches(
             "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\thttps://www.gnu.org/software/bash/\tPackages/bash.rpm\n"
         )
-        self.assertEqual(result, ("bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm", "https://www.gnu.org/software/bash/"))
+        self.assertEqual(result, ("bash-0:5.2.26-3.fc44.x86_64", "fedora", "GPL-3.0-or-later", "bash-5.2.26-3.fc44.src.rpm", "https://www.gnu.org/software/bash/", "Packages/bash.rpm"))
 
     def test_duplicate_identical_rows_are_collapsed(self):
         row = "bash-0:5.2.26-3.fc44.x86_64\tfedora\tGPL-3.0-or-later\tbash-5.2.26-3.fc44.src.rpm\thttps://www.gnu.org/software/bash/\tPackages/bash.rpm"
@@ -112,6 +112,17 @@ class PinnedManifestTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(read_manifest(path, require_pins=True)[0]["pinned_nevra"], "bash-0:5.2.26-3.fc44.x86_64")
+
+    def test_invalid_rpm_sha256_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.csv"
+            path.write_text(
+                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_sha256,rpm_license,source_rpm,source_repository_url,upstream_url\\n"
+                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,not-a-digest,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash,https://www.gnu.org/software/bash/\\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(RuntimeError, "rpm_sha256"):
+                read_manifest(path, require_pins=True)
 
     def test_invalid_source_rpm_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -392,6 +403,29 @@ class ResolverCliTests(unittest.TestCase):
 
 
 class LocalSnapshotRepositoryTests(unittest.TestCase):
+    def test_local_rpm_sha256_hashes_only_a_file_inside_the_local_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "fedora" / "Packages" / "bash.rpm"
+            package.parent.mkdir(parents=True)
+            package.write_bytes(b"local RPM payload")
+            expected = hashlib.sha256(b"local RPM payload").hexdigest()
+            self.assertEqual(RESOLVER.local_rpm_sha256(root, "fedora", "Packages/bash.rpm"), expected)
+
+    def test_local_rpm_sha256_rejects_path_traversal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "fedora").mkdir()
+            with self.assertRaisesRegex(RuntimeError, "Unsafe RPM package location"):
+                RESOLVER.local_rpm_sha256(root, "fedora", "../outside.rpm")
+
+    def test_local_rpm_sha256_rejects_missing_package_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "fedora").mkdir()
+            with self.assertRaises(FileNotFoundError):
+                RESOLVER.local_rpm_sha256(root, "fedora", "Packages/missing.rpm")
+
     def test_snapshot_args_select_only_local_repository(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
