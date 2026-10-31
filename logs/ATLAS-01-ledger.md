@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 18
+Current verified count: 19
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -29,5 +29,7 @@ Current verified count: 18
 | 17 | ATLAS-01-C0017 | P1 | implementation | partial | DNF5 now stages locked Fedora repositories locally, verifies local repomd/primary metadata, and resolves only from local DNF repo paths; 78 tests + Fedora 44 DNF5 smoke passed in run 41190197697; unified 8/8 passed in 41190201562; KIWI still uses upstream remotes; no image build |
 
 | 18 | ATLAS-01-C0018 | P1 | implementation | partial | KIWI now builds from a clean pinned-source overlay whose Fedora repository definitions point only to verified local fedora/updates snapshots; metadata/package signature checks enabled with Fedora 44 primary key; CI run 41191712051 passed 86 tests plus real-source overlay smoke and DNF5 smoke; unified run 41191712054 passed 8/8; no full reposync or image build |
+
+| 19 | ATLAS-01-C0019 | P1 | implementation | partial | Local snapshot verifier now checks every repomd-referenced metadata payload SHA-256. Corrected Fedora signature policy after official fedora/updates repomd.xml.asc endpoints returned 404: detached metadata signature verification is not claimed; RPM package GPG checks remain enabled. ATLAS run 41192287443 passed 85 tests + Fedora 44 DNF5 and pinned-source KIWI overlay smoke; unified run 41192287352 pending; no full reposync/image build. Supersedes C0018's metadata-signature assumption. |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
