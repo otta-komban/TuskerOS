@@ -157,7 +157,6 @@ metadata = {
     "repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run",
     "reproducible_build_claim": False,
     "reproducibility_limitations": [
-        "repository metadata snapshots and repomd.xml digests are not yet locked and verified",
         "RPM payload checksums are not yet recorded in the package lock",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
     ],
