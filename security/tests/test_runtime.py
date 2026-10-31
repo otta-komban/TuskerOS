@@ -1307,3 +1307,43 @@ def test_reissuing_authorization_revokes_previous_reference_atomically():
         assert db.verify_audit_chain()
     finally:
         db.close()
+
+
+
+def test_two_concurrent_approval_decisions_have_one_winner(tmp_path):
+    path = str(tmp_path / "approval-race.sqlite")
+    setup = store(path)
+    rid = approval(setup)
+    context = audit_for_approval(setup, rid)
+    setup.close()
+
+    def decide(approve):
+        db = store(path)
+        try:
+            return db.decide(
+                rid,
+                approve=approve,
+                current_binding=BINDING,
+                approver_credentials={"uid": 1000},
+                audit_context=dict(context),
+                now=NOW,
+            )
+        finally:
+            db.close()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(decide, (True, False)))
+
+    assert sorted(outcomes) == ["APPROVED", "NOT_PENDING"]
+    verify = store(path)
+    try:
+        state = verify._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"]
+        assert state == "APPROVED"
+        events = verify.audit_events()
+        assert [event["event_type"] for event in events].count("approval_granted") == 1
+        assert [event["event_type"] for event in events].count("approval_denied") == 0
+        assert verify.verify_audit_chain()
+    finally:
+        verify.close()
