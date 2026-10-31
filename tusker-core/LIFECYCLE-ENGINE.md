@@ -169,3 +169,6 @@ The public creation API rejects a supplied `origin` that is not a mapping before
 
 
 Replay now validates the returned task snapshot before reading its event stream: the snapshot must be a mapping, its `task_id` must match the requested identifier, and its state must be a known task state. Regression tests cover mismatched identity and malformed state, including that invalid snapshots are rejected before event retrieval. Replay also requires the snapshot `version` to be an exact integer equal to the event count; boolean, floating-point, and string values are rejected as version corruption.
+
+
+Replay origin validation follows the existing provisional event schema: `origin` may contain only the required `kind` and optional string `display_label` (maximum 80 characters). Unknown origin properties and malformed or oversized labels are rejected as persisted-event corruption. This is schema-conformance validation only; it does not change the event schema or origin semantics.
