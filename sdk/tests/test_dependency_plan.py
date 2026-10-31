@@ -57,6 +57,24 @@ class DependencyPlanTests(unittest.TestCase):
                 with self.assertRaises(planner.DependencyPlanError):
                     planner.resolve_install_order(roots, {"app": []})
 
+    def test_deep_dependency_chain_does_not_hit_python_recursion_limit(self):
+        depth = 1500
+        graph = {
+            f"pkg-{index}": ([f"pkg-{index + 1}"] if index + 1 < depth else [])
+            for index in range(depth)
+        }
+        order = planner.resolve_install_order(["pkg-0"], graph)
+        self.assertEqual(len(order), depth)
+        self.assertEqual(order[0], f"pkg-{depth - 1}")
+        self.assertEqual(order[-1], "pkg-0")
+
+    def test_iterative_cycle_error_includes_cycle_path(self):
+        graph = {"a": ["b"], "b": ["c"], "c": ["a"]}
+        with self.assertRaisesRegex(
+            planner.DependencyPlanError, r"dependency cycle: a -> b -> c -> a"
+        ):
+            planner.resolve_install_order(["a"], graph)
+
     def test_packages_must_be_a_mapping(self):
         with self.assertRaisesRegex(planner.DependencyPlanError, "mapping"):
             planner.resolve_install_order(["app"], [("app", [])])
