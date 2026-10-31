@@ -270,6 +270,12 @@ class LifecycleEngine:
         return self.store.transition(task_id, expected_version, next_task, event, idempotency_key, fingerprint)
 
     def request_cancellation(self, task_id: str, *, expected_version: int, reason: str = "user_requested") -> dict[str, Any]:
+        if not isinstance(task_id, str) or not task_id:
+            raise LifecycleError("task_id must be a non-empty string")
+        if type(expected_version) is not int:
+            raise LifecycleError("expected_version must be an integer")
+        if not isinstance(reason, str):
+            raise LifecycleError("cancellation reason must be a string")
         if reason not in {"user_requested", "policy_requested", "shutdown", "superseded"}:
             raise LifecycleError("unsupported cancellation reason")
         key = f"cancel:{task_id}:{expected_version}"
@@ -292,6 +298,12 @@ class LifecycleEngine:
         return self.store.transition(task_id, expected_version, next_task, event, key, fingerprint)
 
     def confirm_cancellation(self, task_id: str, *, expected_version: int, operation_stopped: bool) -> dict[str, Any]:
+        if not isinstance(task_id, str) or not task_id:
+            raise LifecycleError("task_id must be a non-empty string")
+        if type(expected_version) is not int:
+            raise LifecycleError("expected_version must be an integer")
+        if type(operation_stopped) is not bool:
+            raise LifecycleError("operation_stopped must be a boolean")
         if not operation_stopped:
             raise InvalidTransition("cancellation is not terminal until the active operation is confirmed stopped")
         return self.transition(task_id, "cancelled", expected_version=expected_version,
