@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 19
+Current verified count: 20
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -31,5 +31,7 @@ Current verified count: 19
 | 18 | ATLAS-01-C0018 | P1 | implementation | partial | KIWI now builds from a clean pinned-source overlay whose Fedora repository definitions point only to verified local fedora/updates snapshots; metadata/package signature checks enabled with Fedora 44 primary key; CI run 41191712051 passed 86 tests plus real-source overlay smoke and DNF5 smoke; unified run 41191712054 passed 8/8; no full reposync or image build |
 
 | 19 | ATLAS-01-C0019 | P1 | implementation | partial | Local snapshot verifier now checks every repomd-referenced metadata payload SHA-256. Corrected Fedora signature policy after official fedora/updates repomd.xml.asc endpoints returned 404: detached metadata signature verification is not claimed; RPM package GPG checks remain enabled. ATLAS run 41192287443 passed 85 tests + Fedora 44 DNF5 and pinned-source KIWI overlay smoke; unified run 41192287352 pending; no full reposync/image build. Supersedes C0018's metadata-signature assumption. |
+
+| 20 | ATLAS-01-C0020 | P1 | implementation | partial | Package manifest now requires rpm_sha256; DNF5 repoquery returns local RPM location and resolver hashes that staged file, confines path to repository, and compares digest to pin. ATLAS run 41192707813 passed 90 tests, Fedora 44 DNF5 location smoke and KIWI overlay integration; unified validation for newer docs head pending; no package rows/full sync/image build. Supersedes C0019's separate-RPM-lock limitation. |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
