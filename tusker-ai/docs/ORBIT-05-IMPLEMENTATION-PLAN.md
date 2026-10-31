@@ -101,3 +101,12 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 ## Rollback
 
 Keep implementation changes in focused commits/PRs. If rejected, the integrator may revert the relevant commit on the ORBIT branch after review; preserve all historical branches, commits, logs and test evidence.
+
+
+## Iteration 08 — endpoint and health-response hardening
+
+- Tightened endpoint parsing: reject malformed/out-of-range ports and non-root URL paths while retaining HTTP loopback-only support.
+- Bound the /api/version response read to 64 KiB plus one sentinel byte; reject oversized bodies, non-object JSON, and missing/empty/non-string version values. Invalid UTF-8/JSON and transport failures remain a clean unhealthy result.
+- Added HTTP fixture regressions for malformed and oversized health payloads and endpoint URL validation.
+- Commits: 64ce37e7b5cce14011f1bf162fc41eff86b95fd6 (provider), 1dfc33f589400d8294839197d0b17b9c59d5d6fa (tests).
+- Branch-head CI: pending verification. Live Ollama remains NOT RUN.
