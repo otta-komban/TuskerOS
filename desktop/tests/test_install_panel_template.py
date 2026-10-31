@@ -21,6 +21,28 @@ class PanelTemplateInstallerTests(unittest.TestCase):
         (self.source / "contents" / "layout.js").write_text("var panel = true;\\n", encoding="utf-8")
         self.destination = root / "data" / "plasma" / "layout-templates" / "com.tuskeros.desktop.dock"
 
+    def test_default_destination_uses_absolute_xdg_data_home(self) -> None:
+        configured = Path(self.temp.name) / "xdg-data"
+        with patch.dict(os.environ, {"XDG_DATA_HOME": str(configured)}):
+            self.assertEqual(
+                install_panel_template.default_destination(),
+                configured / "plasma" / "layout-templates" / install_panel_template.PLUGIN_ID,
+            )
+
+    def test_default_destination_falls_back_for_relative_xdg_data_home(self) -> None:
+        with patch.dict(os.environ, {"XDG_DATA_HOME": "relative/data"}):
+            self.assertEqual(
+                install_panel_template.default_destination(),
+                Path.home() / ".local" / "share" / "plasma" / "layout-templates" / install_panel_template.PLUGIN_ID,
+            )
+
+    def test_default_destination_expands_home_in_xdg_data_home(self) -> None:
+        with patch.dict(os.environ, {"XDG_DATA_HOME": "~/custom-data"}):
+            self.assertEqual(
+                install_panel_template.default_destination(),
+                Path.home() / "custom-data" / "plasma" / "layout-templates" / install_panel_template.PLUGIN_ID,
+            )
+
     def test_install_copies_template_and_management_marker(self) -> None:
         install(self.source, self.destination)
         self.assertTrue((self.destination / "metadata.desktop").is_file())
