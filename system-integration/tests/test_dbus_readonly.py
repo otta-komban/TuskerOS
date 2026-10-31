@@ -247,13 +247,23 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         adapter = ReadOnlySystemBusAdapter(
             AsyncMock(return_value=True), timeout_seconds=0.0001
         )
+        wait_timeouts = []
+
+        async def wait_without_deadline(awaitable, timeout):
+            wait_timeouts.append(timeout)
+            return await awaitable
+
         with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
             "adapters.dbus_readonly.asyncio.create_subprocess_exec",
             new=AsyncMock(return_value=process),
-        ) as spawn:
+        ) as spawn, patch(
+            "adapters.dbus_readonly.asyncio.wait_for",
+            new=wait_without_deadline,
+        ):
             await adapter._call("GetId")
 
         self.assertEqual(spawn.await_args.args[4], "1ms")
+        self.assertEqual(wait_timeouts, [0.0001])
 
     async def test_subprocess_is_killed_on_stdout_overflow(self):
         process = FakeProcess(stdout=b"x" * 129, returncode=None)
@@ -363,11 +373,13 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(str(caught.exception), "invalid bus response")
 
     async def test_excessively_nested_json_response_is_sanitized(self):
-        nested = b"[" * 1100 + b"0" + b"]" * 1100
+        nested = b"[" * 10000 + b"0" + b"]" * 10000
         process = FakeProcess(
             stdout=b'{"type":"s","data":[' + nested + b"]}"
         )
-        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), max_stdout=32 * 1024
+        )
         with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
             "adapters.dbus_readonly.asyncio.create_subprocess_exec",
             new=AsyncMock(return_value=process),
