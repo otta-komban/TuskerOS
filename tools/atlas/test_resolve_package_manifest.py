@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import tempfile
 import unittest
@@ -308,6 +309,10 @@ class ResolverCliTests(unittest.TestCase):
         self.gpg_key.write_text("fixture key", encoding="utf-8")
         (self.snapshot_root / "fedora" / "repodata").mkdir(parents=True)
         (self.snapshot_root / "fedora" / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
+        rpm_path = self.snapshot_root / "fedora" / "Packages" / "bash.rpm"
+        rpm_path.parent.mkdir(parents=True)
+        rpm_path.write_bytes(b"fixture RPM payload")
+        self.rpm_sha256 = hashlib.sha256(rpm_path.read_bytes()).hexdigest()
         self.manifest.write_text(
             "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_sha256,rpm_license,source_rpm,source_repository_url,upstream_url\n"
             "base-core,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash,https://www.gnu.org/software/bash/\n",
@@ -341,6 +346,7 @@ class ResolverCliTests(unittest.TestCase):
         payload = json.loads(self.output.read_text(encoding="utf-8"))
         self.assertEqual(payload["packages"][0]["package"], "bash")
         self.assertEqual(payload["packages"][0]["repository_id"], "fedora")
+        self.assertEqual(payload["packages"][0]["rpm_sha256"], self.rpm_sha256)
         self.assertEqual(payload["enabled_repository_evidence"], "enabled repo evidence")
 
     def test_cli_resolution_failure_does_not_create_output(self):
