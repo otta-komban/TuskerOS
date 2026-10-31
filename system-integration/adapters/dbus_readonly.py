@@ -237,7 +237,11 @@ class ReadOnlySystemBusAdapter:
     async def _terminate(process: asyncio.subprocess.Process) -> None:
         if process.returncode is not None:
             return
-        process.kill()
+        try:
+            process.kill()
+        except ProcessLookupError:
+            # The child may exit between the returncode check and kill().
+            pass
         try:
             await asyncio.wait_for(process.wait(), timeout=1.0)
         except asyncio.TimeoutError:
