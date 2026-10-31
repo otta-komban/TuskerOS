@@ -211,6 +211,9 @@ Automated schema tests added in `security/tests/test_security_schemas.py`. These
 | AUD-REMOTE-003 | Remote event omits either binding independently | Reject | `test_audit_event_v020_remote_origin_requires_each_binding` |
 | AUD-REMOTE-004 | Either binding is empty, null, non-string, uppercase, malformed or wrong-length | Reject | `test_audit_event_v020_remote_binding_digest_format_is_strict` |
 | AUD-REMOTE-005 | Local/extension/system event supplies either remote binding | Reject | `test_audit_event_v020_non_remote_origin_rejects_remote_bindings` |
-| AUD-REMOTE-006 | Remote event includes raw `device_id` or `session_id` instead of only digests | Reject | `test_audit_event_v020_rejects_raw_remote_identity_fields` |
+| AUD-REMOTE-006 | Remote event includes raw device/session identifiers, key material, session credentials, signatures, pairing secrets, or task/prompt/completion payloads | Reject | `test_audit_event_v020_rejects_raw_remote_identity_credentials_and_payloads` (11 parameter cases) |
 
 These cases validate the candidate envelope only. They do not prove that a trusted remote adapter derives the digests correctly, that a producer persists them, or that a live policy/broker path enforces the binding. The active v0.1.0 schema remains unchanged; v0.2.0 producer migration remains gated on NEXUS-07/TUSKER-04 agreement.
+
+
+C0053 expands AUD-REMOTE-006 with 11 explicit forbidden-field regression cases. This validates the candidate schema's strict envelope only; it does not prove runtime redaction or audit-store behavior.
