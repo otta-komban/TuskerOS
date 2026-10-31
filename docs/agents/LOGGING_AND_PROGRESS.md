@@ -1,84 +1,100 @@
-# Work Logging and Progress Accounting
+# Response Completion Logging and Progress Accounting
 
-## 1. Source of truth
-- GitHub branch refs and commit SHAs are the source of truth for code state.
-- GitHub Actions run/job records and retained artifacts are the source of truth for CI state.
-- The central completion ledger is the source of truth for response-completion counts.
-- Agent-authored dashboards are summaries only and must never override these sources.
+## 1. The unit being counted
 
-## 2. Task log
-Each agent maintains task notes in its PR description or assigned issue. Use this format:
+**One completion = one substantive, task-relevant assistant response in this agent chat.**
 
-```markdown
-## Task update
-- Agent:
-- Task ID:
-- Status: planned | in_progress | blocked | review | done
-- Branch:
-- Base SHA:
-- Head SHA:
-- Scope:
-- Files/components:
-- Tests run:
-- Results:
-- Evidence links:
-- Risks / blockers:
-- Next action:
-```
+Count responses, not tasks, subtasks, commits, tests, files, milestones, log lines, or completion IDs:
+- If one assistant response completes five tasks, it is still **1 completion**.
+- If one assistant response reports several commits or test runs, it is still **1 completion**.
+- A response labelled `C0010` is not automatically ten completions. It is only an identifier; the dashboard count is the number of validated response records.
+- A substantive response to one user turn can contribute at most one completion for that agent.
+- Acknowledgements, empty "continuing" messages, tool-only activity, retries, and status-only messages contribute **0**.
 
-Update the issue/PR when status materially changes. Do not create noisy status-only commits.
+A completion is counted when the response has delivered a meaningful task-relevant result, such as an implementation/change, a verified investigation or decision, a tested fix, or a concrete blocker report with evidence. Do not inflate counts to reach 100.
 
-## 3. Append-only completion ledger
-Canonical location: `progress/completions.jsonl` (created by the coordinator when the new cohort is formally activated). One JSON object per line; UTF-8; no blank lines.
+## 2. Two-level append-only logging
 
-Required fields:
+### Agent-local response log
+
+Each agent owns exactly one append-only file on its assigned branch:
+
+`logs/completions/<AGENT-ID>.jsonl`
+
+The agent appends **exactly one JSON object for each qualifying assistant response**, and never more than one for the same response. The file is the basis for that agent's local dashboard. The agent may write only its own file on its assigned branch.
+
+### Canonical project ledger
+
+The coordinator owns:
+
+`progress/completions.jsonl`
+
+This is the validated project-wide ledger. Agents must not edit it. The coordinator imports a local record only after checking the response evidence, branch, unique response ID, sequence, and one-record-per-response rule. The canonical ledger is append-only. The initial empty file means zero validated records, not a missing logging system.
+
+The agent-local and canonical ledgers use the same record shape:
+
 ```json
 {
-  "completion_id": "ATLAS-01-000001",
-  "agent_id": "ATLAS-01",
-  "branch": "agent/01-fedora-base",
-  "user_message_ref": "<stable conversation/message reference>",
-  "response_summary": "<substantive work performed>",
-  "evidence_refs": ["<commit, PR, issue, test run, or artifact URL>"],
+  "completion_id": "PHOENIX-10-000001",
+  "response_id": "unique UUID for this assistant response",
+  "agent_id": "PHOENIX-10",
+  "branch": "agent/10-installer-recovery",
+  "response_summary": "One concise description of the substantive result in this response",
+  "evidence_refs": [
+    "https://github.com/otta-komban/TuskerOS/commit/<verified-sha>"
+  ],
   "recorded_at_utc": "2026-10-31T00:00:00Z",
   "record_version": 1
 }
 ```
-The timestamp above is illustrative only. Always write the actual UTC time when appending; never reuse the example.
 
-Rules:
-- IDs are sequential per agent, zero-padded to six digits, and never reused.
-- One agent can receive at most one completion for one user message.
-- A valid record requires substantive user-directed work and evidence. A status-only reply, acknowledgement, tool call, retry, commit, test, or file is not a completion by itself.
-- The coordinator validates uniqueness, branch identity, user-message uniqueness, timestamp format, and evidence before append.
-- Append only. Never edit, sort, renumber, backdate, delete, or silently repair existing records.
-- Suspected duplicates or anomalies are flagged in an audit note and excluded pending review.
-- Historical old-cohort records remain frozen and separate; do not merge their unresolved 124 vs 135 counts into the new cohort.
+The timestamp is illustrative. Use the actual UTC time. Never invent a timestamp, SHA, test result, URL, or response evidence. Use a UUID for `response_id`; it identifies one assistant response, not a task or milestone. Sequence `completion_id` per agent from 000001. If the response has no verifiable evidence yet, use a concrete issue/comment or branch-local artifact URL; otherwise do not claim a logged completion.
+
+## 3. Exact counting procedure for every agent response
+
+At the end of each substantive response:
+1. Decide whether the response itself contains a meaningful task-relevant result. If not, add no record and do not increment.
+2. If yes, append exactly one record to your own `logs/completions/<AGENT-ID>.jsonl` on your assigned branch.
+3. Re-read the file and count valid JSONL records for your agent. Do not count task IDs, commits, tests, C-numbers, or milestones separately.
+4. Report that count in the dashboard as the **agent-local count**. State `Log: Updated (branch-local; coordinator validation pending)` until imported into the canonical ledger.
+5. If you cannot write the branch-local log, report `Log: Pending` and do not increment the displayed validated count. Explain the exact blocker.
+6. The coordinator periodically validates and appends records to `progress/completions.jsonl`. Only then is the count marked canonical/validated.
+
+Never claim that writing an issue comment or saying "C0010 recorded" updates the canonical ledger. A response record is not a task-completion record.
 
 ## 4. Dashboard
+
 Every agent response ends with:
 
 ```text
 ### Progress
-- Completions: X / 100 (X%)
+- Completions: X / 100 (Y%) — agent-local; Z canonical
 - Remaining: 100 - X
-- Commits: N (latest: <verified short SHA>)
+- Commits: N (latest: <verified short SHA or none>)
 - Branch: <assigned branch>
-- Log: Updated | Pending
+- Log: Updated (branch-local; coordinator validation pending) | Canonical | Pending
 
-Progress bar: <20-cell bar computed from X%>
+Progress bar: [<20 cells computed from X%>] Y%
 ```
 
-Only display a completion count after ledger validation. Commit count is the number of verified commits for that branch in the declared reporting interval; state the interval. If no verified commit exists, report `0 (latest: none)`. If ledger is not yet initialized, report `0 / 100` and `Log: Pending`; do not fabricate entries.
+Use `X` from the count of that agent's valid local response records, not from the current response's number of tasks. `Z` is the number of that agent's records present in the canonical ledger. If the local log does not exist or cannot be read, show `0 / 100` only if zero is verified; otherwise say `unknown` and `Log: Pending`. The remaining count is based on X. Percent is X percent because the target is 100.
 
-## 5. Audit
-The coordinator periodically validates:
+Commit count is separate from completion count. Report only verified commits on the assigned branch and specify the reporting interval when it is not obvious. Never make up a commit count.
+
+## 5. Coordinator validation
+
+The coordinator validates:
 - JSONL parseability and required fields;
-- unique completion IDs and unique agent/user-message pairs;
-- strictly increasing sequence per agent;
-- actual UTC timestamps and append order;
-- evidence URLs/SHA references;
-- branch-to-agent ownership;
-- dashboard values against the ledger and Git refs.
+- allowed agent ID and exact branch mapping;
+- unique completion IDs and response IDs;
+- sequential per-agent IDs with no gaps or reuse;
+- UTC timestamps and append order;
+- evidence references and actual GitHub state;
+- at most one record per assistant response;
+- dashboard values against local and canonical ledgers.
 
-Audit corrections are new append-only audit records; never rewrite source history.
+The coordinator must not turn one response into multiple completions because it mentions multiple deliverables. Duplicate or unsupported records are flagged and excluded; source logs are never rewritten to hide the issue.
+
+## 6. Historical cohort
+
+Old-cohort records remain frozen and separate. Do not merge the unresolved historical 124 vs 135 figures into this new cohort. The new cohort starts at zero canonical records; only verifiable new-cohort responses may be added.
