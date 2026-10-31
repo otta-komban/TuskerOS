@@ -34,7 +34,7 @@ Every task update must identify:
 - remaining risks, blockers, and rollback/migration notes.
 
 ## Response completion accounting
-- **One substantive assistant response in this agent chat = at most one completion.** Count the response once, no matter how many tasks, commits, tests, files, or milestones it contains.
+- **One substantive assistant response in this agent chat = at most one completion.** Count the response once, no matter how many tasks, commits, tests, files, or milestones it contains. For this cohort, count only responses at or after `2026-10-31T07:39:00Z` (the verified suspension-lift time); pre-boundary records are frozen historical work.
 - A status-only/acknowledgement/tool-only response is zero completions.
 - Never infer the count from a C-number, task ID, milestone count, commit count, or number of deliverables. For example, `C0010` does not mean 10 completions.
 - Append exactly one record per qualifying response to your own `logs/completions/<AGENT-ID>.jsonl` on your assigned branch. Never edit another agent's file or the coordinator-owned canonical ledger.
