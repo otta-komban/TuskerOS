@@ -37,7 +37,7 @@ The adapter's `jsonschema` requirement is test-only (from `system-integration/re
 
 **ATLAS action:** no rows are to be added to `os/package-manifest.csv` from this NEXUS review. ATLAS should resolve any future package addition against its selected immutable Fedora 44 repository snapshot and obtain a separate owner review. The current ATLAS snapshot lock is empty, so no NEVRA, repository ID, RPM digest or provenance pin can be asserted by NEXUS.
 
-**External package evidence:** Fedora 44's `systemd` package file list includes `/usr/bin/busctl`; Fedora's `dbus-broker` package is the message-bus implementation. These facts identify package ownership, not a validated package lock.
+**External package evidence:** Fedora's [Fedora 44 systemd package file list](https://packages.fedoraproject.org/pkgs/systemd/systemd/fedora-44.html) includes `/usr/bin/busctl`; the [Fedora 44 dbus-broker package page](https://packages.fedoraproject.org/pkgs/dbus-broker/dbus-broker/fedora-44.html) identifies it as the Linux D-Bus message-bus implementation. These facts identify package ownership, not a validated package lock.
 
 ## 2. TUSKER-04 — result status and side-effect guarantees
 
