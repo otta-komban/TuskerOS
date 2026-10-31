@@ -15,3 +15,5 @@ The schema also mirrors validator text constraints for non-blank bounded names, 
 Catalog publication and review timestamps use RFC 3339 syntax with an explicit UTC marker or numeric offset. The Python validator also checks calendar validity; the schema carries the matching syntax, timezone, and 64-character bound.
 The Python URL validator also fails closed on malformed authorities/ports and rejects whitespace or control characters before parsing; malformed untrusted URLs return validation errors rather than escaping as parser exceptions. The JSON Schema URL patterns also reject whitespace throughout the authority and path, while allowing percent-encoded spaces.
 The JSON Schema also caps release version text at the same 128-character limit as the Python validator.
+
+The catalog plan resolver validates root IDs and the complete supplied dependency mapping before ordering or release selection. Text-valued dependency declarations, invalid IDs, non-iterable dependency values, and non-mapping graphs are rejected as `CatalogResolutionError` rather than leaking Python type errors.
