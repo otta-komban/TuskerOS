@@ -41,6 +41,14 @@ class CatalogResolverTests(unittest.TestCase):
         with self.assertRaises(CatalogResolutionError):
             parse_compat_version("1.٢.3")
 
+    def test_compatibility_parser_enforces_schema_length_bound(self):
+        from marketplace.tools.catalog_resolver import parse_compat_version
+        self.assertEqual(parse_compat_version("1" * 64).major, int("1" * 64))
+        for value in ("", "1" * 65):
+            with self.subTest(value_length=len(value)):
+                with self.assertRaisesRegex(CatalogResolutionError, "max 64"):
+                    parse_compat_version(value)
+
     def test_release_versions_order_numerically(self):
         self.assertLess(parse_release_version("1.9.0"), parse_release_version("1.10.0"))
 
