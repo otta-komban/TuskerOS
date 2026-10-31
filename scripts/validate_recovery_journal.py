@@ -10,8 +10,12 @@ from dataclasses import dataclass
 import hashlib
 import json
 from typing import Any, Iterable
+from itertools import islice
 
 GENESIS_CHECKSUM = "0" * 64
+MAX_JOURNAL_BYTES = 4 * 1024 * 1024
+MAX_RECORD_BYTES = 64 * 1024
+MAX_RECORDS = 10_000
 STATES = {"planned", "prepared", "executing", "interrupted",
           "succeeded", "failed", "cancelled"}
 TERMINAL_STATES = {"succeeded", "failed", "cancelled"}
@@ -72,7 +76,14 @@ def seal_record(*, sequence: int, operation_id: str, state: str,
 
 def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
     errors: list[str] = []
-    materialized = list(records)
+    try:
+        iterator = iter(records)
+        materialized = list(islice(iterator, MAX_RECORDS + 1))
+    except TypeError:
+        return JournalReport(False, 0, 0, None, "", ("journal records must be iterable",))
+    if len(materialized) > MAX_RECORDS:
+        materialized = materialized[:MAX_RECORDS]
+        errors.append(f"journal exceeds maximum record count ({MAX_RECORDS})")
     previous = GENESIS_CHECKSUM
     previous_state: str | None = None
     operation_id: str | None = None
@@ -148,11 +159,21 @@ def parse_jsonl(text: str) -> list[dict[str, Any]]:
     """Parse complete JSONL records; blank, duplicate-key and truncated records fail."""
     if not isinstance(text, str) or not text:
         raise JournalValidationError("journal must be non-empty text")
+    try:
+        encoded_size = len(text.encode("utf-8", errors="strict"))
+    except UnicodeEncodeError as exc:
+        raise JournalValidationError("journal contains invalid Unicode") from exc
+    if encoded_size > MAX_JOURNAL_BYTES:
+        raise JournalValidationError(f"journal exceeds maximum size ({MAX_JOURNAL_BYTES} bytes)")
     lines = text.splitlines()
+    if len(lines) > MAX_RECORDS:
+        raise JournalValidationError(f"journal exceeds maximum record count ({MAX_RECORDS})")
     records = []
     for number, line in enumerate(lines, start=1):
         if not line.strip():
             raise JournalValidationError(f"line {number}: blank records are not allowed")
+        if len(line.encode("utf-8")) > MAX_RECORD_BYTES:
+            raise JournalValidationError(f"line {number}: record exceeds maximum size ({MAX_RECORD_BYTES} bytes)")
         try:
             item = json.loads(
                 line, object_pairs_hook=_unique_object,
