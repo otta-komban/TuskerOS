@@ -17,11 +17,11 @@ from pathlib import Path
 EXPECTED_RELEASE = "44"
 EXPECTED_ARCH = "x86_64"
 REQUIRED_COLUMNS = {"layer", "package", "owner", "required", "rationale"}
-PINNED_COLUMNS = {"pinned_nevra", "repository_id", "repository_snapshot", "rpm_license", "source_rpm", "source_url"}
+PINNED_COLUMNS = {"pinned_nevra", "repository_id", "repository_snapshot", "rpm_license", "source_rpm", "source_repository_url", "upstream_url"}
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 SOURCE_RPM_RE = re.compile(r"^[A-Za-z0-9+_.:-]+\.src\.rpm$")
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9+_.:-]*$")
-QUERY_FORMAT = "%{full_nevra}\t%{repoid}\t%{license}\t%{sourcerpm}"
+QUERY_FORMAT = "%{full_nevra}\t%{repoid}\t%{license}\t%{sourcerpm}\t%{url}"
 
 
 def run(command: list[str]) -> str:
@@ -111,13 +111,17 @@ def read_manifest(path: Path, *, require_pins: bool = False) -> list[dict[str, s
             repository_id = (row.get("repository_id") or "").strip()
             if not REPOSITORY_RE.fullmatch(repository_id):
                 raise RuntimeError(f"repository_id is invalid: {repository_id!r}")
-            for column in ("repository_snapshot", "rpm_license", "source_rpm", "source_url"):
+            for column in ("repository_snapshot", "rpm_license", "source_rpm", "source_repository_url", "upstream_url"):
                 if not (row.get(column) or "").strip():
                     raise RuntimeError(f"{column} must be non-empty for pinned package {package}")
             if not SOURCE_RPM_RE.fullmatch(row["source_rpm"].strip()):
                 raise RuntimeError("source_rpm must be an RPM source package filename")
-            if not row["source_url"].strip().startswith("https://"):
-                raise RuntimeError("source_url must use HTTPS")
+            source_repository_url = row["source_repository_url"].strip()
+            if not source_repository_url.startswith("https://src.fedoraproject.org/rpms/"):
+                raise RuntimeError("source_repository_url must be a Fedora dist-git HTTPS URL")
+            upstream_url = row["upstream_url"].strip()
+            if upstream_url != "NOASSERTION" and not upstream_url.startswith("https://"):
+                raise RuntimeError("upstream_url must be HTTPS or the explicit NOASSERTION sentinel")
         key = (layer, package)
         if key in seen:
             raise RuntimeError(f"Duplicate package in layer: {layer}/{package}")
@@ -129,17 +133,19 @@ def read_manifest(path: Path, *, require_pins: bool = False) -> list[dict[str, s
 
 def parse_query_matches(
     output: str, expected_package: str | None = None
-) -> tuple[str, str, str, str]:
-    """Return one unambiguous NEVRA/repository/license/source-RPM tuple."""
+) -> tuple[str, str, str, str, str]:
+    """Return one unambiguous NEVRA/repository/license/source-RPM/upstream-URL tuple."""
     matches = {line.strip() for line in output.splitlines() if line.strip()}
     if not matches:
         raise RuntimeError("no available match")
-    parsed: set[tuple[str, str, str, str]] = set()
+    parsed: set[tuple[str, str, str, str, str]] = set()
     for match in matches:
         fields = match.split("\t")
-        if len(fields) != 4 or not all(field.strip() for field in fields):
+        if len(fields) != 5 or not all(field.strip() for field in fields[:4]):
             raise RuntimeError(f"unexpected DNF5 query output row: {match!r}")
-        nevra, repository, license_expression, source_rpm = (field.strip() for field in fields)
+        nevra, repository, license_expression, source_rpm, upstream_url = (field.strip() for field in fields)
+        if upstream_url in {"", "(none)", "None"}:
+            upstream_url = "NOASSERTION"
         if not nevra.endswith((".x86_64", ".noarch")):
             raise RuntimeError(f"DNF5 returned unsupported architecture in NEVRA: {nevra!r}")
         if expected_package is not None and not re.match(
@@ -151,7 +157,9 @@ def parse_query_matches(
             )
         if not SOURCE_RPM_RE.fullmatch(source_rpm):
             raise RuntimeError(f"DNF5 returned invalid source RPM metadata: {source_rpm!r}")
-        parsed.add((nevra, repository, license_expression, source_rpm))
+        if upstream_url != "NOASSERTION" and not upstream_url.startswith("https://"):
+            raise RuntimeError(f"DNF5 returned a non-HTTPS upstream URL: {upstream_url!r}")
+        parsed.add((nevra, repository, license_expression, source_rpm, upstream_url))
     nevras = {item[0] for item in parsed}
     repositories = {item[1] for item in parsed}
     if len(nevras) != 1:
@@ -172,12 +180,14 @@ def verify_pin(
     actual_repository: str,
     actual_license: str,
     actual_source_rpm: str,
+    actual_upstream_url: str,
 ) -> None:
     expected = {
         "pinned_nevra": actual_nevra,
         "repository_id": actual_repository,
         "rpm_license": actual_license,
         "source_rpm": actual_source_rpm,
+        "upstream_url": actual_upstream_url,
     }
     for field, actual in expected.items():
         pinned = row[field].strip()
@@ -211,8 +221,8 @@ def main() -> int:
             "--latest-limit=1", "--qf", QUERY_FORMAT, row["pinned_nevra"].strip()
         ])
         try:
-            nevra, repo_id, rpm_license, source_rpm = parse_query_matches(output, row["package"])
-            verify_pin(row, nevra, repo_id, rpm_license, source_rpm)
+            nevra, repo_id, rpm_license, source_rpm, upstream_url = parse_query_matches(output, row["package"])
+            verify_pin(row, nevra, repo_id, rpm_license, source_rpm, upstream_url)
         except RuntimeError as exc:
             failures.append(f"{row['layer']}/{row['package']}: {exc}")
             continue
@@ -228,7 +238,8 @@ def main() -> int:
             "repository_snapshot": row["repository_snapshot"].strip(),
             "rpm_license": rpm_license,
             "source_rpm": source_rpm,
-            "source_url": row["source_url"].strip(),
+            "source_repository_url": row["source_repository_url"].strip(),
+            "upstream_url": upstream_url,
         })
 
     if failures:
