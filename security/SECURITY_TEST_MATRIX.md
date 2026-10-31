@@ -231,3 +231,14 @@ C0053 expands AUD-REMOTE-006 with 11 explicit forbidden-field regression cases. 
 
 These are acceptance criteria, not passing tests. The current v0.1.0 JSON Schema still accepts arbitrary nested objects under `constraints`; no consumer implementation was exercised. The interim contract requires producers to emit an empty object and consumers to reject non-empty objects until the policy-engine and broker owners approve a bounded, versioned vocabulary. SEC-SCHEMA-007 remains open.
 
+
+
+## Policy-decision interim constraints coverage — SEC-SCHEMA-007
+
+| ID | Scenario | Expected result | Coverage |
+|---|---|---|---|
+| POL-DEC-005a | Decision omits `constraints` | Reject | `test_policy_decision_constraints_must_be_present_and_empty` |
+| POL-DEC-005b | Decision includes an empty `constraints` object | Accept | `test_policy_decision_constraints_must_be_present_and_empty` |
+| POL-DEC-005c | Decision includes any non-empty or nested constraint object | Reject | `test_policy_decision_rejects_non_empty_constraints` |
+
+This is an interim fail-closed contract, not the final constraint vocabulary. It does not prove policy-engine producer or broker-consumer enforcement at runtime.
