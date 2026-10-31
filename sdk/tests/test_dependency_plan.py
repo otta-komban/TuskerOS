@@ -41,6 +41,26 @@ class DependencyPlanTests(unittest.TestCase):
         with self.assertRaisesRegex(planner.DependencyPlanError, "duplicate dependency"):
             planner.resolve_install_order(["app"], {"app": ["lib", "lib"], "lib": []})
 
+    def test_dependency_declaration_cannot_be_a_string(self):
+        with self.assertRaisesRegex(planner.DependencyPlanError, "not text"):
+            planner.resolve_install_order(["app"], {"app": "library"})
+
+    def test_non_string_or_unhashable_dependency_fails_closed(self):
+        for dependency in (None, {}, 7, ""):
+            with self.subTest(dependency=dependency):
+                with self.assertRaises(planner.DependencyPlanError):
+                    planner.resolve_install_order(["app"], {"app": [dependency]})
+
+    def test_roots_must_be_package_id_strings(self):
+        for roots in ("app", ["app", None], [[]]):
+            with self.subTest(roots=roots):
+                with self.assertRaises(planner.DependencyPlanError):
+                    planner.resolve_install_order(roots, {"app": []})
+
+    def test_packages_must_be_a_mapping(self):
+        with self.assertRaisesRegex(planner.DependencyPlanError, "mapping"):
+            planner.resolve_install_order(["app"], [("app", [])])
+
 
 if __name__ == "__main__":
     unittest.main()
