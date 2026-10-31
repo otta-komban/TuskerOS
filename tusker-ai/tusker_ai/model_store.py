@@ -237,7 +237,7 @@ class ModelStore:
             else:
                 report["unsafe_entries"].append({"area": "staging", "name": entry.name, "reason": "not_directory"})
 
-        active_revisions: dict[str, str] = {}
+        active_revisions: dict[str, Mapping] = {}
         for entry in sorted(self.active.iterdir(), key=lambda item: item.name):
             if entry.is_symlink():
                 report["unsafe_entries"].append({"area": "active", "name": entry.name, "reason": "symlink"})
@@ -262,7 +262,7 @@ class ModelStore:
                 state = "integrity_check_failed"
             else:
                 state = "valid"
-                active_revisions[artifact_id] = record["revision"]
+                active_revisions[artifact_id] = record
             report["active_pointers"].append({"artifact_id": artifact_id, "state": state})
 
         for artifact in sorted(self.models.iterdir(), key=lambda item: item.name):
@@ -273,8 +273,38 @@ class ModelStore:
                 if revision.is_symlink() or not revision.is_dir() or not _REVISION.fullmatch(revision.name):
                     report["unsafe_entries"].append({"area": f"models/{artifact.name}", "name": revision.name, "reason": "unsafe_revision_entry"})
                     continue
-                if active_revisions.get(artifact.name) != revision.name:
+                active_record = active_revisions.get(artifact.name)
+                is_active_revision = active_record is not None and active_record["revision"] == revision.name
+                if not is_active_revision:
                     report["orphan_revisions"].append(f"{artifact.name}/{revision.name}")
+
+                # Inspect one level only: never follow symlinks or recurse into
+                # attacker-controlled directory trees during a recovery scan.
+                expected_filename = active_record["filename"] if is_active_revision else None
+                try:
+                    children = sorted(revision.iterdir(), key=lambda item: item.name)
+                except OSError:
+                    report["unsafe_entries"].append({
+                        "area": f"models/{artifact.name}/{revision.name}",
+                        "name": ".",
+                        "reason": "unreadable_revision",
+                    })
+                    continue
+                for child in children:
+                    area = f"models/{artifact.name}/{revision.name}"
+                    if child.is_symlink():
+                        reason = "symlink"
+                    elif not child.is_file():
+                        reason = "unexpected_revision_entry"
+                    elif is_active_revision and child.name != expected_filename:
+                        reason = "unexpected_revision_content"
+                    else:
+                        continue
+                    report["unsafe_entries"].append({
+                        "area": area,
+                        "name": child.name,
+                        "reason": reason,
+                    })
 
         report["requires_operator_review"] = any((
             report["staging_entries"],
