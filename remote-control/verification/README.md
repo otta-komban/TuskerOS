@@ -45,6 +45,15 @@ The result contains `ok`, `scope`, and `runtime_security_tested`. The latter is
 always `false`: a successful result means only that the documentation tables passed
 the structural checks. A validation failure (including unreadable files and invalid UTF-8) exits with status 1.
 
+
+The repository check evaluates PAIR, SESS, and NET independently in that order,
+then reports all discovered specification failures together. Missing files, filesystem
+read errors, and UTF-8 decoding errors are reported as controlled validation failures;
+the validator does not stop after the first broken specification. Text diagnostics
+retain the specification prefix and stable per-specification ordering. In JSON mode,
+all failures are returned in the `error` field of the same failure object, with
+`ok: false` and exit status 1.
+
 ## Run the validator's unit tests
 
 ```sh
