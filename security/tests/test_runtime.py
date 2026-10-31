@@ -1156,3 +1156,49 @@ def test_security_database_rejection_closes_open_file_descriptor(tmp_path, monke
     with pytest.raises(OSError):
         os.fstat(opened[0])
     assert target.read_bytes() == b"preserve external file"
+
+def test_security_store_closes_sqlite_connection_when_schema_initialization_fails(monkeypatch):
+    import sqlite3
+    from security.runtime import store as store_module
+
+    original_connect = sqlite3.connect
+    opened = []
+
+    class FailingSchemaConnection:
+        def __init__(self, connection):
+            object.__setattr__(self, "_connection", connection)
+            object.__setattr__(self, "closed", False)
+
+        def __getattr__(self, name):
+            if name == "executescript":
+                def fail_schema(_script):
+                    raise sqlite3.OperationalError("injected schema initialization failure")
+                return fail_schema
+            return getattr(self._connection, name)
+
+        def __setattr__(self, name, value):
+            if name == "closed":
+                object.__setattr__(self, name, value)
+            else:
+                setattr(self._connection, name, value)
+
+        def close(self):
+            object.__setattr__(self, "closed", True)
+            self._connection.close()
+
+    def capture_connect(*args, **kwargs):
+        connection = original_connect(*args, **kwargs)
+        wrapped = FailingSchemaConnection(connection)
+        opened.append((connection, wrapped))
+        return wrapped
+
+    monkeypatch.setattr(store_module.sqlite3, "connect", capture_connect)
+    with pytest.raises(sqlite3.OperationalError, match="injected schema initialization failure"):
+        SecurityStore(":memory:", audit_key=KEY)
+
+    assert len(opened) == 1
+    connection, wrapped = opened[0]
+    assert wrapped.closed is True
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        connection.execute("SELECT 1")
+
