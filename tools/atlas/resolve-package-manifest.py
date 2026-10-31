@@ -206,7 +206,10 @@ def snapshot_repo_args(snapshot_root: Path, repository_ids: set[str]) -> list[st
     for repository_id in sorted(repository_ids):
         if not REPOSITORY_RE.fullmatch(repository_id):
             raise RuntimeError(f"Invalid repository ID for local snapshot: {repository_id!r}")
-        repository_path = (root / repository_id).resolve(strict=True)
+        try:
+            repository_path = (root / repository_id).resolve(strict=True)
+        except OSError as exc:
+            raise RuntimeError(f"Local repository snapshot is missing: {repository_id}") from exc
         if not repository_path.is_relative_to(root):
             raise RuntimeError(f"Local repository path escapes snapshot root: {repository_id}")
         if not (repository_path / "repodata" / "repomd.xml").is_file():
