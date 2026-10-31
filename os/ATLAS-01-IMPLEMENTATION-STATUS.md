@@ -41,7 +41,7 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest previously validated PR head: `63f796d31bd05ca8c0709e6186fcd03d18e98750`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`. Local KIWI snapshot overlay changes are under validation; refresh this line after CI completes.
+- Latest previously validated PR head: `63f796d31bd05ca8c0709e6186fcd03d19bf8`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`. Local KIWI snapshot overlay changes are under validation; refresh this line after CI completes.
 - Draft remains open for review. Earlier ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669) passed 78 tests and Fedora 44 DNF5 smoke; unified validation [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664) passed all 8 jobs on the then-current code. The new local KIWI overlay implementation and its tests require fresh CI evidence. The PR is not merge-ready until package rows are approved, the complete build is exercised, RPM payload checksums are locked, and PHOENIX VM install/boot evidence is available.
 
 ## Evidence
@@ -105,7 +105,7 @@
 
 - ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669): **78 tests passed**, Fedora 44 DNF5 smoke passed, and upstream KIWI source commit/blob verification passed on `63f796d31bd05ca8c0709e6186fcd03d18d19bf8`.
 - Unified run [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664): **all 8 jobs passed** on the same exact branch head.
-- This validates the earlier DNF local snapshot resolver code and CI contracts; it does not execute a full `dnf5 reposync` of Fedora repositories or a KIWI build. The newer KIWI overlay is pending CI validation.
+- This validates the earlier DNF local snapshot resolver code and CI contracts; it does not execute a full `dnf5 reposync` of Fedora repositories or a KIWI build. The newer KIWI overlay and Fedora signature-enforcement smoke are pending CI validation.
 
 ## Image/build/runtime status
 
