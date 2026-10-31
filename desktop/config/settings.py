@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
+import stat
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -12,38 +14,16 @@ MAX_SETTINGS_BYTES = 64 * 1024
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "schema_version": 1,
-    "panel": {
-        "enabled": True,
-        "edge": "bottom",
-        "icon_size": 48,
-        "auto_hide": False,
-    },
-    "assistant": {
-        "enabled": False,
-        "show_task_progress": True,
-    },
-    "accessibility": {
-        "reduced_motion": False,
-        "high_contrast": False,
-    },
+    "panel": {"enabled": True, "edge": "bottom", "icon_size": 48, "auto_hide": False},
+    "assistant": {"enabled": False, "show_task_progress": True},
+    "accessibility": {"reduced_motion": False, "high_contrast": False},
 }
-
 _ALLOWED: dict[str, Any] = {
     "schema_version": int,
-    "panel": {
-        "enabled": bool,
-        "edge": ("bottom", "top", "left", "right"),
-        "icon_size": (24, 32, 40, 48, 56, 64, 72, 80, 88, 96),
-        "auto_hide": bool,
-    },
-    "assistant": {
-        "enabled": bool,
-        "show_task_progress": bool,
-    },
-    "accessibility": {
-        "reduced_motion": bool,
-        "high_contrast": bool,
-    },
+    "panel": {"enabled": bool, "edge": ("bottom", "top", "left", "right"),
+              "icon_size": (24, 32, 40, 48, 56, 64, 72, 80, 88, 96), "auto_hide": bool},
+    "assistant": {"enabled": bool, "show_task_progress": bool},
+    "accessibility": {"reduced_motion": bool, "high_contrast": bool},
 }
 
 
@@ -97,6 +77,37 @@ def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def _read_settings_document(path: Path) -> Any:
+    """Read bounded JSON through a no-follow descriptor for the opened regular file."""
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        descriptor = os.open(Path(path), flags)
+    except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            raise ValueError("settings file must not be a symlink") from exc
+        raise
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError("settings file must be a regular file")
+        if info.st_size > MAX_SETTINGS_BYTES:
+            raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
+        chunks: list[bytes] = []
+        remaining = MAX_SETTINGS_BYTES + 1
+        while remaining:
+            chunk = os.read(descriptor, min(8192, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        payload = b"".join(chunks)
+        if len(payload) > MAX_SETTINGS_BYTES:
+            raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
+    finally:
+        os.close(descriptor)
+    return json.loads(payload.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
+
+
 def _fsync_directory(path: Path) -> None:
     """Persist directory-entry changes after an atomic rename."""
     flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
@@ -108,20 +119,11 @@ def _fsync_directory(path: Path) -> None:
 
 
 def load_settings(path: Path) -> tuple[dict[str, Any], list[str]]:
-    """Load preferences; missing or invalid files safely fall back to defaults."""
-    path = Path(path)
-    # Check symlinks before exists(): dangling symlinks report exists() == False.
-    if path.is_symlink():
-        return _merge(DEFAULT_SETTINGS, {}), ["settings file must not be a symlink"]
-    if not path.exists():
-        return _merge(DEFAULT_SETTINGS, {}), []
+    """Load preferences without following symlinks or blocking on special files."""
     try:
-        if path.stat().st_size > MAX_SETTINGS_BYTES:
-            raise ValueError(f"settings file exceeds {MAX_SETTINGS_BYTES} bytes")
-        raw = json.loads(
-            path.read_text(encoding="utf-8"),
-            object_pairs_hook=_reject_duplicate_keys,
-        )
+        raw = _read_settings_document(Path(path))
+    except FileNotFoundError:
+        return _merge(DEFAULT_SETTINGS, {}), []
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         return _merge(DEFAULT_SETTINGS, {}), [f"cannot load settings: {exc}"]
     errors = validate_settings(raw)
