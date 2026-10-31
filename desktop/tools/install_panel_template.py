@@ -15,7 +15,7 @@ from pathlib import Path
 
 PLUGIN_ID = "com.tuskeros.desktop.dock"
 MARKER = ".tuskeros-managed"
-MARKER_CONTENT = "TuskerOS managed Plasma layout template; safe to remove with this installer.\\n"
+MARKER_CONTENT = "TuskerOS managed Plasma layout template; safe to remove with this installer.\n"
 MAX_SOURCE_FILES = 256
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
 AT_FDCWD = -100
