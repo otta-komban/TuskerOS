@@ -3,7 +3,7 @@ name: System integration contract tests
 on:
   push:
     branches:
-      - 07-system-integration
+      - agent/07-system-integration
     paths:
       - "system-integration/contracts/**"
       - "system-integration/tests/**"
