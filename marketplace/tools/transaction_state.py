@@ -52,14 +52,16 @@ def transition_transaction(
     """
     if not isinstance(transaction, Mapping):
         raise TransactionStateError("transaction must be an object")
-    required = {"transaction_id", "state", "plan_digest", "snapshot_digest"}
-    optional = {"history", "terminal"}
-    if not required.issubset(transaction) or set(transaction) - required - optional:
+    required = {
+        "transaction_id", "state", "plan_digest", "snapshot_digest",
+        "history", "terminal",
+    }
+    if set(transaction) != required:
         raise TransactionStateError("transaction has an invalid shape")
-    history_value = transaction.get("history", [])
+    history_value = transaction["history"]
     if not isinstance(history_value, list):
         raise TransactionStateError("transaction history must be an array")
-    if "terminal" in transaction and not isinstance(transaction["terminal"], bool):
+    if not isinstance(transaction["terminal"], bool):
         raise TransactionStateError("transaction terminal must be a boolean")
     for field in required:
         if not isinstance(transaction[field], str) or not transaction[field].strip():
