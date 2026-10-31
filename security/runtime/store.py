@@ -83,6 +83,7 @@ class SecurityStore:
                 if isinstance(exc, SecurityStoreError):
                     raise
                 raise SecurityStoreError("security database could not be opened privately") from exc
+        self._db = None
         try:
             self._db = sqlite3.connect(self.path, timeout=10, isolation_level=None)
             if database_fd is not None:
@@ -93,38 +94,45 @@ class SecurityStore:
                             or path_stat.st_nlink != 1
                             or (descriptor_stat.st_dev, descriptor_stat.st_ino)
                             != (path_stat.st_dev, path_stat.st_ino)):
-                        self._db.close()
                         raise SecurityStoreError("security database path changed during open")
                 except OSError as exc:
-                    self._db.close()
                     raise SecurityStoreError("security database path changed during open") from exc
+            self._db.row_factory = sqlite3.Row
+            self._db.execute("PRAGMA foreign_keys=ON")
+            self._db.execute("PRAGMA busy_timeout=10000")
+            self._db.execute("PRAGMA synchronous=FULL")
+            if self.path != ":memory:": self._db.execute("PRAGMA journal_mode=WAL")
+            self._db.executescript("""
+            CREATE TABLE IF NOT EXISTS approvals (
+              request_id TEXT PRIMARY KEY, state TEXT NOT NULL,
+              binding_json BLOB NOT NULL, expires_at TEXT NOT NULL,
+              action_digest TEXT NOT NULL, action_id TEXT NOT NULL,
+              proposal_id TEXT NOT NULL, principal_binding TEXT NOT NULL, broker_operation_id TEXT NOT NULL,
+              policy_version TEXT NOT NULL, risk_class TEXT NOT NULL, task_id TEXT NOT NULL, step_id TEXT NOT NULL,
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS auth_refs (
+              token_hash TEXT PRIMARY KEY, request_id TEXT NOT NULL REFERENCES approvals(request_id),
+              state TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT NOT NULL, consumption_id TEXT
+            );
+            CREATE INDEX IF NOT EXISTS auth_refs_request ON auth_refs(request_id);
+            CREATE TABLE IF NOT EXISTS audit_events (
+              seq INTEGER PRIMARY KEY AUTOINCREMENT, event_json BLOB NOT NULL,
+              previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL UNIQUE
+            );
+            """)
+        except Exception:
+            # Construction did not complete, so no caller can own/close this
+            # connection. Release it here on every post-connect failure path.
+            if self._db is not None:
+                try:
+                    self._db.close()
+                except sqlite3.Error:
+                    pass
+            raise
         finally:
             if database_fd is not None:
                 os.close(database_fd)
-        self._db.row_factory = sqlite3.Row
-        self._db.execute("PRAGMA foreign_keys=ON")
-        self._db.execute("PRAGMA busy_timeout=10000")
-        self._db.execute("PRAGMA synchronous=FULL")
-        if self.path != ":memory:": self._db.execute("PRAGMA journal_mode=WAL")
-        self._db.executescript("""
-        CREATE TABLE IF NOT EXISTS approvals (
-          request_id TEXT PRIMARY KEY, state TEXT NOT NULL,
-          binding_json BLOB NOT NULL, expires_at TEXT NOT NULL,
-          action_digest TEXT NOT NULL, action_id TEXT NOT NULL,
-          proposal_id TEXT NOT NULL, principal_binding TEXT NOT NULL, broker_operation_id TEXT NOT NULL,
-          policy_version TEXT NOT NULL, risk_class TEXT NOT NULL, task_id TEXT NOT NULL, step_id TEXT NOT NULL,
-          created_at TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS auth_refs (
-          token_hash TEXT PRIMARY KEY, request_id TEXT NOT NULL REFERENCES approvals(request_id),
-          state TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT NOT NULL, consumption_id TEXT
-        );
-        CREATE INDEX IF NOT EXISTS auth_refs_request ON auth_refs(request_id);
-        CREATE TABLE IF NOT EXISTS audit_events (
-          seq INTEGER PRIMARY KEY AUTOINCREMENT, event_json BLOB NOT NULL,
-          previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL UNIQUE
-        );
-        """)
 
     def close(self) -> None:
         self._db.close()
