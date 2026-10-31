@@ -122,6 +122,12 @@ class OllamaHttpTests(unittest.TestCase):
         finally:
             Handler.version_body = original
 
+    def test_read_timeout_must_be_finite_and_positive(self):
+        for timeout in (0, -1, float("nan"), float("inf"), float("-inf"), True):
+            with self.subTest(timeout=timeout):
+                with self.assertRaises(ValueError):
+                    OllamaProvider(self.endpoint, read_timeout=timeout)
+
     def test_endpoint_rejects_paths_and_invalid_ports(self):
         for endpoint in (
             "http://127.0.0.1:bad",
