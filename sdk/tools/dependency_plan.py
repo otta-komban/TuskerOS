@@ -49,35 +49,60 @@ def resolve_install_order(
 
     state: dict[str, int] = {}  # 0/unseen, 1/visiting, 2/complete
     ordered: list[str] = []
-    stack: list[str] = []
+    active_path: list[str] = []
+    active_index: dict[str, int] = {}
 
-    def visit(package_id: str) -> None:
-        status = state.get(package_id, 0)
-        if status == 2:
-            return
-        if status == 1:
-            start = stack.index(package_id)
-            cycle = stack[start:] + [package_id]
-            raise DependencyPlanError("dependency cycle: " + " -> ".join(cycle))
-        if package_id not in packages:
-            parent = stack[-1] if stack else "<root>"
-            raise DependencyPlanError(
-                f"missing dependency {package_id} required by {parent}"
-            )
-
-        state[package_id] = 1
-        stack.append(package_id)
-        dependencies = _package_ids(
-            packages[package_id], field=f"dependencies declared by {package_id}"
-        )
-        if len(dependencies) != len(set(dependencies)):
-            raise DependencyPlanError(f"duplicate dependency declared by {package_id}")
-        for dependency_id in sorted(dependencies):
-            visit(dependency_id)
-        stack.pop()
-        state[package_id] = 2
-        ordered.append(package_id)
-
+    # Iterative depth-first traversal avoids Python recursion limits on valid
+    # package graphs while preserving deterministic dependency-first ordering.
     for root_id in root_ids:
-        visit(root_id)
+        if state.get(root_id) == 2:
+            continue
+        state[root_id] = 1
+        active_index[root_id] = len(active_path)
+        active_path.append(root_id)
+        root_dependencies = _package_ids(
+            packages[root_id], field=f"dependencies declared by {root_id}"
+        )
+        if len(root_dependencies) != len(set(root_dependencies)):
+            raise DependencyPlanError(f"duplicate dependency declared by {root_id}")
+        frames: list[tuple[str, object]] = [
+            (root_id, iter(sorted(root_dependencies)))
+        ]
+
+        while frames:
+            package_id, dependencies = frames[-1]
+            try:
+                dependency_id = next(dependencies)
+            except StopIteration:
+                frames.pop()
+                active_path.pop()
+                active_index.pop(package_id)
+                state[package_id] = 2
+                ordered.append(package_id)
+                continue
+
+            dependency_state = state.get(dependency_id, 0)
+            if dependency_state == 2:
+                continue
+            if dependency_state == 1:
+                cycle_start = active_index[dependency_id]
+                cycle = active_path[cycle_start:] + [dependency_id]
+                raise DependencyPlanError("dependency cycle: " + " -> ".join(cycle))
+            if dependency_id not in packages:
+                raise DependencyPlanError(
+                    f"missing dependency {dependency_id} required by {package_id}"
+                )
+
+            state[dependency_id] = 1
+            active_index[dependency_id] = len(active_path)
+            active_path.append(dependency_id)
+            child_dependencies = _package_ids(
+                packages[dependency_id],
+                field=f"dependencies declared by {dependency_id}",
+            )
+            if len(child_dependencies) != len(set(child_dependencies)):
+                raise DependencyPlanError(
+                    f"duplicate dependency declared by {dependency_id}"
+                )
+            frames.append((dependency_id, iter(sorted(child_dependencies))))
     return ordered
