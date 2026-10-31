@@ -683,3 +683,12 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Commits:** audit `c24685980af1c6d35954b07e0d0df7055f138f7d`; checklist `5f8472d11013b097ea14b860046ff82af256c32b`; JSONL `1554cf04060a02d235ae7fd8e4ab82f1ab57552d`.
 - **Tests:** No tests run; this was a cross-branch source/schema review. No peer-credential binding, atomic consume-before-dispatch, or zero-handler-call behavior is claimed.
 - **Limits/blocker:** Provider mutations remain fail-closed pending NEXUS-owned provenance correction and runtime evidence. SEC-INT-008 is open.
+
+
+## C0060 — Visible completion counter correction
+
+- **Correction:** The last explicitly verified checkpoint at C0055 was **7 / 100**. The C0059 response was the next response after that checkpoint and therefore should have advanced the counter to **8 / 100**, not 11 / 100. This correction response is the next completed pair, so the authoritative current counter is **9 / 100**.
+- **Prior accounting error:** C0056–C0058 ledger entries show 8, 9 and 10. Those increments cannot be substantiated as distinct directly verified user-message/complete-assistant-response pairs from the available visible-segment evidence. Their completion values are superseded; they remain historical engineering/work records, not proof of conversation pairs. C0059's 11/100 value is also superseded.
+- **Rule reaffirmed:** Increment the visible completion counter exactly once per directly verified complete user-message/assistant-response pair. Do not derive it from JSONL row count, task count, commits, tool calls, or activity in other project chats.
+- **Current counts:** Visible-segment completions **9 / 100**; historical JSONL records **60** (C0001–C0060, sequential); engineering tasks **49** (no task increment for this bookkeeping correction).
+- **Commit:** JSONL correction cb80bf4567a2f604e15f4e82d96224c6a8e01589. This ledger correction is appended separately.
