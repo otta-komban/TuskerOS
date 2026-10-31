@@ -59,6 +59,25 @@
 
 The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86_64 UEFI QCOW2. The upstream source is `https://forge.fedoraproject.org/releng/kiwi-descriptions.git`, ref `f44`, commit `dfc49a5a10f69941179fdadd96aa6a5984f7c677`. Profile source is `teams/kde.xml`; profiles are `KDE-Desktop-Live` and `KDE-Desktop-Disk`. This is still a POC baseline, not a production image-format approval.
 
+## Work log (UTC)
+
+| Task ID | UTC timestamp | Changed file(s) | Test/evidence outcome | Commit |
+|---|---|---|---|---|
+| ATLAS-01-FB-001 | 2026-10-31T07:24:36Z | `os/image-source.lock.json` | Source branch, commit and upstream blob IDs inspected; structural CI test later passed | `3d4832eb6379658e9b9f1b8917688590c16885d7` |
+| ATLAS-01-FB-002 | 2026-10-31T07:24:49Z | `tools/atlas/build-image.sh` | Pinned clone/build/checksum/metadata automation added; shell syntax later passed | `5d5facc04f56f0e8640a6361e459940d836cfe7b` |
+| ATLAS-01-FB-003 | 2026-10-31T07:25:12Z | `tools/atlas/resolve-package-manifest.py` | Production resolver now requires exact NEVRA and provenance fields; 28-test CI passed | `b638353f35d68e4cb924b271e0e01a1d02a524ea` |
+| ATLAS-01-FB-004 | 2026-10-31T07:25:25Z | `tools/atlas/test_resolve_package_manifest.py` | Epoch, version, repository and provenance tests added; 28-test CI passed | `f160fc0e9fd2a2fd115551b7105825911f28df1b` |
+| ATLAS-01-FB-005 | 2026-10-31T07:25:33Z | `os/package-manifest.csv` | Pinned NEVRA, repo snapshot, RPM license and source provenance columns added; package rows remain owner-blocked | `890080390a79627f13dfcf025352a3fd8feff829` |
+| ATLAS-01-FB-006 | 2026-10-31T07:25:36Z | `.github/workflows/atlas-package-resolver.yml` | Assigned-branch push CI enabled; run 41180559864 passed | `6c545f2eefe0954e5507e8768fad7fd2b24743c4` |
+| ATLAS-01-FB-007 | 2026-10-31T07:25:39Z | `tools/atlas/build-image.sh` | Repeat-build checksum paths normalized; `bash -n` passed in run 41180649544 | `65b75c540dc4e461244378836517a87441da65fb` |
+| ATLAS-01-FB-008 | 2026-10-31T07:26:22Z | `tools/atlas/test_image_source_lock.py` | Four source-lock tests added; first CI iteration exposed one incorrect test-field lookup | `8f5788df20d87a7841d5c65ab3fcf041083f8576` |
+| ATLAS-01-FB-009 | 2026-10-31T07:26:27Z | `.github/workflows/atlas-package-resolver.yml` | Added JSON lock and shell syntax checks; run 41180611540 failed only the source-lock assertion | `687c029b5a24e913d7d172dcc3582726cdfa9b80` |
+| ATLAS-01-FB-010 | 2026-10-31T07:26:49Z | `os/ATLAS-01-IMPLEMENTATION-STATUS.md` | Implementation boundaries, evidence and blockers documented | `a1f008659708b05a232cbc57f75590889ccb820b` |
+| ATLAS-01-FB-011 | 2026-10-31T07:27:05Z | `tools/atlas/test_image_source_lock.py` | Corrected assertion; run 41180649544 passed all 32 tests | `e55e8a1944dc4e6e88bd496e236524530c6391c0` |
+| ATLAS-01-FB-012 | 2026-10-31T07:27:37Z | `os/ATLAS-01-IMPLEMENTATION-STATUS.md` | Recorded current CI evidence and follow-up actions | `ef7bda771bc791a7f52ff6fd554d0a189fefbf7f` |
+
+**Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
+
 ## Next actions
 
 1. Obtain reviewed package rows and dependency ownership confirmation from NOVA-02/NEXUS-07.
