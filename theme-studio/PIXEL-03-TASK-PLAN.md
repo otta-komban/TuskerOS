@@ -87,3 +87,31 @@ Issue #50 remains open. NOVA-02's preview-only review on Issue #30 is not approv
 - Issue #50 remains open; no shared contract or schema changes were made.
 
 - Scope correction: the helper was moved out of `runtime/` and into `tests/support/` to keep this iteration strictly within the role guide's isolated-test allowance while Issue #50 remains open. The runtime helper was deleted from this branch.
+
+
+## Iteration 3 — compatibility/version-policy evidence audit (read-only)
+
+**Status:** Evidence and decision options only; no compatibility behavior or shared contract is frozen.
+
+### Observed schema constraints
+
+- `schema_version` is a required top-level field constrained to the exact constant `1.0.0`. Under this schema, a pack declaring any other schema version is structurally invalid; the schema does not itself express a range of supported schema versions or a migration route.
+- `compatibility.theme_engine_api` is required and constrained only by the lexical pattern `^[0-9]+\\.[0-9]+$`. This establishes a two-component numeric spelling, but does not define whether compatibility means exact match, same-major acceptance, minimum version, or negotiated capabilities.
+- `compatibility.desktop` and `required_surfaces` are optional arrays of unique strings. The schema constrains item length but does not define supported identifier registries, whether unknown identifiers reject the pack, or how optional versus required surfaces affect acceptance.
+- The desktop contract remains a draft and its namespace list does not define version negotiation. NOVA-02's Issue #30 response accepts preview isolation invariants but labels its MVP rendering and apply/reload lifecycle as proposals pending Chief Architect decisions. Issue #8 has PIXEL-03's reconciliation proposal but no NOVA-02 approval comment.
+
+### Compatibility decisions that remain open
+
+| Dimension | What current evidence guarantees | Decision required before implementation |
+|---|---|---|
+| Pack schema | Exactly `1.0.0` validates against this schema | Whether future schema versions coexist, require migration, or reject until engine support is installed |
+| Engine API | Required major.minor numeric string | Exact-match vs same-major/minimum-version policy; treatment of leading zeros and unsupported future minors |
+| Desktop/surfaces | Optional unique string lists | Canonical ID registry, required/optional semantics, and whether unsupported required surfaces reject or degrade |
+| Consumer namespaces | Draft names differ from manifest storage layout | Canonical versioned snapshot projection and negotiation behavior |
+| Migration | No migration behavior is specified by the reviewed schema/contract material | Whether migrations are explicit, deterministic, bounded, and performed before validation or rejected entirely |
+
+### Safe review recommendation (not an approved policy)
+
+Keep parsing/validation separate from compatibility acceptance. First validate the manifest against a known schema version; then evaluate the declared engine API and required desktop/surface capabilities against an explicit engine support table. Unknown schema versions and unsupported required capabilities should not be guessed or silently downgraded. Optional capability omission should produce structured diagnostics only if the Chief Architect and NOVA-02 explicitly approve that behavior. Do not infer same-major compatibility merely from the version string shape.
+
+No implementation or compatibility tests were added: expected acceptance outcomes are not yet authorized by an approved policy, so tests would prematurely encode a shared decision. Issue #50 remains open. This iteration is static repository/issue inspection only; no runtime or test result is claimed.
