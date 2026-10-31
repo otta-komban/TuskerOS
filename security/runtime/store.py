@@ -1,5 +1,6 @@
 """SQLite approval authority and HMAC-chained audit; never dispatches handlers."""
 from __future__ import annotations
+import copy
 import hashlib
 import hmac
 import json
@@ -439,7 +440,7 @@ class SecurityStore:
             if not audit_matches:
                 self._db.execute("ROLLBACK")
                 raise SecurityStoreError("authorization audit context does not match authority binding")
-            if self._policy_rechecker is None or self._policy_rechecker(request_id, current_binding, current_policy_version) is not True:
+            if self._policy_rechecker is None or self._policy_rechecker(request_id, copy.deepcopy(current_binding), current_policy_version) is not True:
                 self._db.execute("UPDATE approvals SET state='INVALIDATED' WHERE request_id=?", (request_id,))
                 self._audit({**audit_context, "event_type":"policy_denied", "approval_request_id":request_id,
                              "result_status":"denied", "reason_code":"POLICY_REEVALUATION_FAILED", "timestamp_utc":self._iso(current)})
@@ -548,7 +549,7 @@ class SecurityStore:
                              "reason_code":"POLICY_AUTHORIZATION_EXPIRED", "timestamp_utc":self._iso(current)})
                 self._db.execute("COMMIT")
                 return ConsumeResult("EXPIRED")
-            policy_current = self._policy_rechecker is not None and self._policy_rechecker(row["request_id"], binding, policy_version) is True
+            policy_current = self._policy_rechecker is not None and self._policy_rechecker(row["request_id"], copy.deepcopy(binding), policy_version) is True
             exact = row["broker_operation_id"] == operation_id and row["action_digest"] == action_digest and row["policy_version"] == policy_version and policy_current and binding["registry_version"] == registry_version and binding["precondition_digest"] == precondition_digest and binding["resource_scope"] == resource_scope
             if not exact:
                 self._db.execute("UPDATE approvals SET state='INVALIDATED' WHERE request_id=?", (row["request_id"],))
