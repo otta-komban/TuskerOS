@@ -135,7 +135,9 @@ def parse_query_matches(
     output: str, expected_package: str | None = None
 ) -> tuple[str, str, str, str, str]:
     """Return one unambiguous NEVRA/repository/license/source-RPM/upstream-URL tuple."""
-    matches = {line.strip() for line in output.splitlines() if line.strip()}
+    # Preserve a trailing tab: an RPM with no upstream URL has an empty
+    # fifth field, which is normalized to the explicit NOASSERTION sentinel.
+    matches = {line.rstrip("\\r\\n") for line in output.splitlines() if line.strip()}
     if not matches:
         raise RuntimeError("no available match")
     parsed: set[tuple[str, str, str, str, str]] = set()
