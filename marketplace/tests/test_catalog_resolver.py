@@ -76,11 +76,12 @@ class CatalogResolverTests(unittest.TestCase):
 
     def test_dependency_constraint_parser_enforces_512_character_bound(self):
         from marketplace.tools.catalog_resolver import parse_dependency_constraint
-        valid = ">=" + "1" * 124 + ".0.0"
-        self.assertEqual(len(valid), 130)
-        self.assertEqual(len(parse_dependency_constraint(valid)), 1)
+        long_clause = ">=" + "1" * 124 + ".0.0"
+        boundary = ",".join((long_clause, long_clause, long_clause, ">=" + "1" * 113 + ".0.0"))
+        self.assertEqual(len(boundary), 512)
+        self.assertEqual(len(parse_dependency_constraint(boundary)), 4)
         with self.assertRaisesRegex(CatalogResolutionError, "max 512"):
-            parse_dependency_constraint(">=" + "1" * 507)
+            parse_dependency_constraint(boundary + " ")
 
     def test_dependency_constraint_operators_are_inclusive_or_exclusive_as_named(self):
         from marketplace.tools.catalog_resolver import satisfies_dependency_constraints
