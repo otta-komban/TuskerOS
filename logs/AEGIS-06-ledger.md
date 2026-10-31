@@ -8,12 +8,12 @@
 ## Current state
 
 - **Full historical conversation count:** Unverified
-- **Verified visible-segment completions:** 7 / 100 after this audit response
-- **Historical JSONL records:** 55 (`C0001`–`C0055`); these are work/response records, not proof of 55 distinct user/assistant pairs
-- **Latest historical record:** `AEGIS-06-C0055`
-- **Current phase:** P1 security integration review — NEXUS public invocation schema improved; trusted identity/consume runtime evidence remains pending
-- **Engineering tasks completed:** 45 (separate from visible conversation completions and commits)
-- **Latest log commit:** `8227ce79ec905782291139c338e8c881ff2670d6`
+- **Verified visible-segment completions:** 9 / 100 after C0057
+- **Historical JSONL records:** 57 (`C0001`–`C0057`); these are work/response records, not proof of 57 distinct user/assistant pairs
+- **Latest historical record:** `AEGIS-06-C0057`
+- **Current phase:** P1 security integration review — SEC-SCHEMA-007 interim empty-only schema enforced; policy/broker consumer fail-closed evidence and owner approval remain pending
+- **Engineering tasks completed:** 47 (separate from visible conversation completions and commits)
+- **Latest log commit:** `e61d774d6eddd603138225ac83acdb1aff21ddb9`
 
 ## Historical work/response record index (not a verified conversation-completion count)
 
@@ -75,6 +75,9 @@
 
 | AEGIS-06-C0053 | remote-audit-data-minimization-regression | Expanded candidate remote audit-event schema tests to reject raw identifiers, credentials, key/signature/pairing material and task/prompt/completion payload fields; CI passed. | Test `98aff2c`; matrix `7add0ba`; audit `f4d6bcd`; checklist `4fa9e8a`; Actions run 41165765657 success |
 | AEGIS-06-C0054 | policy-decision-schema-review | Identified underspecified policy-decision constraints object; opened SEC-SCHEMA-007 issue and updated AEGIS schema audit/checklist. | Issue #31; SCHEMA_CONSISTENCY_AUDIT.md; PHASE1_CHECKLIST.md |
+| AEGIS-06-C0055 | policy-constraints-interim-contract | Specified interim empty-only constraints producer/consumer rule and owner-review criteria. | SECURITY_CONTRACTS.md; POLICY_ENGINE_SPEC.md; issue #31 |
+| AEGIS-06-C0056 | policy-constraints-schema-regression | Enforced required empty constraints object in policy-decision schema and added positive/negative schema tests. | Schema `f811ba4`; tests `130ba23`; CI 41165953314 success |
+| AEGIS-06-C0057 | policy-constraints-schema-documentation-reconciliation | Explicitly closed constraints object, expanded invalid-type tests, reconciled stale docs and recorded 163-test CI pass. | Schema `6818ca1`; tests `d030108`; CI 41166079444 success |
 
 ## C0007 — Privileged operations release gate
 
@@ -635,3 +638,16 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **CI:** [Run 41165953314](https://github.com/otta-komban/TuskerOS/actions/runs/41165953314) passed; validation job and all steps succeeded on test commit `130ba237aa85e0ff9d829db0735297b4eebb9a29`.
 - **Commits:** schema `f811ba41ae96407f518f8fbf5cd734e17e23bb36`; tests `130ba237aa85e0ff9d829db0735297b4eebb9a29`; matrix `2662721dbdddf85bf015ca9b82cbe984fef5b1e5`; audit `7eec43a260171f2e2d9ddc5a98837f486b0f9330`; checklist `8168a5a729ab7ea0bff09091edb6bb2ea6f9f15b`; JSONL `4a6147c5e24d167422e437d55cf7881887d90ae0`.
 - **Limits:** Schema-level validation only. It does not prove policy-engine producer behavior, broker consumer rejection, or zero-handler-call runtime behavior. The future bounded vocabulary and owner acceptance remain pending in issue #31; no runtime enforcement is claimed.
+
+## C0057 — Policy constraints schema/documentation reconciliation
+
+- **Visible-segment completion:** 9 / 100. This is the directly verified user-message/complete-assistant-response count for the visible segment; historical JSONL rows are not used to infer missing pairs.
+- **Historical work/response record:** C0057 (JSONL contains 57 sequential records C0001–C0057).
+- **Engineering tasks completed:** 47 cumulative (+1 this response).
+- **Finding:** C0055 documented the interim empty-only policy-constraint rule and C0056 enforced `maxProperties: 0`, but several documents still incorrectly claimed the schema accepted arbitrary nested constraints.
+- **Schema/tests:** Added `additionalProperties: false`; added an explicit schema-closure assertion and expanded negative tests to reject null, array, string, number, unknown-key, timeout and resource-scope values. Empty `{}` remains accepted; missing constraints remains rejected.
+- **Documentation:** Reconciled `security/POLICY_ENGINE_SPEC.md`, `security/SECURITY_TEST_MATRIX.md`, `security/SCHEMA_CONSISTENCY_AUDIT.md` and `security/PHASE1_CHECKLIST.md`. Added POL-CON-007/008 traceability and distinguished schema tests from still-pending consumer tests.
+- **Coordination:** Updated issue #31 comment 6538635706 with the interim schema status and request for NEXUS-07/TUSKER-04 confirmation of any required non-empty vocabulary. No owner reply was present at final review.
+- **CI:** [Run 41166079444](https://github.com/otta-komban/TuskerOS/actions/runs/41166079444) passed **163 security tests in 2.72s** on Python 3.12; validation job 124433828665 succeeded.
+- **Commits:** schema `6818ca11b25d9e95ec38a235686315521c973e7f`; tests `07421cb1216af15e68884c862bbe3fdeeee10d4d` and `d030108de2ecad303ea20f6e924d6ec7a5901fd2`; policy spec `074eeed98c3a2fbf8aa3d0cc78703e7f7019781c`; audit `e5e3a60764a8d8aa9f2d8d9b0e00455227c37765`; matrix `7d1f1c23edf13d568c270adc89cbdbc4b4b875d4`; checklist `7ac93a0c6abcb30ced0f59378aa87d0c5bcfb197`; JSONL `e61d774d6eddd603138225ac83acdb1aff21ddb9`.
+- **Limits/blocker:** Schema validation only. No policy-engine producer or broker consumer was exercised, and no zero-handler-call runtime evidence exists. SEC-SCHEMA-007 remains open pending owner agreement on any future bounded vocabulary and executable consumer fail-closed tests.
