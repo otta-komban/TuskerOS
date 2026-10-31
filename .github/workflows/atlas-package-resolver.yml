@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile resolver and tests
-        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py
+        run: python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py
       - name: Validate image source lock and build script syntax
         run: |
           python -m json.tool os/image-source.lock.json > /dev/null
