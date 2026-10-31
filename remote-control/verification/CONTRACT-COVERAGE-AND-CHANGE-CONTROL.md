@@ -258,7 +258,7 @@ Every contract change proposal must include:
 
 **Execution status:** 0 tests executed; 0 passed; 0 failed; 0 blocked-by-runner. The last two categories are zero because no execution was attempted; contract blockers are recorded separately.
 
-**Approval status:** NO-GO. AEGIS-06 has not approved DEC-AEG-001..008; TUSKER-04 has a draft v0.1 proposal but has not finalized DEC-TUS-001..007; NOVA-02 has not approved DEC-NOV-001..004. The umbrella issue #1 has no comments at checkpoint.
+**Approval status at C0012:** AEGIS-06 accepted DEC-AEG-001..007 and deferred/disabled DEC-AEG-008 for MVP. TUSKER-04 remains REVISE on DEC-TUS-001..004 and 006..007 and DEFER on 005; NOVA-02 decisions DEC-NOV-001..004 remain open. This supersedes the earlier owner-response snapshot.
 
 **Implementation status:** 0 runtime features; no implementation authorization. Remote approval remains intentionally absent; pause/resume remains excluded unless Core explicitly supports safe checkpoints. No shell, D-Bus, Polkit, privileged broker or direct provider access is permitted.
 
@@ -271,3 +271,14 @@ Every contract change proposal must include:
 - Draft API baseline: `remote-control/contracts/v1/openapi.yaml`.
 
 Update this package whenever any referenced ID, route, requirement, schema, owner decision or scenario changes. Keep IDs stable; record supersession rather than silently deleting history. Do not claim test execution from a static mapping.
+
+
+## C0012 — owner-decision refresh (2026-10-31)
+
+The earlier approval snapshot is historical. Current durable evidence is:
+- AEGIS-06 accepted DEC-AEG-001..007 and disabled remote approval for MVP (DEC-AEG-008): [issue #13](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612).
+- TUSKER-04 has not frozen the Core API: DEC-TUS-001..004 and 006..007 remain REVISE; 005 is DEFERRED: [issue #14](https://github.com/otta-komban/TuskerOS/issues/14#issuecomment-6531700289).
+- NOVA-02 UX decisions remain open: [issue #15](https://github.com/otta-komban/TuskerOS/issues/15).
+- NEXUS final consume integration remains unverified.
+
+The existing 72-scenario mapping and 104 PAIR/SESS/NET conformance cases remain static specifications. No test execution or runtime behavior is claimed. **Contract freeze and implementation remain NO-GO.**
