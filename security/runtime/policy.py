@@ -162,7 +162,17 @@ class PolicyEngine:
                     or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", proposal_id)
                     or str(uuid.UUID(proposal_id)) != proposal_id):
                     return deny("POLICY_INVALID_ARGUMENTS")
-                requested = datetime.fromisoformat(str(proposal["requested_at"]).replace("Z", "+00:00"))
+                requested_at = proposal["requested_at"]
+                # Match the schema's RFC 3339 date-time format before parsing.
+                # datetime.fromisoformat alone accepts looser forms (for example,
+                # a space separator or a time without seconds).
+                if (not isinstance(requested_at, str)
+                    or not re.fullmatch(
+                        r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})",
+                        requested_at,
+                    )):
+                    return deny("POLICY_INVALID_ARGUMENTS")
+                requested = datetime.fromisoformat(requested_at.replace("Z", "+00:00"))
                 if requested.tzinfo is None: return deny("POLICY_INVALID_ARGUMENTS")
             except (ValueError, TypeError):
                 return deny("POLICY_INVALID_ARGUMENTS")
