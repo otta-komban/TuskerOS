@@ -160,6 +160,7 @@ metadata = {
     "reproducibility_limitations": [
         "KIWI and DNF5 still need to consume a frozen local repository snapshot; preflight verification alone does not pin later package downloads",
         "RPM payload checksums are not yet recorded in the package lock",
+        "Fedora repository metadata signatures are not yet verified against Fedora signing keys",
         "Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified"
     ],
     "artifact_checksums": "SHA256SUMS"
