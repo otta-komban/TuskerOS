@@ -1,0 +1,162 @@
+{
+  "schema_version": "0.1.0",
+  "description": "Language-neutral deterministic policy-engine conformance vectors. These are specifications, not executed tests.",
+  "default_executor_calls_for_non_allow": 0,
+  "cases": [
+    {
+      "id": "VEC-001",
+      "name": "registered low-risk read in scope",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": true,
+        "minimum_risk": "R0",
+        "capability_match": true,
+        "resource_in_scope": true,
+        "dependencies_available": true
+      },
+      "expected": {
+        "decision": "ALLOW",
+        "executor_calls": 1
+      }
+    },
+    {
+      "id": "VEC-002",
+      "name": "unknown operation",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": false
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_UNKNOWN_ACTION"
+      }
+    },
+    {
+      "id": "VEC-003",
+      "name": "missing authenticated principal",
+      "context": {
+        "identity": null,
+        "origin": "local",
+        "operation_registered": true
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_UNKNOWN_PRINCIPAL"
+      }
+    },
+    {
+      "id": "VEC-004",
+      "name": "sensitive action awaits approval",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": true,
+        "minimum_risk": "R2",
+        "capability_match": true,
+        "resource_in_scope": true,
+        "approval_state": "pending"
+      },
+      "expected": {
+        "decision": "REQUIRE_APPROVAL",
+        "executor_calls": 0
+      }
+    },
+    {
+      "id": "VEC-005",
+      "name": "approval digest mismatch",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": true,
+        "approval_state": "approved",
+        "approval_digest_matches": false
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_ACTION_DIGEST_MISMATCH"
+      }
+    },
+    {
+      "id": "VEC-006",
+      "name": "approval replay",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": true,
+        "approval_state": "consumed"
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_APPROVAL_REPLAYED"
+      }
+    },
+    {
+      "id": "VEC-007",
+      "name": "required audit store unavailable",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": true,
+        "minimum_risk": "R3",
+        "approval_state": "approved",
+        "audit_available": false
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_AUDIT_UNAVAILABLE"
+      }
+    },
+    {
+      "id": "VEC-008",
+      "name": "remote request cannot claim local origin",
+      "context": {
+        "identity": "authenticated-remote-device",
+        "authenticated_origin": "remote",
+        "claimed_origin": "local",
+        "operation_registered": true,
+        "minimum_risk": "R1"
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_ORIGIN_MISMATCH"
+      }
+    },
+    {
+      "id": "VEC-009",
+      "name": "policy service unavailable",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "policy_service_available": false
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_SERVICE_UNAVAILABLE"
+      }
+    },
+    {
+      "id": "VEC-010",
+      "name": "authorization expired before broker invocation",
+      "context": {
+        "identity": "authenticated-user",
+        "origin": "local",
+        "operation_registered": true,
+        "authorization_state": "expired"
+      },
+      "expected": {
+        "decision": "DENY",
+        "executor_calls": 0,
+        "reason_code": "POLICY_AUTHORIZATION_EXPIRED"
+      }
+    }
+  ]
+}

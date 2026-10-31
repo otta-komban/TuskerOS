@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/operation-registration-0.1.0.json",
+  "title": "TuskerOS Registered Operation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "action_id",
+    "operation_schema_version",
+    "arguments_schema_ref",
+    "allowed_principal_classes",
+    "allowed_origins",
+    "resources",
+    "minimum_risk_class",
+    "approval_mode",
+    "broker_operation_id",
+    "timeout_ms",
+    "idempotency",
+    "preconditions",
+    "postcondition_verifier"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "action_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+$",
+      "maxLength": 160
+    },
+    "operation_schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "arguments_schema_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "allowed_principal_classes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+      }
+    },
+    "allowed_origins": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "local",
+          "remote",
+          "extension",
+          "system"
+        ]
+      }
+    },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "access_modes"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "access_modes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "read",
+                "create",
+                "modify",
+                "delete",
+                "execute",
+                "administer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "minimum_risk_class": {
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ]
+    },
+    "approval_mode": {
+      "enum": [
+        "never",
+        "on_escalation",
+        "always",
+        "out_of_band_admin"
+      ]
+    },
+    "broker_operation_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+$",
+      "maxLength": 160
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600000
+    },
+    "max_input_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10485760
+    },
+    "idempotency": {
+      "enum": [
+        "required",
+        "optional_read_only",
+        "not_supported"
+      ]
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "maxItems": 64
+    },
+    "postcondition_verifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "rate_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_calls": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "window_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "risk_escalation_rules": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "minimum_risk_class": {
+            "const": "R2"
+          }
+        },
+        "required": [
+          "minimum_risk_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "approval_mode": {
+            "enum": [
+              "on_escalation",
+              "always"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "minimum_risk_class": {
+            "enum": [
+              "R3",
+              "R4"
+            ]
+          }
+        },
+        "required": [
+          "minimum_risk_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "approval_mode": {
+            "const": "always"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "minimum_risk_class": {
+            "const": "R5"
+          }
+        },
+        "required": [
+          "minimum_risk_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "approval_mode": {
+            "const": "out_of_band_admin"
+          }
+        }
+      }
+    }
+  ]
+}
