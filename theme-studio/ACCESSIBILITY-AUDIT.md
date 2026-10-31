@@ -1,6 +1,6 @@
 # PIXEL-03 isolated accessibility audit
 
-**Status:** Diagnostic-only implementation; not a shared theme contract or pack-acceptance rule.
+**Status:** Isolated test-only diagnostic; not a shared theme contract or pack-acceptance rule.
 
 The test-only helper `tests/support/accessibility_audit.py` calculates contrast for the semantic color pairs currently present in theme-pack v1. It reports text-role pairs against a 4.5:1 threshold and focus pairs against a 3:1 threshold.
 
