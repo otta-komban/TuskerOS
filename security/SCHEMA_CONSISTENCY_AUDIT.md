@@ -204,3 +204,19 @@ Reviewed `security/schemas/policy-decision.schema.json` against `security/SECURI
 ## SEC-SCHEMA-007 — interim constraints schema enforcement
 
 The policy-decision contract now states that producers emit an empty `constraints` object only and consumers reject non-empty or unsupported constraints until policy-engine and broker owners approve a bounded vocabulary. The v0.1.0 schema now requires `constraints` and caps it at zero properties, matching that interim fail-closed rule. Regression tests accept the empty object and reject omission plus representative non-empty/nested values. This closes the schema-level permissiveness without inventing a future constraint vocabulary. It does not establish runtime producer or consumer enforcement; owner agreement on the eventual typed vocabulary remains tracked in issue #31.
+
+
+## JCS-UNICODE-001 — RFC 8785 Unicode normalization mismatch
+
+**Finding:** The earlier policy-engine specification required all strings to be normalized to NFC before schema validation and then described the resulting digest as RFC 8785 JCS. That instruction conflicts with RFC 8785 §3.1: parsed JSON string data MUST NOT be altered, and JCS participants must preserve Unicode string data as-is. RFC 8785 also requires invalid Unicode such as lone surrogates to cause an error. See [RFC 8785 §3.1 and §3.2.2.2](https://www.rfc-editor.org/rfc/rfc8785.html).
+
+**Risk:** A generic normalizer can collapse distinct input strings before action-digest calculation. Different implementations may then disagree about the bytes bound to approval, and path/resource identifiers may be rewritten contrary to the resource provider's identity semantics. This is a contract/canonicalization defect; no production JCS runtime was present or exercised in this review.
+
+**Remediation on `06-security-gatekeeper`:**
+- Removed global NFC rewriting from the JCS procedure and now require exact code-point preservation of parsed JSON strings.
+- Require invalid Unicode/unpaired surrogates to be rejected before digest creation.
+- Separate operation-specific identifier resolution from JCS. The digest envelope retains the original validated argument and also binds the trusted resolver-produced canonical resource identifier.
+- Added `security/JCS_UNICODE_TEST_VECTORS.json` with composed U+00E9 and decomposed U+0065 U+0301 examples, exact canonical UTF-8 bytes and SHA-256 digests.
+- Added a pytest regression test for the string-only reference vectors and JCS-UNICODE-001–004 acceptance rows to the security test matrix.
+
+**Verification boundary:** The pytest regression checks the reference vectors for these simple string-only JSON objects. It is not a full JCS implementation test and does not establish runtime digest correctness. AEGIS/NEXUS must run these vectors against the actual policy/broker canonicalizer and add invalid-surrogate and operation-specific resolver tests before privileged operations are enabled.
