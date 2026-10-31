@@ -34,6 +34,29 @@ class SettingsControllerTests(unittest.TestCase):
         controller=SettingsController(self.path); controller.update({"assistant":{"enabled":True}})
         self.assertEqual(controller.reset(),DEFAULT_SETTINGS)
         self.assertEqual(json.loads(self.path.read_text()),DEFAULT_SETTINGS)
+    def test_failed_reset_preserves_existing_settings_and_memory(self):
+        controller=SettingsController(self.path)
+        controller.update({"panel":{"icon_size":72}})
+        original=self.path.read_text()
+        before=controller.read()
+        with patch("desktop.config.controller.save_settings",side_effect=OSError("disk full")):
+            with self.assertRaisesRegex(OSError,"disk full"):
+                controller.reset()
+        self.assertEqual(self.path.read_text(),original)
+        self.assertEqual(controller.read(),before)
+        self.assertEqual(controller.load_errors,[])
+    def test_failed_recovery_reset_keeps_original_file_and_edit_lock(self):
+        original='{"panel":{"edge":"unsafe"}}'
+        self.path.write_text(original)
+        controller=SettingsController(self.path)
+        self.assertTrue(controller.load_errors)
+        with patch("desktop.config.controller.save_settings",side_effect=OSError("disk full")):
+            with self.assertRaisesRegex(OSError,"disk full"):
+                controller.reset()
+        self.assertEqual(self.path.read_text(),original)
+        self.assertTrue(controller.load_errors)
+        with self.assertRaisesRegex(ValueError,"restore defaults"):
+            controller.update({"panel":{"icon_size":64}})
     def test_read_returns_detached_copy(self):
         controller=SettingsController(self.path); exposed=controller.read(); exposed["panel"]["icon_size"]=1
         self.assertEqual(controller.read()["panel"]["icon_size"],DEFAULT_SETTINGS["panel"]["icon_size"])
@@ -50,8 +73,6 @@ class SettingsControllerTests(unittest.TestCase):
         self.assertEqual(json.loads(self.path.read_text()), DEFAULT_SETTINGS)
 
     def test_parser_accepted_nesting_that_breaks_migration_enters_recovery(self):
-        # This depth is accepted by json.loads but can exceed deepcopy's
-        # recursion budget while the migration layer clones the document.
         original = '{"a":' * 500 + "0" + "}" * 500
         json.loads(original)
         self.path.write_text(original)
