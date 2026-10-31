@@ -698,6 +698,15 @@ def test_audit_checkpoint_rejects_existing_transaction_without_committing_it():
         db.close()
 
 
+def test_audit_chain_verification_fails_closed_when_table_is_unavailable():
+    db = store()
+    try:
+        db._db.execute("DROP TABLE audit_events")
+        assert db.verify_audit_chain() is False
+    finally:
+        db.close()
+
+
 def test_audit_events_verifies_chain_before_returning_events():
     db = store()
     try:
