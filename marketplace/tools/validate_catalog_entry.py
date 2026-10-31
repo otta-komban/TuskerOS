@@ -21,7 +21,7 @@ REVIEW = {"pending", "approved", "rejected", "quarantined", "revoked"}
 SIGNATURE = {"unverified", "valid", "invalid", "revoked"}
 
 TOP = {"catalog_version", "package", "publisher", "release", "compatibility", "trust", "community"}
-PACKAGE = {"id", "name", "kind", "summary", "description_uri", "license", "categories", "tags"}
+PACKAGE = {"id", "name", "kind", "summary", "description_uri", "license", "categories", "tags", "conflicts"}
 PUBLISHER = {"id", "display_name", "homepage", "verified"}
 RELEASE = {"version", "manifest_uri", "artifact_uri", "sha256", "signature_uri", "published_at", "changelog_uri"}
 COMPAT = {"tuskeros", "api"}
@@ -86,8 +86,18 @@ def validate_catalog_entry(entry: object) -> list[str]:
         for key, limit in (("categories", 48), ("tags", 32)):
             if key in p:
                 values = p[key]
-                if not isinstance(values, list) or any(not isinstance(x, str) or not x.strip() or len(x) > limit for x in values) or len(values) != len(set(values)) if isinstance(values, list) else True:
+                if (not isinstance(values, list)
+                        or any(not isinstance(x, str) or not x.strip() or len(x) > limit for x in values)
+                        or len(values) != len(set(values)) if isinstance(values, list) else True):
                     errors.append(f"$.package.{key}: expected unique non-empty strings (max {limit})")
+        if "conflicts" in p:
+            conflicts = p["conflicts"]
+            if (not isinstance(conflicts, list)
+                    or any(not isinstance(x, str) or not ID_RE.fullmatch(x) for x in conflicts)
+                    or len(conflicts) != len(set(conflicts)) if isinstance(conflicts, list) else True):
+                errors.append("$.package.conflicts: expected unique package identifiers")
+            elif p.get("id") in conflicts:
+                errors.append("$.package.conflicts: package cannot conflict with itself")
         if "description_uri" in p:
             _https(p["description_uri"], "$.package.description_uri", errors)
 
