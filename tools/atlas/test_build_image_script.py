@@ -10,6 +10,16 @@ SCRIPT = (ROOT / "tools" / "atlas" / "build-image.sh").read_text(encoding="utf-8
 
 
 class KiwiBundleContractTests(unittest.TestCase):
+    def test_snapshot_and_manifest_preflight_precedes_upstream_clone(self):
+        preflight = SCRIPT.index('python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"')
+        clone = SCRIPT.index('git clone --no-checkout "$UPSTREAM_URL" "$UPSTREAM_DIR"')
+        self.assertLess(preflight, clone)
+
+    def test_reposync_plugin_preflight_precedes_upstream_clone(self):
+        plugin_check = SCRIPT.index('dnf5 reposync --help >/dev/null 2>&1')
+        clone = SCRIPT.index('git clone --no-checkout "$UPSTREAM_URL" "$UPSTREAM_DIR"')
+        self.assertLess(plugin_check, clone)
+
     def test_each_build_run_gets_a_unique_directory(self):
         self.assertIn('RUN_DIR="$(mktemp -d "$BUILD_ROOT/run-$RUN_ID.XXXXXX")"', SCRIPT)
         self.assertNotIn('RUN_DIR="$BUILD_ROOT/run-$RUN_ID"\nmkdir -p "$RUN_DIR"', SCRIPT)

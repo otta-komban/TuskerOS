@@ -73,6 +73,13 @@ for key, value in {
 PY
 )" || fail "invalid image source lock"
 
+# Fail closed on unapproved or stale package/repository inputs before cloning
+# upstream source or doing any other network/build work.
+# Verify the remote lock first, then materialize the exact repositories locally.
+# An empty lock or manifest intentionally fails before any image build work.
+python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"
+dnf5 reposync --help >/dev/null 2>&1 || fail "dnf5 reposync plugin is required (install dnf5-plugins)"
+
 mkdir -p "$BUILD_ROOT" "$OUTPUT_ROOT"
 UPSTREAM_DIR="$BUILD_ROOT/fedora-kiwi-descriptions"
 if [[ ! -d "$UPSTREAM_DIR/.git" ]]; then
@@ -89,10 +96,6 @@ for pair in "$DESCRIPTION_FILE:$DESCRIPTION_BLOB" "$WRAPPER_FILE:$WRAPPER_BLOB" 
   [[ "$actual" == "$expected" ]] || fail "upstream source blob mismatch for $path: $actual"
 done
 
-# Verify the remote lock first, then materialize the exact repositories locally.
-# An empty lock or manifest intentionally fails before any image build work.
-python3 "$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"
-dnf5 reposync --help >/dev/null 2>&1 || fail "dnf5 reposync plugin is required (install dnf5-plugins)"
 mkdir -p "$SNAPSHOT_ROOT"
 while IFS= read -r repo_id; do
   [[ -n "$repo_id" ]] || continue
