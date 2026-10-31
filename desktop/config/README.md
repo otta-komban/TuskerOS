@@ -32,9 +32,10 @@ unsupported future-version files are not rewritten. When settings are invalid,
 the preference groups are disabled in the UI and normal updates remain blocked;
 only the separately confirmed Restore defaults action can replace them. A
 failed migration write preserves the original file for recovery. If the
-explicit reset write itself fails, the controller keeps its previous in-memory
-settings and recovery status and leaves the source file unchanged; users cannot
-resume editing until a later reset succeeds. Future schema changes require a
+explicit reset write or the parent-directory durability sync fails, the writer
+restores the previous file entry before reporting failure. The controller keeps
+its previous in-memory settings and recovery status; users cannot resume editing
+until a later reset succeeds. Future schema changes require a
 new migration and regression tests; unknown future versions must never be
 silently downgraded.
 
