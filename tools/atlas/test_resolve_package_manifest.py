@@ -276,6 +276,8 @@ class ResolverCliTests(unittest.TestCase):
         self.manifest = self.root / "manifest.csv"
         self.output = self.root / "nested" / "resolution.json"
         self.snapshot_root = self.root / "snapshot"
+        self.gpg_key = self.root / "fedora-key"
+        self.gpg_key.write_text("fixture key", encoding="utf-8")
         (self.snapshot_root / "fedora" / "repodata").mkdir(parents=True)
         (self.snapshot_root / "fedora" / "repodata" / "repomd.xml").write_text("<repomd/>", encoding="utf-8")
         self.manifest.write_text(
@@ -295,6 +297,7 @@ class ResolverCliTests(unittest.TestCase):
                 "--manifest", str(self.manifest),
                 "--output", str(self.output),
                 "--snapshot-root", str(self.snapshot_root),
+                "--gpg-key", str(self.gpg_key),
             ]),
         ):
             return RESOLVER.main()
