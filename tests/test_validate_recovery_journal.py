@@ -119,7 +119,7 @@ class RecoveryJournalTests(unittest.TestCase):
 
     def test_parser_enforces_record_count_limit(self):
         with self.assertRaisesRegex(JournalValidationError, "maximum record count"):
-            parse_jsonl("{}\\n" * (MAX_RECORDS + 1))
+            parse_jsonl("{}\n" * (MAX_RECORDS + 1))
 
     def test_validator_bounds_iterable_record_count(self):
         report = validate_journal({} for _ in range(MAX_RECORDS + 1))
