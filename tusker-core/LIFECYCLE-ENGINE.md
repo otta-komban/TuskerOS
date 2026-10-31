@@ -110,6 +110,8 @@ its durable transaction boundary.
 
 Replay rejects any event whose `type` is absent or outside the Core draft event enum, matching the write-side event-type guard. This is fail-closed validation, not a change to the shared draft schema.
 
+Replay also validates the draft event envelope's schema version, non-empty timestamp string, bounded correlation identifier, and origin kind against the existing provisional event schema. Malformed persisted envelope values fail with `LifecycleError`; this does not define new event meanings or alter the schema.
+
 
 ## Replay malformed-value handling
 
