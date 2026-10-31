@@ -11,6 +11,7 @@ from adapters.dbus_readonly import (
     AdapterError,
     AuthorizationDenied,
     ReadOnlySystemBusAdapter,
+    _OutputLimitExceeded,
 )
 
 
@@ -113,10 +114,8 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         stream.feed_data(b"x" * 129)
         stream.feed_eof()
 
-        with self.assertRaises(Exception) as caught:
+        with self.assertRaises(_OutputLimitExceeded):
             await ReadOnlySystemBusAdapter._read_bounded(stream, 128)
-
-        self.assertEqual(type(caught.exception).__name__, "_OutputLimitExceeded")
 
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
