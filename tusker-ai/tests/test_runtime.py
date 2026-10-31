@@ -132,6 +132,26 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(TuskerRuntimeError):
             list(InferenceRuntime(fake).infer(self.request()))
 
+    def test_provider_failure_releases_concurrency_slot(self):
+        class FailingProvider(FakeProvider):
+            def infer(self, request, cancellation):
+                yield InferenceEvent(request.request_id, 0, "started", {})
+                raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "fixture failure")
+
+        runtime = InferenceRuntime(FailingProvider(), RuntimeLimits(max_concurrent_requests=1))
+        with self.assertRaises(TuskerRuntimeError):
+            list(runtime.infer(self.request()))
+        events = list(runtime.infer(self.request(request_id="after-failure")))
+        self.assertEqual(events[-1].event_type, "completed")
+
+    def test_closing_partial_stream_releases_concurrency_slot(self):
+        runtime = InferenceRuntime(FakeProvider(), RuntimeLimits(max_concurrent_requests=1))
+        stream = runtime.infer(self.request())
+        self.assertEqual(next(iter(stream)).event_type, "started")
+        stream.close()
+        events = list(runtime.infer(self.request(request_id="after-close")))
+        self.assertEqual(events[-1].event_type, "completed")
+
     def test_cancel_before_dispatch_returns_typed_error_without_start_event(self):
         token = CancellationToken()
         token.cancel()
