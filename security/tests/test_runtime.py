@@ -546,6 +546,31 @@ def test_broker_gate_returns_a_narrow_grant_only_after_consume():
                                      "session_binding", "device_binding", "action_digest", "registry_version",
                                      "precondition_digest"}
     finally: db.close()
+def test_broker_gate_fails_closed_on_malformed_requests_and_authority_errors():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    class BrokenAuthority:
+        def consume(self, *args, **kwargs):
+            raise RuntimeError("authority unavailable")
+    assert BrokerAuthorizationGate(BrokenAuthority()).authorize(None, {}).outcome == "BINDING_MISMATCH"
+    request = BrokerAuthorizationRequest("opaque", "broker.disk.erase", D4, "policy-1",
+                                         ("disk:wwn-123",), "registry-1", D4, {"uid": 1000})
+    result = BrokerAuthorizationGate(BrokenAuthority()).authorize(request, {})
+    assert result.outcome == "AUTHORITY_UNAVAILABLE"
+    assert result.grant is None
+
+
+def test_broker_gate_never_releases_an_incomplete_consumed_grant():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    class IncompleteAuthority:
+        def consume(self, *args, **kwargs):
+            return ConsumeResult("CONSUMED", "consumption-1", {"operation_id": "broker.disk.erase"})
+    request = BrokerAuthorizationRequest("opaque", "broker.disk.erase", D4, "policy-1",
+                                         ("disk:wwn-123",), "registry-1", D4, {"uid": 1000})
+    result = BrokerAuthorizationGate(IncompleteAuthority()).authorize(request, {})
+    assert result.outcome == "AUTHORITY_UNAVAILABLE"
+    assert result.grant is None
+
+
 def test_reconciliation_is_bound_to_original_principal_session_and_device():
     db = store()
     try:
@@ -726,6 +751,15 @@ def test_audit_checkpoint_rejects_existing_transaction_without_committing_it():
         db.close()
 
 
+def test_audit_chain_verification_fails_closed_when_table_is_unavailable():
+    db = store()
+    try:
+        db._db.execute("DROP TABLE audit_events")
+        assert db.verify_audit_chain() is False
+    finally:
+        db.close()
+
+
 def test_audit_events_verifies_chain_before_returning_events():
     db = store()
     try:
@@ -790,6 +824,16 @@ def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
         event.update(overrides)
         with pytest.raises(SecurityStoreError):
             db._audit(event)
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
+def test_audit_rejects_free_form_reason_codes():
+    db = store()
+    try:
+        with pytest.raises(SecurityStoreError, match="reason code"):
+            db._audit(audit(reason_code="user supplied secret: do not log"))
         assert db.audit_events() == []
     finally:
         db.close()
