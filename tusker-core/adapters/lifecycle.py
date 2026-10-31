@@ -334,7 +334,21 @@ class LifecycleEngine:
             raise LifecycleError("event stream is empty")
         if any(not isinstance(event, Mapping) for event in events):
             raise LifecycleError("event stream contains a malformed event record")
+        allowed_event_fields = {
+            "schema_version", "event_id", "task_id", "sequence", "occurred_at",
+            "type", "state", "correlation_id", "origin", "step", "progress",
+            "approval", "result", "error", "evidence_refs",
+        }
+        object_payload_fields = {"step", "progress", "approval", "result", "error"}
         for event in events:
+            if set(event) - allowed_event_fields:
+                raise LifecycleError("event stream contains unexpected event fields")
+            required_fields = {
+                "schema_version", "event_id", "task_id", "sequence", "occurred_at",
+                "type", "state", "correlation_id", "origin",
+            }
+            if not required_fields.issubset(event):
+                raise LifecycleError("event stream contains missing required event fields")
             if event.get("schema_version") != "0.1.0-draft":
                 raise LifecycleError("event stream contains an unsupported schema version")
             occurred_at = event.get("occurred_at")
@@ -360,6 +374,29 @@ class LifecycleEngine:
                     and (not isinstance(origin["display_label"], str)
                          or len(origin["display_label"]) > 80)):
                 raise LifecycleError("event stream contains an invalid origin")
+            for identity_field in ("event_id", "task_id"):
+                identity = event.get(identity_field)
+                try:
+                    UUID(identity)
+                except (ValueError, TypeError, AttributeError) as exc:
+                    raise LifecycleError(
+                        f"event stream contains an invalid {identity_field}"
+                    ) from exc
+            sequence = event.get("sequence")
+            if type(sequence) is not int or sequence < 1:
+                raise LifecycleError("event stream contains an invalid sequence")
+            if "evidence_refs" in event:
+                refs = event["evidence_refs"]
+                if (not isinstance(refs, list)
+                        or any(not isinstance(ref, str) or len(ref) > 512 for ref in refs)):
+                    raise LifecycleError("event stream contains invalid evidence_refs")
+            for payload_field in object_payload_fields:
+                if payload_field in event and event[payload_field] is not None and not isinstance(
+                    event[payload_field], Mapping
+                ):
+                    raise LifecycleError(
+                        f"event stream contains an invalid {payload_field} payload"
+                    )
         if any(type(event.get("sequence")) is not int or event.get("sequence") != index
                for index, event in enumerate(events, 1)):
             raise LifecycleError("event sequence is not contiguous")
