@@ -146,7 +146,7 @@ class InferenceRuntime:
         if (
             isinstance(request.timeout_seconds, bool)
             or not isinstance(request.timeout_seconds, (int, float))
-            or not math.isfinite(request.timeout_seconds)
+            or (isinstance(request.timeout_seconds, float) and not math.isfinite(request.timeout_seconds))
             or not 0 < request.timeout_seconds <= self.limits.request_timeout_seconds
         ):
             raise TuskerRuntimeError(RuntimeErrorCode.INVALID_REQUEST, "Request timeout is outside the configured bound")
