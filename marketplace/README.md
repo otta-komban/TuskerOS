@@ -21,6 +21,8 @@ The catalog plan resolver validates root IDs and the complete supplied dependenc
 
 Catalog JSON Schema patterns use an explicit end-of-input guard after their anchors. This prevents regex engines that treat `$` as matching before a final line terminator from accepting identifiers, versions, digests, timestamps or URLs with a trailing newline; the Python validator continues to enforce full-string matches.
 
+The transaction lifecycle state machine requires `history` as an array and `terminal` as a boolean, while validating only transaction identifiers, state names, and digests as non-empty strings; this keeps runtime type checks aligned with the transaction schema.
+
 The public dependency-constraint predicate validates direct `Version` objects and constraint iterables before comparison. Invalid component values, malformed prerelease tuples, text passed as the constraint collection, and non-iterable inputs raise `CatalogResolutionError` rather than leaking attribute or type errors.
 
 The direct release selector validates its public collection and flag inputs, checks target compatibility versions before scanning candidates, and snapshots candidate constraints once. This is important for generator callers: every release candidate is evaluated against the same complete constraint set rather than only the first candidate consuming it.
