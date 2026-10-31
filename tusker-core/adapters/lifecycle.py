@@ -342,8 +342,9 @@ class LifecycleEngine:
             if not isinstance(event.get("correlation_id"), str) or len(event["correlation_id"]) > 128:
                 raise LifecycleError("event stream contains an invalid correlation_id")
             origin = event.get("origin")
-            if (not isinstance(origin, Mapping)
-                    or origin.get("kind") not in {"local", "remote", "extension", "system"}):
+            origin_kind = origin.get("kind") if isinstance(origin, Mapping) else None
+            if (not isinstance(origin_kind, str)
+                    or origin_kind not in {"local", "remote", "extension", "system"}):
                 raise LifecycleError("event stream contains an invalid origin")
         if any(type(event.get("sequence")) is not int or event.get("sequence") != index
                for index, event in enumerate(events, 1)):
