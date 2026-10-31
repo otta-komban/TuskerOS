@@ -1403,3 +1403,60 @@ def test_approval_decision_one_microsecond_before_expiry_is_accepted():
         assert db.verify_audit_chain()
     finally:
         db.close()
+
+
+
+def test_approval_creation_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected approval creation audit failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="approval creation/audit failed closed"):
+                approval(db)
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
+        assert db.audit_events() == []
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+def test_approval_expiry_transition_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        rid = approval(db)
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected approval expiry audit failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="approval decision/audit failed closed"):
+                db.decide(
+                    rid,
+                    approve=True,
+                    current_binding=BINDING,
+                    approver_credentials={"uid": 1000},
+                    audit_context=audit_for_approval(db, rid),
+                    now=NOW + timedelta(minutes=2),
+                )
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
