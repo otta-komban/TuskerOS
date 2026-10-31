@@ -49,8 +49,9 @@ def _keys(value: object, allowed: set[str], required: set[str], path: str, error
     if not isinstance(value, dict):
         errors.append(f"{path}: expected object")
         return False
-    for key in sorted(set(value) - allowed):
-        errors.append(f"{path}.{key}: unsupported field")
+    unknown_keys = set(value) - allowed
+    for key in sorted(unknown_keys, key=lambda item: (type(item).__name__, repr(item))):
+        errors.append(f"{path}.{key!r}: unsupported field")
     for key in sorted(required - set(value)):
         errors.append(f"{path}.{key}: required field missing")
     return True
