@@ -257,6 +257,30 @@ class SecurityStore:
             if row is None or row["state"] != "PENDING":
                 self._db.execute("ROLLBACK")
                 return "NOT_PENDING"
+            approval_binding = json.loads(bytes(row["binding_json"]).decode("utf-8"))
+            expected_audit = {
+                "principal_binding": row["principal_binding"],
+                "proposal_id": row["proposal_id"],
+                "operation_id": row["broker_operation_id"],
+                "risk_class": row["risk_class"],
+                "policy_version": row["policy_version"],
+                "action_digest": row["action_digest"],
+                "task_id": row["task_id"],
+                "step_id": row["step_id"],
+                "registry_version": approval_binding["registry_version"],
+                "registry_status": "resolved",
+            }
+            if not self._audit_context_matches(audit_context, expected_audit):
+                self._db.execute("ROLLBACK")
+                return "BINDING_MISMATCH"
+            if audit_context["origin"] == "remote":
+                if (audit_context.get("device_binding") != approval_binding["device_binding"]
+                    or audit_context.get("session_binding") != approval_binding["session_binding"]):
+                    self._db.execute("ROLLBACK")
+                    return "BINDING_MISMATCH"
+            elif "device_binding" in audit_context or "session_binding" in audit_context:
+                self._db.execute("ROLLBACK")
+                return "BINDING_MISMATCH"
             if current >= datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00")):
                 self._db.execute("UPDATE approvals SET state='EXPIRED' WHERE request_id=?", (request_id,))
                 self._audit({**audit_context, "event_type":"approval_expired", "approval_request_id":request_id,
