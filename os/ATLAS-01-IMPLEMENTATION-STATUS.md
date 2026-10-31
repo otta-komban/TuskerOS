@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc` (ATLAS CI passed 70 tests; unified validation passed all 8 jobs; branch 82 commits ahead / 0 behind `main`)  
+**Latest code/test evidence head:** `8f594cb13a9360eaa11a2f32e2d78654bf4d00fc` (ATLAS CI passed 70 tests; unified validation passed all 8 jobs)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
