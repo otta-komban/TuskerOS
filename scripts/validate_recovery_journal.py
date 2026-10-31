@@ -46,6 +46,10 @@ class JournalReport:
 
 
 def _canonical_payload(record: dict[str, Any]) -> bytes:
+    if type(record) is not dict:
+        raise JournalValidationError("record must be a plain dictionary")
+    if any(type(key) is not str for key in record):
+        raise JournalValidationError("record object keys must be plain strings")
     payload = {key: value for key, value in record.items() if key != "checksum"}
     try:
         return json.dumps(payload, ensure_ascii=False, sort_keys=True,
@@ -96,13 +100,12 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
     seen_sequences: set[int] = set()
 
     for index, record in enumerate(materialized, start=1):
-        if not isinstance(record, dict):
-            errors.append(f"record {index}: expected object")
+        if type(record) is not dict:
+            errors.append(f"record {index}: expected a plain dictionary")
             continue
-        non_string_keys = [key for key in record if not isinstance(key, str)]
-        if non_string_keys:
-            errors.append(
-                f"record {index}: object keys must be strings; found {non_string_keys!r}")
+        if any(type(key) is not str for key in record):
+            # Do not format attacker-controlled key objects: __repr__ may raise.
+            errors.append(f"record {index}: object keys must be plain strings")
             continue
         missing = REQUIRED_FIELDS - record.keys()
         extra = record.keys() - REQUIRED_FIELDS
@@ -120,7 +123,7 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
             seen_sequences.add(sequence)
         if sequence != index:
             errors.append(f"record {index}: expected sequence {index}, got {sequence}")
-        if not isinstance(record["operation_id"], str) or not record["operation_id"]:
+        if type(record["operation_id"]) is not str or not record["operation_id"]:
             errors.append(f"record {index}: operation_id must be non-empty")
         elif operation_id is None:
             operation_id = record["operation_id"]
@@ -129,7 +132,7 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         state = record["state"]
         if index == 1 and state != "planned":
             errors.append("record 1: initial state must be planned")
-        if not isinstance(state, str) or state not in STATES:
+        if type(state) is not str or state not in STATES:
             errors.append(f"record {index}: unknown state {state!r}")
         elif previous_state is not None and state not in TRANSITIONS[previous_state]:
             errors.append(f"record {index}: illegal transition {previous_state} -> {state}")
@@ -146,18 +149,26 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
             errors.append(f"record {index}: previous_checksum must be 64 lowercase hexadecimal characters")
         if previous_checksum != previous:
             errors.append(f"record {index}: previous checksum does not match chain")
-        try:
-            actual = record_checksum(record)
-        except JournalValidationError as exc:
-            errors.append(f"record {index}: {exc}")
-            actual = ""
         supplied = record["checksum"]
-        if (not isinstance(supplied, str)
+        if type(supplied) is not str:
+            errors.append(f"record {index}: checksum must be a plain string")
+        if (type(supplied) is not str
                 or len(supplied) != SHA256_HEX_LENGTH
                 or any(char not in "0123456789abcdef" for char in supplied)):
             errors.append(f"record {index}: checksum must be 64 lowercase hexadecimal characters")
-        elif supplied != actual:
-            errors.append(f"record {index}: checksum mismatch")
+        # Only serialize a record after its schema fields have exact built-in
+        # primitive types. This avoids invoking custom object behavior while
+        # constructing a checksum for malformed caller-supplied dictionaries.
+        if (type(sequence) is int and type(record["operation_id"]) is str
+                and type(state) is str and type(record["idempotent"]) is bool
+                and type(previous_checksum) is str and type(supplied) is str):
+            try:
+                actual = record_checksum(record)
+            except JournalValidationError as exc:
+                errors.append(f"record {index}: {exc}")
+                actual = ""
+            if supplied != actual:
+                errors.append(f"record {index}: checksum mismatch")
         previous = supplied if isinstance(supplied, str) else ""
         # Never index TRANSITIONS with an unrecognized state on the next record.
         previous_state = state if isinstance(state, str) and state in STATES else None
