@@ -218,6 +218,18 @@ class OllamaHttpTests(unittest.TestCase):
         next_events = list(provider.infer(next_req, CancellationToken()))
         self.assertEqual(next_events[-1].event_type, "completed")
 
+    def test_oversized_serialized_request_is_rejected_before_dispatch(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        provider = OllamaProvider("http://127.0.0.1:1", read_timeout=0.1)
+        request = InferenceRequest(
+            "oversized-request",
+            "fixture",
+            [{"role": "user", "content": "small", "metadata": "x" * (4 * 1024 * 1024)}],
+        )
+        with self.assertRaises(TuskerRuntimeError) as caught:
+            list(provider.infer(request, CancellationToken()))
+        self.assertEqual(caught.exception.code, RuntimeErrorCode.INVALID_REQUEST)
+
     def test_local_requests_ignore_ambient_proxy_environment(self):
         proxy_env = {
             "HTTP_PROXY": "http://127.0.0.1:1", "http_proxy": "http://127.0.0.1:1",
