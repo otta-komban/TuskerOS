@@ -272,6 +272,8 @@ class LifecycleEngine:
                 raise LifecycleError("event stream contains an invalid event ID") from exc
         if any(event.get("task_id") != task_id for event in events):
             raise LifecycleError("event stream contains an event for another task")
+        if any(event.get("type") not in ALLOWED_EVENT_TYPES for event in events):
+            raise LifecycleError("event stream contains an unknown event type")
         first = events[0]
         if first.get("type") != "task.created" or first.get("state") != "queued":
             raise LifecycleError("event stream must begin with task.created in queued state")
