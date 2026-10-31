@@ -12,6 +12,91 @@ _ORIGINS = {"local", "remote", "extension", "system"}
 _ACCESS = {"read", "create", "modify", "delete", "execute", "administer"}
 _ACTION = re.compile(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9_-]*)+$")
 
+
+def _valid_registry_entry(entry: Mapping[str, Any]) -> bool:
+    """Validate the complete operation-registration v0.1.0 shape before use."""
+    required = {"schema_version", "action_id", "operation_schema_version",
+        "arguments_schema_ref", "allowed_principal_classes", "allowed_origins",
+        "resources", "minimum_risk_class", "approval_mode", "broker_operation_id",
+        "timeout_ms", "idempotency", "preconditions", "postcondition_verifier"}
+    optional = {"max_input_bytes", "rate_limit", "risk_escalation_rules"}
+    if not required.issubset(entry) or set(entry) - required - optional:
+        return False
+    if entry.get("schema_version") != "0.1.0":
+        return False
+    for field in ("action_id", "broker_operation_id"):
+        value = entry.get(field)
+        if not isinstance(value, str) or len(value) > 160 or not _ACTION.fullmatch(value):
+            return False
+    version = entry.get("operation_schema_version")
+    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\\.[0-9]+\\.[0-9]+", version):
+        return False
+    schema_ref = entry.get("arguments_schema_ref")
+    if not isinstance(schema_ref, str) or not 1 <= len(schema_ref) <= 512:
+        return False
+    if not isinstance(entry.get("minimum_risk_class"), str) or entry["minimum_risk_class"] not in _RISKS:
+        return False
+    if not isinstance(entry.get("approval_mode"), str) or entry["approval_mode"] not in {"never", "on_escalation", "always", "out_of_band_admin"}:
+        return False
+    if not isinstance(entry.get("idempotency"), str) or entry["idempotency"] not in {"required", "optional_read_only", "not_supported"}:
+        return False
+    timeout = entry.get("timeout_ms")
+    if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 3600000:
+        return False
+    if "max_input_bytes" in entry:
+        limit = entry["max_input_bytes"]
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 10485760:
+            return False
+    origins = entry.get("allowed_origins")
+    if (not isinstance(origins, list) or not origins
+        or any(not isinstance(value, str) or value not in _ORIGINS for value in origins)
+        or len(origins) != len(set(origins))):
+        return False
+    principals = entry.get("allowed_principal_classes")
+    if (not isinstance(principals, list) or not principals
+        or any(not isinstance(value, str) or not 1 <= len(value) <= 64 for value in principals)
+        or len(principals) != len(set(principals))):
+        return False
+    resources = entry.get("resources")
+    if not isinstance(resources, list) or not 1 <= len(resources) <= 32:
+        return False
+    for declaration in resources:
+        if (not isinstance(declaration, Mapping) or set(declaration) != {"kind", "access_modes"}
+            or not isinstance(declaration.get("kind"), str)
+            or not 1 <= len(declaration["kind"]) <= 64
+            or not isinstance(declaration.get("access_modes"), list)
+            or not declaration["access_modes"]
+            or any(not isinstance(mode, str) or mode not in _ACCESS for mode in declaration["access_modes"])
+            or len(declaration["access_modes"]) != len(set(declaration["access_modes"]))):
+            return False
+    if len({item["kind"] for item in resources}) != len(resources):
+        return False
+    preconditions = entry.get("preconditions")
+    if (not isinstance(preconditions, list) or len(preconditions) > 64
+        or any(not isinstance(value, str) or not 1 <= len(value) <= 256 for value in preconditions)):
+        return False
+    verifier = entry.get("postcondition_verifier")
+    if not isinstance(verifier, str) or not 1 <= len(verifier) <= 160:
+        return False
+    if "risk_escalation_rules" in entry:
+        rules = entry["risk_escalation_rules"]
+        if (not isinstance(rules, list) or len(rules) > 64
+            or any(not isinstance(value, str) or not 1 <= len(value) <= 256 for value in rules)):
+            return False
+    if "rate_limit" in entry:
+        rate = entry["rate_limit"]
+        if not isinstance(rate, Mapping) or set(rate) - {"max_calls", "window_seconds"}:
+            return False
+        for value in rate.values():
+            if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+                return False
+    minimum, mode = entry["minimum_risk_class"], entry["approval_mode"]
+    if ((minimum == "R2" and mode not in {"on_escalation", "always"})
+        or (minimum in {"R3", "R4"} and mode != "always")
+        or (minimum == "R5" and mode != "out_of_band_admin")):
+        return False
+    return True
+
 @dataclass(frozen=True)
 class PolicyResult:
     status: str
@@ -84,6 +169,8 @@ class PolicyEngine:
             matches = [entry for entry in registry if entry.get("action_id") == proposal["action_id"]]
             if len(matches) != 1: return deny("POLICY_UNKNOWN_ACTION")
             entry = matches[0]
+            if not _valid_registry_entry(entry):
+                return deny("POLICY_REGISTRY_INVALID")
             if (entry.get("schema_version") != "0.1.0" or entry.get("minimum_risk_class") not in _RISKS
                 or entry.get("approval_mode") not in {"never", "on_escalation", "always", "out_of_band_admin"}
                 or entry.get("idempotency") not in {"required", "optional_read_only", "not_supported"}

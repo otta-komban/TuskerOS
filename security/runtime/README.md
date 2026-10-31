@@ -8,6 +8,7 @@ This package implements a deterministic policy evaluator, SQLite-backed approval
 
 - DENY when identity, registry verification, argument-schema validation, resource resolution, precondition verification, or canonical data is missing or invalid.
 - Trust dependencies are injected callbacks. Production adapters must source them from authenticated OS/session state and integrity-protected registry/schema artifacts.
+- Complete operation-registration v0.1.0 entries are checked against the schema's required fields, property allowlist, identifier bounds, resource/precondition limits, rate-limit shape and approval/risk constraints before use. The injected registry verifier remains responsible for authenticity/signature trust; shape validation does not establish provenance.
 - Registry scope is validated fail-closed: allowed origins must be unique members of the supported origin set; principal-class allowlists must contain unique non-empty strings of at most 64 characters; authenticated principal classes use the same bound. Resource declarations reject duplicate kinds and malformed/duplicate/unsupported access modes.
 - R0/R1 registered actions may receive ALLOW; R2/R3/R4 require approval. R5 and unsupported risk-escalation rules are denied.
 - Mutations require idempotency keys. Resource mutations are escalated to at least R3; execute/delete/administer to R4.

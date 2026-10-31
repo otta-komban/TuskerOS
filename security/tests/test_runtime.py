@@ -68,6 +68,8 @@ def test_policy_deny_default_allow_read_require_approval_and_deny_r5():
         resource_resolver=lambda r: list(r), precondition_verifier=lambda p, r: D4)
     assert engine.evaluate(proposal, context, [], "registry-1").status == "DENY"
     reg = {"schema_version": "0.1.0", "action_id": "system.info.read", "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info",
         "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}], "minimum_risk_class": "R0",
         "approval_mode": "never", "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
@@ -108,7 +110,9 @@ def test_malformed_or_ambiguous_registry_resource_policy_is_denied(resource_decl
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": "user"}
     registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"], "resources": resource_declarations,
         "minimum_risk_class": "R0", "approval_mode": "never",
         "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
@@ -140,7 +144,9 @@ def test_malformed_registry_identity_scope_is_denied(field, value):
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": "user"}
     entry = {"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}],
         "minimum_risk_class": "R0", "approval_mode": "never",
@@ -165,7 +171,9 @@ def test_malformed_authenticated_principal_class_is_denied(principal_class):
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": principal_class}
     registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}],
         "minimum_risk_class": "R0", "approval_mode": "never",
@@ -193,7 +201,9 @@ def test_registry_numeric_limits_reject_boolean_values(field, value):
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": "user"}
     entry = {"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}],
         "minimum_risk_class": "R0", "approval_mode": "never",
@@ -207,6 +217,40 @@ def test_registry_numeric_limits_reject_boolean_values(field, value):
     decision = engine.evaluate(proposal, context, [entry], "registry-1")
     assert decision.status == "DENY"
     assert decision.reason_code == "POLICY_REGISTRY_INVALID"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("arguments_schema_ref", None), ("preconditions", "not-a-list"),
+    ("preconditions", [""]), ("postcondition_verifier", ""),
+    ("operation_schema_version", "1.0"), ("action_id", "A" * 161),
+    ("unexpected_field", "must-not-be-ignored"),
+    ("rate_limit", {"max_calls": True}), ("rate_limit", {"window_seconds": 0}),
+    ("risk_escalation_rules", [""]), ("resources", [{"kind": "system", "access_modes": ["read"]}] * 33),
+])
+def test_registry_full_schema_shape_is_enforced(field, value):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    entry = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only", "preconditions": [],
+        "postcondition_verifier": "verify.system.info"}
+    entry[field] = value
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: True, argument_validator=lambda a, x: True,
+        resource_resolver=lambda resources: list(resources),
+        precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, [entry], "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_REGISTRY_INVALID"
 
 
 def test_registry_rejects_non_mapping_entries_before_lookup():
@@ -233,7 +277,9 @@ def test_resource_resolver_cannot_drop_add_or_widen_resources():
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": "user"}
     registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}],
         "minimum_risk_class": "R0", "approval_mode": "never",
@@ -258,7 +304,9 @@ def test_action_digest_binds_original_and_resolved_resource_identifiers():
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": "user"}
     registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}],
         "minimum_risk_class": "R0", "approval_mode": "never",
@@ -435,7 +483,9 @@ def test_resource_resolver_cannot_return_oversized_canonical_identifier():
     context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
         "device_binding": D3, "origin": "local", "principal_class": "user"}
     registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
-        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "preconditions": [], "postcondition_verifier": "verify.system.info", "allowed_origins": ["local"],
         "allowed_principal_classes": ["user"],
         "resources": [{"kind": "system", "access_modes": ["read"]}],
         "minimum_risk_class": "R0", "approval_mode": "never",
