@@ -23,7 +23,14 @@ task = engine.transition(
 
 A production implementation of `LifecycleStore` must atomically compare the
 expected task version, append exactly one monotonically sequenced event, update
-the task snapshot, and persist the idempotency-key result. `InMemoryLifecycleStore`
+the task snapshot, and persist the idempotency-key result. The initial snapshot
+and creation event both start at 1. Every accepted transition must atomically
+advance both task `version` and event `sequence` to
+`expected_version + 1`; a store must reject mismatched task IDs, versions or
+sequences without changing any state. The engine derives the next sequence from
+the expected version rather than a separate event-list read, and the store is
+the final authority enforcing the invariant under concurrent writes.
+`InMemoryLifecycleStore`
 provides a thread-safe reference implementation for tests only; it is not durable
 across process restart.
 
