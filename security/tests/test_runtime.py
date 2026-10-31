@@ -295,6 +295,11 @@ def test_resource_resolver_cannot_drop_add_or_widen_resources():
     assert evaluate_with(lambda resources: resources + [{"kind":"system","id":"other","access":"read"}]).reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
     assert evaluate_with(lambda resources: [{"kind":"system","id":"host","access":"modify"}]).reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
 
+    # A registration with resource declarations cannot authorize an
+    # unscoped proposal, even if the resolver would accept an empty list.
+    proposal["resources"] = []
+    assert evaluate_with(lambda resources: list(resources)).reason_code == "POLICY_SCOPE_EXCEEDED"
+
 
 def test_action_digest_binds_original_and_resolved_resource_identifiers():
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
