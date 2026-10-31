@@ -43,6 +43,7 @@ class TransactionStateTests(unittest.TestCase):
         tx = transition_transaction(self.tx, "approval_verified", {
             "approval_id": "a1", "verification_ref": "aegis:verify:1", "authority": "aegis"
         })
+        tx = transition_transaction(tx, "revalidated", {"snapshot_digest": "b" * 64})
         tx = transition_transaction(tx, "stale", {"observed_snapshot_digest": "c" * 64})
         self.assertTrue(tx["terminal"])
 
@@ -99,7 +100,7 @@ class TransactionStateTests(unittest.TestCase):
 
     def test_rejects_non_string_current_state(self):
         tx = dict(self.tx, state=[])
-        with self.assertRaisesRegex(TransactionStateError, "unknown current"):
+        with self.assertRaisesRegex(TransactionStateError, "state must be a non-empty string"):
             transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
 
@@ -107,6 +108,7 @@ class TransactionStateTests(unittest.TestCase):
         tx = transition_transaction(self.tx, "approval_verified", {
             "approval_id": "a1", "verification_ref": "v1", "authority": "aegis"
         })
+        tx = transition_transaction(tx, "revalidated", {"snapshot_digest": "b" * 64})
         with self.assertRaisesRegex(TransactionStateError, "observed snapshot digest"):
             transition_transaction(tx, "stale")
 
@@ -145,7 +147,7 @@ class TransactionStateTests(unittest.TestCase):
     def test_cancelled_transition_requires_non_empty_reason_code(self):
         with self.assertRaisesRegex(TransactionStateError, "cancelled requires a non-empty reason_code"):
             transition_transaction(self.tx, "cancelled")
-        with self.assertRaisesRegex(TransactionStateError, "cancelled requires a non-empty reason_code"):
+        with self.assertRaisesRegex(TransactionStateError, "evidence must map text keys"):
             transition_transaction(self.tx, "cancelled", {"reason_code": "  "})
 
     def test_rejected_transition_requires_non_empty_reason_code(self):
