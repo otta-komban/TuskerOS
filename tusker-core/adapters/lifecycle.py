@@ -320,13 +320,18 @@ class LifecycleEngine:
         task = self.store.get(task_id)
         if task is None:
             raise LifecycleError(f"unknown task: {task_id}")
+        if not isinstance(task, Mapping):
+            raise LifecycleError("task snapshot is not a valid mapping")
+        if task.get("task_id") != task_id:
+            raise LifecycleError("task snapshot identity does not match requested task")
+        snapshot_state = task.get("state")
+        if not isinstance(snapshot_state, str) or snapshot_state not in TASK_STATES:
+            raise LifecycleError("task snapshot contains an unknown task state")
         events = self.store.events(task_id)
         if not isinstance(events, list):
             raise LifecycleError("event stream is not a valid list")
         if not events:
             raise LifecycleError("event stream is empty")
-        if not isinstance(task, Mapping):
-            raise LifecycleError("task snapshot is not a valid mapping")
         if any(not isinstance(event, Mapping) for event in events):
             raise LifecycleError("event stream contains a malformed event record")
         if any(type(event.get("sequence")) is not int or event.get("sequence") != index
