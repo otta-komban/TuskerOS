@@ -40,6 +40,20 @@ class ParseCaseRowsTests(unittest.TestCase):
             [("PAIR-C01", "Condition with | literal pipe", "Reject safely")],
         )
 
+    def test_even_backslash_run_does_not_escape_delimiter(self):
+        markdown = r"| PAIR-C01 | Two slashes \\ before delimiter | Reject |" + "\n"
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [( "PAIR-C01", r"Two slashes \ before delimiter", "Reject")],
+        )
+
+    def test_odd_backslash_run_escapes_pipe_and_preserves_pairs(self):
+        markdown = r"| PAIR-C01 | Three slashes \\\| then text | Reject |" + "\n"
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [("PAIR-C01", r"Two slashes \| then text", "Reject")],
+        )
+
     def test_rejects_malformed_case_identifier(self):
         markdown = "| PAIR-C1 | Missing zero padding | Reject |" + "\n"
         with self.assertRaisesRegex(validator.SpecError, "malformed case ID"):
