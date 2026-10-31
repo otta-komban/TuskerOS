@@ -284,8 +284,10 @@ class SecurityStore:
             or not isinstance(principal_binding, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", principal_binding)):
             raise SecurityStoreError("invalid digest binding")
         required = {"session_binding", "device_binding", "registry_version", "resource_scope", "precondition_digest"}
-        if not isinstance(binding, Mapping) or set(binding) != required or not isinstance(binding["resource_scope"], list) or not binding["resource_scope"]:
-            raise SecurityStoreError("incomplete approval binding")
+        if (not isinstance(binding, Mapping) or set(binding) != required
+            or not isinstance(binding["resource_scope"], list)
+            or not 1 <= len(binding["resource_scope"]) <= 128):
+            raise SecurityStoreError("incomplete or oversized approval binding")
         if not isinstance(audit_context, Mapping):
             raise SecurityStoreError("approval audit context is required")
         for field in ("session_binding", "device_binding", "precondition_digest"):
