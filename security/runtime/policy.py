@@ -135,13 +135,13 @@ class PolicyEngine:
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
             if any(not isinstance(item, Mapping) for item in registry):
                 return deny("POLICY_REGISTRY_INVALID")
-            if not self.registry_verifier(registry, registry_version):
+            if self.registry_verifier(registry, registry_version) is not True:
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
             # Validate every signed registry entry before selecting an action. A malformed
             # unrelated entry invalidates the registry as a whole; lookup must not hide it.
             if any(not _valid_registry_entry(item) for item in registry):
                 return deny("POLICY_REGISTRY_INVALID")
-            if self.identity_verifier is None or not self.identity_verifier(context):
+            if self.identity_verifier is None or self.identity_verifier(context) is not True:
                 return deny("POLICY_UNKNOWN_PRINCIPAL")
             for field in ("principal_binding", "session_binding", "device_binding"):
                 if not isinstance(context.get(field), str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", context[field]):
@@ -166,7 +166,7 @@ class PolicyEngine:
                     return deny("POLICY_INVALID_ARGUMENTS")
             if not isinstance(proposal["arguments"], dict) or not isinstance(proposal["resources"], list):
                 return deny("POLICY_INVALID_ARGUMENTS")
-            if self.argument_validator is None or not self.argument_validator(proposal["action_id"], proposal["arguments"]):
+            if self.argument_validator is None or self.argument_validator(proposal["action_id"], proposal["arguments"]) is not True:
                 return deny("POLICY_INVALID_ARGUMENTS")
             if self.resource_resolver is None or self.precondition_verifier is None:
                 return deny("POLICY_DEPENDENCY_UNAVAILABLE")
