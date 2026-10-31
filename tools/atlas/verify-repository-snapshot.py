@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import sys
@@ -149,10 +150,38 @@ def verify_lock(path: Path, *, require_repositories: bool = True) -> dict[str, d
     return indexed
 
 
+
+def verify_manifest_snapshot_pins(manifest_path: Path, indexed: dict[str, dict[str, str]]) -> int:
+    try:
+        with manifest_path.open(newline="", encoding="utf-8") as stream:
+            reader = csv.DictReader(line for line in stream if line.strip() and not line.lstrip().startswith("#"))
+            required = {"package", "repository_id", "repository_snapshot"}
+            if not reader.fieldnames or not required.issubset(reader.fieldnames):
+                raise RuntimeError("package manifest is missing repository snapshot columns")
+            rows = list(reader)
+    except OSError as exc:
+        raise RuntimeError(f"cannot read package manifest {manifest_path}: {exc}") from exc
+    if not rows:
+        raise RuntimeError("package manifest has no rows; owner-reviewed RPM dependencies are required")
+    for row in rows:
+        package = (row.get("package") or "").strip()
+        repo_id = (row.get("repository_id") or "").strip()
+        snapshot_id = (row.get("repository_snapshot") or "").strip()
+        if not package or repo_id not in indexed:
+            raise RuntimeError(f"{package or '<unnamed package>'}: repository {repo_id!r} has no verified snapshot")
+        if snapshot_id != indexed[repo_id]["snapshot_id"]:
+            raise RuntimeError(
+                f"{package}: repository_snapshot {snapshot_id!r} does not match verified "
+                f"snapshot {indexed[repo_id]['snapshot_id']!r} for {repo_id}"
+            )
+    return len(rows)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--lock", type=Path, default=Path("os/repository-snapshot.lock.json"))
     parser.add_argument("--validate-only", action="store_true", help="validate lock structure without network access")
+    parser.add_argument("--manifest", type=Path, help="also require every package row to reference its exact verified repository snapshot")
     parser.add_argument("--capture", action="append", default=[], metavar="REPO_ID=REPOMD_URL",
                         help="fetch one repository's repomd.xml and primary metadata and append its immutable identity")
     args = parser.parse_args()
@@ -182,7 +211,9 @@ def main() -> int:
         print(f"Validated repository snapshot lock structure: {len(indexed)} repository entries")
         return 0
     indexed = verify_lock(args.lock)
-    print(f"Verified immutable repomd.xml and primary metadata for {len(indexed)} Fedora 44 repositories")
+    package_count = verify_manifest_snapshot_pins(args.manifest, indexed) if args.manifest else None
+    suffix = f" and {package_count} package snapshot pins" if package_count is not None else ""
+    print(f"Verified immutable repomd.xml and primary metadata for {len(indexed)} Fedora 44 repositories{suffix}")
     return 0
 
 
