@@ -267,6 +267,26 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("PAIR: specification not found", payload["error"])
         self.assertFalse(payload["runtime_security_tested"])
 
+    def test_repository_validation_reports_all_specification_failures(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            for relative_path, _ in validator.SPECS.values():
+                spec_path = root / relative_path
+                spec_path.parent.mkdir(parents=True, exist_ok=True)
+                spec_path.write_text("", encoding="utf-8")
+
+            with self.assertRaises(validator.SpecError) as raised:
+                validator.validate_repository(root)
+
+        message = str(raised.exception)
+        for prefix in ("PAIR", "SESS", "NET"):
+            self.assertIn(prefix + ":", message)
+        self.assertIn("PAIR-C01", message)
+        self.assertIn("SESS-C01", message)
+        self.assertIn("NET-C01", message)
+
     def test_missing_specification_fails_repository_validation(self):
         import tempfile
 
