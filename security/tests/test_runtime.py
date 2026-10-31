@@ -1095,3 +1095,29 @@ def test_security_database_refuses_hard_link_without_chmod_or_writes(tmp_path):
 
     assert target.read_bytes() == b"preserve external file"
     assert stat.S_IMODE(target.stat().st_mode) == 0o644
+
+def test_security_database_rejection_closes_open_file_descriptor(tmp_path, monkeypatch):
+    import os
+    from security.runtime import store as store_module
+
+    target = tmp_path / "shared.db"
+    target.write_bytes(b"preserve external file")
+    path = tmp_path / "security.db"
+    path.hardlink_to(target)
+
+    opened = []
+    real_open = os.open
+
+    def capture_open(*args, **kwargs):
+        fd = real_open(*args, **kwargs)
+        opened.append(fd)
+        return fd
+
+    monkeypatch.setattr(store_module.os, "open", capture_open)
+    with pytest.raises(SecurityStoreError, match="must not have hard links"):
+        SecurityStore(path, audit_key=KEY)
+
+    assert len(opened) == 1
+    with pytest.raises(OSError):
+        os.fstat(opened[0])
+    assert target.read_bytes() == b"preserve external file"
