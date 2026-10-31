@@ -69,7 +69,11 @@ This is a conservative interim contract, not a claim that any current policy con
 
 ## 5. Canonicalization and digest
 
-Use RFC 8785 JCS over a normalized envelope with explicit field names and no undefined values. Normalize resource ordering by (kind, canonical_id, access) before canonicalization. Reject duplicate resource tuples. Strings are Unicode-normalized to NFC before schema validation; reject invalid Unicode and ambiguous path encodings. Do not normalize case unless the resource provider defines case-insensitive identity. Include principal binding and policy/registry version in the authorization digest domain. Digest comparison is constant-time where secret-derived values are compared. Never hash raw JSON bytes or model-authored display strings as a substitute for canonical semantics.
+Use RFC 8785 JCS over an explicitly constructed digest envelope with fixed field names and no undefined values. Construct that envelope from the validated proposal, trusted principal binding, resolved resources, and explicit policy/registry versions. Normalize resource-list ordering by (kind, canonical_id, access) before envelope construction; reject duplicate resource tuples.
+
+**Unicode preservation is mandatory:** Preserve the exact Unicode code-point sequence of every parsed JSON string, including property names and values. Do not apply NFC, NFD, NFKC, NFKD, case folding, trimming, or any other text rewrite as a JCS preprocessing step. RFC 8785 requires parsed string data to remain unchanged. Reject invalid Unicode, including unpaired surrogates, before canonicalization. If an operation has identifier-specific normalization rules, define them in that operation's trusted resolver; keep the original validated argument in the digest envelope and also bind the resolver-produced canonical resource identifier. Never generically normalize filesystem paths or case-fold identifiers unless the relevant resource provider explicitly defines those semantics.
+
+Include principal binding and policy/registry version in the authorization digest domain. Digest comparison is constant-time where secret-derived values are compared. Never hash raw JSON bytes or model-authored display strings as a substitute for canonical semantics.
 
 ## 6. Approval and anti-replay
 
@@ -99,7 +103,7 @@ Policy service unavailable, schema mismatch, clock uncertainty beyond configured
 
 ## 11. Open integration decisions
 
-- Confirm JCS + SHA-256 implementation/library and Unicode normalization behavior with runtime owners.
+- Confirm the JCS + SHA-256 implementation/library with runtime owners; require exact Unicode preservation per RFC 8785 and document any field-specific identifier normalization as a separate trusted-resolution step, never as JCS preprocessing.
 - Confirm how authenticated local IPC peer credentials and remote session/device claims reach the policy service.
 - Confirm authorization reference lookup vs signed token and one-time nonce storage with NEXUS-07.
 - Confirm whether the selected OS stack provides durable audit guarantees required for privileged execution.
