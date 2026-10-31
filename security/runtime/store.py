@@ -344,15 +344,32 @@ class SecurityStore:
             return ConsumeResult("AUTHORITY_UNAVAILABLE")
 
     def reconcile(self, authorization_ref: str, *, peer_credentials: Any) -> ConsumeResult:
+        """Return consume state only to the authenticated principal/session/device bound to it."""
         if self._peer_authenticator is None: return ConsumeResult("CALLER_UNAUTHORIZED")
         try: peer = self._peer_authenticator(peer_credentials)
         except Exception: return ConsumeResult("CALLER_UNAUTHORIZED")
-        if not isinstance(peer, Mapping) or peer.get("authenticated") is not True: return ConsumeResult("CALLER_UNAUTHORIZED")
-        token_hash = hashlib.sha256(authorization_ref.encode()).hexdigest()
-        row = self._db.execute("SELECT state,consumption_id FROM auth_refs WHERE token_hash=?", (token_hash,)).fetchone()
-        if row is None: return ConsumeResult("BINDING_MISMATCH")
-        if row["state"] == "CONSUMED": return ConsumeResult("ALREADY_CONSUMED", row["consumption_id"])
-        return ConsumeResult(row["state"])
+        if not isinstance(peer, Mapping) or peer.get("authenticated") is not True:
+            return ConsumeResult("CALLER_UNAUTHORIZED")
+        if not isinstance(authorization_ref, str) or not 1 <= len(authorization_ref) <= 512:
+            return ConsumeResult("BINDING_MISMATCH")
+        try:
+            token_hash = hashlib.sha256(authorization_ref.encode("utf-8", "strict")).hexdigest()
+            row = self._db.execute("""SELECT r.state,r.consumption_id,a.principal_binding,a.binding_json
+                FROM auth_refs r JOIN approvals a ON a.request_id=r.request_id
+                WHERE r.token_hash=?""", (token_hash,)).fetchone()
+            if row is None: return ConsumeResult("BINDING_MISMATCH")
+            binding = json.loads(bytes(row["binding_json"]).decode("utf-8"))
+            peer_matches = (
+                row["principal_binding"] == peer.get("principal_binding")
+                and binding.get("session_binding") == peer.get("session_binding")
+                and binding.get("device_binding") == peer.get("device_binding")
+            )
+            if not peer_matches: return ConsumeResult("CALLER_UNAUTHORIZED")
+            if row["state"] == "CONSUMED":
+                return ConsumeResult("ALREADY_CONSUMED", row["consumption_id"])
+            return ConsumeResult(row["state"])
+        except Exception:
+            return ConsumeResult("AUTHORITY_UNAVAILABLE")
 
     def audit_events(self) -> list[dict[str, Any]]:
         return [json.loads(bytes(row["event_json"]).decode("utf-8"))
