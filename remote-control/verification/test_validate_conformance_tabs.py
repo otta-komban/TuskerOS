@@ -43,9 +43,9 @@ class TabFenceBoundaryTests(unittest.TestCase):
     def test_tab_after_spaces_expands_to_four_column_indentation(self):
         markdown = (
             "| PAIR-C01 | Before indented code | Reject |\n"
-            " \\t```markdown\n"
+            " \t```markdown\n"
             "| PAIR-C02 | Tab-stop indented example | Ignored |\n"
-            "   \\t```\n"
+            "   \t```\n"
             "| PAIR-C03 | After indented code | Reject |\n"
         )
         self.assertEqual(
