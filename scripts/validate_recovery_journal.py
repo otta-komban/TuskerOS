@@ -132,7 +132,7 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
             errors.append(f"record {index}: operation_id changed within journal")
         state = record["state"]
         if type(state) is not str:
-            errors.append(f"record {index}: state must be a plain string")
+            errors.append(f"record {index}: unknown state (state must be a plain string)")
         elif index == 1 and state != "planned":
             errors.append("record 1: initial state must be planned")
         elif state not in STATES:
