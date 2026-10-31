@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "standard": "RFC 8785",
+  "description": "String-only canonicalization vectors proving that canonically equivalent NFC and NFD sequences are preserved as distinct JSON strings and therefore produce distinct canonical UTF-8 bytes and SHA-256 digests. These are reference vectors, not evidence that a TuskerOS runtime canonicalizer exists.",
+  "cases": [
+    {
+      "id": "JCS-UNICODE-001",
+      "name": "precomposed Latin small letter e with acute",
+      "input": {
+        "name": "é"
+      },
+      "code_points": [
+        "U+00E9"
+      ],
+      "canonical_utf8_hex": "7b226e616d65223a22c3a9227d",
+      "sha256": "sha256:2f16b8477146a1b2ba7d6bb7cf7c9979c191cc2838a107dbf5f0d920b4cb3ba1"
+    },
+    {
+      "id": "JCS-UNICODE-002",
+      "name": "decomposed Latin small letter e followed by combining acute",
+      "input": {
+        "name": "é"
+      },
+      "code_points": [
+        "U+0065",
+        "U+0301"
+      ],
+      "canonical_utf8_hex": "7b226e616d65223a2265cc81227d",
+      "sha256": "sha256:6a547588c4055916e090ed61467326046dd52810679d03bfb84d862a7123522e"
+    }
+  ],
+  "invariant": "A JCS implementation MUST preserve each parsed JSON string exactly. It MUST NOT normalize the two values to the same byte sequence."
+}
