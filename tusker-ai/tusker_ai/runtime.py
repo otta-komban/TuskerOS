@@ -40,6 +40,17 @@ class InferenceRuntime:
                 raise TuskerRuntimeError(RuntimeErrorCode.INSUFFICIENT_RESOURCES, "Available memory is below the configured safety reserve", retryable=True)
             _LOG.info("inference_started", extra={"request_id": request.request_id, "provider_id": self.provider.provider_id, "model_id": request.model})
             for event in self.provider.infer(request, token):
+                if (
+                    not isinstance(event, InferenceEvent)
+                    or not isinstance(event.request_id, str)
+                    or isinstance(event.sequence, bool)
+                    or not isinstance(event.sequence, int)
+                    or event.sequence < 0
+                    or not isinstance(event.event_type, str)
+                    or not isinstance(event.payload, Mapping)
+                    or not isinstance(event.timestamp, str)
+                ):
+                    raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned a malformed inference event")
                 if terminal:
                     raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider emitted an event after a terminal event")
                 if time.monotonic() - start > min(request.timeout_seconds, self.limits.request_timeout_seconds):
