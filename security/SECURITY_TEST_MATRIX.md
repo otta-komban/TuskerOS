@@ -222,10 +222,10 @@ C0053 expands AUD-REMOTE-006 with 11 explicit forbidden-field regression cases. 
 
 | ID | Scenario | Expected result | Status |
 |---|---|---|---|
-| POL-CON-001 | Decision contains an empty `constraints: {}` object | Accept as carrying no additional execution permission | Pending consumer test |
-| POL-CON-002 | Decision contains any non-empty constraint before a vocabulary is ratified | Reject / DENY; zero broker handler calls | Pending consumer test |
-| POL-CON-003 | Decision contains an unknown top-level constraint key after vocabulary versioning | Reject / DENY; zero broker handler calls | Pending schema and consumer test |
-| POL-CON-004 | A supported constraint has the wrong type or exceeds its agreed bound | Reject / DENY; zero broker handler calls | Pending schema and consumer test |
+| POL-CON-001 | Decision contains an empty `constraints: {}` object | Accept as carrying no additional execution permission | Schema test passed; consumer test pending |
+| POL-CON-002 | Decision contains any non-empty constraint before a vocabulary is ratified | Reject / DENY; zero broker handler calls | Schema test passed; consumer test pending |
+| POL-CON-003 | Decision contains an unknown top-level constraint key after vocabulary versioning | Reject / DENY; zero broker handler calls | Interim empty-only schema rejects it; future vocabulary tests pending |
+| POL-CON-004 | A supported constraint has the wrong type or exceeds its agreed bound | Reject / DENY; zero broker handler calls | No non-empty vocabulary ratified; future typed-bound tests pending |
 | POL-CON-005 | Consumer encounters missing, malformed, or unsupported constraint data | Fail closed; do not ignore, drop, reinterpret, or broaden scope | Pending consumer test |
 | POL-CON-006 | Constraint attempts to relax registered operation bounds or expand canonical resource scope | Reject / DENY; zero broker handler calls | Pending consumer test |
 
@@ -241,4 +241,8 @@ POL-CON-001/002 have schema-level regression coverage: `constraints` is required
 | POL-DEC-005b | Decision includes an empty `constraints` object | Accept | `test_policy_decision_constraints_must_be_present_and_empty` |
 | POL-DEC-005c | Decision includes any non-empty or nested constraint object | Reject | `test_policy_decision_rejects_non_empty_constraints` |
 
-This is an interim fail-closed contract, not the final constraint vocabulary. It does not prove policy-engine producer or broker-consumer enforcement at runtime.
+This is an interim fail-closed contract, not the final constraint vocabulary. The v0.1.0 schema now requires an empty object and rejects non-empty/non-object values. It does not prove policy-engine producer or broker-consumer enforcement at runtime.
+
+
+| POL-CON-007 | Schema declares constraints as object, maxProperties=0 and additionalProperties=false | Pass | `test_policy_decision_constraints_schema_is_explicitly_closed_and_empty_only` |
+| POL-CON-008 | Decision supplies a non-object constraints value | Reject | `test_policy_decision_rejects_non_empty_constraints` (expanded type cases) |
