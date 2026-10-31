@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 16  
+Current authorized cohort count: 17  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0025  
+Last completion: PHOENIX-10-C0026  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0026 | P2 | recovery-journal-nested-json-bounds | Reject nested custom containers/values and cycles; bound depth, nodes and in-memory record size; add hostile-input/resource-limit tests and docs. PHOENIX + unified CI passed. | validator `2729e248`, `201b290d`; tests `a5e00ef9`, `0a703ac3`, `59ea2e81`; docs `bbab5f62`, `bfe0c574`; PR #55. |
 | PHOENIX-10-C0025 | P2 | recovery-journal-hostile-object-hardening | Reject dict subclasses, non-plain keys and hostile malformed values without invoking custom hooks; add regression coverage and docs; latest-head CI pending after diagnostic compatibility repair. | validator `67ea9b5b` (hardening commits `00285d27`, `573d55c1`, `653156f7`, `355130e2`); tests `83b8eeed`, `6040c225`; docs `83c7382e`; PR #55. |
 | PHOENIX-10-C0024 | P2 | recovery-journal-iterator-failure-hardening | Return structured validation failure when caller iterator creation/consumption raises; add generator regression and docs; CI pending. | validator `daa12aac`, test `3d815ec5`, docs `b3c9b412`; PR #55. |
 | PHOENIX-10-C0023 | P2 | recovery-journal-in-memory-object-shape-hardening | Reject non-string keys in caller-supplied journal dictionaries as structured validation errors; regression test and docs added; PHOENIX CI `41189062747` and unified validation `41189062769` passed. | validator commit `a300daa1`, test `ddc91a4d`, docs `1a3bcb04`; PR #55. |
@@ -44,6 +45,8 @@ Last updated: 2026-10-31
 - JSONL remains the append-only source of record; each new entry includes its global sequence and cohort-local sequence.
 
 ## Current status
+
+- [x] C0026 response completion logged; nested recovery-journal JSON values are strictly validated and resource-bounded; PHOENIX and unified CI passed.
 
 - [x] C0025 response completion logged; hardened recovery-journal validation against hostile dict subclasses, keys and scalar values; CI pending after diagnostic compatibility repair.
 
@@ -130,3 +133,6 @@ C0024 limitation: this response hardens only bounded in-memory iterable handling
 
 
 C0025 limitation: this response hardens only bounded in-memory recovery-journal validation and its tests. PHOENIX runs 41190832893 and 41190919216 exposed regressions in the unknown-state diagnostic: the first required legacy diagnostic wording, and the second showed the first-record state checks had become mutually exclusive. Restored the legacy diagnostic and made initial-state and unknown-state validation independent in commit c321aa91. Latest-head PHOENIX CI [41191071719](https://github.com/otta-komban/TuskerOS/actions/runs/41191071719) passed (compile plus all four focused suites); unified validation [41191071572](https://github.com/otta-komban/TuskerOS/actions/runs/41191071572) remains pending. No persistence, broker integration, recovery dispatch, disk access/write, image build or VM test was performed; NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
+
+
+C0026 limitation: bounded in-memory validation only. The journal is not persisted; no atomic writes, locking, fsync, broker integration, recovery dispatch, disk access/write, image build or VM test was performed. The SHA-256 chain is unkeyed integrity evidence, not authentication or authorization. NEXUS-07/AEGIS-06 accepted contracts remain prerequisites for runtime integration.
