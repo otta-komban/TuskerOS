@@ -97,5 +97,15 @@ class DependencyPlanTests(unittest.TestCase):
             planner.resolve_install_order(["app"], [("app", [])])
 
 
+    def test_mapping_is_not_accepted_as_package_id_collection(self):
+        for roots, graph in (
+            ({"app": True}, {"app": []}),
+            (["app"], {"app": {"lib": True}, "lib": []}),
+        ):
+            with self.subTest(roots=roots, graph=graph):
+                with self.assertRaisesRegex(planner.DependencyPlanError, "mapping"):
+                    planner.resolve_install_order(roots, graph)
+
+
 if __name__ == "__main__":
     unittest.main()
