@@ -64,6 +64,10 @@ class InMemoryLifecycleStore:
     _lock: RLock = field(default_factory=RLock, repr=False)
 
     def create(self, task: Mapping[str, Any], event: Mapping[str, Any]) -> dict[str, Any]:
+        if not isinstance(task, Mapping) or not isinstance(event, Mapping):
+            raise LifecycleError("task snapshot and creation event must be mappings")
+        if "task_id" not in task or "event_id" not in event:
+            raise LifecycleError("task snapshot and creation event require task_id and event_id")
         task_id, event_id = str(task["task_id"]), str(event["event_id"])
         with self._lock:
             if task_id in self._tasks:
@@ -78,6 +82,10 @@ class InMemoryLifecycleStore:
             return deepcopy(self._tasks[task_id])
 
     def transition(self, task_id: str, expected_version: int, task: Mapping[str, Any], event: Mapping[str, Any], idempotency_key: str | None, idempotency_fingerprint: str | None) -> dict[str, Any]:
+        if not isinstance(task, Mapping) or not isinstance(event, Mapping):
+            raise LifecycleError("task snapshot and transition event must be mappings")
+        if "event_id" not in event:
+            raise LifecycleError("transition event requires event_id")
         with self._lock:
             current = self._tasks.get(task_id)
             if current is None:
