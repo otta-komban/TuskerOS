@@ -112,6 +112,40 @@ class ModelStoreTests(unittest.TestCase):
         self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-001")
         self.assertTrue(self.store.verify_active("fixture-model"))
 
+    def test_failed_rollback_preserves_both_revisions_for_operator_recovery(self):
+        self.install_fixture()
+        second_payload = b"second verified revision"
+        second = dict(self.manifest)
+        second["revision"] = "rev-002"
+        second["files"] = [{
+            "filename": "model.gguf",
+            "size_bytes": len(second_payload),
+            "sha256": hashlib.sha256(second_payload).hexdigest(),
+        }]
+        real_replace = __import__("os").replace
+        replace_calls = 0
+
+        def fail_rollback(source, target):
+            nonlocal replace_calls
+            replace_calls += 1
+            if replace_calls == 3:
+                raise OSError("simulated rollback pointer replacement failure")
+            return real_replace(source, target)
+
+        with patch("tusker_ai.model_store._open_https", return_value=Response(second_payload)), \\
+             patch("tusker_ai.model_store.os.replace", side_effect=fail_rollback), \\
+             patch.object(self.store, "_fsync_dir", side_effect=[None, OSError("activation fsync failure")]):
+            with self.assertRaises(OSError):
+                self.store.install(second, consent=True)
+
+        # Rollback could not be proven, so both immutable revisions remain.
+        self.assertTrue((self.store.models / "fixture-model" / "rev-001" / "model.gguf").exists())
+        self.assertTrue((self.store.models / "fixture-model" / "rev-002" / "model.gguf").exists())
+        self.assertEqual(self.store.active_revision("fixture-model")["revision"], "rev-002")
+        report = self.store.inspect_recovery()
+        self.assertIn("fixture-model/rev-001", report["orphan_revisions"])
+        self.assertTrue(report["requires_operator_review"])
+
     def test_active_revision_cannot_be_removed(self):
         self.install_fixture()
         with self.assertRaises(TuskerRuntimeError) as ctx:
