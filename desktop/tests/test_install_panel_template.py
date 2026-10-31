@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,25 @@ class PanelTemplateInstallerTests(unittest.TestCase):
         self.assertTrue((self.destination / "metadata.desktop").is_file())
         self.assertTrue((self.destination / "contents" / "layout.js").is_file())
         self.assertEqual((self.destination / MARKER).read_text(encoding="utf-8"), MARKER_CONTENT)
+
+    def test_install_rejects_symlink_inside_source_tree(self) -> None:
+        layout = self.source / "contents" / "layout.js"
+        layout.unlink()
+        external = Path(self.temp.name) / "outside.js"
+        external.write_text("outside data", encoding="utf-8")
+        layout.symlink_to(external)
+        with self.assertRaisesRegex(ValueError, "symlink or special file"):
+            install(self.source, self.destination)
+        self.assertFalse(self.destination.exists())
+        self.assertEqual(external.read_text(encoding="utf-8"), "outside data")
+
+    def test_install_rejects_fifo_inside_source_tree(self) -> None:
+        layout = self.source / "contents" / "layout.js"
+        layout.unlink()
+        os.mkfifo(layout)
+        with self.assertRaisesRegex(ValueError, "symlink or special file"):
+            install(self.source, self.destination)
+        self.assertFalse(self.destination.exists())
 
     def test_install_refuses_to_overwrite_existing_directory(self) -> None:
         self.destination.mkdir(parents=True)
