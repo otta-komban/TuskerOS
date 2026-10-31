@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `5bfd033ec71b5c3b8c8aaa9507843f645fb15247`  
+**Latest code/test evidence head:** `7c5b9ba6ddc130b8c625ba8af4a17c9ea4e65203` (PR head; 35 commits ahead / 0 behind `main`)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -28,8 +28,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- PR head at creation: `ff88d6aa7c09388b70478b6c73c5f720dbe513fe`; base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
-- Draft remains open for review. It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
+- Current PR head: `7c5b9ba6ddc130b8c625ba8af4a17c9ea4e65203`; base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
+- Draft remains open for review. PR validation on this exact head passed: unified validation run 41182404765 (8 jobs) and ATLAS resolver run 41182404795 (45 tests). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
 
 ## Evidence
 
@@ -60,6 +60,19 @@
 - Exact latest commands: `python -m py_compile tools/atlas/resolve-package-manifest.py tools/atlas/test_resolve_package_manifest.py tools/atlas/test_image_source_lock.py tools/atlas/test_build_image_script.py`; `python -m json.tool os/image-source.lock.json > /dev/null`; `bash -n tools/atlas/build-image.sh`; `python -m unittest discover -s tools/atlas -p 'test_*.py' -v`.
 - Two intermediate CI runs (`41181567432`, `41181595588`) failed because test fixtures still used the old two-column DNF query output / two-argument pin helper after the resolver began validating license and source RPM. Fixtures were corrected; subsequent 39- and 40-test runs passed.
 - One preceding CI iteration (run `41180611540`) failed one newly added source-lock test due to an incorrect test-field lookup; the test was corrected and the next run passed.
+
+### PR-head validation
+
+- Unified validation: [41182404765](https://github.com/otta-komban/TuskerOS/actions/runs/41182404765), exact PR head `7c5b9ba6ddc130b8c625ba8af4a17c9ea4e65203`; all 8 jobs passed:
+  - System integration contracts
+  - Security contract validation
+  - Fedora package resolver
+  - Core contract schemas
+  - AI model and inference contracts
+  - Theme pack validation
+  - Marketplace transaction lifecycle
+  - Desktop static validation
+- ATLAS PR workflow: [41182404795](https://github.com/otta-komban/TuskerOS/actions/runs/41182404795), same exact PR head; compile, JSON lock validation, shell syntax and all **45 tests** passed.
 
 ### Image/build/runtime status
 
@@ -125,6 +138,7 @@ The shared POC candidate is Fedora 44, mutable RPM/DNF, x86_64 UEFI ISO plus x86
 | ATLAS-01-FB-026 | 2026-10-31T07:51:21Z | `tools/atlas/build-image.sh` | Build metadata now explicitly lists the unverified Fedora dist-git source URL limitation; run 41182234800 passed 45 tests. | `67c027879f3f7f77dc9a7a86c97e38799c31baf6` |
 | ATLAS-01-FB-027 | 2026-10-31T07:51:30Z | `tools/atlas/test_build_image_script.py` | Added a regression assertion for the source-repository limitation disclosure; run 41182244823 passed 45 tests. | `5bfd033ec71b5c3b8c8aaa9507843f645fb15247` |
 
+| ATLAS-01-FB-028 | 2026-10-31T07:53:29Z | Draft pull request #59 | Opened reviewable draft PR against main with task/base/head, scope, test evidence, contract impact, limitations and no-merge acceptance conditions. PR-head CI subsequently passed. | [PR #59](https://github.com/otta-komban/TuskerOS/pull/59) |
 **Engineering status:** resolver/source-lock/build automation foundation implemented; package inventory, immutable repository snapshot enforcement, actual image build and VM validation remain open. These engineering subtasks are not coordinator response completions.
 
 ## Next actions
