@@ -745,3 +745,12 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Historical JSONL records:** **65** (C0001–C0065). Record count is not the completion counter.
 - **Correction:** Concurrent conversations and work-level bookkeeping caused duplicate IDs, ledger drift, and misleading counts. Future writes must re-fetch both files, use the current blob SHA, append one response record, then append one matching ledger entry. If a race occurs, stop and report Pending.
 - **JSONL commit:** 18c984c3754c265d092144db8894a12beabf0a32
+
+## C0066 — NEXUS/FORGE security contract re-review
+
+- **Authoritative response completions:** **18 / 100** (+1 for this complete assistant response; C0065 recorded 17).
+- **Engineering tasks:** **49 cumulative** (+0). This cross-agent review is not a newly completed engineering implementation task.
+- **NEXUS-07:** Re-fetched branch head `a0cc0a74242070135b6b7937bd7605c7861fe7d8`. The public invocation schema still permits optional open-ended `authorization_context`; the public example still includes it; the 155-line contract test module has no authority-field negative tests. Follow-up posted on issue #17, comment [6539407164](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6539407164). No NEXUS-owned files modified; no NEXUS tests run.
+- **FORGE-09:** Re-fetched branch head `27112b84fa41aba0b5b12a429f689bd627065fee`. Python validator still fails to require `reason_code` on new or historical rejected/cancelled transitions although JSON Schema requires it; existing cancellation test still omits evidence. Follow-up posted on issue #29, comment [6539407608](https://github.com/otta-komban/TuskerOS/issues/29#issuecomment-6539407608). No FORGE-owned files modified; no FORGE tests run.
+- **Security posture:** Both gaps remain open. Trusted IPC identity injection and AEGIS consume-before-dispatch are unproven; package transaction reason evidence remains inconsistent. Keep privileged/provider and package mutations fail-closed.
+- **JSONL:** C0066 appended as record 66; JSONL commit: `b6f1d9f840b611e40fd3d9700d6a9310cfc20686`.
