@@ -16,6 +16,7 @@ from ..types import (
 
 
 _MAX_STREAM_FRAME_BYTES = 1_048_576
+_MAX_REQUEST_BODY_BYTES = 4_194_304
 
 
 class _NoRedirectHandler(HTTPRedirectHandler):
