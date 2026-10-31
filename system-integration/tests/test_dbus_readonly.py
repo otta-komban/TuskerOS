@@ -268,6 +268,52 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(caught.exception), "bus call timed out")
         self.assertTrue(process.killed)
 
+    async def test_wrong_dbus_signature_is_rejected(self):
+        process = FakeProcess(stdout=b'{"type":"as","data":[["name"]]}')
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "invalid bus response")
+
+    async def test_wrong_dbus_result_arity_is_rejected(self):
+        process = FakeProcess(stdout=b'{"type":"s","data":["one","two"]}')
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "invalid bus response")
+
+    async def test_unsupported_method_is_rejected_before_process_lookup(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which") as lookup, patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec"
+        ) as spawn:
+            with self.assertRaises(AdapterError):
+                await adapter._call("BecomeMonitor")
+
+        lookup.assert_not_called()
+        spawn.assert_not_awaited()
+
+    async def test_missing_busctl_is_reported_without_spawn(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value=None), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec"
+        ) as spawn:
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus client unavailable")
+        spawn.assert_not_awaited()
+
     def test_timeout_and_output_limits_are_bounded(self):
         with self.assertRaises(ValueError):
             ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=31)
