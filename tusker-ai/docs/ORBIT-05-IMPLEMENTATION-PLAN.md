@@ -127,3 +127,12 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added fixture regressions for falsey non-object messages, non-string content, non-boolean completion flags, unhashable completion reasons, and invalid usage counters.
 - Source commit: `8da8c82fd712e0b1b4aca81a2caab5fee436c385`; test commit: `114f47507253c933fe87ed8f8f57d93c78d29459`.
 - Latest-head CI pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 11 — strict inference request validation
+
+- Runtime now rejects non-InferenceRequest inputs, blank/oversized request and model identifiers, malformed message containers, unsupported roles, non-string message content, and invalid token/deadline types before provider dispatch.
+- Input size is counted from validated string content rather than coercing arbitrary objects with `str()`.
+- Boolean values are not accepted as token/context/deadline numbers; floating-point NaN and infinities are rejected. Added regressions that assert invalid requests never invoke the provider and that all five contract message roles remain accepted.
+- Commits: `4056c379f44bc96a9d0d3ab9582a3fdb8f088f4d` (runtime), `1121d8eb587502d5dc0aa50143edbb41b2386fdc` (tests), `8de3ce6693986460cdd06f2071789d5616381bf2` (deadline edge-case hardening).
+- Latest-head CI pending verification. Live Ollama remains NOT RUN.
