@@ -62,6 +62,67 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         gate.assert_awaited_once_with("system.bus.names.read")
         adapter._call.assert_awaited_once_with("ListNames")
 
+    async def test_snapshot_authorizes_each_read_independently(self):
+        gate = AsyncMock(return_value=True)
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock(
+            side_effect=[
+                "0123456789abcdef0123456789abcdef",
+                ["org.freedesktop.DBus", ":1.42"],
+            ]
+        )
+
+        snapshot = await adapter.snapshot()
+
+        self.assertEqual(snapshot.bus_id, "0123456789abcdef0123456789abcdef")
+        self.assertEqual(snapshot.names, ("org.freedesktop.DBus", ":1.42"))
+        self.assertEqual(
+            [call.args for call in gate.await_args_list],
+            [("system.bus.id.read",), ("system.bus.names.read",)],
+        )
+        self.assertEqual(
+            [call.args for call in adapter._call.await_args_list],
+            [("GetId",), ("ListNames",)],
+        )
+
+    async def test_snapshot_stops_before_names_read_when_second_authorization_is_denied(self):
+        gate = AsyncMock(side_effect=[True, False])
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock(
+            return_value="0123456789abcdef0123456789abcdef"
+        )
+
+        with self.assertRaises(AuthorizationDenied):
+            await adapter.snapshot()
+
+        self.assertEqual(
+            [call.args for call in gate.await_args_list],
+            [("system.bus.id.read",), ("system.bus.names.read",)],
+        )
+        adapter._call.assert_awaited_once_with("GetId")
+
+    async def test_snapshot_does_not_return_partial_result_when_names_read_fails(self):
+        gate = AsyncMock(return_value=True)
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock(
+            side_effect=[
+                "0123456789abcdef0123456789abcdef",
+                AdapterError("bus call failed"),
+            ]
+        )
+
+        with self.assertRaisesRegex(AdapterError, "bus call failed"):
+            await adapter.snapshot()
+
+        self.assertEqual(
+            [call.args for call in gate.await_args_list],
+            [("system.bus.id.read",), ("system.bus.names.read",)],
+        )
+        self.assertEqual(
+            [call.args for call in adapter._call.await_args_list],
+            [("GetId",), ("ListNames",)],
+        )
+
     async def test_missing_authorization_gate_fails_closed(self):
         adapter = ReadOnlySystemBusAdapter(None)
         adapter._call = AsyncMock()
@@ -91,6 +152,17 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
             await adapter.get_bus_id()
 
         self.assertEqual(str(caught.exception), "authorization unavailable")
+        adapter._call.assert_not_awaited()
+
+    async def test_authorization_cancellation_propagates_without_provider_call(self):
+        gate = AsyncMock(side_effect=asyncio.CancelledError())
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock()
+
+        with self.assertRaises(asyncio.CancelledError):
+            await adapter.get_bus_id()
+
+        gate.assert_awaited_once_with("system.bus.id.read")
         adapter._call.assert_not_awaited()
 
     async def test_invalid_bus_id_is_rejected(self):
@@ -172,7 +244,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         invalid_names = (
             "single", "org..service", ".org.service", "org.service.",
             "org.1service", "org.service name", "org.sérvice", "org:service.name",
-            ":1", ":.42", ":1..42", "::1.42", ":abc.foo", ":_private.7",
+            ":1", ":.42", ":1..42", "::1.42",
         )
         for name in invalid_names:
             with self.subTest(name=name):
@@ -180,6 +252,13 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
                 adapter._call = AsyncMock(return_value=[name])
                 with self.assertRaises(AdapterError):
                     await adapter.list_names()
+
+    async def test_unique_bus_name_elements_may_begin_with_letters_or_digits(self):
+        names = [":abc.foo", ":1.42", ":foo.1", ":_private.7"]
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=names)
+
+        self.assertEqual(await adapter.list_names(), tuple(names))
 
     async def test_duplicate_bus_names_are_rejected(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
@@ -195,6 +274,24 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
             await adapter.health(),
             {"state": "degraded", "reason": "authorization_unavailable"},
         )
+
+    async def test_health_propagates_authorization_cancellation(self):
+        gate = AsyncMock(side_effect=asyncio.CancelledError())
+        adapter = ReadOnlySystemBusAdapter(gate)
+        adapter._call = AsyncMock()
+
+        with self.assertRaises(asyncio.CancelledError):
+            await adapter.health()
+
+        gate.assert_awaited_once_with("system.bus.id.read")
+        adapter._call.assert_not_awaited()
+
+    async def test_health_propagates_cancellation(self):
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(side_effect=asyncio.CancelledError())
+
+        with self.assertRaises(asyncio.CancelledError):
+            await adapter.health()
 
     async def test_health_reports_degraded_when_bus_fails(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
@@ -419,6 +516,81 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(str(caught.exception), "bus response exceeded output limit")
         self.assertTrue(process.killed)
+
+    async def test_process_kill_failure_does_not_escape_cleanup_boundary(self):
+        class KillFailureProcess(FakeProcess):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.terminated = False
+
+            def kill(self):
+                raise RuntimeError("private kill detail")
+
+            def terminate(self):
+                self.terminated = True
+                self.returncode = -15
+                self._exited.set()
+
+        process = KillFailureProcess(
+            stdout=b"x" * 129,
+            returncode=None,
+        )
+        process.wait = AsyncMock(return_value=-9)
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), max_stdout=128
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus response exceeded output limit")
+        self.assertNotIn("private kill detail", str(caught.exception))
+        self.assertTrue(process.terminated)
+        self.assertEqual(process.wait.await_count, 2)
+
+    async def test_process_terminate_failure_does_not_escape_cleanup_boundary(self):
+        class KillAndTerminateFailureProcess(FakeProcess):
+            def kill(self):
+                raise RuntimeError("private kill detail")
+
+            def terminate(self):
+                raise RuntimeError("private terminate detail")
+
+        process = KillAndTerminateFailureProcess(stdout=b"x" * 129, returncode=None)
+        process.wait = AsyncMock(return_value=-9)
+        adapter = ReadOnlySystemBusAdapter(
+            AsyncMock(return_value=True), max_stdout=128
+        )
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus response exceeded output limit")
+        self.assertNotIn("private kill detail", str(caught.exception))
+        self.assertNotIn("private terminate detail", str(caught.exception))
+        self.assertEqual(process.wait.await_count, 2)
+
+    async def test_process_wait_failure_does_not_escape_cleanup_boundary(self):
+        process = FakeProcess(returncode=None)
+        process.wait = AsyncMock(side_effect=[RuntimeError("private wait detail"), -9])
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        with patch("adapters.dbus_readonly.shutil.which", return_value="/usr/bin/busctl"), patch(
+            "adapters.dbus_readonly.asyncio.create_subprocess_exec",
+            new=AsyncMock(return_value=process),
+        ):
+            with self.assertRaises(AdapterError) as caught:
+                await adapter._call("GetId")
+
+        self.assertEqual(str(caught.exception), "bus call failed")
+        self.assertNotIn("private wait detail", str(caught.exception))
+        self.assertTrue(process.killed)
+        self.assertEqual(process.wait.await_count, 2)
 
     async def test_timeout_kills_running_subprocess(self):
         process = FakeProcess(returncode=None)

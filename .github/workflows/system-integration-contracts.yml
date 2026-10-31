@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - agent/07-system-integration
+      - 07-NEXUS
     paths:
       - "system-integration/contracts/**"
       - "system-integration/tests/**"

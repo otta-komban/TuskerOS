@@ -72,11 +72,12 @@ def _is_valid_bus_name(name: object) -> bool:
     if len(elements) < 2:
         return False
     allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
-    for index, element in enumerate(elements):
+    for element in elements:
         if not element or any(character not in allowed for character in element):
             return False
-        if unique and index == 0 and not element[0].isdigit():
-            return False
+        # The D-Bus grammar permits digit-leading elements in unique names,
+        # but forbids them in well-known names. Do not impose an extra
+        # first-element restriction on unique connection names.
         if not unique and element[0].isdigit():
             return False
     return True
@@ -274,7 +275,23 @@ class ReadOnlySystemBusAdapter:
         except ProcessLookupError:
             # The child may exit between the returncode check and kill().
             pass
+        except Exception:
+            # Fall back to terminate() if kill() itself fails. This preserves
+            # the original adapter error while still attempting bounded cleanup.
+            try:
+                process.terminate()
+            except ProcessLookupError:
+                # The child may exit while the fallback is being issued.
+                pass
+            except Exception:
+                # The bounded wait below still gives an already-exiting child
+                # a chance to finish without masking the original failure.
+                pass
         try:
             await asyncio.wait_for(process.wait(), timeout=1.0)
         except asyncio.TimeoutError:
+            pass
+        except Exception:
+            # Cleanup must not replace the sanitized adapter failure that
+            # triggered termination (for example, a failed wait operation).
             pass
