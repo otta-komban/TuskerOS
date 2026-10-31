@@ -21,6 +21,8 @@ AGENT_BRANCHES = {
     "PILOT-08": "agent/08-remote-control",
     "FORGE-09": "agent/09-ecosystem",
     "PHOENIX-10": "agent/10-installer-recovery",
+    # Coordinator responses are tracked separately from the ten specialist agents.
+    "COORDINATOR": "main",
 }
 REQUIRED = {
     "completion_id", "response_id", "agent_id", "branch",
