@@ -82,6 +82,32 @@ class CatalogEntryValidationTests(unittest.TestCase):
         entry["trust"]["signature_status"] = "trusted"
         self.assertTrue(any("unsupported state" in e for e in validate_catalog_entry(entry)))
 
+
+    def test_package_and_publisher_identifiers_use_ascii_slug_grammar(self):
+        for section, field, invalid in (
+            ("package", "id", "Org.Tuskeros.Package"),
+            ("publisher", "id", "publisher name"),
+            ("package", "id", "x"),
+            ("publisher", "id", "x"),
+            ("package", "id", "ümlaut.package"),
+        ):
+            with self.subTest(section=section, invalid=invalid):
+                entry = copy.deepcopy(self.fixture)
+                entry[section][field] = invalid
+                self.assertTrue(any(f"$.{section}.{field}" in e for e in validate_catalog_entry(entry)))
+
+    def test_optional_metadata_urls_require_https(self):
+        for section, field in (
+            ("package", "description_uri"),
+            ("publisher", "homepage"),
+            ("release", "signature_uri"),
+            ("release", "changelog_uri"),
+        ):
+            with self.subTest(section=section, field=field):
+                entry = copy.deepcopy(self.fixture)
+                entry[section][field] = "http://example.invalid/resource"
+                self.assertTrue(any(f"$.{section}.{field}" in e for e in validate_catalog_entry(entry)))
+
     def test_duplicate_tags_rejected(self):
         entry = copy.deepcopy(self.fixture)
         entry["package"]["tags"] = ["same", "same"]
