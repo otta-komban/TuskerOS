@@ -53,6 +53,10 @@ Policy evaluation returns one of DENY, REQUIRE_APPROVAL, or ALLOW.
 
 DENY is terminal for this proposal. REQUIRE_APPROVAL does not authorize execution. ALLOW is valid only for the exact digest, principal, policy version, and expiry. Executors MUST reject stale, replayed, mismatched, or unrecognized decisions. Missing fields and unknown enum values are denial conditions.
 
+### Interim handling of policy constraints (SEC-SCHEMA-007)
+
+The current v0.1.0 schema does not define a bounded constraints vocabulary. Until the policy-engine and broker owners agree and version that vocabulary, producers MUST emit an empty `constraints` object only. Consumers MUST reject a policy decision containing a non-empty constraints object; they MUST NOT silently ignore, drop, reinterpret, or treat an unknown constraint as permission to broaden an operation or resource scope. Missing, malformed, or unsupported constraint data is a fail-closed condition. An empty object conveys no additional execution permission. This interim rule does not define the future vocabulary or claim that existing consumers enforce it.
+
 ## 5. Approval request and response
 
 Approval requests MUST show the exact operation, target, resource scope, meaningful impact, risk class, requesting principal, and whether the action is reversible. UI text is generated from trusted operation metadata and validated arguments, not copied blindly from model-provided descriptions.
