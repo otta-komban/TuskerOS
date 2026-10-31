@@ -27,14 +27,15 @@
 - Corrected the ATLAS workflow's branch filters so push validation runs on `agent/01-fedora-base` and PR validation targets `main`.
 - Added `os/repository-snapshot.lock.json` and `tools/atlas/verify-repository-snapshot.py` to capture and preflight-check Fedora 44 `repomd.xml` plus primary metadata SHA-256 identities. The verifier rejects digest drift, malformed/unsafe metadata paths, non-HTTPS URLs and repository-origin escapes.
 - Added package-manifest snapshot binding: every build package row must reference the exact `snapshot_id` recorded for its repository in the lock.
-- Gated `build-image.sh` on repository snapshot preflight verification and recorded `repository_snapshot_consumed_by_kiwi: false`; this deliberately does not claim the later KIWI/DNF package download is already frozen to those bytes. Metadata signature verification, RPM payload checksums and actual KIWI consumption of an immutable local snapshot remain open.
+- Gated `build-image.sh` on repository snapshot preflight verification. It now stages each locked repository with DNF5 `reposync --download-metadata` (x86_64/noarch, RPM GPG checking enabled), verifies the local `repomd.xml` and primary metadata bytes against the lock, and resolves packages only through DNF5 `--repofrompath` entries pointing at those local copies. The resolver rejects missing local repositories and enables only the pinned repository IDs.
+- Build metadata now distinguishes `repository_snapshot_consumed_by_dnf5: true` from `repository_snapshot_consumed_by_kiwi: false`. The upstream KIWI description still has remote repository definitions; local snapshot consumption by KIWI, full metadata payload inventory, Fedora metadata signature verification and RPM payload checksum lock remain open. A full reposync can require substantial disk/network capacity.
 
 ## Repository snapshot preflight
 
 - Lock: `os/repository-snapshot.lock.json`; it is intentionally empty until NOVA-02/NEXUS-07 approve package inputs and the selected Fedora repository endpoints are reviewed.
 - Capture reviewed endpoints with `python3 tools/atlas/verify-repository-snapshot.py --capture REPO_ID=REPOMD_URL --lock os/repository-snapshot.lock.json`. Repeat `--capture` for each approved repository in one invocation; the command fetches `repomd.xml` and its primary metadata and records SHA-256 identities.
 - Verify the committed lock and manifest pins with `python3 tools/atlas/verify-repository-snapshot.py --lock os/repository-snapshot.lock.json --manifest os/package-manifest.csv`.
-- Current verifier pins `repomd.xml` and primary metadata only, and uses HTTPS transport during capture; it does not verify Fedora GPG signatures or freeze the later KIWI/DNF downloads.
+- The verifier pins `repomd.xml` and primary metadata only, and checks the same bytes in the staged local repository. DNF5 package resolution now consumes those local copies. The verifier does not yet inventory every repodata payload or RPM checksum, and KIWI itself still downloads from upstream repository definitions. Fedora repository metadata GPG signatures are not yet verified by the ATLAS lock verifier.
 
 ## Pull request
 
@@ -118,7 +119,7 @@
 ## Explicit blockers and boundaries
 
 1. `os/package-manifest.csv` intentionally has no package rows. The base-system proposal defers exact package selection until NOVA-02 and NEXUS-07 confirm dependencies. The resolver/build script fail closed rather than inventing package names or licenses.
-2. A repository snapshot identifier is required in each future package row, but the current resolver records that declared value and repo evidence; it does **not yet fetch or verify immutable Fedora repodata bytes**. Bit-for-bit reproducible release builds remain blocked until the build consumes an immutable repository snapshot and validates its metadata digest.
+2. DNF5 package resolution now uses staged local repository copies verified against locked `repomd.xml` and primary metadata. KIWI still consumes its upstream remote repository definitions, and the lock does not yet inventory all metadata payloads or RPM checksums. Bit-for-bit reproducible release builds remain blocked until KIWI consumes the same frozen local repositories and the remaining signature/checksum gates are complete.
 3. The upstream Fedora Forge commit is unsigned/unverified according to its branch API response. Content blob IDs are checked, but upstream signature trust remains unresolved.
 4. `source_url` is currently checked for HTTPS syntax but is not independently resolved/verified against Fedora dist-git. `repository_snapshot` is currently a required declaration, not a verified repodata digest. The build metadata explicitly prevents a reproducibility claim until those are implemented.
 5. The Fedora 44 package index currently lists stable `6.7.5-1.fc44` for `plasma-workspace`, `plasma-login-manager` and `plasma-setup`; the earlier 6.6.4 release-article reference is stale for current package resolution. Exact RPM NEVRAs still come from the selected repository snapshot.
