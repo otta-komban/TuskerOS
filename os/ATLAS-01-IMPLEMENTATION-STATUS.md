@@ -4,7 +4,7 @@
 **Status:** In progress  
 **Branch:** `agent/01-fedora-base`  
 **Implementation base SHA:** `8bf66079f9e021244eda432fa8455e83b59e2165`  
-**Latest code/test evidence head:** `63f796d31bd05ca8c0709e6186fcd03d18d19bf8` (ATLAS CI passed 78 tests and Fedora 44 DNF5 smoke; unified validation passed all 8 jobs)  
+**Latest code/test evidence head:** `a951a70a1ad07a282731db5283a193f69a6e05ae` (ATLAS CI passed 86 tests, Fedora 44 DNF5 smoke and actual pinned-source local KIWI overlay integration; unified validation passed all 8 jobs)  
 **Initial branch/base verification:** assigned branch and live `main` both pointed to the implementation base SHA above.
 
 ## Delivered in this milestone
@@ -41,8 +41,8 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Latest previously validated PR head: `63f796d31bd05ca8c0709e6186fcd03d19bf8`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`. Local KIWI snapshot overlay changes are under validation; refresh this line after CI completes.
-- Draft remains open for review. Earlier ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669) passed 78 tests and Fedora 44 DNF5 smoke; unified validation [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664) passed all 8 jobs on the then-current code. The new local KIWI overlay implementation and its tests require fresh CI evidence. The PR is not merge-ready until package rows are approved, the complete build is exercised, RPM payload checksums are locked, and PHOENIX VM install/boot evidence is available.
+- Latest validated PR head: a951a70a1ad07a282731db5283a193f69a6e05ae; PR base: 8bf66079f9e021244eda432fa8455e83b59e2165.
+- Draft remains open for review. ATLAS run [41191712051](https://github.com/otta-komban/TuskerOS/actions/runs/41191712051) passed **86 tests**, the Fedora 44 DNF5 smoke, reposync-plugin/key availability checks, and an integration smoke that cloned the exact pinned Fedora 44 source and successfully rewrote its actual repository include to local snapshot paths with metadata/package signature checks enabled. Unified validation [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054) passed all 8 jobs on the exact same code head. These checks validate overlay generation, not a full reposync or image build. The PR remains non-mergeable until package approvals, a full build, RPM payload checksum locking and PHOENIX VM install/boot evidence are complete.
 
 ## Evidence
 
@@ -101,11 +101,11 @@
   - Desktop static validation
 - ATLAS PR workflow: [41182404795](https://github.com/otta-komban/TuskerOS/actions/runs/41182404795), same exact PR head; compile, JSON lock validation, shell syntax and all **45 tests** passed.
 
-### Latest local snapshot validation
+### Latest repository snapshot and KIWI overlay validation
 
-- ATLAS run [41190284669](https://github.com/otta-komban/TuskerOS/actions/runs/41190284669): **78 tests passed**, Fedora 44 DNF5 smoke passed, and upstream KIWI source commit/blob verification passed on `63f796d31bd05ca8c0709e6186fcd03d18d19bf8`.
-- Unified run [41190284664](https://github.com/otta-komban/TuskerOS/actions/runs/41190284664): **all 8 jobs passed** on the same exact branch head.
-- This validates the earlier DNF local snapshot resolver code and CI contracts; it does not execute a full `dnf5 reposync` of Fedora repositories or a KIWI build. The newer KIWI overlay and Fedora signature-enforcement smoke are pending CI validation.
+- ATLAS run [41191712051](https://github.com/otta-komban/TuskerOS/actions/runs/41191712051): **86 unit tests passed**; Fedora 44 DNF5 query smoke passed; the DNF5 reposync plugin and Fedora 44 primary key were present; the integration step cloned pinned commit dfc49a5a10f69941179fdadd96aa6a5984f7c677, exercised the real Fedora repositories/core.xml symlink and verified both fedora and updates become local file:// sources with KIWI repository/package signature checks enabled.
+- Unified validation run [41191712054](https://github.com/otta-komban/TuskerOS/actions/runs/41191712054): **all 8 jobs passed** on the same code head a951a70a1ad07a282731db5283a193f69a6e05ae.
+- This integration smoke uses fixture repository metadata; it does not perform a full DNF5 reposync or execute KIWI image creation. No ISO/QCOW2 build, repeat-build checksum comparison or VM boot is claimed.
 
 ## Image/build/runtime status
 
