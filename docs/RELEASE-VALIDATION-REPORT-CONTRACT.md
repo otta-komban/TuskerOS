@@ -44,7 +44,7 @@ The JSON Schema checks field shape and allowed values. A semantic validator must
 7. The finish timestamp is not earlier than the start timestamp; per-check times, when present, fall within the report interval.
 8. Duplicate `check_id` values are rejected unless a future schema version defines explicit attempt identifiers and aggregation rules.
 
-The overall-status derivation above is deliberately stricter than JSON Schema's structural constraints. Consumers must not treat a user-supplied `overall_status` or summary counter as authoritative without recomputing it.
+The semantic validator also rejects duplicate JSON object member names at every nesting level. This prevents parser-dependent ambiguity where one consumer uses the first occurrence and another uses the last. The overall-status derivation above is deliberately stricter than JSON Schema's structural constraints. Consumers must not treat a user-supplied `overall_status` or summary counter as authoritative without recomputing it.
 
 ## Promotion use
 
