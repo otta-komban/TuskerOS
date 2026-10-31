@@ -6,9 +6,9 @@ LOCK="${ROOT}/os/image-source.lock.json"
 MANIFEST="${ROOT}/os/package-manifest.csv"
 SNAPSHOT_LOCK="${ROOT}/os/repository-snapshot.lock.json"
 SNAPSHOT_VERIFIER="${ROOT}/tools/atlas/verify-repository-snapshot.py"
-SNAPSHOT_ROOT="${BUILD_ROOT}/repository-snapshot"
 RESOLVER="${ROOT}/tools/atlas/resolve-package-manifest.py"
 BUILD_ROOT="${ROOT}/build/atlas"
+SNAPSHOT_ROOT="${BUILD_ROOT}/repository-snapshot"
 OUTPUT_ROOT="${ROOT}/dist"
 REPRO_CHECK=1
 
