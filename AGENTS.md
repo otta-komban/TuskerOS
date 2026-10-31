@@ -33,8 +33,13 @@ Every task update must identify:
 - commit SHA(s);
 - remaining risks, blockers, and rollback/migration notes.
 
-## Completion accounting
-A completion is one substantive, task-relevant response to one user message for one agent. At most one completion per agent per user message. Tool calls, commits, tests, files, retries, acknowledgements, and status-only messages are not completions. Only the central coordinator may append validated records to the canonical ledger. Never self-increment a dashboard or edit historical records.
+## Response completion accounting
+- **One substantive assistant response in this agent chat = at most one completion.** Count the response once, no matter how many tasks, commits, tests, files, or milestones it contains.
+- A status-only/acknowledgement/tool-only response is zero completions.
+- Never infer the count from a C-number, task ID, milestone count, commit count, or number of deliverables. For example, `C0010` does not mean 10 completions.
+- Append exactly one record per qualifying response to your own `logs/completions/<AGENT-ID>.jsonl` on your assigned branch. Never edit another agent's file or the coordinator-owned canonical ledger.
+- Re-read your local log and derive your dashboard count from its records. Show local count and canonical validated count separately. A local record is not canonical until coordinator validation.
+- If branch-local logging cannot be committed, do not claim the log was updated or increment the count.
 
 ## Pull request requirements
 Every PR must include the task ID, scope, design/contract impact, test evidence, risks, migration/rollback, and exact source/base SHAs. Do not merge without required checks on the exact PR head, review, and integration acceptance.
