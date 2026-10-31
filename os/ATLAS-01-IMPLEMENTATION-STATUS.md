@@ -29,7 +29,7 @@
 ## Pull request
 
 - Draft PR: [#59 — ATLAS-01 Fedora base resolver and KIWI image foundation](https://github.com/otta-komban/TuskerOS/pull/59)
-- Current PR head: `14b211967a6bb390050d8c233df1bd5508e1007d`; base: `8bf66079f9e021244eda432fa8455e83b59e2165`.
+- Last validated code head: `14b211967a6bb390050d8c233df1bd5508e1007d`; PR base: `8bf66079f9e021244eda432fa8455e83b59e2165`. Subsequent branch commits in this log are documentation-only.
 - Draft remains open for review. PR validation on this exact head passed: unified validation run 41182834842 (8 jobs) and ATLAS resolver run 41182834784 (49 tests). It is intentionally not merge-ready until package rows, immutable repository snapshot validation, actual image build and PHOENIX VM install/boot evidence are available.
 
 ## Evidence
