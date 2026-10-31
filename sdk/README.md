@@ -8,7 +8,7 @@ This directory contains the versioned extension manifest contract, a metadata-on
 python3 sdk/tools/validate_manifest.py sdk/examples/hello-extension/manifest.json
 ```
 
-The validator checks structure only. It does not verify publisher identity, artifact signatures, dependency resolution, permission grants, archive safety or runtime isolation.
+The validator checks structure only and validates release versions using Semantic Versioning 2.0.0 identifier rules, including prerelease and build-metadata segments. The JSON Schema carries the same version pattern. It does not verify publisher identity, artifact signatures, dependency resolution, permission grants, archive safety or runtime isolation.
 
 ## Dependency planning
 
