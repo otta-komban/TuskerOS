@@ -6,7 +6,7 @@ Run the catalog metadata validator from the repository root:
 python3 marketplace/tools/validate_catalog_entry.py marketplace/examples/hello-catalog-entry.json
 ```
 
-The validator uses only the Python standard library. It rejects unknown fields, non-HTTPS external references, malformed package identifiers, non-semantic release versions, malformed SHA-256 digests, invalid timestamps, duplicate tags/categories and unknown trust-state values. Optional community metrics, when present, must be non-null numbers/integers within the catalog schema's bounds.
+The validator uses only the Python standard library. It rejects unknown fields, non-HTTPS external references, malformed package identifiers, non-semantic release versions, malformed SHA-256 digests, invalid timestamps, duplicate tags/categories and unknown trust-state values. It also rejects unsupported object keys deterministically instead of raising while sorting malformed Python mappings. Optional community metrics, when present, must be non-null numbers/integers within the catalog schema's bounds.
 
 Use `marketplace/tools/catalog_resolver.py` to select a compatible release and produce an ordered dependency plan from a separately validated manifest dependency graph. Dependency edge constraints are enforced when the validated manifest graph and edge-constraint mapping are supplied. See `marketplace/tools/RESOLUTION.md` for supported syntax and limitations. Use `marketplace/tools/package_ownership.py` to validate an installed-state snapshot and create a dry-run owner-removal plan.
 
