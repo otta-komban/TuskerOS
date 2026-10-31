@@ -105,6 +105,66 @@ def test_create_approval_rejects_mismatched_audit_context(field, value):
         db.close()
 
 
+def test_policy_rechecker_cannot_mutate_authoritative_approval_bindings():
+    import copy
+
+    seen = []
+
+    def mutating_rechecker(request_id, binding, policy_version):
+        seen.append(request_id)
+        binding.clear()
+        binding["resource_scope"] = ["disk:attacker-selected"]
+        return True
+
+    db = SecurityStore(":memory:", audit_key=KEY, peer_authenticator=peer,
+        approver_authenticator=lambda c, r: c == {"uid": 1000},
+        policy_rechecker=mutating_rechecker)
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+                         approver_credentials={"uid": 1000},
+                         audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+        before = copy.deepcopy(BINDING)
+        with pytest.raises(SecurityStoreError, match="binding changed"):
+            db.issue_authorization(rid, current_binding=BINDING,
+                                   current_policy_version="policy-1",
+                                   audit_context=audit_for_approval(db, rid), now=NOW)
+        assert BINDING == before
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "INVALIDATED"
+        assert seen == [rid]
+        assert db.audit_events()[-1]["reason_code"] == "POLICY_BINDING_MISMATCH"
+    finally:
+        db.close()
+
+
+def test_consume_policy_rechecker_cannot_mutate_authoritative_binding():
+    def mutating_rechecker(request_id, binding, policy_version):
+        binding.clear()
+        binding["resource_scope"] = ["disk:attacker-selected"]
+        return True
+
+    db = SecurityStore(":memory:", audit_key=KEY, peer_authenticator=peer,
+        approver_authenticator=lambda c, r: c == {"uid": 1000},
+        policy_rechecker=mutating_rechecker)
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+                         approver_credentials={"uid": 1000},
+                         audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+        ref = db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                                     audit_context=audit_for_approval(db, rid), now=NOW)
+        # Use the authentic resource scope. The callback's mutation must not
+        # alter the store's binding or the resource scope released in the grant.
+        result = db.consume(ref, operation_id="broker.disk.erase", resource_scope=BINDING["resource_scope"],
+                            action_digest=D4, policy_version="policy-1", registry_version="registry-1",
+                            precondition_digest=D4, peer_credentials={"uid": 1000, "pid": 42},
+                            audit_context=audit_for_ref(db, ref), now=NOW)
+        assert result.outcome == "CONSUMED"
+        assert result.grant["resource_scope"] == BINDING["resource_scope"]
+    finally:
+        db.close()
+
+
 def test_approval_lifecycle_methods_fail_closed_on_invalid_timestamps():
     from datetime import tzinfo
 
