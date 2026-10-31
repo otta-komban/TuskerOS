@@ -169,6 +169,11 @@ class SecurityStore:
             value = safe.get(field)
             if value is not None and (not isinstance(value, str) or not 1 <= len(value) <= maximum):
                 raise SecurityStoreError("invalid optional audit event field: " + field)
+        # Audit reason codes are identifiers, never caller-supplied prose. This
+        # prevents arbitrary payloads from being smuggled into the audit trail.
+        reason_code = safe.get("reason_code")
+        if reason_code is not None and not re.fullmatch(r"[A-Z][A-Z0-9_]{0,95}", reason_code):
+            raise SecurityStoreError("invalid audit reason code")
         if safe["decision_id"] is not None and not isinstance(safe["decision_id"], str):
             raise SecurityStoreError("invalid audit decision identifier")
         if safe.get("approval_request_id") is not None and not isinstance(safe["approval_request_id"], str):
