@@ -172,7 +172,7 @@ class PolicyEngine:
                 # a space separator or a time without seconds).
                 if (not isinstance(requested_at, str)
                     or not re.fullmatch(
-                        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})",
+                        r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})",
                         requested_at,
                     )):
                     return deny("POLICY_INVALID_ARGUMENTS")
