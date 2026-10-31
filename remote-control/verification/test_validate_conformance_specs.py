@@ -443,5 +443,52 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
 
 
+    def test_cli_modes_render_aggregated_filesystem_read_errors(self):
+        from contextlib import redirect_stderr, redirect_stdout
+        from unittest.mock import patch
+        import io
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            pair_path = root / validator.SPECS["PAIR"][0]
+            pair_path.parent.mkdir(parents=True, exist_ok=True)
+            pair_path.write_text("| PAIR-C01 | Condition | Assertion |\\n", encoding="utf-8")
+            original_read_text = Path.read_text
+
+            def controlled_read_text(path, *args, **kwargs):
+                if path == pair_path:
+                    raise PermissionError("simulated CLI read denial")
+                return original_read_text(path, *args, **kwargs)
+
+            for json_mode in (False, True):
+                with self.subTest(json_mode=json_mode):
+                    stdout = io.StringIO()
+                    stderr = io.StringIO()
+                    argv = ["--root", temporary_root]
+                    if json_mode:
+                        argv.append("--json")
+                    with patch.object(Path, "read_text", autospec=True,
+                                      side_effect=controlled_read_text):
+                        with redirect_stdout(stdout), redirect_stderr(stderr):
+                            result = validator.main(argv)
+
+                    self.assertEqual(result, 1)
+                    self.assertNotIn("Traceback", stdout.getvalue() + stderr.getvalue())
+                    if json_mode:
+                        payload = json.loads(stdout.getvalue())
+                        self.assertFalse(payload["ok"])
+                        self.assertIn("PAIR: simulated CLI read denial", payload["error"])
+                        self.assertIn("NET: specification not found", payload["error"])
+                        self.assertEqual(stderr.getvalue(), "")
+                        self.assertFalse(payload["runtime_security_tested"])
+                    else:
+                        self.assertEqual(stdout.getvalue(), "")
+                        self.assertIn("FAIL repository validation failed", stderr.getvalue())
+                        self.assertIn("PAIR: simulated CLI read denial", stderr.getvalue())
+                        self.assertIn("NET: specification not found", stderr.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
