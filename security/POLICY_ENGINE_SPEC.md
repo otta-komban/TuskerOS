@@ -57,7 +57,7 @@ Risk escalation predicates MUST be deterministic and testable. Unknown resource 
 
 ## 4.1 Interim policy-constraint handling (SEC-SCHEMA-007)
 
-The current policy-decision schema leaves `constraints` structurally open and the repository has not ratified a canonical vocabulary. Until policy-engine and broker owners agree a bounded, versioned vocabulary:
+The v0.1.0 policy-decision schema now enforces the conservative interim shape: `constraints` is required and must be an empty object (`maxProperties: 0`, `additionalProperties: false`). The repository has not ratified a canonical non-empty vocabulary. Until policy-engine and broker owners agree a bounded, versioned vocabulary:
 
 - A policy producer MUST emit `constraints: {}` only.
 - A consumer MUST reject a decision with a non-empty `constraints` object rather than silently ignore or drop unknown keys.
