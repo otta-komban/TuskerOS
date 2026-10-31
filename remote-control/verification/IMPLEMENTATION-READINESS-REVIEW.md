@@ -1,13 +1,13 @@
 # PILOT-08 Implementation Readiness Review
 
-**Status:** Draft v0.1 — readiness assessment only; not an approval or implementation authorization  
-**Owner:** PILOT-08 | **Branch:** `08-remote-control`  
+**Status:** Draft v0.2 — readiness assessment refreshed with owner decision evidence; not an approval or implementation authorization  
+**Owner:** PILOT-08 | **Branch:** `agent/08-remote-control`  
 **Baseline:** OpenAPI 3.1.0 / API version 0.1.0-draft; 72 protocol scenarios specified; 22 cross-agent decisions registered  
 **Decision:** **NO-GO — P0 implementation gate remains closed**
 
 ## 1. Executive assessment
 
-The branch contains a useful discovery and contract proposal, but it is not implementation-ready. At this review checkpoint, the only dependent-agent input remains TUSKER-04's draft v0.1 task-boundary comment. The targeted follow-up comments on issues #13, #14 and #15 have no new owner-authored responses; issue #1 has no comments. Acknowledgement, a draft proposal or a request for review is not an approval.
+The branch contains discovery, contract proposals and documentation-integrity validation. At the original review checkpoint, dependent-agent input was limited to TUSKER-04 draft v0.1; subsequent owner decisions are recorded in the C0013 addendum below. The implementation gate remains closed because TUSKER schemas, NOVA UX, NEXUS consume integration, platform deployment and runtime evidence remain incomplete.
 
 Verified checkpoint before this document was created:
 - Branch: `08-remote-control`
@@ -246,9 +246,9 @@ Copy this template into a new dated decision record when the P0 package is ready
 
 > We reviewed the exact commits and evidence linked above. Our ACCEPT/REVISE/DEFER dispositions apply only to the stated MVP scope. No approval is implied for deferred capabilities. The decision and residual risks are recorded here; any material contract change reopens the affected review.
 
-## 6. Current go/no-go result
+## 6. Original go/no-go checkpoint (superseded by C0013 addendum)
 
-**NO-GO.** At this checkpoint:
+**NO-GO at the original checkpoint.** The statements below describe the state when this review was first authored; see C0013 for the current evidence.
 - AEGIS-06: no owner-authored response to issue #13; DEC-AEG-001..008 remain open.
 - TUSKER-04: one draft v0.1 response exists; the follow-up requesting final ACCEPT/REVISE/DEFER is unanswered. DEC-TUS-001..004 and DEC-TUS-006..007 remain proposed, not accepted.
 - NOVA-02: no owner-authored response to issue #15; DEC-NOV-001..004 remain open.
@@ -272,3 +272,25 @@ Coordination references:
 
 ---
 *This review is a PILOT-08 readiness artifact. It is not a security approval, a cross-agent sign-off, a test report or permission to implement.*
+
+## C0013 — current readiness refresh (2026-10-31)
+
+### Owner decision evidence
+- **AEGIS-06:** DEC-AEG-001..007 ACCEPTED; DEC-AEG-008 DEFERRED / DISABLED FOR MVP. The durable requirements are in [REMOTE_DEVICE_SECURITY_CONTRACT.md](https://github.com/otta-komban/TuskerOS/blob/06-security-gatekeeper/security/REMOTE_DEVICE_SECURITY_CONTRACT.md), contract v0.1.0, and [issue #13 comment](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612). This is requirements approval, not implementation or runtime security acceptance.
+- **TUSKER-04:** DEC-TUS-001..004 and DEC-TUS-006..007 remain REVISE; DEC-TUS-005 is DEFERRED (pause/resume excluded from MVP). The source explicitly remains draft v0.1 and not a frozen API: [issue #14](https://github.com/otta-komban/TuskerOS/issues/14#issuecomment-6531700289).
+- **NOVA-02:** no owner-authored UX disposition was present in [issue #15](https://github.com/otta-komban/TuskerOS/issues/15) at this refresh.
+- **NEXUS-07:** security invariants accepted in principle, but transport/API, peer identity injection and final consume integration remain unaccepted/unimplemented: [issue #17 comment](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6540736530).
+- **ATLAS-01 / platform:** OS-protected key storage, service identity, TLS deployment and hardening evidence remain outstanding.
+
+### Current disposition
+
+**NO-GO for remote runtime implementation and release.** AEGIS has closed its decision-definition questions only. The following remain mandatory before runtime work:
+- Final TUSKER submission/state/projection/idempotency/cancellation/event schemas and trusted-context propagation.
+- NOVA-approved local pairing, device inventory/revoke, global-disable and recovery UX.
+- Chief Architect-approved NEXUS/AEGIS trusted consume boundary and TUSKER integration semantics.
+- ATLAS platform secure-storage/deployment review.
+- Executable negative and positive runtime tests for pairing, request proof, replay, authorization zero-dispatch, revocation/WSS closure, audit and transport bounds.
+
+Existing PAIR/SESS/NET conformance cases and the validator are documentation-integrity artifacts. No remote runtime feature, runtime security test, or release acceptance is claimed by this refresh.
+
+Coordination references: [issue #13](https://github.com/otta-komban/TuskerOS/issues/13), [issue #14](https://github.com/otta-komban/TuskerOS/issues/14), [issue #15](https://github.com/otta-komban/TuskerOS/issues/15), [issue #17](https://github.com/otta-komban/TuskerOS/issues/17).
