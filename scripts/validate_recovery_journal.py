@@ -274,8 +274,10 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def parse_jsonl(text: str) -> list[dict[str, Any]]:
     """Parse complete JSONL records; blank, duplicate-key and truncated records fail."""
-    if not isinstance(text, str) or not text:
-        raise JournalValidationError("journal must be non-empty text")
+    # Require an exact built-in string so subclasses cannot override encode()
+    # or otherwise run caller-controlled methods during parser preflight.
+    if type(text) is not str or not text:
+        raise JournalValidationError("journal must be non-empty plain text")
     try:
         encoded_size = len(text.encode("utf-8", errors="strict"))
     except UnicodeEncodeError as exc:
@@ -300,8 +302,10 @@ def parse_jsonl(text: str) -> list[dict[str, Any]]:
                 line, object_pairs_hook=_unique_object,
                 parse_constant=lambda value: (_ for _ in ()).throw(
                     JournalValidationError(f"non-standard JSON constant {value}")))
-        except (json.JSONDecodeError, JournalValidationError) as exc:
-            raise JournalValidationError(f"line {number}: {exc}") from exc
+        except (ValueError, RecursionError, JournalValidationError) as exc:
+            # json.loads may raise RecursionError for deeply nested input and
+            # ValueError for implementation limits such as oversized integers.
+            raise JournalValidationError(f"line {number}: invalid JSON ({type(exc).__name__})") from exc
         if not isinstance(item, dict):
             raise JournalValidationError(f"line {number}: expected JSON object")
         records.append(item)
