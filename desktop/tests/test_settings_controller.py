@@ -30,6 +30,18 @@ class SettingsControllerTests(unittest.TestCase):
     def test_read_returns_detached_copy(self):
         controller=SettingsController(self.path); exposed=controller.read(); exposed["panel"]["icon_size"]=1
         self.assertEqual(controller.read()["panel"]["icon_size"],DEFAULT_SETTINGS["panel"]["icon_size"])
+    def test_excessively_nested_json_enters_recovery_without_rewrite(self):
+        original = "[" * 2000 + "0" + "]" * 2000
+        self.path.write_text(original)
+        controller = SettingsController(self.path)
+        self.assertTrue(controller.load_errors)
+        self.assertIn("nesting", " ".join(controller.load_errors))
+        self.assertEqual(self.path.read_text(), original)
+        with self.assertRaisesRegex(ValueError, "restore defaults"):
+            controller.update({"panel": {"icon_size": 64}})
+        self.assertEqual(controller.reset(), DEFAULT_SETTINGS)
+        self.assertEqual(json.loads(self.path.read_text()), DEFAULT_SETTINGS)
+
     def test_corrupt_input_is_not_echoed_in_errors(self):
         self.path.write_text('{"token":"do-not-print"}')
         controller=SettingsController(self.path)
