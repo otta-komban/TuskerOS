@@ -3,13 +3,14 @@
 Permanent identity: PHOENIX-10  
 Branch: `agent/10-installer-recovery`  
 Completion target: 100 actual assistant responses (C0001–C0100)  
-Current authorized cohort count: 9  
+Current authorized cohort count: 10  
 Authorized cohort start: 2026-10-31T07:39:06Z  
-Last completion: PHOENIX-10-C0018  
+Last completion: PHOENIX-10-C0019  
 Last updated: 2026-10-31
 
 | Completion | Phase | Category | Summary | Evidence |
 |---|---|---|---|---|
+| PHOENIX-10-C0019 | P2 | read-only-recovery-journal-validation | Added strict read-only journal validation, state transitions, checksum-chain checks and advisory replay gates; PHOENIX CI `41186199820` passed. | `scripts/validate_recovery_journal.py`; `tests/test_validate_recovery_journal.py`; `docs/RECOVERY-JOURNAL-VALIDATION.md`; workflow; PR #55. |
 | PHOENIX-10-C0018 | P2 | installer-jcs-unicode-conformance | Corrected stale NFC digest rule; added AEGIS Unicode reference-vector tests and CI coverage; PHOENIX CI 41185982568 passed. | `docs/INSTALLER-CONTRACT-CONFORMANCE.md`; `tests/test_installer_jcs_unicode_vectors.py`; workflow; PR #55. |
 | PHOENIX-10-C0017 | P2 | release-report-cli-test-repair | Fixed the missing-file CLI test's stderr capture assertion after CI exposed the test-only failure; rerun pending. | `tests/test_validate_release_report.py`; PHOENIX CI `41185512785` identified the defect; fix commit `7de652d`; JSONL C0017. |
 | PHOENIX-10-C0016 | P2 | release-report-cli-contract-tests | Added CLI regression coverage for valid, semantic-invalid, malformed, duplicate-key, non-standard-constant, invalid-UTF-8 and missing-file inputs; clarified validator scope and exit codes. | `tests/test_validate_release_report.py`; `docs/RELEASE-VALIDATION-REPORT-CONTRACT.md`; prior CI `41185062227` passed before the new CLI tests; latest CI pending; JSONL C0016. |
