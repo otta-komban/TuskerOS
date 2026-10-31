@@ -1505,3 +1505,47 @@ def test_consume_commit_failure_is_reconcilable_without_issuing_grant():
         assert db.verify_audit_chain()
     finally:
         db.close()
+
+def test_consume_commit_response_loss_reconciles_committed_consumption_without_grant():
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        real_connection = db._db
+
+        class CommitThenLoseResponseConnection:
+            def __init__(self, connection):
+                self.connection = connection
+                self.lose_commit_response = True
+
+            def execute(self, sql, *args, **kwargs):
+                result = self.connection.execute(sql, *args, **kwargs)
+                if sql.strip().upper() == "COMMIT" and self.lose_commit_response:
+                    self.lose_commit_response = False
+                    raise sqlite3.OperationalError("injected lost response after durable commit")
+                return result
+
+            def __getattr__(self, name):
+                return getattr(self.connection, name)
+
+        import sqlite3
+        db._db = CommitThenLoseResponseConnection(real_connection)
+        result = consume(db, ref)
+
+        # The store must not hand out a grant when COMMIT reports an error,
+        # even though SQLite actually committed the consume and audit record.
+        assert result.outcome == "CONSUME_OUTCOME_UNKNOWN"
+        assert result.grant is None
+        assert result.consumption_id is not None
+        assert not db._db.in_transaction
+
+        reconciled = db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42})
+        assert reconciled.outcome == "ALREADY_CONSUMED"
+        assert reconciled.consumption_id == result.consumption_id
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "CONSUMED"
+        assert db._db.execute("SELECT state, consumption_id FROM auth_refs").fetchone() == {
+            "state": "CONSUMED", "consumption_id": result.consumption_id
+        }
+        assert len(db.audit_events()) == 3
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
