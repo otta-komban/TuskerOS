@@ -29,11 +29,17 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 
 - Added a deterministic stream-cancellation regression: cancellation is triggered while the adapter is waiting for the next NDJSON frame, the request emits a `cancelled` terminal event rather than `completed`, and a subsequent independent request succeeds against the same HTTP fixture.
 - The test uses the adapter's bounded socket-read timeout to observe cancellation. It does not prove server-side generation stops in Ollama; live cancellation conformance remains outstanding.
-- GitHub Actions Tusker AI Runtime Unit Tests passed on branch head `0f9440f026ad2078653b903b989572a292494d9a` (run 59). Tusker AI contract tests and unified validation were still in progress when checked.
+- GitHub Actions Tusker AI Runtime Unit Tests passed on source/test revision `87f45be297f921dd38b511236c64dd2e16f4e4e6` (run 60); PHOENIX release manifest integrity also passed. Tusker AI contract/schema tests passed after the cancelled attempt was re-queued (run 79). Unified validation run 530 was cancelled during rapid branch updates; no pass is claimed.
+
+## Runtime lifecycle regression iteration
+
+- Added tests proving the runtime semaphore is released when a provider raises after starting and when a consumer closes a partially consumed inference stream.
+- These cases exercise the existing `finally` cleanup guarantee without changing runtime behavior or shared contracts. They guard against a stuck capacity slot that would otherwise block all later inference when configured concurrency is one.
+- The new tests are committed; branch-head CI has not yet reported results for this revision.
 
 ## Remaining work sequence
 
-1. Confirm Tusker AI contract/schema tests and unified validation on the exact branch head; the dedicated runtime unit-test workflow has passed.
+1. Re-run runtime unit tests and unified validation on the latest branch head after the new runtime slot-cleanup tests.
 2. Review provider cancellation/deadline behavior and add focused tests for request isolation without terminating the shared daemon.
 3. Verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
 4. Keep model install/remove fail-closed until the approved AEGIS action/session/device/resource/precondition authorization is integrated and tested.
@@ -45,7 +51,7 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - [x] Historical work and Issue #57 reconciled against current main with exact SHAs and no blind history import.
 - [x] Proxy environment and redirect isolation added to the local Ollama adapter with regression tests.
 - [x] Focused HTTP adapter tests and compile checks pass in the isolated local harness.
-- [ ] Full runtime/schema tests pass on the exact ORBIT branch head.
+- [x] Runtime unit tests and contract/schema tests passed on the pre-slot-cleanup source revision; re-run runtime tests on latest head is pending.
 - [ ] Any model install/remove path remains deny-by-default unless exact AEGIS authorization is integrated and tested.
 - [ ] Resource limits distinguish admission control from enforced process isolation; live cancellation is tested without killing a shared daemon.
 - [ ] Live inference report includes model digest, provider version, host metadata and reproducible command output, or is explicitly NOT RUN.
