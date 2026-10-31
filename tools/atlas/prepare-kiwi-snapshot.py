@@ -62,9 +62,10 @@ def prepare_overlay(description_root: Path, snapshot_root: Path, lock_path: Path
         if signing is None or not signing.attrib.get("key", "").startswith("file://"):
             raise RuntimeError(f"{repository_id}: Fedora RPM signing-key reference is missing")
         signing_key_url = urllib.parse.urlparse(signing.attrib["key"])
-        signing_key_path = Path(urllib.parse.unquote(signing_key_url.path))
+        signing_key_path = Path(urllib.parse.unquote(signing_key_url.path).replace("$releasever", "44"))
         if not signing_key_path.is_file():
             raise RuntimeError(f"{repository_id}: Fedora RPM signing key is not installed: {signing_key_path}")
+        signing.set("key", signing_key_path.as_uri())
         repository.set("repository_gpgcheck", "true")
         repository.set("package_gpgcheck", "true")
         repository_path = (snapshots / repository_id).resolve(strict=True)
