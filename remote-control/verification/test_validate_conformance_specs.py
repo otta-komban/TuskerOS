@@ -186,6 +186,26 @@ class ParseCaseRowsTests(unittest.TestCase):
         )
 
 
+    def test_crlf_fenced_examples_are_ignored_without_shifting_source_lines(self):
+        markdown = (
+            "| PAIR-C01 | Actual row before fence | Assertion |\\r\\n"
+            "```markdown\\r\\n"
+            "| PAIR-C01 | Fenced duplicate example | Ignored |\\r\\n"
+            "```\\r\\n"
+            "| PAIR-C01 | Actual duplicate after fence | Assertion |\\r\\n"
+        )
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [
+                ("PAIR-C01", "Actual row before fence", "Assertion"),
+                ("PAIR-C01", "Actual duplicate after fence", "Assertion"),
+            ],
+        )
+        with self.assertRaises(validator.SpecError) as raised:
+            validator.validate_spec(markdown, "PAIR", 1)
+        self.assertIn("PAIR-C01 (lines 1, 5)", str(raised.exception))
+
+
 class ValidateSpecTests(unittest.TestCase):
     def test_accepts_contiguous_case_ids(self):
         markdown = "".join(
