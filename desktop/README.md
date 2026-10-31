@@ -1,7 +1,7 @@
 # TuskerOS Desktop — NOVA-02
 
 **Owner:** NOVA-02 — Desktop & KDE Engineer  
-**Branch:** `agent/02-desktop-shell`  
+**Branch:** `02-NOVA`  
 **Owned scope:** `desktop/`, desktop-specific configuration, desktop UI tests, and desktop documentation.
 
 ## Settings UX and persistence
