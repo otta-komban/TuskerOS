@@ -413,6 +413,9 @@ class SecurityStore:
                 if not isinstance(checkpoint["mac"], str) or not hmac.compare_digest(checkpoint["mac"], expected_mac):
                     return False
                 checkpoint_seq, checkpoint_hash = checkpoint["sequence"], checkpoint["event_hash"]
+                # Sequence zero is the empty-chain checkpoint, whose hash is fixed.
+                if checkpoint_seq == 0 and checkpoint_hash != "0" * 64:
+                    return False
             seen_checkpoint = checkpoint_seq == 0
             expected_seq = 1
             for row in self._db.execute("SELECT seq,event_json,previous_hash,event_hash FROM audit_events ORDER BY seq"):

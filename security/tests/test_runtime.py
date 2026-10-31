@@ -530,6 +530,23 @@ def test_registry_invalid_unmatched_entry_invalidates_entire_registry():
 
 
 
+def test_audit_checkpoint_rejects_non_genesis_hash_at_sequence_zero():
+    import hashlib
+    import hmac
+
+    db = store()
+    try:
+        checkpoint = db.audit_checkpoint()
+        forged = dict(checkpoint)
+        forged["event_hash"] = "a" * 64
+        payload = {key: forged[key] for key in ("schema_version", "sequence", "event_hash")}
+        forged["mac"] = hmac.new(KEY, b"TUSKER-AUDIT-CHECKPOINT-v1\\0" + canonical_bytes(payload), hashlib.sha256).hexdigest()
+        assert not db.verify_audit_chain(forged)
+        assert db.verify_audit_chain(checkpoint)
+    finally:
+        db.close()
+
+
 def test_audit_chain_rejects_boolean_checkpoint_sequence_and_sequence_gaps():
     db = store()
     try:
