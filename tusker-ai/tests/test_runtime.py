@@ -132,11 +132,12 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(TuskerRuntimeError):
             list(InferenceRuntime(fake).infer(self.request()))
 
-    def test_cancel_before_dispatch_emits_cancelled(self):
+    def test_cancel_before_dispatch_returns_typed_error_without_start_event(self):
         token = CancellationToken()
         token.cancel()
-        events = list(OllamaProvider().infer(self.request(), token))
-        self.assertEqual([e.event_type for e in events], ["cancelled"])
+        with self.assertRaises(TuskerRuntimeError) as ctx:
+            list(OllamaProvider().infer(self.request(), token))
+        self.assertEqual(ctx.exception.code, RuntimeErrorCode.CANCELLED)
 
 
 if __name__ == "__main__":
