@@ -736,3 +736,12 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Historical JSONL:** **64 records** (C0001–C0064); record count is not used to calculate completions.
 - **Evidence limitation:** The attached 6-Security.txt is a C0011 excerpt only, not a full transcript. It cannot prove the entire historical conversation count independently.
 - **JSONL commit:** d1cfe533845ea48d0b4f86874af79df7aff80532.
+
+## C0065 — one-response/one-completion accounting
+
+- **Authoritative response completions:** **17 / 100** (+1 for this completed assistant response). One complete assistant response to one user message equals exactly one completion.
+- **Previous verified counter:** C0064 recorded **16 / 100**; this response advances it once to **17 / 100**.
+- **Engineering tasks:** **49 cumulative** (+0). This bookkeeping response is not an engineering task.
+- **Historical JSONL records:** **65** (C0001–C0065). Record count is not the completion counter.
+- **Correction:** Concurrent conversations and work-level bookkeeping caused duplicate IDs, ledger drift, and misleading counts. Future writes must re-fetch both files, use the current blob SHA, append one response record, then append one matching ledger entry. If a race occurs, stop and report Pending.
+- **JSONL commit:** 18c984c3754c265d092144db8894a12beabf0a32
