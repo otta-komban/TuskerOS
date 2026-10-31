@@ -334,7 +334,10 @@ class SecurityStore:
 
     def decide(self, request_id: str, *, approve: bool, current_binding: Mapping[str, Any],
                approver_credentials: Any, audit_context: Mapping[str, Any], now: datetime | None = None) -> str:
-        current = self._time(now)
+        try:
+            current = self._time(now)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise SecurityStoreError("approval decision timestamp is invalid") from exc
         # A decision is a typed security input, not a truthiness test: reject
         # integers, strings and other coercible values before authentication
         # or any approval-state transition.
@@ -399,8 +402,11 @@ class SecurityStore:
     def issue_authorization(self, request_id: str, *, current_binding: Mapping[str, Any],
                             current_policy_version: str, audit_context: Mapping[str, Any],
                             ttl_seconds: int = 30, now: datetime | None = None) -> str:
-        current = self._time(now)
-        if not 1 <= ttl_seconds <= 120: raise SecurityStoreError("authorization TTL outside policy bound")
+        try:
+            current = self._time(now)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise SecurityStoreError("authorization timestamp is invalid") from exc
+        if type(ttl_seconds) is not int or not 1 <= ttl_seconds <= 120: raise SecurityStoreError("authorization TTL outside policy bound")
         token, token_hash = (secrets.token_urlsafe(32), None)
         token_hash = hashlib.sha256(token.encode()).hexdigest()
         try:
@@ -462,7 +468,10 @@ class SecurityStore:
     def consume(self, authorization_ref: str, *, operation_id: str, resource_scope: list[str],
                 action_digest: str, policy_version: str, registry_version: str, precondition_digest: str,
                 peer_credentials: Any, audit_context: Mapping[str, Any], now: datetime | None = None) -> ConsumeResult:
-        current = self._time(now)
+        try:
+            current = self._time(now)
+        except (TypeError, ValueError, OverflowError):
+            return ConsumeResult("BINDING_MISMATCH")
         if self._peer_authenticator is None: return ConsumeResult("CALLER_UNAUTHORIZED")
         try: peer = self._peer_authenticator(peer_credentials)
         except Exception: return ConsumeResult("CALLER_UNAUTHORIZED")
