@@ -229,7 +229,7 @@ C0053 expands AUD-REMOTE-006 with 11 explicit forbidden-field regression cases. 
 | POL-CON-005 | Consumer encounters missing, malformed, or unsupported constraint data | Fail closed; do not ignore, drop, reinterpret, or broaden scope | Pending consumer test |
 | POL-CON-006 | Constraint attempts to relax registered operation bounds or expand canonical resource scope | Reject / DENY; zero broker handler calls | Pending consumer test |
 
-These are acceptance criteria, not passing tests. The current v0.1.0 JSON Schema still accepts arbitrary nested objects under `constraints`; no consumer implementation was exercised. The interim contract requires producers to emit an empty object and consumers to reject non-empty objects until the policy-engine and broker owners approve a bounded, versioned vocabulary. SEC-SCHEMA-007 remains open.
+POL-CON-001/002 have schema-level regression coverage: `constraints` is required, `{}` validates, and non-empty objects (including unknown keys and nested scope/timeout examples) are rejected by the v0.1.0 schema. This does not prove a live policy producer emits only `{}` or that a broker/policy consumer independently rejects unsupported data if schema validation is bypassed. POL-CON-003/004 remain pending any future non-empty vocabulary; POL-CON-005/006 consumer tests remain pending. SEC-SCHEMA-007 remains open until owners approve a versioned vocabulary and runtime fail-closed evidence.
 
 
 
