@@ -17,11 +17,46 @@ SPECS = {
     "SESS": ("remote-control/verification/SESSION-PROOF-AND-REVOCATION-CONFORMANCE.md", 40),
     "NET": ("remote-control/verification/TRANSPORT-AND-EXPOSURE-CONFORMANCE.md", 42),
 }
-CASE_ID = re.compile(r"^(PAIR|SESS|NET)-C(\d{2})$")
+CASE_ID = re.compile(r"^(PAIR|SESS|NET)-C(\\d{2})$")
 
 
 class SpecError(ValueError):
     """Raised when a conformance table is incomplete or malformed."""
+
+
+def split_table_cells(line: str) -> list[str]:
+    """Split a Markdown pipe-table row, honoring backslash parity before pipes."""
+    row = line.strip()
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|"):
+        row = row[:-1]
+
+    cells: list[str] = []
+    current: list[str] = []
+    index = 0
+    while index < len(row):
+        if row[index] == "\\\\":
+            end = index
+            while end < len(row) and row[end] == "\\\\":
+                end += 1
+            slash_count = end - index
+            if end < len(row) and row[end] == "|" and slash_count % 2:
+                current.extend("\\\\" for _ in range(slash_count - 1))
+                current.append("|")
+                index = end + 1
+                continue
+            current.extend("\\\\" for _ in range(slash_count))
+            index = end
+            continue
+        if row[index] == "|":
+            cells.append("".join(current).strip())
+            current = []
+        else:
+            current.append(row[index])
+        index += 1
+    cells.append("".join(current).strip())
+    return cells
 
 
 def parse_case_rows(markdown: str, prefix: str) -> list[tuple[str, str, str]]:
@@ -30,8 +65,7 @@ def parse_case_rows(markdown: str, prefix: str) -> list[tuple[str, str, str]]:
     for line_number, line in enumerate(markdown.splitlines(), 1):
         if not line.lstrip().startswith("|"):
             continue
-        # A backslash-escaped pipe is cell content, not a column delimiter.
-        cells = [cell.strip().replace(r"\|", "|") for cell in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+        cells = split_table_cells(line)
         if not cells:
             continue
         if cells[0].startswith(prefix + "-C") and not CASE_ID.fullmatch(cells[0]):
