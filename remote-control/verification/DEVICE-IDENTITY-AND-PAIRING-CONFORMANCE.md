@@ -7,7 +7,7 @@
 **Baseline:** `8bf66079f9e021244eda432fa8455e83b59e2165`
 **Security source:** AEGIS-06 `security/REMOTE_DEVICE_SECURITY_CONTRACT.md`, branch `06-security-gatekeeper`, blob `d72feb9d78c81da769c8bca009b721b69bf8032c`
 **Product decision state:** NOVA-02 DEC-NOV-001..004 still lack owner-authored dispositions in issue #15 at review time.
-**Disposition:** NO-GO for pairing runtime/UI until repository reauthorization and the remaining P0 contracts close.
+**Disposition:** Branch-isolated implementation is authorized by the owner (Issue #35 comments 6540346389 and 6540745614). Pairing runtime/UI remain **NO-GO** until the remaining P0 contracts and executable acceptance evidence close; this authorization does not waive role-specific security gates.
 
 ## 1. Purpose and boundary
 
@@ -174,7 +174,7 @@ Never include private keys, raw challenge secrets, reusable enrollment tokens, l
 | Device inventory/revocation UX | NOVA-02 | No owner-authored disposition located | **P0 OPEN** — provide DEC-NOV-002 |
 | Visible remote status and local global disable/re-enable UX | NOVA-02 | AEGIS defines global disable/re-enable security semantics; no NOVA UX disposition located | **P0 OPEN** — provide DEC-NOV-003 and align UI with durable revoke-before-success |
 | Lost-device recovery UX | NOVA-02 | AEGIS requires revoke + fresh local pairing; no NOVA UX disposition located | **P1 OPEN** — provide DEC-NOV-004; no remote-only recovery |
-| Repository implementation reauthorization | Admin/coordinator | PR #49 gate not independently verified; required-check configuration evidence incomplete | **OPEN** — no runtime implementation authorization inferred |
+| Branch-isolated implementation authorization | Repository owner / coordinator | Owner authorization and coordinator clarification in Issue #35 comments 6540346389 and 6540745614; branch-protection/required-check state remains unverified | **AUTHORIZED for scoped work on the assigned branch**; this does not authorize remote runtime, privileged dispatch, shared-contract changes, force-pushes, or merges |
 | Session/request proof | AEGIS-06 | Accepted contract section 3 | Security requirements accepted; separate session implementation/conformance work required |
 | Authorization and task path | AEGIS-06 / TUSKER-04 / NEXUS-07 | AEGIS accepted policy boundary; TUSKER decisions remain REVISE; NEXUS consume/context boundary unresolved | **P0 OPEN** for protected task operations; pairing conformance does not waive it |
 
@@ -193,7 +193,7 @@ This proposal does not authorize:
 The document is ready for AEGIS-06 and NOVA-02 review as an implementation-neutral conformance proposal. It is not a signed protocol contract.
 
 Before pairing implementation can start, require:
-1. PR #49 repository reauthorization gate closed and verified by the coordinator/admin.
+1. Continue only on the assigned branch under the owner authorization in Issue #35 comments 6540346389 and 6540745614. PR #49 and branch-protection verification are separate repository-governance items; neither substitutes for the remaining P0 security/UX contracts or authorizes runtime work.
 2. NOVA-02 DEC-NOV-001..003 P0 decisions recorded with a concrete local UX state flow.
 3. PILOT/AEGIS agreement on any missing pairing transaction/rotation wire semantics without changing accepted AEGIS invariants.
 4. A test harness and platform secure-storage capability contract selected under the approved implementation plan.
