@@ -188,5 +188,5 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added a 4 MiB cap on the serialized Ollama chat request body. The runtime's character limit counts message content; extra message metadata can otherwise inflate the actual JSON body well beyond that limit.
 - Oversized serialized requests now fail as safe `INVALID_REQUEST` errors before opening an HTTP connection. This bounds bytes sent to the local provider without changing the shared request schema.
 - Added a regression with small message content and oversized metadata against an unreachable loopback endpoint, proving the size check wins before network dispatch.
-- Provider and test commits: recorded in the ORBIT-05 iteration 17 evidence log.
+- Provider body-limit commit: `ddfef92c6ff7279ed8d683267c1ebdea7522bcd6`; regression test: `2a6c5216f103bf6b41a352d13e6d888ba8d973a7`; explicit limit constant correction: `923b9b73707f2a5ae0141df23129e5f953b10ad8`.
 - Live Ollama remains NOT RUN.
