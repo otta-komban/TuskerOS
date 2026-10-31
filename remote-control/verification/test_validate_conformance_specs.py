@@ -651,5 +651,23 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("no runtime security behavior was tested", rendered)
 
 
+    def test_crlf_input_preserves_rows_and_duplicate_source_line_numbers(self):
+        markdown = (
+            "| PAIR-C01 | First condition | First assertion |\\r\\n"
+            "\\r\\n"
+            "| PAIR-C01 | Second condition | Second assertion |\\r\\n"
+        )
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [
+                ("PAIR-C01", "First condition", "First assertion"),
+                ("PAIR-C01", "Second condition", "Second assertion"),
+            ],
+        )
+        with self.assertRaises(validator.SpecError) as raised:
+            validator.validate_spec(markdown, "PAIR", 1)
+        self.assertIn("PAIR-C01 (lines 1, 3)", str(raised.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
