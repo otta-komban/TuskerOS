@@ -1108,6 +1108,49 @@ def test_consume_rejects_truthy_non_boolean_policy_recheck(callback_result):
         db.close()
 
 
+def test_issue_authorization_policy_rechecker_exception_rolls_back_without_minting():
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+
+        def unavailable(*_args):
+            raise RuntimeError("injected policy service outage")
+
+        db._policy_rechecker = unavailable
+        with pytest.raises(SecurityStoreError, match="authorization issue/audit failed closed"):
+            db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                audit_context=audit_for_approval(db, rid), now=NOW)
+
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs").fetchone()[0] == 0
+        assert len(db.audit_events()) == 2
+    finally:
+        db.close()
+
+
+def test_consume_policy_rechecker_exception_rolls_back_and_preserves_issued_reference():
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+
+        def unavailable(*_args):
+            raise RuntimeError("injected policy service outage")
+
+        db._policy_rechecker = unavailable
+        result = consume(db, ref)
+
+        assert result.outcome == "AUTHORITY_UNAVAILABLE"
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT state FROM auth_refs").fetchone()["state"] == "ISSUED"
+        assert len(db.audit_events()) == 3
+    finally:
+        db.close()
+
+
 def test_security_database_refuses_hard_link_without_chmod_or_writes(tmp_path):
     import stat
 
