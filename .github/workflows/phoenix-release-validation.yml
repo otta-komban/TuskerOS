@@ -2,7 +2,7 @@ name: PHOENIX release manifest integrity
 
 on:
   push:
-    branches: [main]
+    branches: [main, agent/10-installer-recovery]
   pull_request:
     branches: [main]
   workflow_dispatch:
