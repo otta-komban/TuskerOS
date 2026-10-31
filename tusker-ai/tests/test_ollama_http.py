@@ -24,6 +24,8 @@ class Handler(BaseHTTPRequestHandler):
             chunks = [{"message": {"content": "x" * (1024 * 1024 + 100)}, "done": False}]
         elif request.get("model") == "aggregate-oversized":
             chunks = [{"message": {"content": "x" * 900_000}, "done": False} for _ in range(10)]
+        elif request.get("model") == "deep-json":
+            chunks = [None]
         elif request.get("model") == "bad-shape":
             chunks = [[]]
         elif request.get("model") == "bad-message":
@@ -49,7 +51,8 @@ class Handler(BaseHTTPRequestHandler):
             for index, chunk in enumerate(chunks):
                 if request.get("model") in {"late-frame", "cancel-frame"} and index == 0:
                     time.sleep(0.08)
-                self.wfile.write((json.dumps(chunk) + "\n").encode()); self.wfile.flush()
+                raw = (b"[" * 1200 + b"0" + b"]" * 1200 + b"\\n") if request.get("model") == "deep-json" else (json.dumps(chunk) + "\\n").encode()
+                self.wfile.write(raw); self.wfile.flush()
                 if request.get("model") == "slow" and index == 0:
                     time.sleep(0.12)
                 if request.get("model") == "stall" and index == 0:
@@ -115,7 +118,7 @@ class OllamaHttpTests(unittest.TestCase):
     def test_oversized_and_malformed_frames_are_typed_provider_errors(self):
         from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
         provider = OllamaProvider(self.endpoint, read_timeout=2)
-        for model in ("oversized", "bad-shape", "bad-message", "falsey-message", "bad-content", "bad-done", "bad-reason", "bad-usage"):
+        for model in ("oversized", "deep-json", "bad-shape", "bad-message", "falsey-message", "bad-content", "bad-done", "bad-reason", "bad-usage"):
             request = InferenceRequest(model, model, [{"role": "user", "content": "hello"}])
             with self.subTest(model=model):
                 with self.assertRaises(TuskerRuntimeError) as ctx:
