@@ -90,6 +90,8 @@ class OllamaProvider:
                         if time.monotonic() >= deadline:
                             raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
                         continue
+                    if time.monotonic() >= deadline:
+                        raise TuskerRuntimeError(RuntimeErrorCode.DEADLINE_EXCEEDED, "Inference deadline exceeded", retryable=True) from None
                     if not raw_line:
                         break
                     if not raw_line.strip():
