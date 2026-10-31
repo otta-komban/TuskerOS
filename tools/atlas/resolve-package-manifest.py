@@ -224,7 +224,6 @@ def snapshot_repo_args(
         arguments.extend([
             f"--repofrompath={repository_id},{repository_path.as_uri()}",
             f"--setopt={repository_id}.gpgcheck=1",
-            f"--setopt={repository_id}.repo_gpgcheck=1",
             f"--setopt={repository_id}.gpgkey={key_uri}",
             f"--repo={repository_id}",
         ])
