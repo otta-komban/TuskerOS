@@ -447,7 +447,7 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         spawn.assert_not_awaited()
 
     def test_non_finite_and_boolean_timeouts_are_rejected(self):
-        for timeout in (float("nan"), float("inf"), float("-inf"), True):
+        for timeout in (float("nan"), float("inf"), float("-inf"), True, 10 ** 1000):
             with self.subTest(timeout=timeout):
                 with self.assertRaises(ValueError):
                     ReadOnlySystemBusAdapter(AsyncMock(), timeout_seconds=timeout)
