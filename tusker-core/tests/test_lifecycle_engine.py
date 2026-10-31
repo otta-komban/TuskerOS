@@ -675,5 +675,31 @@ class LifecycleEngineTests(unittest.TestCase):
         self.assertEqual(event_reads, [])
 
 
+    def test_replay_rejects_event_records_outside_schema_envelope(self):
+        task_id = self.task["task_id"]
+        original_events = self.store.events
+        mutations = (
+            ("unexpected top-level field", lambda event: event.update({"extra": True}), "unexpected event fields"),
+            ("missing required field", lambda event: event.pop("correlation_id"), "missing required event fields"),
+            ("invalid event UUID", lambda event: event.update({"event_id": "not-a-uuid"}), "invalid event_id"),
+            ("invalid task UUID", lambda event: event.update({"task_id": "not-a-uuid"}), "invalid task_id"),
+            ("boolean sequence", lambda event: event.update({"sequence": True}), "invalid sequence"),
+            ("zero sequence", lambda event: event.update({"sequence": 0}), "invalid sequence"),
+            ("non-array evidence refs", lambda event: event.update({"evidence_refs": "ref"}), "invalid evidence_refs"),
+            ("oversized evidence ref", lambda event: event.update({"evidence_refs": ["x" * 513]}), "invalid evidence_refs"),
+            ("invalid object payload", lambda event: event.update({"step": []}), "invalid step payload"),
+        )
+        for label, mutate, message in mutations:
+            with self.subTest(case=label):
+                events = original_events(task_id)
+                mutate(events[0])
+                self.store.events = lambda requested, records=events: records
+                try:
+                    with self.assertRaisesRegex(LifecycleError, message):
+                        self.engine.replay(task_id)
+                finally:
+                    self.store.events = original_events
+
+
 if __name__ == "__main__":
     unittest.main()
