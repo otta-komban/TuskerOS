@@ -33,6 +33,20 @@ class ParseCaseRowsTests(unittest.TestCase):
         with self.assertRaises(validator.SpecError):
             validator.parse_case_rows(markdown, "PAIR")
 
+    def test_preserves_escaped_pipe_at_end_of_row_without_closing_delimiter(self):
+        markdown = r"| PAIR-C01 | Condition | Reject with literal pipe \\|" + "\\n"
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [("PAIR-C01", "Condition", "Reject with literal pipe |")],
+        )
+
+    def test_strips_unescaped_optional_trailing_delimiter_after_backslashes(self):
+        markdown = r"| PAIR-C01 | Condition | Reject with literal backslash \\\\|" + "\\n"
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [("PAIR-C01", "Condition", r"Reject with literal backslash \\\\")],
+        )
+
     def test_preserves_escaped_pipe_inside_cell(self):
         markdown = r"| PAIR-C01 | Condition with \| literal pipe | Reject safely |" + "\n"
         self.assertEqual(
