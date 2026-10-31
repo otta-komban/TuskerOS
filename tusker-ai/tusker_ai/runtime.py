@@ -81,13 +81,24 @@ class InferenceRuntime:
 
     @staticmethod
     def _available_memory_bytes() -> int | None:
+        host_available = None
         try:
             for line in Path("/proc/meminfo").read_text(encoding="ascii").splitlines():
                 if line.startswith("MemAvailable:"):
-                    return int(line.split()[1]) * 1024
+                    host_available = int(line.split()[1]) * 1024
+                    break
         except (OSError, ValueError, IndexError):
-            return None
-        return None
+            pass
+        # Respect cgroup v2 memory ceilings when running in a managed service/container.
+        try:
+            limit_text = Path("/sys/fs/cgroup/memory.max").read_text(encoding="ascii").strip()
+            current_text = Path("/sys/fs/cgroup/memory.current").read_text(encoding="ascii").strip()
+            if limit_text != "max":
+                cgroup_available = max(0, int(limit_text) - int(current_text))
+                return cgroup_available if host_available is None else min(host_available, cgroup_available)
+        except (OSError, ValueError):
+            pass
+        return host_available
 
     def _validate(self, request: InferenceRequest) -> None:
         if not request.request_id or len(request.request_id) > 128 or not request.model:
