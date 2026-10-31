@@ -122,7 +122,7 @@ class SettingsTests(unittest.TestCase):
 
     def test_directory_fsync_failure_restores_previous_settings(self) -> None:
         self.path.parent.mkdir(parents=True)
-        original = json.dumps({"panel": {"icon_size": 72}}) + "\\n"
+        original = json.dumps({"panel": {"icon_size": 72}}) + chr(10)
         self.path.write_text(original, encoding="utf-8")
         real_fsync = os.fsync
         calls = 0
@@ -139,6 +139,9 @@ class SettingsTests(unittest.TestCase):
                 save_settings(self.path, {"panel": {"icon_size": 64}})
 
         self.assertEqual(self.path.read_text(encoding="utf-8"), original)
+        restored, errors = load_settings(self.path)
+        self.assertEqual(errors, [])
+        self.assertEqual(restored["panel"]["icon_size"], 72)
         self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.backup.*")), [])
         self.assertEqual(list(self.path.parent.glob(f".{self.path.name}.*")), [])
 
