@@ -261,20 +261,32 @@ class SecurityStore:
                         proposal_id: str, principal_binding: str, policy_version: str, risk_class: str,
                         task_id: str, step_id: str, binding: Mapping[str, Any], expires_at: datetime,
                         audit_context: Mapping[str, Any], now: datetime | None = None) -> str:
-        current, expiry = (self._time(now), self._time(expires_at))
+        if (now is not None and not isinstance(now, datetime)) or not isinstance(expires_at, datetime):
+            raise SecurityStoreError("approval timestamps must be datetime values")
+        try:
+            current, expiry = (self._time(now), self._time(expires_at))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise SecurityStoreError("approval timestamps must be timezone-aware") from exc
         if expiry <= current: raise SecurityStoreError("approval expiry must be in the future")
-        op = r"[a-z][a-z0-9]*(\.[a-z][a-z0-9_-]*)+"
-        if not isinstance(action_id, str) or not re.fullmatch(op, action_id) or not isinstance(broker_operation_id, str) or not re.fullmatch(op, broker_operation_id):
+        op = r"[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+"
+        if (not isinstance(action_id, str) or len(action_id) > 160 or not re.fullmatch(op, action_id)
+            or not isinstance(broker_operation_id, str) or len(broker_operation_id) > 160
+            or not re.fullmatch(op, broker_operation_id)):
             raise SecurityStoreError("invalid fixed operation binding")
-        if not policy_version or len(policy_version) > 64 or risk_class not in {"R0", "R1", "R2", "R3", "R4"}:
+        if (not isinstance(policy_version, str) or not 1 <= len(policy_version) <= 64
+            or not isinstance(risk_class, str) or risk_class not in {"R0", "R1", "R2", "R3", "R4"}):
             raise SecurityStoreError("approval not permitted for this policy version/risk")
-        if not task_id or len(task_id) > 128 or not step_id or len(step_id) > 128:
+        if (not isinstance(task_id, str) or not 1 <= len(task_id) <= 128
+            or not isinstance(step_id, str) or not 1 <= len(step_id) <= 128):
             raise SecurityStoreError("task and step correlation required")
-        if not re.fullmatch(r"sha256:[0-9a-f]{64}", action_digest) or not re.fullmatch(r"sha256:[0-9a-f]{64}", principal_binding):
+        if (not isinstance(action_digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", action_digest)
+            or not isinstance(principal_binding, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", principal_binding)):
             raise SecurityStoreError("invalid digest binding")
         required = {"session_binding", "device_binding", "registry_version", "resource_scope", "precondition_digest"}
-        if set(binding) != required or not isinstance(binding["resource_scope"], list) or not binding["resource_scope"]:
+        if not isinstance(binding, Mapping) or set(binding) != required or not isinstance(binding["resource_scope"], list) or not binding["resource_scope"]:
             raise SecurityStoreError("incomplete approval binding")
+        if not isinstance(audit_context, Mapping):
+            raise SecurityStoreError("approval audit context is required")
         for field in ("session_binding", "device_binding", "precondition_digest"):
             if not isinstance(binding[field], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", binding[field]):
                 raise SecurityStoreError("invalid approval binding digest")
