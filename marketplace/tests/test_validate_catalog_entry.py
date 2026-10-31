@@ -44,6 +44,15 @@ class CatalogEntryValidationTests(unittest.TestCase):
         entry["release"]["artifact_uri"] = "http://example.invalid/a.tar"
         self.assertTrue(any("HTTPS URL" in e for e in validate_catalog_entry(entry)))
 
+
+    def test_malformed_and_whitespace_urls_fail_closed_without_exception(self):
+        for value in ("https://[broken/path", "https://example.invalid:bad/file", "https://example.invalid/a b"):
+            with self.subTest(value=value):
+                entry = copy.deepcopy(self.fixture)
+                entry["release"]["artifact_uri"] = value
+                errors = validate_catalog_entry(entry)
+                self.assertTrue(any("$.release.artifact_uri" in e for e in errors))
+
     def test_bad_digest_rejected(self):
         entry = copy.deepcopy(self.fixture)
         entry["release"]["sha256"] = "abc"
