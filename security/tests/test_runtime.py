@@ -285,3 +285,27 @@ def test_consumed_replay_disclosure_is_bound_to_original_peer_identity():
         assert legitimate_replay.consumption_id == first.consumption_id
     finally:
         db.close()
+
+
+def test_resource_resolver_cannot_return_oversized_canonical_identifier():
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    registry = [{"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}]
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: c.get("authenticated") is True,
+        registry_verifier=lambda r, v: bool(r) and v == "registry-1",
+        argument_validator=lambda a, x: True,
+        resource_resolver=lambda resources: [{"kind": "system", "id": "x" * 1025, "access": "read"}],
+        precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, registry, "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
