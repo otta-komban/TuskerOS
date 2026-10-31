@@ -117,8 +117,8 @@ class PinnedManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "manifest.csv"
             path.write_text(
-                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_sha256,rpm_license,source_rpm,source_repository_url,upstream_url\\n"
-                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,not-a-digest,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash,https://www.gnu.org/software/bash/\\n",
+                "layer,package,owner,required,rationale,pinned_nevra,repository_id,repository_snapshot,rpm_sha256,rpm_license,source_rpm,source_repository_url,upstream_url\n"
+                "base,bash,ATLAS-01,true,base shell,bash-0:5.2.26-3.fc44.x86_64,fedora,compose-20261031,not-a-digest,GPL-3.0-or-later,bash-5.2.26-3.fc44.src.rpm,https://src.fedoraproject.org/rpms/bash,https://www.gnu.org/software/bash/\n",
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(RuntimeError, "rpm_sha256"):
