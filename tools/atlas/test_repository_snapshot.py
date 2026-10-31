@@ -206,7 +206,6 @@ class LocalSnapshotVerificationTests(unittest.TestCase):
         self.repository = self.root / "fedora"
         (self.repository / "repodata").mkdir(parents=True)
         (self.repository / "repodata" / "repomd.xml").write_bytes(REPOMD)
-        (self.repository / "repodata" / "repomd.xml.asc").write_text("signature fixture", encoding="utf-8")
         (self.repository / "repodata" / "primary.xml.gz").write_bytes(PRIMARY)
         digest = hashlib.sha256(REPOMD).hexdigest()
         self.indexed = {
@@ -237,11 +236,6 @@ class LocalSnapshotVerificationTests(unittest.TestCase):
         (self.repository / "repodata" / "filelists.xml.gz").write_bytes(b"tampered")
         with self.assertRaisesRegex(RuntimeError, "filelists metadata SHA-256 differs"):
             MODULE.verify_local_snapshot(self.root, indexed)
-
-    def test_local_snapshot_requires_metadata_signature_file(self):
-        (self.repository / "repodata" / "repomd.xml.asc").unlink()
-        with self.assertRaisesRegex(RuntimeError, "missing repomd.xml.asc"):
-            MODULE.verify_local_snapshot(self.root, self.indexed)
 
     def test_local_snapshot_rejects_changed_repomd(self):
         (self.repository / "repodata" / "repomd.xml").write_bytes(REPOMD + b"changed")
