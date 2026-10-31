@@ -96,5 +96,34 @@ class PackageOwnershipTests(unittest.TestCase):
         self.assertEqual(plan["summary"]["remove_count"], 3)
 
 
+    def test_installed_state_enforces_schema_string_length_limits(self):
+        mutations = (
+            ("package_id", lambda package: package.update(package_id="p" * 129)),
+            ("version", lambda package: package.update(version="v" * 129)),
+            ("owner_id", lambda package: package["owners"][0].update(id="o" * 129)),
+            ("dependency_id", lambda package: package["dependencies"].append("d" * 129)),
+        )
+        for field, mutate in mutations:
+            with self.subTest(field=field):
+                state = self.state()
+                mutate(state["packages"][0])
+                with self.assertRaisesRegex(OwnershipPlanError, "max 128 characters"):
+                    validate_installed_state(state)
+
+    def test_installed_state_accepts_schema_maximum_string_length(self):
+        state = self.state()
+        state["packages"][0]["version"] = "v" * 128
+        state["packages"][0]["owners"][0]["id"] = "o" * 128
+        state["packages"][0]["dependencies"] = ["d" * 128]
+        state["packages"].append({
+            "package_id": "d" * 128,
+            "version": "1",
+            "owners": [],
+            "dependencies": [],
+        })
+        indexed = validate_installed_state(state)
+        self.assertIn("d" * 128, indexed)
+
+
 if __name__ == "__main__":
     unittest.main()
