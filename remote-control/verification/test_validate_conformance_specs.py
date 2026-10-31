@@ -138,6 +138,25 @@ class ParseCaseRowsTests(unittest.TestCase):
         )
 
 
+    def test_fences_allow_three_space_indent_and_trailing_close_whitespace(self):
+        markdown = (
+            "| PAIR-C01 | Before fence | Reject |\\n"
+            "   ```markdown   \\n"
+            "| PAIR-C01 | Fenced example | Ignored |\\n"
+            "   ```   \\n"
+            "| PAIR-C01 | After fence | Reject |\\n"
+            "    ```markdown\\n"
+            "| PAIR-C01 | Indented code, not a fence | Ignored |\\n"
+        )
+        self.assertEqual(
+            validator.parse_case_rows(markdown, "PAIR"),
+            [
+                ("PAIR-C01", "Before fence", "Reject"),
+                ("PAIR-C01", "After fence", "Reject"),
+            ],
+        )
+
+
 class ValidateSpecTests(unittest.TestCase):
     def test_accepts_contiguous_case_ids(self):
         markdown = "".join(
