@@ -131,6 +131,22 @@ class LifecycleEngineTests(unittest.TestCase):
         with self.assertRaises(InvalidTransition):
             self.move("failed", details={"outcome_unknown": True})
 
+    def test_replay_rejects_unknown_task(self):
+        with self.assertRaisesRegex(LifecycleError, "unknown task"):
+            self.engine.replay("00000000-0000-4000-8000-000000000099")
+
+    def test_replay_rejects_corrupt_event_identity_and_snapshot(self):
+        task_id = self.task["task_id"]
+        self.store._events[task_id][0]["task_id"] = "00000000-0000-4000-8000-000000000099"
+        with self.assertRaisesRegex(LifecycleError, "another task"):
+            self.engine.replay(task_id)
+
+    def test_replay_rejects_snapshot_version_mismatch(self):
+        task_id = self.task["task_id"]
+        self.store._tasks[task_id]["version"] = 2
+        with self.assertRaisesRegex(LifecycleError, "version"):
+            self.engine.replay(task_id)
+
     def test_replay_is_contiguous_and_never_executes(self):
         self.move("planning")
         replay = self.engine.replay("00000000-0000-4000-8000-000000000001")

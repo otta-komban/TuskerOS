@@ -46,6 +46,42 @@ class LifecycleStoreContractMixin:
         }
         return next_task, next_event
 
+    def test_duplicate_task_creation_leaves_original_unchanged(self):
+        before_task, before_events = self.store.get(self.task_id), self.store.events(self.task_id)
+        replacement = {**self.task, "state": "failed"}
+        with self.assertRaises(IdempotencyConflict):
+            self.store.create(replacement, self.event)
+        self.assertEqual(self.store.get(self.task_id), before_task)
+        self.assertEqual(self.store.events(self.task_id), before_events)
+
+    def test_create_rejects_cross_task_event_without_partial_write(self):
+        other_task = "00000000-0000-4000-8000-000000000199"
+        task = {"task_id": other_task, "version": 1, "state": "queued"}
+        event = {**self.event, "task_id": self.task_id}
+        with self.assertRaises(LifecycleError):
+            self.store.create(task, event)
+        self.assertIsNone(self.store.get(other_task))
+        self.assertEqual(self.store.events(other_task), [])
+
+    def test_store_reads_are_defensive_copies(self):
+        task = self.store.get(self.task_id)
+        task["state"] = "failed"
+        events = self.store.events(self.task_id)
+        events[0]["state"] = "failed"
+        self.assertEqual(self.store.get(self.task_id)["state"], "queued")
+        self.assertEqual(self.store.events(self.task_id)[0]["state"], "queued")
+
+    def test_failed_write_does_not_reserve_idempotency_key(self):
+        bad_task, bad_event = self.candidate(event_id=self.event["event_id"])
+        before_task, before_events = self.store.get(self.task_id), self.store.events(self.task_id)
+        with self.assertRaises(IdempotencyConflict):
+            self.store.transition(self.task_id, 1, bad_task, bad_event, "retry-atomic", "same-request")
+        self.assertEqual(self.store.get(self.task_id), before_task)
+        self.assertEqual(self.store.events(self.task_id), before_events)
+        good_task, good_event = self.candidate()
+        committed = self.store.transition(self.task_id, 1, good_task, good_event, "retry-atomic", "same-request")
+        self.assertEqual(committed, good_task)
+
     def test_create_starts_snapshot_and_event_at_one(self):
         self.assertEqual(self.store.get(self.task_id)["version"], 1)
         self.assertEqual([e["sequence"] for e in self.store.events(self.task_id)], [1])

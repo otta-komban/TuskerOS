@@ -80,3 +80,11 @@ test module binds the mixin to `InMemoryLifecycleStore`; no persistent backend
 is selected or claimed by these tests. An adapter with different setup
 requirements may override `setUp()` while preserving the same contract
 assertions.
+
+## Replay integrity checks
+
+Replay is a read-only validation operation. It rejects an unknown task, an empty
+event stream, missing or duplicate event IDs, cross-task events, non-contiguous
+sequence numbers, a task version that differs from the event count, or a final
+event state that differs from the task snapshot. These checks detect corruption;
+they do not repair state or execute any operation.

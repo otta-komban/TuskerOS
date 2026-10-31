@@ -252,10 +252,22 @@ class LifecycleEngine:
                                event_type="task.cancelled", operation_stopped=True)
 
     def replay(self, task_id: str) -> dict[str, Any]:
-        """Return the deterministic event stream; never dispatch/re-execute operations."""
+        """Validate and return the event stream; never dispatch/re-execute operations."""
+        task = self.store.get(task_id)
+        if task is None:
+            raise LifecycleError(f"unknown task: {task_id}")
         events = self.store.events(task_id)
+        if not events:
+            raise LifecycleError("event stream is empty")
         if any(event.get("sequence") != index for index, event in enumerate(events, 1)):
             raise LifecycleError("event sequence is not contiguous")
-        if len({event.get("event_id") for event in events}) != len(events):
-            raise LifecycleError("event stream contains duplicate event IDs")
-        return {"task": self.store.get(task_id), "events": events}
+        event_ids = [event.get("event_id") for event in events]
+        if any(not event_id for event_id in event_ids) or len(set(event_ids)) != len(event_ids):
+            raise LifecycleError("event stream contains missing or duplicate event IDs")
+        if any(event.get("task_id") != task_id for event in events):
+            raise LifecycleError("event stream contains an event for another task")
+        if task.get("version") != len(events):
+            raise LifecycleError("task version does not match event stream length")
+        if events[-1].get("state") != task.get("state"):
+            raise LifecycleError("task snapshot state does not match final event")
+        return {"task": task, "events": events}
