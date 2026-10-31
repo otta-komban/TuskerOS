@@ -89,7 +89,7 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
     except Exception as exc:
         return JournalReport(
             False, 0, 0, None, "",
-            (f"journal iteration failed: {type(exc).__name__}: {exc}",))
+            (f"journal iteration failed: {type(exc).__name__}",))
     if len(materialized) > MAX_RECORDS:
         materialized = materialized[:MAX_RECORDS]
         errors.append(f"journal exceeds maximum record count ({MAX_RECORDS})")
@@ -172,11 +172,11 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
                 actual = ""
             if supplied != actual:
                 errors.append(f"record {index}: checksum mismatch")
-        previous = supplied if isinstance(supplied, str) else ""
+        previous = supplied if type(supplied) is str else ""
         # Never index TRANSITIONS with an unrecognized state on the next record.
-        previous_state = state if isinstance(state, str) and state in STATES else None
+        previous_state = state if type(state) is str and state in STATES else None
 
-    last = materialized[-1] if materialized and isinstance(materialized[-1], dict) else {}
+    last = materialized[-1] if materialized and type(materialized[-1]) is dict else {}
     return JournalReport(
         valid=not errors,
         record_count=len(materialized),
@@ -236,7 +236,8 @@ def replay_eligibility(record: dict[str, Any], *,
                        preconditions_verified: bool,
                        authorization_current: bool) -> tuple[bool, str]:
     """Conservative advisory only; never dispatches or authorizes a replay."""
-    if not isinstance(record, dict) or record.get("state") != "interrupted":
+    if type(record) is not dict or type(record.get("state")) is not str \
+            or record["state"] != "interrupted":
         return False, "latest state is not interrupted"
     if record.get("idempotent") is not True:
         return False, "operation is not declared idempotent"
