@@ -37,6 +37,12 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - These cases exercise the existing `finally` cleanup guarantee without changing runtime behavior or shared contracts. They guard against a stuck capacity slot that would otherwise block all later inference when configured concurrency is one.
 - The first branch-head CI run exposed two fixture mistakes in the new tests (the reusable fake provider emitted a hard-coded request ID and the failure fixture failed every request). The fixtures were corrected so follow-up requests use their own IDs and only the first request fails. The corrected tests are committed. GitHub Actions passed on corrected code revision `141bcbb52037c25ec8b099c05dea709da5615fef`: runtime unit tests run 65, contract/schema tests run 86, unified validation run 541, and PHOENIX manifest integrity run 235.
 
+## Admission cleanup hardening iteration
+
+- Moved the available-memory probe inside the runtime semaphore's `try/finally` scope. Previously, an unexpected exception from the probe itself could bypass the release path and strand a concurrency slot.
+- Added a regression test that injects a probe exception and confirms a subsequent request can still acquire the single available slot.
+- Latest-head CI is running; no result is claimed until all required workflows finish.
+
 ## Remaining work sequence
 
 1. Keep the full runtime/contract/unified validation green as further implementation changes land.
