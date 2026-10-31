@@ -3,7 +3,7 @@
 Permanent identity: ATLAS-01  
 Branch: `01-fedora-base`  
 Target: 100 actual assistant responses  
-Current verified count: 16
+Current verified count: 17
 
 | Response | Completion ID | Phase | Category | Status | Evidence |
 |---:|---|---|---|---|---|
@@ -25,5 +25,7 @@ Current verified count: 16
 | 15 | ATLAS-01-C0015 | P1 | status | recorded | Resumed Fedora base-image work; verified branch comparison, 49-test/8-job CI evidence, pinned KIWI source and still-open NOVA/NEXUS package handoffs; no package rows or build claims added |
 
 | 16 | ATLAS-01-C0016 | P1 | implementation | partial | Added Fedora repository snapshot capture/preflight, manifest snapshot binding, build gate and 20+ regression checks; ATLAS CI run 41185951919 passed 70 tests plus live Fedora 44 DNF5 smoke and unified run 41185951924 passed all 8 jobs on `8f594cb`; KIWI/DNF snapshot consumption, metadata signatures, RPM checksums and actual image build remain open |
+
+| 17 | ATLAS-01-C0017 | P1 | implementation | partial | DNF5 now stages locked Fedora repositories locally, verifies local repomd/primary metadata, and resolves only from local DNF repo paths; 78 tests + Fedora 44 DNF5 smoke passed in run 41190197697; unified 8/8 passed in 41190201562; KIWI still uses upstream remotes; no image build |
 
 Counts include only actual assistant responses. Never backfill or fabricate entries.
