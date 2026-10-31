@@ -233,7 +233,7 @@ class RecoveryJournalTests(unittest.TestCase):
             record_checksum(record)
         record = chain(["planned"])[0]
         record["extra"] = "\\u0001" * (MAX_RECORD_BYTES // 2)
-        with self.assertRaisesRegex(JournalValidationError, "maximum size"):
+        with self.assertRaisesRegex(JournalValidationError, "maximum (encoded input )?size"):
             record_checksum(record)
 
     def test_checksum_rejects_non_finite_nested_numbers(self):
