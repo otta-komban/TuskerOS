@@ -25,6 +25,12 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 - Added deterministic regression tests covering proxy-environment isolation for health and inference, and redirect rejection for both GET and POST paths.
 - Local verification: `PYTHONPATH=. python -m unittest -v tests/test_ollama_http.py` — 4 passed; `python -m py_compile tusker_ai/providers/ollama.py tests/test_ollama_http.py` — passed. This focused local harness is not the full project suite or live Ollama conformance.
 
+## Implemented in the next iteration
+
+- Added a deterministic stream-cancellation regression: cancellation is triggered while the adapter is waiting for the next NDJSON frame, the request emits a `cancelled` terminal event rather than `completed`, and a subsequent independent request succeeds against the same HTTP fixture.
+- The test uses the adapter's bounded socket-read timeout to observe cancellation. It does not prove server-side generation stops in Ollama; live cancellation conformance remains outstanding.
+- CI was triggered for this branch head; results are pending at the time this plan update was prepared.
+
 ## Remaining work sequence
 
 1. Run the full runtime/schema test suite in a reproducible checkout and capture exact branch-head evidence.
