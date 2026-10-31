@@ -66,7 +66,7 @@ class TransactionStateTests(unittest.TestCase):
         self.assertTrue(tx["terminal"])
 
     def test_terminal_state_cannot_transition_again(self):
-        tx = transition_transaction(self.tx, "cancelled")
+        tx = transition_transaction(self.tx, "cancelled", {"reason_code": "user_requested"})
         with self.assertRaisesRegex(TransactionStateError, "not allowed"):
             transition_transaction(tx, "approval_verified", {
                 "approval_id": "a1", "verification_ref": "v1", "authority": "aegis"
@@ -74,19 +74,19 @@ class TransactionStateTests(unittest.TestCase):
 
     def test_input_record_is_not_mutated(self):
         original = dict(self.tx)
-        transition_transaction(self.tx, "cancelled")
+        transition_transaction(self.tx, "cancelled", {"reason_code": "user_requested"})
         self.assertEqual(self.tx, original)
 
 
     def test_rejects_malformed_digest(self):
         tx = dict(self.tx, plan_digest="not-a-digest")
         with self.assertRaisesRegex(TransactionStateError, "SHA-256"):
-            transition_transaction(tx, "cancelled")
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
     def test_rejects_terminal_flag_mismatch(self):
         tx = dict(self.tx, terminal=True)
         with self.assertRaisesRegex(TransactionStateError, "terminal flag"):
-            transition_transaction(tx, "cancelled")
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
     def test_rejects_untrusted_arbitrary_evidence_fields(self):
         with self.assertRaisesRegex(TransactionStateError, "sensitive"):
@@ -95,12 +95,12 @@ class TransactionStateTests(unittest.TestCase):
     def test_rejects_malformed_history(self):
         tx = dict(self.tx, history=[{"secret": "do-not-store"}])
         with self.assertRaisesRegex(TransactionStateError, "history"):
-            transition_transaction(tx, "cancelled")
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
     def test_rejects_non_string_current_state(self):
         tx = dict(self.tx, state=[])
         with self.assertRaisesRegex(TransactionStateError, "unknown current"):
-            transition_transaction(tx, "cancelled")
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
 
     def test_stale_transition_requires_observed_snapshot_digest(self):
@@ -111,10 +111,10 @@ class TransactionStateTests(unittest.TestCase):
             transition_transaction(tx, "stale")
 
     def test_rejects_broken_history_chain(self):
-        tx = transition_transaction(self.tx, "cancelled")
+        tx = transition_transaction(self.tx, "cancelled", {"reason_code": "user_requested"})
         tx["history"][0]["from"] = "revalidated"
         with self.assertRaisesRegex(TransactionStateError, "continuity"):
-            transition_transaction(tx, "cancelled")
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
     def test_rejects_history_without_required_approval_evidence(self):
         tx = dict(self.tx, state="approval_verified", history=[{
@@ -133,13 +133,44 @@ class TransactionStateTests(unittest.TestCase):
              "evidence": {"observed_snapshot_digest": "different"}}
         ])
         with self.assertRaisesRegex(TransactionStateError, "invalid stale"):
-            transition_transaction(tx, "cancelled")
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
 
     def test_non_prepared_state_requires_history(self):
         tx = dict(self.tx, state="approval_verified")
         with self.assertRaisesRegex(TransactionStateError, "without history"):
             transition_transaction(tx, "revalidated", {"snapshot_digest": "b" * 64})
+
+
+    def test_cancelled_transition_requires_non_empty_reason_code(self):
+        with self.assertRaisesRegex(TransactionStateError, "cancelled requires a non-empty reason_code"):
+            transition_transaction(self.tx, "cancelled")
+        with self.assertRaisesRegex(TransactionStateError, "cancelled requires a non-empty reason_code"):
+            transition_transaction(self.tx, "cancelled", {"reason_code": "  "})
+
+    def test_rejected_transition_requires_non_empty_reason_code(self):
+        tx = transition_transaction(self.tx, "approval_verified", {
+            "approval_id": "a1", "verification_ref": "v1", "authority": "aegis"
+        })
+        with self.assertRaisesRegex(TransactionStateError, "rejected requires a non-empty reason_code"):
+            transition_transaction(tx, "rejected")
+
+    def test_historical_cancelled_event_requires_reason_code(self):
+        tx = dict(self.tx, state="cancelled", terminal=True, history=[{
+            "from": "prepared", "event": "cancelled", "evidence": {}
+        }])
+        with self.assertRaisesRegex(TransactionStateError, "cancelled requires a non-empty reason_code"):
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
+
+    def test_historical_rejected_event_requires_reason_code(self):
+        tx = dict(self.tx, state="rejected", terminal=True, history=[
+            {"from": "prepared", "event": "approval_verified", "evidence": {
+                "approval_id": "a1", "verification_ref": "v1", "authority": "aegis"
+            }},
+            {"from": "approval_verified", "event": "rejected", "evidence": {}},
+        ])
+        with self.assertRaisesRegex(TransactionStateError, "rejected requires a non-empty reason_code"):
+            transition_transaction(tx, "cancelled", {"reason_code": "user_requested"})
 
 
 if __name__ == "__main__":
