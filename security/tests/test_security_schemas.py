@@ -487,13 +487,28 @@ def test_audit_event_v020_non_remote_origin_rejects_remote_bindings(field):
     assert list(audit_v020_validator().iter_errors(event))
 
 
-@pytest.mark.parametrize("field", ["device_id", "session_id"])
-def test_audit_event_v020_rejects_raw_remote_identity_fields(field):
+@pytest.mark.parametrize(
+    "field",
+    [
+        "device_id",
+        "session_id",
+        "device_public_key",
+        "session_token",
+        "authorization",
+        "signature",
+        "pairing_secret",
+        "private_key",
+        "task_payload",
+        "prompt",
+        "completion",
+    ],
+)
+def test_audit_event_v020_rejects_raw_remote_identity_credentials_and_payloads(field):
     event = valid_audit_v020_event()
     event["origin"] = "remote"
     event["device_binding"] = "sha256:" + "a" * 64
     event["session_binding"] = "sha256:" + "b" * 64
-    event[field] = "raw-identifier-must-not-enter-general-audit"
+    event[field] = "must-not-enter-general-audit"
     assert list(audit_v020_validator().iter_errors(event))
 
 
