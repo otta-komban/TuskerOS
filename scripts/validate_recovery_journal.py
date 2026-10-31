@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from typing import Any, Iterable
 from itertools import islice
 
@@ -17,6 +18,8 @@ MAX_JOURNAL_BYTES = 4 * 1024 * 1024
 MAX_RECORD_BYTES = 64 * 1024
 MAX_RECORDS = 10_000
 SHA256_HEX_LENGTH = 64
+MAX_JSON_DEPTH = 64
+MAX_JSON_NODES = 10_000
 STATES = {"planned", "prepared", "executing", "interrupted",
           "succeeded", "failed", "cancelled"}
 TERMINAL_STATES = {"succeeded", "failed", "cancelled"}
@@ -45,12 +48,55 @@ class JournalReport:
     errors: tuple[str, ...]
 
 
+def _validate_json_value(value: Any, *, depth: int = 0,
+                         active: set[int] | None = None,
+                         budget: list[int] | None = None) -> None:
+    """Accept bounded JSON primitives/containers only; never call custom hooks."""
+    if active is None:
+        active = set()
+    if budget is None:
+        budget = [MAX_JSON_NODES]
+    budget[0] -= 1
+    if budget[0] < 0:
+        raise JournalValidationError("record exceeds maximum JSON node count")
+    if depth > MAX_JSON_DEPTH:
+        raise JournalValidationError("record exceeds maximum JSON nesting depth")
+    value_type = type(value)
+    if value_type in (type(None), bool, int, str):
+        return
+    if value_type is float:
+        if not math.isfinite(value):
+            raise JournalValidationError("record contains a non-finite number")
+        return
+    if value_type not in (list, dict):
+        raise JournalValidationError("record contains a non-JSON value type")
+    identity = id(value)
+    if identity in active:
+        raise JournalValidationError("record contains a circular reference")
+    active.add(identity)
+    try:
+        if value_type is list:
+            for item in value:
+                _validate_json_value(item, depth=depth + 1,
+                                     active=active, budget=budget)
+        else:
+            for key, item in value.items():
+                if type(key) is not str:
+                    raise JournalValidationError(
+                        "nested object keys must be plain strings")
+                _validate_json_value(item, depth=depth + 1,
+                                     active=active, budget=budget)
+    finally:
+        active.remove(identity)
+
+
 def _canonical_payload(record: dict[str, Any]) -> bytes:
     if type(record) is not dict:
         raise JournalValidationError("record must be a plain dictionary")
     if any(type(key) is not str for key in record):
         raise JournalValidationError("record object keys must be plain strings")
     payload = {key: value for key, value in record.items() if key != "checksum"}
+    _validate_json_value(payload)
     try:
         return json.dumps(payload, ensure_ascii=False, sort_keys=True,
                           separators=(",", ":"), allow_nan=False).encode(
@@ -182,8 +228,8 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         valid=not errors,
         record_count=len(materialized),
         last_sequence=last.get("sequence", 0) if type(last.get("sequence")) is int else 0,
-        last_state=last.get("state") if isinstance(last.get("state"), str) else None,
-        last_checksum=last.get("checksum") if isinstance(last.get("checksum"), str) else "",
+        last_state=last.get("state") if type(last.get("state")) is str else None,
+        last_checksum=last.get("checksum") if type(last.get("checksum")) is str else "",
         errors=tuple(errors),
     )
 
