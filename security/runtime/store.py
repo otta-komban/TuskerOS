@@ -660,5 +660,7 @@ class SecurityStore:
                         return False
                     seen_checkpoint = True
             return seen_checkpoint
-        except (ValueError, TypeError, KeyError):
+        except (ValueError, TypeError, KeyError, sqlite3.Error):
+            # A damaged or unavailable audit table is an integrity failure,
+            # not a reason to let verification escape as an unhandled error.
             return False
