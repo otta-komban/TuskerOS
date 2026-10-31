@@ -1,6 +1,8 @@
 """Narrow broker authorization adapter; deliberately contains no handlers."""
 from __future__ import annotations
 from dataclasses import dataclass, field
+from types import MappingProxyType
+import re
 from datetime import datetime
 from typing import Any, Mapping
 from .store import ConsumeResult, SecurityStore
@@ -52,9 +54,32 @@ class BrokerAuthorizationGate:
             "session_binding", "device_binding", "action_digest", "registry_version",
             "precondition_digest",
         }
-        if (not isinstance(result.consumption_id, str) or not result.consumption_id
-            or not isinstance(result.grant, Mapping)
-            or set(result.grant) != required_grant_fields
-            or result.grant.get("consumption_id") != result.consumption_id):
+        try:
+            grant = dict(result.grant) if isinstance(result.grant, Mapping) else None
+            expected_scope = list(request.canonical_resource_scope)
+            valid_digest = lambda value: isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
+            valid = (
+                isinstance(result.consumption_id, str)
+                and re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", result.consumption_id) is not None
+                and grant is not None
+                and set(grant) == required_grant_fields
+                and grant.get("consumption_id") == result.consumption_id
+                and grant.get("operation_id") == request.broker_operation_id
+                and grant.get("resource_scope") == expected_scope
+                and grant.get("action_digest") == request.action_digest
+                and grant.get("registry_version") == request.registry_version
+                and grant.get("precondition_digest") == request.precondition_digest
+                and valid_digest(grant.get("principal_binding"))
+                and valid_digest(grant.get("session_binding"))
+                and valid_digest(grant.get("device_binding"))
+            )
+            if not valid:
+                return BrokerAuthorizationResponse("AUTHORITY_UNAVAILABLE")
+            # Detach the response from authority-owned mutable objects and make
+            # the nested resource scope immutable before it reaches dispatch.
+            grant["resource_scope"] = tuple(grant["resource_scope"])
+            return BrokerAuthorizationResponse(
+                "CONSUMED", result.consumption_id, MappingProxyType(grant)
+            )
+        except Exception:
             return BrokerAuthorizationResponse("AUTHORITY_UNAVAILABLE")
-        return BrokerAuthorizationResponse("CONSUMED", result.consumption_id, result.grant)
