@@ -34,7 +34,7 @@ class KiwiBundleContractTests(unittest.TestCase):
         self.assertIn('"repository_snapshot_preflight_verified": True', SCRIPT)
         self.assertIn('"repository_snapshot_consumed_by_dnf5": True', SCRIPT)
         self.assertIn('"repository_snapshot_consumed_by_kiwi": True', SCRIPT)
-        self.assertIn('--setopt="$repo_id.repo_gpgcheck=1" reposync', SCRIPT)
+        self.assertIn('--setopt="$repo_id.gpgcheck=1" reposync', SCRIPT)
         self.assertIn('git -C "$UPSTREAM_DIR" archive --format=tar "$UPSTREAM_COMMIT" | tar -xf - -C "$KIWI_BUILD_DIR"', SCRIPT)
         self.assertIn('"$KIWI_OVERLAY_PREPARER" --description-root "$KIWI_BUILD_DIR" --snapshot-root "$SNAPSHOT_ROOT"', SCRIPT)
         self.assertIn('cd "$KIWI_BUILD_DIR"', SCRIPT)
@@ -44,7 +44,9 @@ class KiwiBundleContractTests(unittest.TestCase):
     def test_metadata_does_not_overclaim_reproducibility(self):
         self.assertIn('"repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run"', SCRIPT)
         self.assertIn('"reproducible_build_claim": False', SCRIPT)
-        self.assertIn("DNF5 reposync, package resolution and KIWI repository_gpgcheck/package_gpgcheck consume verified local repository copies with Fedora signing keys", SCRIPT)
+        self.assertIn('"repository_metadata_signature_verified": False', SCRIPT)
+        self.assertIn("Fedora 44 fedora/updates endpoints do not publish repomd.xml.asc at the inspected official URLs", SCRIPT)
+        self.assertIn("DNF5 and KIWI enforce RPM package signatures using the Fedora 44 primary key", SCRIPT)
         self.assertIn("RPM payload checksums are not yet recorded in the package lock", SCRIPT)
         self.assertIn("Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified", SCRIPT)
 
