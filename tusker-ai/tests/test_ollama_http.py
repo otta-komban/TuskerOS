@@ -1,8 +1,10 @@
 import json
+import os
 import threading
 import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from unittest.mock import patch
 
 from tusker_ai.providers.ollama import OllamaProvider
 from tusker_ai.types import InferenceRequest, CancellationToken
@@ -29,6 +31,29 @@ class Handler(BaseHTTPRequestHandler):
         except BrokenPipeError:
             pass
 
+    def log_message(self, *_args):
+        pass
+
+
+class RedirectHandler(BaseHTTPRequestHandler):
+    target = None
+    def do_GET(self):
+        self.send_response(307); self.send_header("Location", self.target); self.end_headers()
+    def do_POST(self):
+        self.send_response(307); self.send_header("Location", self.target); self.end_headers()
+    def log_message(self, *_args):
+        pass
+
+
+class TargetHandler(BaseHTTPRequestHandler):
+    hits = 0
+    def do_GET(self):
+        type(self).hits += 1
+        self.send_response(200); self.end_headers()
+    def do_POST(self):
+        type(self).hits += 1
+        self.rfile.read(int(self.headers.get("Content-Length", "0")))
+        self.send_response(200); self.end_headers()
     def log_message(self, *_args):
         pass
 
@@ -62,6 +87,41 @@ class OllamaHttpTests(unittest.TestCase):
         self.assertEqual([e.event_type for e in events], ["started", "text_delta", "text_delta", "usage", "completed"])
         self.assertEqual(events[1].payload["delta"] + events[2].payload["delta"], "Tusker runtime")
         self.assertEqual(events[3].payload["output_tokens"], 2)
+
+    def test_local_requests_ignore_ambient_proxy_environment(self):
+        proxy_env = {
+            "HTTP_PROXY": "http://127.0.0.1:1", "http_proxy": "http://127.0.0.1:1",
+            "HTTPS_PROXY": "http://127.0.0.1:1", "https_proxy": "http://127.0.0.1:1",
+            "ALL_PROXY": "http://127.0.0.1:1", "all_proxy": "http://127.0.0.1:1",
+            "NO_PROXY": "", "no_proxy": "",
+        }
+        with patch.dict(os.environ, proxy_env, clear=False):
+            provider = OllamaProvider(self.endpoint, read_timeout=1)
+            self.assertTrue(provider.health())
+            req = InferenceRequest("proxy-isolation", "fixture", [{"role": "user", "content": "private"}])
+            events = list(provider.infer(req, CancellationToken()))
+        self.assertEqual(events[-1].event_type, "completed")
+
+    def test_local_provider_does_not_follow_redirects(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError
+        target = ThreadingHTTPServer(("127.0.0.1", 0), TargetHandler)
+        target_thread = threading.Thread(target=target.serve_forever, daemon=True)
+        target_thread.start()
+        redirect = ThreadingHTTPServer(("127.0.0.1", 0), RedirectHandler)
+        RedirectHandler.target = f"http://127.0.0.1:{target.server_port}/capture"
+        redirect_thread = threading.Thread(target=redirect.serve_forever, daemon=True)
+        redirect_thread.start()
+        TargetHandler.hits = 0
+        try:
+            provider = OllamaProvider(f"http://127.0.0.1:{redirect.server_port}", read_timeout=1)
+            self.assertFalse(provider.health())
+            req = InferenceRequest("redirect-block", "fixture", [{"role": "user", "content": "must-not-leak"}])
+            with self.assertRaises(TuskerRuntimeError):
+                list(provider.infer(req, CancellationToken()))
+            self.assertEqual(TargetHandler.hits, 0)
+        finally:
+            redirect.shutdown(); redirect.server_close(); redirect_thread.join(timeout=2)
+            target.shutdown(); target.server_close(); target_thread.join(timeout=2)
 
 
 if __name__ == "__main__":
