@@ -36,6 +36,21 @@ class BrokerAuthorizationGate:
         # exception or an incomplete "consumed" response cross the gate.
         if not isinstance(request, BrokerAuthorizationRequest) or not isinstance(audit_context, Mapping):
             return BrokerAuthorizationResponse("BINDING_MISMATCH")
+        scope = request.canonical_resource_scope
+        if (
+            not isinstance(request.authorization_ref, str) or not 1 <= len(request.authorization_ref) <= 512
+            or not isinstance(request.broker_operation_id, str) or len(request.broker_operation_id) > 160
+            or re.fullmatch(r"[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+", request.broker_operation_id) is None
+            or not isinstance(request.action_digest, str) or re.fullmatch(r"sha256:[0-9a-f]{64}", request.action_digest) is None
+            or not isinstance(request.policy_version, str) or not 1 <= len(request.policy_version) <= 64
+            or not isinstance(scope, tuple) or not 1 <= len(scope) <= 128
+            or any(not isinstance(item, str) or not item or len(item) > 512 for item in scope)
+            or len(scope) != len(set(scope))
+            or not isinstance(request.registry_version, str) or not 1 <= len(request.registry_version) <= 128
+            or not isinstance(request.precondition_digest, str)
+            or re.fullmatch(r"sha256:[0-9a-f]{64}", request.precondition_digest) is None
+        ):
+            return BrokerAuthorizationResponse("BINDING_MISMATCH")
         try:
             result: ConsumeResult = self._authority.consume(
                 request.authorization_ref, operation_id=request.broker_operation_id,
