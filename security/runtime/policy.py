@@ -29,7 +29,7 @@ def _valid_registry_entry(entry: Mapping[str, Any]) -> bool:
         if not isinstance(value, str) or len(value) > 160 or not _ACTION.fullmatch(value):
             return False
     version = entry.get("operation_schema_version")
-    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\\.[0-9]+\\.[0-9]+", version):
+    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         return False
     schema_ref = entry.get("arguments_schema_ref")
     if not isinstance(schema_ref, str) or not 1 <= len(schema_ref) <= 512:
@@ -137,6 +137,10 @@ class PolicyEngine:
                 return deny("POLICY_REGISTRY_INVALID")
             if not self.registry_verifier(registry, registry_version):
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
+            # Validate every signed registry entry before selecting an action. A malformed
+            # unrelated entry invalidates the registry as a whole; lookup must not hide it.
+            if any(not _valid_registry_entry(item) for item in registry):
+                return deny("POLICY_REGISTRY_INVALID")
             if self.identity_verifier is None or not self.identity_verifier(context):
                 return deny("POLICY_UNKNOWN_PRINCIPAL")
             for field in ("principal_binding", "session_binding", "device_binding"):

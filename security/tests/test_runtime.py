@@ -499,3 +499,32 @@ def test_resource_resolver_cannot_return_oversized_canonical_identifier():
     result = engine.evaluate(proposal, context, registry, "registry-1")
     assert result.status == "DENY"
     assert result.reason_code == "POLICY_RESOURCE_RESOLUTION_MISMATCH"
+
+def test_registry_invalid_unmatched_entry_invalidates_entire_registry():
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    def entry(action_id, version="1.0.0"):
+        return {"schema_version": "0.1.0", "action_id": action_id,
+            "operation_schema_version": version,
+            "arguments_schema_ref": "schemas/arguments/system-info.json",
+            "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+            "resources": [{"kind": "system", "access_modes": ["read"]}],
+            "minimum_risk_class": "R0", "approval_mode": "never",
+            "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+            "idempotency": "optional_read_only", "preconditions": [],
+            "postcondition_verifier": "verify.system.info"}
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: True, argument_validator=lambda a, x: True,
+        resource_resolver=lambda resources: list(resources),
+        precondition_verifier=lambda p, r: D4)
+    # The malformed entry does not match the proposal action. It must still fail
+    # registry-wide validation instead of being hidden by action lookup.
+    decision = engine.evaluate(proposal, context,
+        [entry("system.info.read"), entry("other.info.read", "not-semver")], "registry-1")
+    assert decision.status == "DENY"
+    assert decision.reason_code == "POLICY_REGISTRY_INVALID"
+
