@@ -246,15 +246,15 @@ Copy this template into a new dated decision record when the P0 package is ready
 
 > We reviewed the exact commits and evidence linked above. Our ACCEPT/REVISE/DEFER dispositions apply only to the stated MVP scope. No approval is implied for deferred capabilities. The decision and residual risks are recorded here; any material contract change reopens the affected review.
 
-## 6. Original go/no-go checkpoint (superseded by C0013 addendum)
+## 6. Original go/no-go checkpoint (historical; superseded by C0013 and C0016)
 
-**NO-GO at the original checkpoint.** The statements below describe the state when this review was first authored; see C0013 for the current evidence.
+**NO-GO at the original checkpoint.** The statements below describe the state when this review was first authored; C0013 records later owner-decision evidence and C0016 records the current workforce authorization and implementation-gate clarification.
 - AEGIS-06: no owner-authored response to issue #13; DEC-AEG-001..008 remain open.
 - TUSKER-04: one draft v0.1 response exists; the follow-up requesting final ACCEPT/REVISE/DEFER is unanswered. DEC-TUS-001..004 and DEC-TUS-006..007 remain proposed, not accepted.
 - NOVA-02: no owner-authored response to issue #15; DEC-NOV-001..004 remain open.
 - Umbrella issue #1 has no comments.
 - OpenAPI validation and all runtime tests remain unrun.
-- Runtime implementation remains unauthorized.
+- At this original checkpoint, branch-isolated implementation had not yet been authorized. This historical statement was superseded by C0016: scoped work on the assigned agent branch is authorized, while remote runtime features remain NO-GO until the P0 owner contracts and executable positive/negative acceptance evidence are complete.
 
 Coordination references:
 - AEGIS-06 review: https://github.com/otta-komban/TuskerOS/issues/13
