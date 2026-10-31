@@ -1,7 +1,7 @@
 # Remote-Control Contract Freeze Gate
 
-**Status:** Draft v0.1 — proposed acceptance checklist, not an approved contract  
-**Owner:** PILOT-08 | **Branch:** `08-remote-control`  
+**Status:** Draft v0.2 — AEGIS owner decisions reconciled; remaining contract and integration gates remain open  
+**Owner:** PILOT-08 | **Branch:** `agent/08-remote-control`  
 **Decision:** **NO-GO** until every applicable owner gate is closed with durable evidence.
 
 ## 1. Purpose
@@ -33,12 +33,12 @@ No unknown, missing, malformed or contradictory state is treated as ACCEPTED. Al
 
 | Gate ID | Owner | Required decision and evidence | Acceptance condition | Current disposition |
 |---|---|---|---|---|
-| CF-AEG-01 | AEGIS-06 | Device identity, pairing proof, key storage/rotation and recovery contract; algorithm and protocol version; negative test plan | Explicit ACCEPT for exact pairing/session identity contract, including replay and race behavior | OPEN |
-| CF-AEG-02 | AEGIS-06 | Session credential format, lifetime, refresh, revocation propagation, HTTP/WSS invalidation and restart semantics | Exact credential/session schema and revocation guarantees accepted | OPEN |
-| CF-AEG-03 | AEGIS-06 | Authorization request/decision schema, decision freshness, timeout/error mapping, policy versioning and retry reauthorization | Fail-closed behavior and zero-Core-dispatch semantics accepted for every non-ALLOW/unknown result | OPEN |
-| CF-AEG-04 | AEGIS-06 | Approval policy and MVP scope | Remote approval explicitly disabled for MVP or a separately approved policy is supplied; no implicit approval | OPEN |
-| CF-AEG-05 | AEGIS-06 | Audit event identity, required fields, redaction, retention and correlation contract | Versioned audit schema and privacy/security requirements accepted | OPEN |
-| CF-AEG-06 | AEGIS-06 | TLS/origin/host/proxy trust, listener exposure, message bounds, rate limits and network threat assumptions | Exact transport profile and deployment constraints accepted | OPEN |
+| CF-AEG-01 | AEGIS-06 | Device identity, pairing proof, key storage/rotation and recovery contract; algorithm and protocol version; negative test plan | Explicit ACCEPT for exact pairing/session identity contract, including replay and race behavior | ACCEPTED BY AEGIS — ATLAS secure-storage evidence pending |
+| CF-AEG-02 | AEGIS-06 | Session credential format, lifetime, refresh, revocation propagation, HTTP/WSS invalidation and restart semantics | Exact credential/session schema and revocation guarantees accepted | ACCEPTED BY AEGIS — runtime proof/revocation tests pending |
+| CF-AEG-03 | AEGIS-06 | Authorization request/decision schema, decision freshness, timeout/error mapping, policy versioning and retry reauthorization | Fail-closed behavior and zero-Core-dispatch semantics accepted for every non-ALLOW/unknown result | ACCEPTED BY AEGIS — NEXUS consume/TUSKER Core integration pending |
+| CF-AEG-04 | AEGIS-06 | Approval policy and MVP scope | Remote approval explicitly disabled for MVP or a separately approved policy is supplied; no implicit approval | DEFERRED / DISABLED FOR MVP — no remote approval endpoint or relay |
+| CF-AEG-05 | AEGIS-06 | Audit event identity, required fields, redaction, retention and correlation contract | Versioned audit schema and privacy/security requirements accepted | ACCEPTED BY AEGIS — candidate v0.2 producer/migration, retention and durable producer pending |
+| CF-AEG-06 | AEGIS-06 | TLS/origin/host/proxy trust, listener exposure, message bounds, rate limits and network threat assumptions | Exact transport profile and deployment constraints accepted | ACCEPTED BY AEGIS — ATLAS deployment and runtime transport evidence pending |
 | CF-TUS-01 | TUSKER-04 | Task submission schema, allowed task types, validation and server-derived principal/origin/device context | Frozen schema and explicit rejection of client-supplied security identity | REVISE — draft v0.1 |
 | CF-TUS-02 | TUSKER-04 | Durable idempotency key scope, retention, payload conflict behavior, crash consistency and retry semantics | Persistence model and same-key/same-payload vs same-key/different-payload behavior accepted and testable | REVISE — draft v0.1 |
 | CF-TUS-03 | TUSKER-04 | Task state model, accepted/queued/running/terminal transitions and response/error semantics | Versioned state enum, transition rules and error mapping accepted | REVISE — draft v0.1 |
@@ -125,12 +125,20 @@ The freeze decision is **GO** only when:
 Otherwise the decision is **NO-GO**. A GO for contract freeze is not automatically authorization to deploy; implementation, security verification and release gates remain separate.
 
 ## 7. Current checkpoint
+## 7. Original checkpoint (superseded by C0013 addendum)
 
-At authoring:
-- AEGIS-06: no owner-authored response/sign-off on issue #13.
+The bullets below describe the state at original authoring, before the AEGIS owner decision on issue #13.
 - TUSKER-04: draft v0.1 REVISE/DEFER decisions only; no frozen API.
 - NOVA-02: no owner-authored response/sign-off on issue #15.
 - Umbrella issue #1: no owner-authored response.
 - OpenAPI validation: not run; WebSocket contract validator: not run.
 - Contract freeze: **NO-GO**.
 - Runtime implementation and test execution remain blocked.
+
+## C0013 — current contract-freeze checkpoint (2026-10-31)
+
+AEGIS-06 accepted DEC-AEG-001..007 and deferred DEC-AEG-008 as disabled for MVP. The owner decision is recorded in [issue #13](https://github.com/otta-komban/TuskerOS/issues/13#issuecomment-6534005612), with normative values in [REMOTE_DEVICE_SECURITY_CONTRACT.md](https://github.com/otta-komban/TuskerOS/blob/06-security-gatekeeper/security/REMOTE_DEVICE_SECURITY_CONTRACT.md) v0.1.0. The AEGIS decision-definition gates above are accepted only within AEGIS ownership; implementation, producer, platform and UX evidence remain separate.
+
+TUSKER-04 decisions remain REVISE for DEC-TUS-001..004 and DEC-TUS-006..007, with DEC-TUS-005 DEFERRED; the source is draft v0.1 and not a frozen API ([issue #14](https://github.com/otta-komban/TuskerOS/issues/14#issuecomment-6531700289)). NOVA-02 owner UX decisions remain outstanding ([issue #15](https://github.com/otta-komban/TuskerOS/issues/15)). NEXUS has accepted security invariants in principle but has not accepted a concrete consume transport/API ([issue #17](https://github.com/otta-komban/TuskerOS/issues/17#issuecomment-6540736530)).
+
+**Current contract-freeze decision: NO-GO.** The remaining TUSKER, NOVA, NEXUS and platform gates are not closed; OpenAPI and complementary WebSocket contract validation remain unrun. AEGIS requirements acceptance does not authorize remote runtime implementation or release.
