@@ -281,7 +281,7 @@ class RecoveryJournalTests(unittest.TestCase):
             parse_jsonl(HostileText('{"sequence":1}'))
 
     def test_parser_converts_deep_json_recursion_into_validation_error(self):
-        deeply_nested = '{"payload":' + ("[" * 1100) + "0" + ("]" * 1100) + "}"
+        deeply_nested = '{"payload":' + ("[" * 12000) + "0" + ("]" * 12000) + "}"
         with self.assertRaisesRegex(JournalValidationError, "invalid JSON"):
             parse_jsonl(deeply_nested)
 
