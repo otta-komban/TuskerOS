@@ -167,6 +167,52 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("SESS: 40 unique, contiguous cases validated", results[1])
         self.assertIn("NET: 42 unique, contiguous cases validated", results[2])
 
+    def test_json_cli_uses_supplied_root_for_success(self):
+        from contextlib import redirect_stdout
+        import io
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            for prefix, (relative_path, case_count) in validator.SPECS.items():
+                spec_path = root / relative_path
+                spec_path.parent.mkdir(parents=True, exist_ok=True)
+                spec_path.write_text(
+                    "".join(
+                        f"| {prefix}-C{number:02d} | Condition {number} | Assertion {number} |\\n"
+                        for number in range(1, case_count + 1)
+                    ),
+                    encoding="utf-8",
+                )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = validator.main(["--root", temporary_root, "--json"])
+
+        payload = json.loads(output.getvalue())
+        self.assertEqual(result, 0)
+        self.assertTrue(payload["ok"])
+        self.assertEqual([item["case_count"] for item in payload["specifications"]],
+                         [22, 40, 42])
+        self.assertFalse(payload["runtime_security_tested"])
+
+    def test_json_cli_reports_missing_spec_from_supplied_root(self):
+        from contextlib import redirect_stdout
+        import io
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary_root:
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = validator.main(["--root", temporary_root, "--json"])
+
+        payload = json.loads(output.getvalue())
+        self.assertEqual(result, 1)
+        self.assertFalse(payload["ok"])
+        self.assertIn("PAIR: specification not found", payload["error"])
+        self.assertFalse(payload["runtime_security_tested"])
+
     def test_missing_specification_fails_repository_validation(self):
         import tempfile
 
