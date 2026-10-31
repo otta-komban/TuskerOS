@@ -40,10 +40,19 @@ def approval(db):
         binding=BINDING, expires_at=NOW + timedelta(minutes=2),
         audit_context=audit(proposal_id=proposal_id), now=NOW)
 
+def audit_for_approval(db, rid):
+    row = db._db.execute("SELECT * FROM approvals WHERE request_id=?", (rid,)).fetchone()
+    binding = __import__("json").loads(bytes(row["binding_json"]).decode("utf-8"))
+    return audit(principal_binding=row["principal_binding"], proposal_id=row["proposal_id"],
+        operation_id=row["broker_operation_id"], risk_class=row["risk_class"],
+        policy_version=row["policy_version"], action_digest=row["action_digest"],
+        task_id=row["task_id"], step_id=row["step_id"], registry_version=binding["registry_version"])
+
+
 def decide_and_issue(db):
     rid = approval(db)
     assert db.decide(rid, approve=True, current_binding=BINDING, approver_credentials={"uid": 1000},
-                     audit_context=audit(), now=NOW) == "APPROVED"
+                     audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
     return db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
                                   audit_context=audit(), now=NOW)
 
@@ -419,7 +428,7 @@ def test_expired_approval_stale_resource_and_wrong_operation_are_denied():
     try:
         rid = approval(db)
         assert db.decide(rid, approve=True, current_binding=BINDING, approver_credentials={"uid": 1000},
-            audit_context=audit(), now=NOW + timedelta(minutes=2)) == "EXPIRED"
+            audit_context=audit_for_approval(db, rid), now=NOW + timedelta(minutes=2)) == "EXPIRED"
         ref = decide_and_issue(db)
         assert consume(db, ref, resource_scope=["disk:other"]).outcome == "BINDING_MISMATCH"
         ref = decide_and_issue(db)
@@ -758,13 +767,51 @@ def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
         db.close()
 
 
+@pytest.mark.parametrize("field,value", [
+    ("principal_binding", D4), ("proposal_id", str(uuid.uuid4())),
+    ("operation_id", "broker.other.op"), ("risk_class", "R4"),
+    ("policy_version", "policy-2"), ("action_digest", D3),
+    ("task_id", "other-task"), ("step_id", "other-step"),
+    ("registry_version", "registry-2"), ("registry_status", "unavailable"),
+])
+def test_decide_rejects_mismatched_audit_context_before_state_change(field, value):
+    db = store()
+    try:
+        rid = approval(db)
+        context = audit_for_approval(db, rid)
+        context[field] = value
+        result = db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=context, now=NOW)
+        assert result == "BINDING_MISMATCH"
+        row = db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()
+        assert row["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+    finally:
+        db.close()
+
+
+def test_decide_rejects_remote_audit_identity_not_bound_to_approval():
+    db = store()
+    try:
+        rid = approval(db)
+        context = audit_for_approval(db, rid)
+        context.update(origin="remote", device_binding=D4, session_binding=D2)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=context, now=NOW) == "BINDING_MISMATCH"
+        row = db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()
+        assert row["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+    finally:
+        db.close()
+
+
 @pytest.mark.parametrize("invalid_decision", [1, 0, "true", "false", None, [], {}])
 def test_decide_rejects_non_boolean_decisions_without_state_change(invalid_decision):
     db = store()
     try:
         rid = approval(db)
         result = db.decide(rid, approve=invalid_decision, current_binding=BINDING,
-                           approver_credentials={"uid": 1000}, audit_context=audit(), now=NOW)
+                           approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW)
         assert result == "INVALID_DECISION"
         row = db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()
         assert row["state"] == "PENDING"
