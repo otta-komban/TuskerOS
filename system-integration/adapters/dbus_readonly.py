@@ -24,6 +24,10 @@ _MAX_STDOUT: Final[int] = 16 * 1024
 _MAX_STDERR: Final[int] = 4 * 1024
 
 
+class _OutputLimitExceeded(Exception):
+    """Internal signal used to terminate a child that exceeds an output cap."""
+
+
 class AdapterError(Exception):
     """Safe, stable adapter failure; never includes subprocess output."""
 
@@ -138,8 +142,8 @@ class ReadOnlySystemBusAdapter:
         except Exception as exc:
             raise AdapterError("bus client could not start") from exc
         assert process.stdout is not None and process.stderr is not None
-        out_task = asyncio.create_task(process.stdout.read(self._max_stdout + 1))
-        err_task = asyncio.create_task(process.stderr.read(self._max_stderr + 1))
+        out_task = asyncio.create_task(self._read_bounded(process.stdout, self._max_stdout))
+        err_task = asyncio.create_task(self._read_bounded(process.stderr, self._max_stderr))
         wait_task = asyncio.create_task(process.wait())
         tasks = (out_task, err_task, wait_task)
         try:
@@ -152,17 +156,24 @@ class ReadOnlySystemBusAdapter:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
             raise
-        except (asyncio.TimeoutError, Exception) as exc:
+        except _OutputLimitExceeded as exc:
             await self._terminate(process)
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
-            if isinstance(exc, asyncio.TimeoutError):
-                raise AdapterError("bus call timed out") from exc
+            raise AdapterError("bus response exceeded output limit") from exc
+        except asyncio.TimeoutError as exc:
+            await self._terminate(process)
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise AdapterError("bus call timed out") from exc
+        except Exception as exc:
+            await self._terminate(process)
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
             raise AdapterError("bus call failed") from exc
-
-        if len(stdout) > self._max_stdout or len(stderr) > self._max_stderr:
-            raise AdapterError("bus response exceeded output limit")
         if return_code != 0:
             raise AdapterError("bus call failed")
         try:
@@ -176,6 +187,18 @@ class ReadOnlySystemBusAdapter:
             return data[0]
         except (UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError) as exc:
             raise AdapterError("invalid bus response") from exc
+
+    @staticmethod
+    async def _read_bounded(stream: asyncio.StreamReader, limit: int) -> bytes:
+        """Drain a pipe only up to its cap; signal overflow before the child blocks."""
+        result = bytearray()
+        while True:
+            chunk = await stream.read(min(4096, limit + 1 - len(result)))
+            if not chunk:
+                return bytes(result)
+            result.extend(chunk)
+            if len(result) > limit:
+                raise _OutputLimitExceeded
 
     @staticmethod
     async def _terminate(process: asyncio.subprocess.Process) -> None:
