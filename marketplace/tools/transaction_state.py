@@ -63,7 +63,7 @@ def transition_transaction(
         raise TransactionStateError("transaction history must be an array")
     if not isinstance(transaction["terminal"], bool):
         raise TransactionStateError("transaction terminal must be a boolean")
-    for field in required:
+    for field in ("transaction_id", "state", "plan_digest", "snapshot_digest"):
         if not isinstance(transaction[field], str) or not transaction[field].strip():
             raise TransactionStateError(f"{field} must be a non-empty string")
     current = transaction["state"]
