@@ -17,7 +17,7 @@ SPECS = {
     "SESS": ("remote-control/verification/SESSION-PROOF-AND-REVOCATION-CONFORMANCE.md", 40),
     "NET": ("remote-control/verification/TRANSPORT-AND-EXPOSURE-CONFORMANCE.md", 42),
 }
-CASE_ID = re.compile(r"^(PAIR|SESS|NET)-C(\\d{2})$")
+CASE_ID = re.compile(r"^(PAIR|SESS|NET)-C(\d{2})$")
 
 
 class SpecError(ValueError):
@@ -36,17 +36,17 @@ def split_table_cells(line: str) -> list[str]:
     current: list[str] = []
     index = 0
     while index < len(row):
-        if row[index] == "\\\\":
+        if row[index] == "\\":
             end = index
-            while end < len(row) and row[end] == "\\\\":
+            while end < len(row) and row[end] == "\\":
                 end += 1
             slash_count = end - index
             if end < len(row) and row[end] == "|" and slash_count % 2:
-                current.extend("\\\\" for _ in range(slash_count - 1))
+                current.extend("\\" for _ in range(slash_count - 1))
                 current.append("|")
                 index = end + 1
                 continue
-            current.extend("\\\\" for _ in range(slash_count))
+            current.extend("\\" for _ in range(slash_count))
             index = end
             continue
         if row[index] == "|":
