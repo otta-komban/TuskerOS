@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 import os
 import shutil
 import stat
@@ -13,14 +15,34 @@ from pathlib import Path
 
 PLUGIN_ID = "com.tuskeros.desktop.dock"
 MARKER = ".tuskeros-managed"
-MARKER_CONTENT = "TuskerOS managed Plasma layout template; safe to remove with this installer.\n"
+MARKER_CONTENT = "TuskerOS managed Plasma layout template; safe to remove with this installer.\\n"
 MAX_SOURCE_FILES = 256
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
+AT_FDCWD = -100
+RENAME_NOREPLACE = 1
 
 
 def default_destination() -> Path:
     data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
     return data_home / "plasma" / "layout-templates" / PLUGIN_ID
+
+
+def _publish_directory_noreplace(source: Path, destination: Path) -> None:
+    """Atomically publish a directory only if the destination is still absent."""
+    try:
+        libc = ctypes.CDLL(None, use_errno=True)
+        renameat2 = libc.renameat2
+    except AttributeError as exc:
+        raise OSError(errno.ENOTSUP, "atomic no-replace directory publication is unavailable") from exc
+
+    renameat2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    renameat2.restype = ctypes.c_int
+    result = renameat2(
+        AT_FDCWD, os.fsencode(source), AT_FDCWD, os.fsencode(destination), RENAME_NOREPLACE
+    )
+    if result != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(destination))
 
 
 def _validate_source_entry(path: Path, totals: list[int]) -> None:
@@ -71,8 +93,8 @@ def install(source: Path, destination: Path) -> None:
         shutil.copy2(metadata, staging / "metadata.desktop")
         shutil.copytree(contents, staging / "contents")
         (staging / MARKER).write_text(MARKER_CONTENT, encoding="utf-8")
-        # Destination is required not to exist; rename publishes the complete tree atomically.
-        os.replace(staging, destination)
+        # RENAME_NOREPLACE closes the check/publish race without replacing user data.
+        _publish_directory_noreplace(staging, destination)
         staging = None
     finally:
         if staging is not None:
