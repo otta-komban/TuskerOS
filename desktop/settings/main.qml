@@ -9,13 +9,15 @@ ApplicationWindow {
     color: palette.window
     property var preferences: ({})
     property string saveError: ""
+    property bool needsRecovery: false
     function announceError(message) {
         if (message.length > 0)
             Accessible.announce(message, Accessible.Assertive)
     }
     function reloadPreferences() {
         preferences = settingsBackend.read()
-        if (settingsBackend.status().needsRecovery)
+        needsRecovery = settingsBackend.status().needsRecovery
+        if (needsRecovery)
             saveError = qsTr("Your settings file needs recovery. Restore defaults before editing.")
         else
             saveError = ""
@@ -44,7 +46,7 @@ ApplicationWindow {
             Label { text: qsTr("Desktop preferences"); font.pixelSize: 26; font.bold: true
                 Accessible.role: Accessible.Heading; Layout.topMargin: 24 }
             GroupBox {
-                title: qsTr("Panel"); Layout.fillWidth: true
+                title: qsTr("Panel"); Layout.fillWidth: true; enabled: !window.needsRecovery
                 ColumnLayout {
                     anchors.fill: parent
                     Switch { text: qsTr("Enable desktop panel"); checked: !!preferences.panel?.enabled
@@ -70,7 +72,7 @@ ApplicationWindow {
                 }
             }
             GroupBox {
-                title: qsTr("Assistant"); Layout.fillWidth: true
+                title: qsTr("Assistant"); Layout.fillWidth: true; enabled: !window.needsRecovery
                 ColumnLayout {
                     anchors.fill: parent
                     Switch { text: qsTr("Show assistant panel"); checked: !!preferences.assistant?.enabled
@@ -81,7 +83,7 @@ ApplicationWindow {
                 }
             }
             GroupBox {
-                title: qsTr("Accessibility"); Layout.fillWidth: true
+                title: qsTr("Accessibility"); Layout.fillWidth: true; enabled: !window.needsRecovery
                 ColumnLayout {
                     anchors.fill: parent
                     Switch { text: qsTr("Reduce motion"); checked: !!preferences.accessibility?.reduced_motion
@@ -111,7 +113,7 @@ ApplicationWindow {
             text: qsTr("This replaces your desktop preferences with safe defaults. This cannot be undone.") }
         onAccepted: {
             let response = settingsBackend.reset()
-            if (response && response.ok) { preferences=response.settings; saveError="" }
+            if (response && response.ok) { preferences=response.settings; needsRecovery=false; saveError="" }
             else {
                 saveError=qsTr("Could not restore defaults. Your previous preferences are unchanged.")
                 announceError(saveError)
