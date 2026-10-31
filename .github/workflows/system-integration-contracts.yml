@@ -7,12 +7,14 @@ on:
     paths:
       - "system-integration/contracts/**"
       - "system-integration/tests/**"
+      - "system-integration/adapters/**"
       - "system-integration/requirements-test.txt"
       - ".github/workflows/system-integration-contracts.yml"
   pull_request:
     paths:
       - "system-integration/contracts/**"
       - "system-integration/tests/**"
+      - "system-integration/adapters/**"
       - "system-integration/requirements-test.txt"
       - ".github/workflows/system-integration-contracts.yml"
   workflow_dispatch:
