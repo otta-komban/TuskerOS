@@ -146,6 +146,14 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AdapterError):
             await adapter.list_names()
 
+    async def test_bus_name_at_maximum_length_is_accepted(self):
+        name = "a." + ("b" * 253)
+        self.assertEqual(len(name), 255)
+        adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
+        adapter._call = AsyncMock(return_value=[name])
+
+        self.assertEqual(await adapter.list_names(), (name,))
+
     async def test_empty_bus_name_is_rejected(self):
         adapter = ReadOnlySystemBusAdapter(AsyncMock(return_value=True))
         adapter._call = AsyncMock(return_value=[""])
