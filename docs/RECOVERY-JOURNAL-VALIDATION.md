@@ -32,6 +32,10 @@ An interrupted record remains unresolved. This validator does not infer that rol
 
 `replay_eligibility` returns a candidate only when the latest record is `interrupted`, the operation is declared idempotent, and the caller asserts that external preconditions and fresh authorization have been verified. It does not verify those assertions, call NEXUS/AEGIS, or dispatch a replay. A production implementation must consume the accepted NEXUS operation contract and AEGIS authorization/approval contract; until then, no installer recovery execution is permitted.
 
+## Resource bounds
+
+The local parser rejects journals larger than 4 MiB, more than 10,000 records, or any individual JSONL record larger than 64 KiB. The in-memory validator also consumes at most 10,001 iterable entries to detect and reject record-count overflow without materializing an unbounded generator. These are conservative local defaults, not a cross-agent production contract; integration must review appropriate limits for the real operation lifecycle.
+
 ## Validation scope and limitations
 
 The validator checks required/extra fields, strict JSONL parsing, contiguous and unique sequence numbers, stable operation identity, allowed state transitions, previous-checksum linkage, and per-record checksums. It rejects blank/truncated JSONL records and non-standard JSON constants. It does not provide durable writes, locking, fsync, atomic append, concurrent-writer protection, signatures, anti-rollback, trusted timestamps, secret handling, or crash-consistent persistence. Those concerns require cross-agent contract review before integration.
