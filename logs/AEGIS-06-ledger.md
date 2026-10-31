@@ -726,3 +726,13 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Corrections retained for audit:** C0056–C0060 contain superseded/invalid completion figures; C0061 established 13, C0062 established 14, and this C0063 record establishes 15. Never derive completions from engineering tasks, commits, tool calls, or JSONL row count.
 - **Transcript scope:** The attached `6-Security.txt` is a single C0011 excerpt, not a full transcript. Therefore 15 is the verified project response counter carried forward from C0062, not a claim that every historical project chat has been independently reconstructed.
 - **JSONL commit:** a65e18bfc1159387c62b35df1ed1ebb2aaaf343a
+
+
+## C0064 — One-response-one-completion checkpoint
+
+- **Prior shared checkpoint:** C0063 recorded **15 / 100**.
+- **This response:** One distinct user-message/complete-assistant-response pair advances the count exactly once to **16 / 100**.
+- **Engineering tasks:** **49 cumulative** (+0).
+- **Historical JSONL:** **64 records** (C0001–C0064); record count is not used to calculate completions.
+- **Evidence limitation:** The attached 6-Security.txt is a C0011 excerpt only, not a full transcript. It cannot prove the entire historical conversation count independently.
+- **JSONL commit:** d1cfe533845ea48d0b4f86874af79df7aff80532.
