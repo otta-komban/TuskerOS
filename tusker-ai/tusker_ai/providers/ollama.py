@@ -133,20 +133,32 @@ class OllamaProvider:
                         raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame") from None
                     if not isinstance(chunk, dict):
                         raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
-                    message = chunk.get("message") or {}
+                    message = chunk.get("message", {})
                     if not isinstance(message, dict):
                         raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
                     delta = message.get("content")
+                    if delta is not None and not isinstance(delta, str):
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
+                    done = chunk.get("done", False)
+                    if not isinstance(done, bool):
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
+                    input_tokens = chunk.get("prompt_eval_count")
+                    output_tokens = chunk.get("eval_count")
+                    for token_count in (input_tokens, output_tokens):
+                        if token_count is not None and (
+                            isinstance(token_count, bool) or not isinstance(token_count, int) or token_count < 0
+                        ):
+                            raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned invalid usage metadata")
+                    reason = chunk.get("done_reason")
+                    if reason is not None and not isinstance(reason, str):
+                        raise TuskerRuntimeError(RuntimeErrorCode.PROVIDER_DISCONNECTED, "Provider returned an invalid stream frame")
                     if isinstance(delta, str) and delta:
                         yield InferenceEvent(request.request_id, seq, "text_delta", {"delta": delta})
                         seq += 1
-                    if chunk.get("done") is True:
-                        input_tokens = chunk.get("prompt_eval_count")
-                        output_tokens = chunk.get("eval_count")
+                    if done:
                         if input_tokens is not None or output_tokens is not None:
                             yield InferenceEvent(request.request_id, seq, "usage", {"input_tokens": input_tokens, "output_tokens": output_tokens})
                             seq += 1
-                        reason = chunk.get("done_reason")
                         finish_reason = reason if reason in {"stop", "output_limit", "tool_calls"} else "provider_specific" if reason else "unknown"
                         yield InferenceEvent(request.request_id, seq, "completed", {"finish_reason": finish_reason})
                         return
