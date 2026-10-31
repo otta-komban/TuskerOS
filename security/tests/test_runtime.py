@@ -308,6 +308,36 @@ def test_registry_full_schema_shape_is_enforced(field, value):
     assert result.reason_code == "POLICY_REGISTRY_INVALID"
 
 
+@pytest.mark.parametrize("rate_limit", [
+    {"max_calls": 5, "window_seconds": 60},
+    {"max_calls": 1},
+    {"window_seconds": 1},
+])
+def test_policy_denies_registry_rate_limits_without_enforcement(rate_limit):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    entry = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0",
+        "arguments_schema_ref": "schemas/arguments/system-info.json",
+        "allowed_origins": ["local"], "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only", "preconditions": [],
+        "postcondition_verifier": "verify.system.info", "rate_limit": rate_limit}
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: True, argument_validator=lambda a, x: True,
+        resource_resolver=lambda resources: list(resources),
+        precondition_verifier=lambda p, r: D4)
+    result = engine.evaluate(proposal, context, [entry], "registry-1")
+    assert result.status == "DENY"
+    assert result.reason_code == "POLICY_RATE_LIMIT_UNSUPPORTED"
+
+
 def test_registry_rejects_non_mapping_entries_before_lookup():
     engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
         registry_verifier=lambda r, v: bool(r) and v == "registry-1",
@@ -516,6 +546,31 @@ def test_broker_gate_returns_a_narrow_grant_only_after_consume():
                                      "session_binding", "device_binding", "action_digest", "registry_version",
                                      "precondition_digest"}
     finally: db.close()
+def test_broker_gate_fails_closed_on_malformed_requests_and_authority_errors():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    class BrokenAuthority:
+        def consume(self, *args, **kwargs):
+            raise RuntimeError("authority unavailable")
+    assert BrokerAuthorizationGate(BrokenAuthority()).authorize(None, {}).outcome == "BINDING_MISMATCH"
+    request = BrokerAuthorizationRequest("opaque", "broker.disk.erase", D4, "policy-1",
+                                         ("disk:wwn-123",), "registry-1", D4, {"uid": 1000})
+    result = BrokerAuthorizationGate(BrokenAuthority()).authorize(request, {})
+    assert result.outcome == "AUTHORITY_UNAVAILABLE"
+    assert result.grant is None
+
+
+def test_broker_gate_never_releases_an_incomplete_consumed_grant():
+    from security.runtime.broker import BrokerAuthorizationGate, BrokerAuthorizationRequest
+    class IncompleteAuthority:
+        def consume(self, *args, **kwargs):
+            return ConsumeResult("CONSUMED", "consumption-1", {"operation_id": "broker.disk.erase"})
+    request = BrokerAuthorizationRequest("opaque", "broker.disk.erase", D4, "policy-1",
+                                         ("disk:wwn-123",), "registry-1", D4, {"uid": 1000})
+    result = BrokerAuthorizationGate(IncompleteAuthority()).authorize(request, {})
+    assert result.outcome == "AUTHORITY_UNAVAILABLE"
+    assert result.grant is None
+
+
 def test_reconciliation_is_bound_to_original_principal_session_and_device():
     db = store()
     try:
@@ -696,6 +751,15 @@ def test_audit_checkpoint_rejects_existing_transaction_without_committing_it():
         db.close()
 
 
+def test_audit_chain_verification_fails_closed_when_table_is_unavailable():
+    db = store()
+    try:
+        db._db.execute("DROP TABLE audit_events")
+        assert db.verify_audit_chain() is False
+    finally:
+        db.close()
+
+
 def test_audit_events_verifies_chain_before_returning_events():
     db = store()
     try:
@@ -760,6 +824,16 @@ def test_audit_rejects_non_scalar_or_malformed_optional_fields(overrides):
         event.update(overrides)
         with pytest.raises(SecurityStoreError):
             db._audit(event)
+        assert db.audit_events() == []
+    finally:
+        db.close()
+
+
+def test_audit_rejects_free_form_reason_codes():
+    db = store()
+    try:
+        with pytest.raises(SecurityStoreError, match="reason code"):
+            db._audit(audit(reason_code="user supplied secret: do not log"))
         assert db.audit_events() == []
     finally:
         db.close()
@@ -974,6 +1048,61 @@ def test_decide_rejects_truthy_non_boolean_approver_authentication(callback_resu
         db.close()
 
 
+def test_approval_decision_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        rid = approval(db)
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected approval audit write failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="approval decision/audit failed closed"):
+                db.decide(rid, approve=True, current_binding=BINDING,
+                    approver_credentials={"uid": 1000},
+                    audit_context=audit_for_approval(db, rid), now=NOW)
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+def test_issue_authorization_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected audit write failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="injected audit write failure"):
+                db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                    audit_context=audit_for_approval(db, rid), now=NOW)
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs").fetchone()[0] == 0
+        assert len(db.audit_events()) == 2
+    finally:
+        db.close()
+
+
 @pytest.mark.parametrize("callback_result", [1, "allowed", [], {}])
 def test_issue_authorization_rejects_truthy_non_boolean_policy_recheck(callback_result):
     db = store()
@@ -1003,6 +1132,49 @@ def test_consume_rejects_truthy_non_boolean_policy_recheck(callback_result):
         assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "INVALIDATED"
         assert db._db.execute("SELECT state FROM auth_refs").fetchone()["state"] == "REVOKED"
         assert db.audit_events()[-1]["reason_code"] == "POLICY_BINDING_MISMATCH"
+    finally:
+        db.close()
+
+
+def test_issue_authorization_policy_rechecker_exception_rolls_back_without_minting():
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+
+        def unavailable(*_args):
+            raise RuntimeError("injected policy service outage")
+
+        db._policy_rechecker = unavailable
+        with pytest.raises(SecurityStoreError, match="authorization issue/audit failed closed"):
+            db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                audit_context=audit_for_approval(db, rid), now=NOW)
+
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs").fetchone()[0] == 0
+        assert len(db.audit_events()) == 2
+    finally:
+        db.close()
+
+
+def test_consume_policy_rechecker_exception_rolls_back_and_preserves_issued_reference():
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+
+        def unavailable(*_args):
+            raise RuntimeError("injected policy service outage")
+
+        db._policy_rechecker = unavailable
+        result = consume(db, ref)
+
+        assert result.outcome == "AUTHORITY_UNAVAILABLE"
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT state FROM auth_refs").fetchone()["state"] == "ISSUED"
+        assert len(db.audit_events()) == 3
     finally:
         db.close()
 
@@ -1099,3 +1271,282 @@ def test_policy_rejects_truthy_non_boolean_argument_validator(callback_result):
     result = engine.evaluate(proposal, context, registry, "registry-1")
     assert result.status == "DENY"
     assert result.reason_code == "POLICY_INVALID_ARGUMENTS"
+
+
+def test_security_database_rejection_closes_open_file_descriptor(tmp_path, monkeypatch):
+    import os
+    from security.runtime import store as store_module
+
+    target = tmp_path / "shared.db"
+    target.write_bytes(b"preserve external file")
+    path = tmp_path / "security.db"
+    path.hardlink_to(target)
+
+    opened = []
+    real_open = os.open
+
+    def capture_open(*args, **kwargs):
+        fd = real_open(*args, **kwargs)
+        opened.append(fd)
+        return fd
+
+    monkeypatch.setattr(store_module.os, "open", capture_open)
+    with pytest.raises(SecurityStoreError, match="must not have hard links"):
+        SecurityStore(path, audit_key=KEY)
+
+    assert len(opened) == 1
+    with pytest.raises(OSError):
+        os.fstat(opened[0])
+    assert target.read_bytes() == b"preserve external file"
+
+def test_security_store_closes_sqlite_connection_when_schema_initialization_fails(monkeypatch):
+    import sqlite3
+    from security.runtime import store as store_module
+
+    original_connect = sqlite3.connect
+    opened = []
+
+    class FailingSchemaConnection:
+        def __init__(self, connection):
+            object.__setattr__(self, "_connection", connection)
+            object.__setattr__(self, "closed", False)
+
+        def __getattr__(self, name):
+            if name == "executescript":
+                def fail_schema(_script):
+                    raise sqlite3.OperationalError("injected schema initialization failure")
+                return fail_schema
+            return getattr(self._connection, name)
+
+        def __setattr__(self, name, value):
+            if name == "closed":
+                object.__setattr__(self, name, value)
+            else:
+                setattr(self._connection, name, value)
+
+        def close(self):
+            object.__setattr__(self, "closed", True)
+            self._connection.close()
+
+    def capture_connect(*args, **kwargs):
+        connection = original_connect(*args, **kwargs)
+        wrapped = FailingSchemaConnection(connection)
+        opened.append((connection, wrapped))
+        return wrapped
+
+    monkeypatch.setattr(store_module.sqlite3, "connect", capture_connect)
+    with pytest.raises(sqlite3.OperationalError, match="injected schema initialization failure"):
+        SecurityStore(":memory:", audit_key=KEY)
+
+    assert len(opened) == 1
+    connection, wrapped = opened[0]
+    assert wrapped.closed is True
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        connection.execute("SELECT 1")
+
+def test_reissuing_authorization_revokes_previous_reference_atomically():
+    import hashlib
+
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid),
+            now=NOW) == "APPROVED"
+
+        first_ref = db.issue_authorization(rid, current_binding=BINDING,
+            current_policy_version="policy-1", audit_context=audit_for_approval(db, rid), now=NOW)
+        second_ref = db.issue_authorization(rid, current_binding=BINDING,
+            current_policy_version="policy-1", audit_context=audit_for_approval(db, rid), now=NOW)
+        assert first_ref != second_ref
+
+        first_hash = hashlib.sha256(first_ref.encode("utf-8")).hexdigest()
+        second_hash = hashlib.sha256(second_ref.encode("utf-8")).hexdigest()
+        states = {row["token_hash"]: row["state"] for row in db._db.execute(
+            "SELECT token_hash, state FROM auth_refs WHERE request_id=?", (rid,))}
+        assert states == {first_hash: "REVOKED", second_hash: "ISSUED"}
+
+        # The superseded bearer reference cannot consume, while the latest
+        # reference remains eligible for exactly one successful consume.
+        assert consume(db, first_ref).outcome == "REVOKED"
+        result = consume(db, second_ref)
+        assert result.outcome == "CONSUMED"
+        assert result.grant is not None
+        final_states = {row["token_hash"]: row["state"] for row in db._db.execute(
+            "SELECT token_hash, state FROM auth_refs WHERE request_id=?", (rid,))}
+        assert final_states == {first_hash: "REVOKED", second_hash: "CONSUMED"}
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+def test_approval_decision_one_microsecond_before_expiry_is_accepted():
+    db = store()
+    try:
+        rid = approval(db)
+        just_before_expiry = NOW + timedelta(minutes=2) - timedelta(microseconds=1)
+        result = db.decide(
+            rid,
+            approve=True,
+            current_binding=BINDING,
+            approver_credentials={"uid": 1000},
+            audit_context=audit_for_approval(db, rid),
+            now=just_before_expiry,
+        )
+        assert result == "APPROVED"
+        assert db._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"] == "APPROVED"
+        events = db.audit_events()
+        assert events[-1]["event_type"] == "approval_granted"
+        assert events[-1]["timestamp_utc"] == db._iso(just_before_expiry)
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+
+def test_approval_creation_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected approval creation audit failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="approval creation/audit failed closed"):
+                approval(db)
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 0
+        assert db.audit_events() == []
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+def test_approval_expiry_transition_rolls_back_when_audit_write_fails():
+    db = store()
+    try:
+        rid = approval(db)
+        original_audit = db._audit
+
+        def fail_audit(_event):
+            raise SecurityStoreError("injected approval expiry audit failure")
+
+        db._audit = fail_audit
+        try:
+            with pytest.raises(SecurityStoreError, match="approval decision/audit failed closed"):
+                db.decide(
+                    rid,
+                    approve=True,
+                    current_binding=BINDING,
+                    approver_credentials={"uid": 1000},
+                    audit_context=audit_for_approval(db, rid),
+                    now=NOW + timedelta(minutes=2),
+                )
+        finally:
+            db._audit = original_audit
+
+        assert not db._db.in_transaction
+        assert db._db.execute(
+            "SELECT state FROM approvals WHERE request_id=?", (rid,)
+        ).fetchone()["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+
+
+def test_consume_commit_failure_is_reconcilable_without_issuing_grant():
+    import sqlite3
+
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        real_connection = db._db
+
+        class CommitFailingConnection:
+            def __init__(self, connection):
+                self.connection = connection
+                self.fail_commit = True
+
+            def execute(self, sql, *args, **kwargs):
+                if sql.strip().upper() == "COMMIT" and self.fail_commit:
+                    self.fail_commit = False
+                    raise sqlite3.OperationalError("injected ambiguous commit failure")
+                return self.connection.execute(sql, *args, **kwargs)
+
+            def __getattr__(self, name):
+                return getattr(self.connection, name)
+
+        db._db = CommitFailingConnection(real_connection)
+        result = consume(db, ref)
+
+        assert result.outcome == "CONSUME_OUTCOME_UNKNOWN"
+        assert result.grant is None
+        assert result.consumption_id is not None
+        assert not db._db.in_transaction
+
+        # The injected failure happened before SQLite committed. Reconciliation
+        # is authoritative and reports the persisted reference as still ISSUED;
+        # the tentative consumption identifier is not disclosed as committed.
+        reconciled = db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42})
+        assert reconciled.outcome == "ISSUED"
+        assert reconciled.consumption_id is None
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "APPROVED"
+        assert db._db.execute("SELECT state FROM auth_refs").fetchone()["state"] == "ISSUED"
+        assert len(db.audit_events()) == 3
+        assert db.verify_audit_chain()
+    finally:
+        db.close()
+
+def test_consume_commit_response_loss_reconciles_committed_consumption_without_grant():
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        real_connection = db._db
+
+        class CommitThenLoseResponseConnection:
+            def __init__(self, connection):
+                self.connection = connection
+                self.lose_commit_response = True
+
+            def execute(self, sql, *args, **kwargs):
+                result = self.connection.execute(sql, *args, **kwargs)
+                if sql.strip().upper() == "COMMIT" and self.lose_commit_response:
+                    self.lose_commit_response = False
+                    raise sqlite3.OperationalError("injected lost response after durable commit")
+                return result
+
+            def __getattr__(self, name):
+                return getattr(self.connection, name)
+
+        import sqlite3
+        db._db = CommitThenLoseResponseConnection(real_connection)
+        result = consume(db, ref)
+
+        # The store must not hand out a grant when COMMIT reports an error,
+        # even though SQLite actually committed the consume and audit record.
+        assert result.outcome == "CONSUME_OUTCOME_UNKNOWN"
+        assert result.grant is None
+        assert result.consumption_id is not None
+        assert not db._db.in_transaction
+
+        reconciled = db.reconcile(ref, peer_credentials={"uid": 1000, "pid": 42})
+        assert reconciled.outcome == "ALREADY_CONSUMED"
+        assert reconciled.consumption_id == result.consumption_id
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "CONSUMED"
+        persisted_ref = db._db.execute(
+            "SELECT state, consumption_id FROM auth_refs"
+        ).fetchone()
+        assert tuple(persisted_ref) == ("CONSUMED", result.consumption_id)
+        assert len(db.audit_events()) == 4
+        assert db.verify_audit_chain()
+    finally:
+        db.close()

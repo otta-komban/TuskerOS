@@ -196,6 +196,10 @@ class PolicyEngine:
                 or (minimum == "R5" and entry["approval_mode"] != "out_of_band_admin")):
                 return deny("POLICY_REGISTRY_INVALID")
             if entry.get("risk_escalation_rules"): return deny("POLICY_RISK_RULE_UNSUPPORTED")
+            # A registry rate limit is a security control, not descriptive metadata.
+            # This evaluator has no durable rate-limit authority, so accepting a
+            # configured limit would silently claim enforcement that does not exist.
+            if entry.get("rate_limit"): return deny("POLICY_RATE_LIMIT_UNSUPPORTED")
             max_input = entry.get("max_input_bytes", 10485760)
             if not isinstance(max_input, int) or isinstance(max_input, bool) or not 1 <= max_input <= 10485760:
                 return deny("POLICY_REGISTRY_INVALID")
