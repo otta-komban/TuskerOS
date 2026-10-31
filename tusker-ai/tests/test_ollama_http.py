@@ -141,7 +141,7 @@ class OllamaHttpTests(unittest.TestCase):
         provider = OllamaProvider(self.endpoint, read_timeout=2)
         original = getattr(Handler, "version_body", None)
         try:
-            for body in (b"[]", b'"version-string"', b'{"version": 7}', b"{" + b" " * 65536):
+            for body in (b"[]", b'"version-string"', b'{"version": 7}', b"[" * 1200 + b"0" + b"]" * 1200, b"{" + b" " * 65536):
                 with self.subTest(body_prefix=body[:16], body_length=len(body)):
                     Handler.version_body = body
                     self.assertIsNone(provider.version())
