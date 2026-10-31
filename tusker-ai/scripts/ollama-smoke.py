@@ -7,7 +7,9 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import statistics
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -19,32 +21,128 @@ from tusker_ai.runtime import InferenceRuntime
 from tusker_ai.types import InferenceRequest
 
 
-def hardware_metadata():
-    mem_total = mem_available = None
+def _read_meminfo():
+    values = {}
     try:
         for line in Path("/proc/meminfo").read_text(encoding="ascii").splitlines():
-            if line.startswith("MemTotal:"):
-                mem_total = int(line.split()[1]) * 1024
-            elif line.startswith("MemAvailable:"):
-                mem_available = int(line.split()[1]) * 1024
-    except (OSError, ValueError, IndexError):
+            key, _, raw = line.partition(":")
+            fields = raw.strip().split()
+            if fields and fields[0].isdigit():
+                values[key] = int(fields[0]) * (1024 if len(fields) > 1 and fields[1] == "kB" else 1)
+    except (OSError, ValueError):
         pass
-    cpu = platform.processor() or None
-    if not cpu:
-        try:
-            for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
-                if line.lower().startswith("model name"):
-                    cpu = line.split(":", 1)[1].strip()
-                    break
-        except OSError:
-            pass
-    return {
-        "os": platform.platform(), "kernel": platform.release(),
-        "architecture": platform.machine(), "cpu_model": cpu,
-        "logical_cores": os.cpu_count(), "memory_total_bytes": mem_total,
-        "memory_available_bytes": mem_available, "gpu": None,
-        "gpu_note": "Not probed by this portable smoke harness; do not infer GPU availability.",
+    return values
+
+
+def _cpu_metadata():
+    records = []
+    try:
+        raw = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+        for block in raw.split("\n\n"):
+            record = {}
+            for line in block.splitlines():
+                key, sep, value = line.partition(":")
+                if sep:
+                    record[key.strip().lower()] = value.strip()
+            if record:
+                records.append(record)
+    except OSError:
+        pass
+    first = records[0] if records else {}
+    physical = {
+        (item.get("physical id"), item.get("core id"))
+        for item in records if item.get("physical id") is not None and item.get("core id") is not None
     }
+    flags = first.get("flags", first.get("features", "")).split()
+    return {
+        "model": platform.processor() or first.get("model name") or first.get("hardware"),
+        "logical_cores": os.cpu_count(),
+        "physical_cores": len(physical) or None,
+        "instruction_flags": sorted(flags) if flags else None,
+    }
+
+
+def _cgroup_memory():
+    result = {"current_bytes": None, "limit_bytes": None}
+    for key, filename in (("current_bytes", "memory.current"), ("limit_bytes", "memory.max")):
+        try:
+            raw = Path("/sys/fs/cgroup", filename).read_text(encoding="ascii").strip()
+            if raw != "max":
+                result[key] = int(raw)
+        except (OSError, ValueError):
+            pass
+    return result
+
+
+def _gpu_metadata():
+    executable = shutil.which("nvidia-smi")
+    if not executable:
+        return {"vendor": None, "devices": None, "probe": "nvidia-smi unavailable; other GPU vendors are not probed"}
+    try:
+        completed = subprocess.run(
+            [executable, "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=2, check=False,
+        )
+        if completed.returncode != 0:
+            return {"vendor": "NVIDIA", "devices": None, "probe": "nvidia-smi query failed"}
+        devices = []
+        for line in completed.stdout.splitlines():
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) == 3:
+                try:
+                    memory_mib = int(parts[1])
+                except ValueError:
+                    memory_mib = None
+                devices.append({"name": parts[0], "dedicated_vram_bytes": memory_mib * 1024 * 1024 if memory_mib is not None else None, "driver_version": parts[2]})
+        return {"vendor": "NVIDIA", "devices": devices, "probe": "nvidia-smi"}
+    except (OSError, subprocess.TimeoutExpired):
+        return {"vendor": "NVIDIA", "devices": None, "probe": "nvidia-smi unavailable or timed out"}
+
+
+def _storage_metadata(output_path):
+    target = Path(output_path).expanduser().resolve().parent
+    try:
+        usage = shutil.disk_usage(target)
+        return {"path_role": "report_output_parent", "total_bytes": usage.total, "free_bytes": usage.free}
+    except OSError:
+        return {"path_role": "report_output_parent", "total_bytes": None, "free_bytes": None}
+
+
+def _client_peak_rss_bytes():
+    # resource is unavailable on some platforms; this is the harness process only.
+    try:
+        import resource
+        value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return int(value if sys.platform == "darwin" else value * 1024)
+    except (ImportError, OSError, ValueError):
+        return None
+
+
+def hardware_metadata(output_path=None):
+    memory = _read_meminfo()
+    return {
+        "os": platform.platform(),
+        "kernel": platform.release(),
+        "architecture": platform.machine(),
+        "cpu": _cpu_metadata(),
+        "memory_total_bytes": memory.get("MemTotal"),
+        "memory_available_bytes": memory.get("MemAvailable"),
+        "cgroup_memory": _cgroup_memory(),
+        "gpu": _gpu_metadata(),
+        "storage": _storage_metadata(output_path or "."),
+    }
+
+
+def runtime_revision():
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
+            timeout=2, check=False,
+        )
+        value = result.stdout.strip()
+        return value if result.returncode == 0 and len(value) == 40 else None
+    except (OSError, subprocess.TimeoutExpired):
+        return None
 
 
 def main():
@@ -89,7 +187,9 @@ def main():
             raise SystemExit("Inference smoke assertion failed; response content is not written to the report")
         output_tokens = usage.get("output_tokens")
         results.append({
-            "run": index + 1, "cold_or_warm": "first-run" if index == 0 else "warm",
+            "run": index + 1,
+            "request_order": "first_request" if index == 0 else "subsequent_request",
+            "model_load_state": "unknown_not_measured",
             "total_seconds": round(total, 6),
             "time_to_first_token_seconds": round(first_token, 6) if first_token is not None else None,
             "prompt_tokens": usage.get("input_tokens"), "output_tokens": output_tokens,
@@ -99,15 +199,20 @@ def main():
         })
     totals = [item["total_seconds"] for item in results]
     report = {
-        "schema_version": 1, "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "schema_version": 2, "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "provider": "ollama", "provider_version": version, "endpoint_scope": "loopback",
         "model_id": args.model, "model_sha256": os.environ.get("TUSKER_MODEL_SHA256"),
-        "runtime_package": "TuskerOS tusker-ai initial adapter", "python": platform.python_version(),
-        "hardware": hardware_metadata(), "network_state": "connected for local endpoint; no cloud fallback configured",
+        "runtime_package": "TuskerOS tusker-ai", "runtime_git_sha": runtime_revision(),
+        "python": platform.python_version(), "hardware": hardware_metadata(args.output),
+        "client_process_peak_rss_bytes": _client_peak_rss_bytes(),
+        "client_process_peak_rss_scope": "smoke harness process only; does not measure Ollama daemon RSS",
+        "network_state": "connected for local endpoint; no cloud fallback configured",
         "prompt_id": "fixed-tusker-smoke-v1", "repeats": args.repeats,
         "median_total_seconds": statistics.median(totals), "runs": results,
         "limitations": [
-            "GPU metadata is not probed",
+            "First-request timing is not a cold model-load measurement; Ollama model residency is not observed",
+            "GPU discovery is NVIDIA-only via nvidia-smi; other vendors and shared GPU memory are not probed",
+            "Peak RSS is for the client smoke harness, not the Ollama daemon",
             "Model digest is null unless TUSKER_MODEL_SHA256 is supplied and independently verified",
             "This report does not establish quality beyond the fixed smoke assertion",
         ],
