@@ -13,7 +13,7 @@ class DesktopWorkflowTests(unittest.TestCase):
             / "workflows"
             / "desktop-validation.yml"
         ).read_text(encoding="utf-8")
-        push = re.search(r"(?ms)^  push:\n(?P<body>.*?)(?=^  [a-z_]+:|\\Z)", workflow)
+        push = re.search(r"(?ms)^  push:\n(?P<body>.*?)(?=^  [a-z_]+:)", workflow)
         self.assertIsNotNone(push, "desktop workflow must declare a push trigger")
         match = re.search(
             r"(?m)^    branches:\n(?P<branches>(?:^      - .+\n)+)",
