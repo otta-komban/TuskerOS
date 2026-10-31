@@ -193,6 +193,8 @@ def test_policy_rejects_non_rfc3339_requested_at_values():
         "2026-10-31T06:00+00:00",
         "2026-10-31",
         "not-a-timestamp",
+        "２０２６-10-31T06:00:00+00:00",
+        "٢٠٢٦-10-31T06:00:00+00:00",
     ):
         proposal = deepcopy(valid_proposal)
         proposal["requested_at"] = invalid_timestamp
