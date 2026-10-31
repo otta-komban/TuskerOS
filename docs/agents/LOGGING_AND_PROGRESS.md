@@ -104,3 +104,10 @@ Do not renumber, delete, or rewrite historical entries. In a legacy log whose ID
 If a qualifying post-boundary response was not logged at the time, the agent may append a clearly identified late-recorded entry using the actual current append timestamp and a reference to the original response evidence. Never backdate the record. The coordinator audits the original response time from the evidence reference and prevents duplicate counting.
 
 Old-cohort figures 124/1,000 and 135/1,000 remain frozen, separate, and unreconciled. The new cohort starts at zero at the boundary above; only validated post-boundary response records count.
+
+
+## 7. Coordinator completions and project target
+
+The coordinator is a separate counted contributor. Its qualifying substantive responses are recorded directly in the canonical `progress/completions.jsonl` ledger with `agent_id: "COORDINATOR"`, `branch: "main"`, and sequential IDs `COORDINATOR-000001` onward. The validator treats this as a distinct actor; coordinator records must not be attributed to one of the ten specialist agents or written into their local files.
+
+Coordinator completions count toward the shared 1,000-completion project target, while each specialist agent retains its own 100-completion sub-target. Report specialist-agent subtotal and coordinator subtotal separately, then show their combined project total. The denominator remains 1,000; do not increase it merely because coordinator work is counted. Late records use the actual append timestamp and evidence references to the original response/repository action. Do not backdate them.
