@@ -80,6 +80,22 @@ class ReleaseReportSemanticTests(unittest.TestCase):
         self.assertEqual(validate_report(valid_report(), DIGEST), [])
         self.assertTrue(validate_report(valid_report(), "c" * 64))
 
+    def test_non_string_expected_digest_returns_validation_error(self):
+        errors = validate_report(valid_report(), [])
+        self.assertTrue(any("--expected-manifest-digest" in error for error in errors))
+
+    def test_fractional_summary_count_is_rejected(self):
+        report = valid_report()
+        report["summary"]["passed"] = 1.0
+        errors = validate_report(report)
+        self.assertTrue(any("summary.passed: expected integer 1" in error for error in errors))
+
+    def test_boolean_summary_count_is_rejected(self):
+        report = valid_report()
+        report["summary"]["passed"] = True
+        errors = validate_report(report)
+        self.assertTrue(any("summary.passed: expected integer 1" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
