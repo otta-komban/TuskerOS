@@ -929,3 +929,53 @@ def test_security_database_refuses_final_component_symlink(tmp_path):
     with pytest.raises(SecurityStoreError, match="could not be opened privately"):
         SecurityStore(link, audit_key=KEY)
     assert target.read_bytes() == b"not a database"
+
+
+@pytest.mark.parametrize("callback_result", [1, "authenticated", [], {}])
+def test_decide_rejects_truthy_non_boolean_approver_authentication(callback_result):
+    db = store()
+    try:
+        rid = approval(db)
+        calls = []
+        db._approver_authenticator = lambda credentials, request_id: calls.append(request_id) or callback_result
+        result = db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW)
+        assert result == "CALLER_UNAUTHORIZED"
+        assert calls == [rid]
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "PENDING"
+        assert len(db.audit_events()) == 1
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("callback_result", [1, "allowed", [], {}])
+def test_issue_authorization_rejects_truthy_non_boolean_policy_recheck(callback_result):
+    db = store()
+    try:
+        rid = approval(db)
+        assert db.decide(rid, approve=True, current_binding=BINDING,
+            approver_credentials={"uid": 1000}, audit_context=audit_for_approval(db, rid), now=NOW) == "APPROVED"
+        db._policy_rechecker = lambda request_id, binding, version: callback_result
+        with pytest.raises(SecurityStoreError, match="re-evaluation unavailable or denied"):
+            db.issue_authorization(rid, current_binding=BINDING, current_policy_version="policy-1",
+                audit_context=audit_for_approval(db, rid), now=NOW)
+        assert db._db.execute("SELECT state FROM approvals WHERE request_id=?", (rid,)).fetchone()["state"] == "INVALIDATED"
+        assert db._db.execute("SELECT COUNT(*) FROM auth_refs").fetchone()[0] == 0
+        assert len(db.audit_events()) == 3
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("callback_result", [1, "allowed", [], {}])
+def test_consume_rejects_truthy_non_boolean_policy_recheck(callback_result):
+    db = store()
+    try:
+        ref = decide_and_issue(db)
+        db._policy_rechecker = lambda request_id, binding, version: callback_result
+        result = consume(db, ref)
+        assert result.outcome == "BINDING_MISMATCH"
+        assert db._db.execute("SELECT state FROM approvals").fetchone()["state"] == "INVALIDATED"
+        assert db._db.execute("SELECT state FROM auth_refs").fetchone()["state"] == "REVOKED"
+        assert db.audit_events()[-1]["reason_code"] == "POLICY_BINDING_MISMATCH"
+    finally:
+        db.close()
