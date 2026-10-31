@@ -25,6 +25,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200); self.send_header("Content-Type", "application/x-ndjson"); self.end_headers()
         try:
             for index, chunk in enumerate(chunks):
+                if request.get("model") == "late-frame" and index == 0:
+                    time.sleep(0.08)
                 self.wfile.write((json.dumps(chunk) + "\n").encode()); self.wfile.flush()
                 if request.get("model") == "slow" and index == 0:
                     time.sleep(0.12)
@@ -76,6 +78,14 @@ class OllamaHttpTests(unittest.TestCase):
         from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
         provider = OllamaProvider(self.endpoint, read_timeout=1)
         req = InferenceRequest("slow-request", "slow", [{"role": "user", "content": "hello"}], timeout_seconds=0.03)
+        with self.assertRaises(TuskerRuntimeError) as ctx:
+            list(provider.infer(req, CancellationToken()))
+        self.assertEqual(ctx.exception.code, RuntimeErrorCode.DEADLINE_EXCEEDED)
+
+    def test_frame_arriving_after_deadline_is_rejected(self):
+        from tusker_ai.types import RuntimeError as TuskerRuntimeError, RuntimeErrorCode
+        provider = OllamaProvider(self.endpoint, read_timeout=1)
+        req = InferenceRequest("late-frame", "late-frame", [{"role": "user", "content": "hello"}], timeout_seconds=0.03)
         with self.assertRaises(TuskerRuntimeError) as ctx:
             list(provider.infer(req, CancellationToken()))
         self.assertEqual(ctx.exception.code, RuntimeErrorCode.DEADLINE_EXCEEDED)
