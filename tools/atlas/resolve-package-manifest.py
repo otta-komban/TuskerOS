@@ -68,7 +68,9 @@ def fedora_release() -> str:
     return values.get("VERSION_ID", "")
 
 
-def read_manifest(path: Path, *, require_pins: bool = False) -> list[dict[str, str]]:
+def read_manifest(
+    path: Path, *, require_pins: bool = False, allow_empty: bool = False
+) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as stream:
         lines = (line for line in stream if line.strip() and not line.lstrip().startswith("#"))
         reader = csv.DictReader(lines)
@@ -84,7 +86,7 @@ def read_manifest(path: Path, *, require_pins: bool = False) -> list[dict[str, s
                 f"{', '.join(sorted(REQUIRED_COLUMNS))}"
             )
         rows = list(reader)
-    if not rows:
+    if not rows and not allow_empty:
         raise RuntimeError("Manifest contains no package rows; obtain owner-reviewed package names first.")
     seen: set[tuple[str, str]] = set()
     for row in rows:
@@ -201,7 +203,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=Path("os/package-manifest.csv"))
     parser.add_argument("--output", type=Path, default=Path("build/package-resolution.json"))
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="validate the pinned manifest schema/rows without requiring Fedora or querying DNF5",
+    )
     args = parser.parse_args()
+
+    if args.validate_only:
+        rows = read_manifest(args.manifest, require_pins=True, allow_empty=True)
+        print(f"Validated package manifest schema and {len(rows)} package rows")
+        return 0
 
     release = fedora_release()
     arch = platform.machine()
