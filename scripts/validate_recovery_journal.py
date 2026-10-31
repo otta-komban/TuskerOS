@@ -133,12 +133,13 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         state = record["state"]
         if type(state) is not str:
             errors.append(f"record {index}: unknown state (state must be a plain string)")
-        elif index == 1 and state != "planned":
-            errors.append("record 1: initial state must be planned")
-        elif state not in STATES:
-            errors.append(f"record {index}: unknown state {state!r}")
-        elif previous_state is not None and state not in TRANSITIONS[previous_state]:
-            errors.append(f"record {index}: illegal transition {previous_state} -> {state}")
+        else:
+            if index == 1 and state != "planned":
+                errors.append("record 1: initial state must be planned")
+            if state not in STATES:
+                errors.append(f"record {index}: unknown state {state!r}")
+            elif previous_state is not None and state not in TRANSITIONS[previous_state]:
+                errors.append(f"record {index}: illegal transition {previous_state} -> {state}")
         if type(record["idempotent"]) is not bool:
             errors.append(f"record {index}: idempotent must be boolean")
         elif operation_idempotent is None:
