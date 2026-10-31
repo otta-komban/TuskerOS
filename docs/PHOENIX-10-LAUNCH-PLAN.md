@@ -83,7 +83,20 @@ The following are proposed work packages within the PHOENIX role. They are not n
 - Test multiple disks and target changes; prove unselected disks remain unchanged.
 - Mark every criterion PASS / FAIL / NOT RUN / UNVERIFIED. Static CI is not VM evidence.
 
-## 4. Stop conditions
+## 4. AEGIS schema-audit handoff (read-only review)
+
+A fresh read of `06-security-gatekeeper/security/SCHEMA_CONSISTENCY_AUDIT.md` and `security/INSTALLER-RELEASE-TRUST-DECISION.md` records additional AEGIS findings. These are security-owner draft/candidate artifacts, not PHOENIX-owned contracts:
+
+- Approval-request schema v0.2.0 adds a required nested binding object for session/device bindings, registry version, canonical resource scope and precondition digest. Trusted derivation, producer/consumer compatibility and broker consume-time enforcement remain unaccepted.
+- Audit-event v0.1.0 now requires explicit `task_id` and `step_id` keys (nullable values). A separate v0.2.0 candidate proposes registry-resolution state/version, executor/reason fields and package transaction correlation. It remains candidate-only.
+- The candidate still has unresolved lifecycle coverage for presentation, dismissal, invalidation, revocation, consume acceptance/rejection and reconciliation. Registry-unavailable event semantics and trusted provenance must be accepted by NEXUS-07/TUSKER-04 before migration.
+- AEGIS reports schema/fixture CI passing for its candidate, but explicitly says this is not evidence of a live producer, durable audit persistence, trusted identity derivation, broker atomicity or privileged runtime conformance.
+- The release-trust recommendation prefers TUF for a maintained update channel, with detached OpenPGP as an offline-only alternative. Neither is selected by project release maintainers; key custody and release-channel contract remain open.
+- The security decision's digest section still contains an NFC-normalization instruction, while the later AEGIS finding SEC-INST-001 says JCS must preserve exact parsed Unicode code points and reject invalid surrogate sequences. Treat this as an unresolved cross-document inconsistency; obtain AEGIS owner correction/clarification before implementing any digest path. PHOENIX must not independently redefine JCS.
+
+**PHOENIX action:** consume only owner-approved, versioned schemas and runtime interfaces. Do not copy candidate schemas into the installer, invent lifecycle event names, or claim schema-fixture CI proves runtime safety. Privileged storage execution remains blocked.
+
+## 5. Stop conditions
 
 Until task assignment and required dependencies are accepted:
 - No privileged installer or broker integration.
@@ -92,11 +105,11 @@ Until task assignment and required dependencies are accepted:
 - No ISO/QCOW2 build, boot, install, Secure Boot or recovery success claim without actual reproducible evidence.
 - No edits to shared schemas, security boundaries or cross-agent contracts without Chief Architect approval.
 
-## 5. Next action
+## 6. Next action
 
 Chief Architect: assign the next PHOENIX-10 task ID and bounded acceptance criteria, or designate an existing handoff issue as the authorized next deliverable. See [Issue #78](https://github.com/otta-komban/TuskerOS/issues/78).
 
-## 6. Evidence references
+## 7. Evidence references
 
 - [PHOENIX-10 role guide](https://github.com/otta-komban/TuskerOS/blob/10-PHOENIX/docs/agents/launch/10-PHOENIX-10.md)
 - [Issue #52 — REL-001](https://github.com/otta-komban/TuskerOS/issues/52)
