@@ -1,40 +1,47 @@
 # ORBIT-05 Runtime Work Plan
 
-**Task:** ORBIT-05-RUNTIME-01 (historical owner-assigned scope; revalidated against the replacement branch)
+**Task:** ORBIT-05-RUNTIME-01
 **Owner:** ORBIT-05
 **Working branch:** `05-ORBIT`
-**Base/main SHA at inspection:** `345fc5a3d0f831fc714bae0cc88fa842cd9bed79`
-**Plan status:** Review-first; no implementation or runtime acceptance claimed.
+**Base/main SHA at initial inspection:** `345fc5a3d0f831fc714bae0cc88fa842cd9bed79`
+**Plan status:** Active implementation; local proxy/redirect isolation change committed, focused tests pass, live Ollama remains unverified.
 
 ## Objective
 
-Review the prior ORBIT runtime implementation and Issue #57, establish which artifacts are already present on the current unified main baseline, identify remaining gaps, then deliver a small reviewed runtime increment without importing historical branch history wholesale.
+Review the prior ORBIT runtime implementation and Issue #57, establish which artifacts are already present on the current unified main baseline, identify remaining gaps, and deliver small reviewed runtime increments without importing historical branch history wholesale.
 
 ## Verified starting evidence
 
-- The assigned branch `05-ORBIT` exists and compares identical to live `main` (0 ahead / 0 behind).
-- Historical Issue #57 records a prior candidate at `effb9fa93baea1309ba7cf77de36882b169547d9`, reported as 30 commits ahead / 0 behind at the time of that report.
-- That historical candidate is now an ancestor of current `main`; GitHub compare reports current main 605 commits ahead of that candidate and 0 ahead of it. The historical `agent/05-ai-runtime` ref is also behind current main. No blind merge/cherry-pick is warranted.
-- The current mainline contains the historical provider contract, cross-agent alignment note, model-manifest schema and runtime README. The README now documents recovery-inspection behavior beyond the historical report.
-- The historical report records 29 passing / 2 skipped tests and a successful compile check in its isolated environment. The two skipped tests require real Ollama and a model; this is not live inference evidence.
-- The provider contract remains explicitly proposed pending TUSKER-04, NEXUS-07, ATLAS-01 and AEGIS-06 review. The AEGIS callback defaults to deny; hard daemon CPU/memory isolation is outside admission guards.
+- The assigned branch `05-ORBIT` existed at the unified main SHA when work began. The historical candidate `effb9fa93baea1309ba7cf77de36882b169547d9` is an ancestor of current `main`; no blind merge/cherry-pick was warranted.
+- The current mainline already contains the historical provider contract, cross-agent alignment note, model-manifest schema, provider adapter and ModelStore implementation.
+- The historical runtime PR #58 records 94 component tests passed and 2 opt-in live Ollama tests skipped on its earlier head. Those checks are not evidence of live inference.
+- PR #58 contains an owner-directed freeze on its historical `agent/05-ai-runtime` branch. This work is isolated to the replacement branch `05-ORBIT`; the frozen branch and PR are not modified.
+- The provider contract remains proposed pending TUSKER-04, NEXUS-07, ATLAS-01 and AEGIS-06 review. The AEGIS callback defaults to deny; hard daemon CPU/memory isolation is outside admission guards.
 
-## Work sequence
+## Implemented in this iteration
 
-1. **Historical review (current):** compare Issue #57 and the old runtime branch/commit with current main; inventory already-integrated code, tests, docs, workflow evidence and unresolved findings.
-2. **Contract/dependency review:** verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
-3. **Local validation:** run focused unit tests and compile checks in a reproducible checkout; record exact commands, exit codes, test counts and tested SHA. Keep real-Ollama tests opt-in.
-4. **Implementation:** select one bounded, independently testable gap in ORBIT ownership. Keep install/remove disabled by default until the approved AEGIS contract is available. Do not claim hard isolation for a shared Ollama daemon.
-5. **Runtime acceptance:** only on a host with a real local Ollama service and pinned model, run health/version, inference, streaming, cancellation-isolation and smoke/benchmark tests; record model digest and host metadata. If unavailable, mark NOT RUN and retain the blocker.
-6. **Delivery:** update compatibility and rollback notes, commit focused changes on `05-ORBIT`, and open a PR to `main` for integrator review. Do not self-merge.
+- Replaced ambient `urlopen()` use in the Ollama adapter with an explicit opener configured with `ProxyHandler({})`, so HTTP(S)/ALL proxy environment variables cannot reroute local inference.
+- Added a no-redirect handler. A local endpoint's 3xx response is rejected instead of forwarding a prompt-bearing request to another host.
+- Added deterministic regression tests covering proxy-environment isolation for health and inference, and redirect rejection for both GET and POST paths.
+- Local verification: `PYTHONPATH=. python -m unittest -v tests/test_ollama_http.py` — 4 passed; `python -m py_compile tusker_ai/providers/ollama.py tests/test_ollama_http.py` — passed. This focused local harness is not the full project suite or live Ollama conformance.
+
+## Remaining work sequence
+
+1. Run the full runtime/schema test suite in a reproducible checkout and capture exact branch-head evidence.
+2. Review provider cancellation/deadline behavior and add focused tests for request isolation without terminating the shared daemon.
+3. Verify current TUSKER lifecycle, AEGIS authorization, NEXUS hardware-source and ATLAS service/cgroup decisions. Do not modify shared contracts or infer approval from proposals.
+4. Keep model install/remove fail-closed until the approved AEGIS action/session/device/resource/precondition authorization is integrated and tested.
+5. On a host with a real local Ollama service and pinned model, run health/version, inference, streaming, cancellation-isolation and smoke/benchmark tests; record model digest and host metadata. If unavailable, mark NOT RUN.
+6. Deliver a focused PR to `main` for integrator review. Do not self-merge.
 
 ## Acceptance criteria
 
-- [ ] Historical work and Issue #57 reconciled against current main with exact SHAs and no blind history import.
-- [ ] Provider capability matrix and manifest behavior reviewed against implementation and tests.
-- [ ] Focused unit tests and compile checks pass on the exact ORBIT branch head.
-- [ ] Any model install/remove path remains deny-by-default unless exact AEGIS action/session/device/resource/precondition authorization is integrated and tested.
-- [ ] Resource limits distinguish admission control from enforced process isolation; cancellation is tested without killing a shared daemon.
+- [x] Historical work and Issue #57 reconciled against current main with exact SHAs and no blind history import.
+- [x] Proxy environment and redirect isolation added to the local Ollama adapter with regression tests.
+- [x] Focused HTTP adapter tests and compile checks pass in the isolated local harness.
+- [ ] Full runtime/schema tests pass on the exact ORBIT branch head.
+- [ ] Any model install/remove path remains deny-by-default unless exact AEGIS authorization is integrated and tested.
+- [ ] Resource limits distinguish admission control from enforced process isolation; live cancellation is tested without killing a shared daemon.
 - [ ] Live inference report includes model digest, provider version, host metadata and reproducible command output, or is explicitly NOT RUN.
 - [ ] Focused PR includes task ID, base/head SHA, tests, security impact, rollback and evidence.
 
@@ -50,9 +57,10 @@ Review the prior ORBIT runtime implementation and Issue #57, establish which art
 
 - No shared schema, lifecycle, privilege-boundary or package-trust changes without Chief Architect approval.
 - No cloud fallback, root inference process, tool execution by the model runtime, or killing a shared Ollama daemon.
+- No changes to the frozen historical `agent/05-ai-runtime` branch or PR #58.
 - No blind cherry-pick/merge of historical branches, no direct main push, no force-push, no self-merge.
 - No claim of live inference, hard resource enforcement, production authorization or release readiness without reproducible evidence.
 
 ## Rollback
 
-Keep implementation changes in a focused commit/PR. If rejected, the integrator may revert that commit on the ORBIT branch after review; preserve all historical branches, commits, logs and test evidence.
+Keep implementation changes in focused commits/PRs. If rejected, the integrator may revert the relevant commit on the ORBIT branch after review; preserve all historical branches, commits, logs and test evidence.
