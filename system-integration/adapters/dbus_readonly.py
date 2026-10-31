@@ -248,7 +248,7 @@ class ReadOnlySystemBusAdapter:
             if not isinstance(data, list) or len(data) != 1:
                 raise ValueError("unexpected result shape")
             return data[0]
-        except (UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError) as exc:
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError, RecursionError) as exc:
             raise AdapterError("invalid bus response") from exc
 
     @staticmethod
