@@ -119,15 +119,22 @@ def validate_spec(markdown: str, prefix: str, expected_count: int) -> list[str]:
 
 
 def validate_repository(root: Path) -> list[str]:
+    """Validate every specification and report all independent failures together."""
     results = []
+    errors = []
     for prefix, (relative_path, expected_count) in SPECS.items():
         path = root / relative_path
-        if not path.is_file():
-            raise SpecError(f"{prefix}: specification not found: {relative_path}")
-        ids = validate_spec(path.read_text(encoding="utf-8"), prefix, expected_count)
+        try:
+            if not path.is_file():
+                raise SpecError(f"specification not found: {relative_path}")
+            ids = validate_spec(path.read_text(encoding="utf-8"), prefix, expected_count)
+        except (OSError, UnicodeError, SpecError) as exc:
+            errors.append(f"{prefix}: {exc}")
+            continue
         results.append(f"{prefix}: {len(ids)} unique, contiguous cases validated ({relative_path})")
+    if errors:
+        raise SpecError("repository validation failed: " + " | ".join(errors))
     return results
-
 
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
