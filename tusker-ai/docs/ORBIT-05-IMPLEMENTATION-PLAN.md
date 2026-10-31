@@ -110,3 +110,11 @@ Keep implementation changes in focused commits/PRs. If rejected, the integrator 
 - Added HTTP fixture regressions for malformed and oversized health payloads and endpoint URL validation.
 - Commits: 64ce37e7b5cce14011f1bf162fc41eff86b95fd6 (provider), 1dfc33f589400d8294839197d0b17b9c59d5d6fa (tests).
 - Branch-head CI: pending verification. Live Ollama remains NOT RUN.
+
+
+## Iteration 09 — finite timeout configuration
+
+- Constructor now accepts only numeric, finite, strictly positive read timeouts; booleans, zero, negatives, NaN and infinities fail immediately with ValueError.
+- Added parameterized regression coverage for invalid timeout values.
+- Commits: 90085d51d535039bba6d085e71c4f1938854ec28 (provider), fdbc70efea7bfd63916f14913656994ddca183d2 (tests).
+- Branch-head CI pending verification. Live Ollama remains NOT RUN.
