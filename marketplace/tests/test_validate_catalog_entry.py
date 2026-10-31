@@ -47,7 +47,7 @@ class CatalogEntryValidationTests(unittest.TestCase):
 
 
     def test_malformed_and_whitespace_urls_fail_closed_without_exception(self):
-        for value in ("https://[broken/path", "https://example.invalid:bad/file", "https://example.invalid/a b"):
+        for value in ("https://[broken/path", "https://example.invalid:bad/file", "https://example.invalid/a b", "https://example.invalid/a\x7fb", "https://example.invalid/a\u0085b"):
             with self.subTest(value=value):
                 entry = copy.deepcopy(self.fixture)
                 entry["release"]["artifact_uri"] = value
