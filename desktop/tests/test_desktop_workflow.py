@@ -13,11 +13,13 @@ class DesktopWorkflowTests(unittest.TestCase):
             / "workflows"
             / "desktop-validation.yml"
         ).read_text(encoding="utf-8")
+        push = re.search(r"(?ms)^  push:\\n(?P<body>.*?)(?=^  [a-z_]+:|\\Z)", workflow)
+        self.assertIsNotNone(push, "desktop workflow must declare a push trigger")
         match = re.search(
-            r"(?ms)^  push:\n    branches:\n(?P<branches>(?:      - .+\n)+)",
-            workflow,
+            r"(?m)^    branches:\\n(?P<branches>(?:^      - .+\\n)+)",
+            push.group("body"),
         )
-        self.assertIsNotNone(match, "desktop workflow must declare push branches")
+        self.assertIsNotNone(match, "desktop push trigger must declare branches")
         branches = re.findall(r"^      - (.+)$", match.group("branches"), re.MULTILINE)
         self.assertEqual(branches, ["02-NOVA"])
 
