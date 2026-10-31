@@ -95,6 +95,11 @@ def validate_journal(records: Iterable[dict[str, Any]]) -> JournalReport:
         if not isinstance(record, dict):
             errors.append(f"record {index}: expected object")
             continue
+        non_string_keys = [key for key in record if not isinstance(key, str)]
+        if non_string_keys:
+            errors.append(
+                f"record {index}: object keys must be strings; found {non_string_keys!r}")
+            continue
         missing = REQUIRED_FIELDS - record.keys()
         extra = record.keys() - REQUIRED_FIELDS
         if missing:
