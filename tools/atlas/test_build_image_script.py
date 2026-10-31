@@ -33,16 +33,19 @@ class KiwiBundleContractTests(unittest.TestCase):
         self.assertIn('"$SNAPSHOT_VERIFIER" --lock "$SNAPSHOT_LOCK" --manifest "$MANIFEST"', SCRIPT)
         self.assertIn('"repository_snapshot_preflight_verified": True', SCRIPT)
         self.assertIn('"repository_snapshot_consumed_by_dnf5": True', SCRIPT)
-        self.assertIn('"repository_snapshot_consumed_by_kiwi": False', SCRIPT)
+        self.assertIn('"repository_snapshot_consumed_by_kiwi": True', SCRIPT)
+        self.assertIn('--setopt="$repo_id.repo_gpgcheck=1" reposync', SCRIPT)
+        self.assertIn('git -C "$UPSTREAM_DIR" archive --format=tar "$UPSTREAM_COMMIT" | tar -xf - -C "$KIWI_BUILD_DIR"', SCRIPT)
+        self.assertIn('"$KIWI_OVERLAY_PREPARER" --description-root "$KIWI_BUILD_DIR" --snapshot-root "$SNAPSHOT_ROOT"', SCRIPT)
+        self.assertIn('cd "$KIWI_BUILD_DIR"', SCRIPT)
         self.assertIn('--download-metadata --destdir="$SNAPSHOT_ROOT" --arch=x86_64 --arch=noarch --gpgcheck', SCRIPT)
         self.assertIn('--snapshot-root "$SNAPSHOT_ROOT"', SCRIPT)
 
     def test_metadata_does_not_overclaim_reproducibility(self):
         self.assertIn('"repeat_build_checksum_comparison": "passed" if repro == "1" else "not_run"', SCRIPT)
         self.assertIn('"reproducible_build_claim": False', SCRIPT)
-        self.assertIn("KIWI still downloads from its upstream repository definitions; only DNF5 package resolution consumes the verified local repository copies", SCRIPT)
+        self.assertIn("DNF5 reposync, package resolution and KIWI repository_gpgcheck/package_gpgcheck consume verified local repository copies with Fedora signing keys", SCRIPT)
         self.assertIn("RPM payload checksums are not yet recorded in the package lock", SCRIPT)
-        self.assertIn("Fedora repository metadata signatures are not yet verified against Fedora signing keys", SCRIPT)
         self.assertIn("Fedora dist-git source repository URLs are syntax-checked but not independently fetched or verified", SCRIPT)
 
 
