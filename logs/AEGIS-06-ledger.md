@@ -7,13 +7,14 @@
 
 ## Current state
 
-- **Full historical conversation count:** Unverified
-- **Verified visible-segment completions:** 10 / 100 after C0058
-- **Historical JSONL records:** 58 (`C0001`–`C0058`); these are work/response records, not proof of 58 distinct user/assistant pairs
-- **Latest historical record:** `AEGIS-06-C0058`
-- **Current phase:** P1 security integration review — SEC-SCHEMA-007 interim empty-only schema enforced; policy/broker consumer fail-closed evidence and owner approval remain pending
-- **Engineering tasks completed:** 48 (separate from visible conversation completions and commits)
-- **Latest log commit:** `75a765fcf046847308956400e9f3aecd82d50115`
+- **Authoritative response completions:** 19 / 100. Exactly one increment per complete assistant response.
+- **Historical JSONL records:** 67 (C0001–C0067); this is a record count, not the completion count.
+- **Latest historical record:** `AEGIS-06-C0067`
+- **Current phase:** P1 security integration review — schema-level policy constraints are empty-only; policy/broker consumer fail-closed evidence, production JCS canonicalizer, and authenticated consume-before-dispatch remain pending.
+- **Engineering tasks completed:** 49 (separate from response completions and commits).
+- **Latest JSONL commit:** `41d4ec3ac65137903cfdfa13d2a321b9781253b3`
+- **Latest verified branch head before this ledger update:** `41d4ec3ac65137903cfdfa13d2a321b9781253b3`
+- **Branch comparison:** 356 ahead / 0 behind `main`; no merge or rebase performed.
 
 ## Historical work/response record index (not a verified conversation-completion count)
 
@@ -754,3 +755,17 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **FORGE-09:** Re-fetched branch head `27112b84fa41aba0b5b12a429f689bd627065fee`. Python validator still fails to require `reason_code` on new or historical rejected/cancelled transitions although JSON Schema requires it; existing cancellation test still omits evidence. Follow-up posted on issue #29, comment [6539407608](https://github.com/otta-komban/TuskerOS/issues/29#issuecomment-6539407608). No FORGE-owned files modified; no FORGE tests run.
 - **Security posture:** Both gaps remain open. Trusted IPC identity injection and AEGIS consume-before-dispatch are unproven; package transaction reason evidence remains inconsistent. Keep privileged/provider and package mutations fail-closed.
 - **JSONL:** C0066 appended as record 66; JSONL commit: `b6f1d9f840b611e40fd3d9700d6a9310cfc20686`.
+
+
+## C0067 — policy constraints and JCS runtime evidence review
+
+- **Authoritative response completions:** **19 / 100** (+1 for this complete assistant response; C0066 recorded 18).
+- **Engineering tasks:** **49 cumulative** (+0). This cross-agent runtime-evidence review did not complete a new implementation task.
+- **NEXUS-07:** Rechecked branch `07-system-integration` at `a0cc0a74242070135b6b7937bd7605c7861fe7d8`. Its reviewed tree contains contracts, documentation and tests, but no broker runtime or policy-decision consumer implementation.
+- **TUSKER-04:** Rechecked branch `04-tusker-core` at `d170b61415e2a668386daf35de228f4eb674c149`. Its reviewed tree contains schemas, documentation and adapter mapping/tests, but no production JCS canonicalizer or policy engine.
+- **SEC-SCHEMA-007:** Issue #31 remains open. The schema requires an empty-only `constraints: {}`; producer/consumer runtime rejection and DENY with zero handler calls remain unproven.
+- **JCS-UNICODE-001:** Issue #32 remains open; production exact-Unicode canonicalization and end-to-end approval invalidation remain unproven.
+- **NEXUS trust boundary:** Issue #17 still has no owner response resolving caller-reachable authorization context, authenticated peer identity, or atomic consume-before-dispatch.
+- **CI:** Workflow run 41171447596 completed successfully on the preceding branch head; its security-contract job succeeded. This is schema/contract CI only, not runtime enforcement evidence.
+- **Security posture:** No runtime implementation was found in the reviewed owner branches. Keep privileged/provider mutations fail-closed.
+- **JSONL:** C0067 appended as record 67; JSONL commit: `41d4ec3ac65137903cfdfa13d2a321b9781253b3`.
