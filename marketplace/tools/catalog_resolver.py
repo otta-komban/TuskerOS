@@ -136,8 +136,10 @@ def is_compatible(entry: Mapping[str, Any], tuskeros_version: str, api_version: 
 
 def parse_dependency_constraint(value: str) -> tuple[tuple[str, Version], ...]:
     """Parse comma-conjoined exact/comparison constraints, e.g. >=1.2.0,<2.0.0."""
-    if not isinstance(value, str) or not value.strip():
-        raise CatalogResolutionError("dependency version constraint must be a non-empty string")
+    if not isinstance(value, str) or not value.strip() or len(value) > 512:
+        raise CatalogResolutionError(
+            "dependency version constraint must be a non-empty string (max 512 characters)"
+        )
     parsed = []
     for raw in value.split(","):
         match = re.fullmatch(r"(>=|<=|>|<|=)?\s*(.+)", raw.strip())
