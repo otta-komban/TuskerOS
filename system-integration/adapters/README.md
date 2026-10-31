@@ -21,7 +21,7 @@ The gate is an internal composition seam only; it is **not** the AEGIS wire cont
 
 - Timeout, process startup failure, nonzero exit, malformed or ambiguous JSON (including duplicate object keys, non-standard numeric constants, and unexpected response-envelope fields), invalid signature, invalid result shape, and output overflow produce a stable generic adapter error.
 - Cancellation propagates and terminates the child process. Cleanup tolerates the child exiting in the narrow race between the return-code check and the kill request, and still waits for process reaping.
-- The `GetId` result is validated as a D-Bus bus UUID: exactly 32 hexadecimal characters, with no hyphens. `ListNames` entries must follow the ASCII D-Bus bus-name grammar (including distinct well-known-name and unique-name component rules), and duplicate entries are rejected. Health returns `degraded` when authorization or the bus probe is unavailable; it never treats inability to authorize as readiness.
+- The `GetId` result is validated as a D-Bus bus UUID: exactly 32 hexadecimal characters, with no hyphens. `ListNames` is capped at 1,024 names; the inclusive 1,024-name boundary is accepted and larger results are rejected. Entries must follow the ASCII D-Bus bus-name grammar (including distinct well-known-name and unique-name component rules), and duplicate entries are rejected. Health returns `degraded` when authorization or the bus probe is unavailable; it never treats inability to authorize as readiness.
 - This prototype does not implement mutation, arbitrary D-Bus introspection, signal subscriptions, retry, or operation reconciliation because it performs no mutations.
 
 ## Tests
