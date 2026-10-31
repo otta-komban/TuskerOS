@@ -623,3 +623,15 @@ Do not backfill missing historical pairs from timestamps, IDs, commits, engineer
 - **Owner coordination:** [Issue #31 comment 6538612949](https://github.com/otta-komban/TuskerOS/issues/31#issuecomment-6538612949) requests policy-engine/broker confirmation of the interim rule, versioned vocabulary, bounds and consumer-test ownership.
 - **Commits:** contracts `d69c3f7b64d7942a229f39f33f87e4bf88638bbb`; policy spec `751e17c360ee3d604a50da1f8c4e5ecef24c2310`; test matrix `d706fe4f8875e7c2efd3ef800fabb9c3d134a741`; checklist `23ba3ee48a8bdd2f3a8a87a41234dbc97dc0a717`; JSONL `8227ce79ec905782291139c338e8c881ff2670d6`.
 - **Limits:** No active schema or runtime code was changed. No consumer/runtime test was run. SEC-SCHEMA-007 remains open until owners ratify the vocabulary and implement/test enforcement.
+
+## C0056 — Interim policy-constraints schema regression
+
+- **Visible-segment completion:** 8 / 100. This counts the current verified user-message/complete-assistant-response pair; historical log rows are not used to infer missing pairs.
+- **Historical work/response record:** C0056 (JSONL contains 56 unique sequential records C0001–C0056).
+- **Engineering tasks completed:** 46 cumulative (+1 this response).
+- **Schema guard:** Updated `policy-decision.schema.json` to require `constraints` and permit only the empty object under the interim SEC-SCHEMA-007 rule.
+- **Tests:** `test_policy_decision_constraints_must_be_present_and_empty` accepts `{}` and rejects omission; `test_policy_decision_rejects_non_empty_constraints` rejects representative unknown, typed and nested values.
+- **Traceability:** POL-DEC-005a–005c added to `security/SECURITY_TEST_MATRIX.md`; consistency audit and Phase 1 checklist updated.
+- **CI:** [Run 41165953314](https://github.com/otta-komban/TuskerOS/actions/runs/41165953314) passed; validation job and all steps succeeded on test commit `130ba237aa85e0ff9d829db0735297b4eebb9a29`.
+- **Commits:** schema `f811ba41ae96407f518f8fbf5cd734e17e23bb36`; tests `130ba237aa85e0ff9d829db0735297b4eebb9a29`; matrix `2662721dbdddf85bf015ca9b82cbe984fef5b1e5`; audit `7eec43a260171f2e2d9ddc5a98837f486b0f9330`; checklist `8168a5a729ab7ea0bff09091edb6bb2ea6f9f15b`; JSONL `4a6147c5e24d167422e437d55cf7881887d90ae0`.
+- **Limits:** Schema-level validation only. It does not prove policy-engine producer behavior, broker consumer rejection, or zero-handler-call runtime behavior. The future bounded vocabulary and owner acceptance remain pending in issue #31; no runtime enforcement is claimed.
