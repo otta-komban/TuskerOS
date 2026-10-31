@@ -29,7 +29,7 @@ class PolicyEngine:
                  argument_validator: Callable[[str, Mapping[str, Any]], bool] | None = None,
                  resource_resolver: Callable[[Sequence[Mapping[str, Any]]], Sequence[Mapping[str, Any]]] | None = None,
                  precondition_verifier: Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]]], str | None] | None = None):
-        if not policy_version or len(policy_version) > 64:
+        if not isinstance(policy_version, str) or not 1 <= len(policy_version) <= 64:
             raise ValueError("invalid policy version")
         self.policy_version = policy_version
         self.identity_verifier = identity_verifier
@@ -44,8 +44,12 @@ class PolicyEngine:
         try:
             if not isinstance(proposal, Mapping) or not isinstance(context, Mapping):
                 return deny("POLICY_INVALID_INPUT")
-            if not registry or not registry_version or self.registry_verifier is None:
+            if (not isinstance(registry, Sequence) or isinstance(registry, (str, bytes))
+                or not registry or not isinstance(registry_version, str)
+                or not 1 <= len(registry_version) <= 64 or self.registry_verifier is None):
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
+            if any(not isinstance(item, Mapping) for item in registry):
+                return deny("POLICY_REGISTRY_INVALID")
             if not self.registry_verifier(registry, registry_version):
                 return deny("POLICY_REGISTRY_UNAVAILABLE")
             if self.identity_verifier is None or not self.identity_verifier(context):
@@ -85,7 +89,7 @@ class PolicyEngine:
                 or entry.get("idempotency") not in {"required", "optional_read_only", "not_supported"}
                 or not isinstance(entry.get("broker_operation_id"), str)
                 or not _ACTION.fullmatch(entry.get("broker_operation_id", ""))
-                or not isinstance(entry.get("timeout_ms"), int) or not 1 <= entry["timeout_ms"] <= 3600000
+                or not isinstance(entry.get("timeout_ms"), int) or isinstance(entry.get("timeout_ms"), bool) or not 1 <= entry["timeout_ms"] <= 3600000
                 or not isinstance(entry.get("allowed_origins"), list) or not entry.get("allowed_origins")
                 or any(not isinstance(value, str) or value not in _ORIGINS for value in entry["allowed_origins"])
                 or len(entry["allowed_origins"]) != len(set(entry["allowed_origins"]))
@@ -102,7 +106,7 @@ class PolicyEngine:
                 return deny("POLICY_REGISTRY_INVALID")
             if entry.get("risk_escalation_rules"): return deny("POLICY_RISK_RULE_UNSUPPORTED")
             max_input = entry.get("max_input_bytes", 10485760)
-            if not isinstance(max_input, int) or not 1 <= max_input <= 10485760:
+            if not isinstance(max_input, int) or isinstance(max_input, bool) or not 1 <= max_input <= 10485760:
                 return deny("POLICY_REGISTRY_INVALID")
             if len(canonical_bytes(proposal)) > max_input: return deny("POLICY_INPUT_LIMIT")
             if origin not in entry["allowed_origins"] or principal_class not in entry["allowed_principal_classes"]:

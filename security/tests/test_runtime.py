@@ -180,6 +180,51 @@ def test_malformed_authenticated_principal_class_is_denied(principal_class):
     assert decision.reason_code == "POLICY_UNKNOWN_PRINCIPAL"
 
 
+@pytest.mark.parametrize("field,value", [
+    ("timeout_ms", True),
+    ("max_input_bytes", True),
+    ("max_input_bytes", False),
+])
+def test_registry_numeric_limits_reject_boolean_values(field, value):
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    entry = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "operation_schema_version": "1.0.0", "allowed_origins": ["local"],
+        "allowed_principal_classes": ["user"],
+        "resources": [{"kind": "system", "access_modes": ["read"]}],
+        "minimum_risk_class": "R0", "approval_mode": "never",
+        "broker_operation_id": "broker.system.info.read", "timeout_ms": 1000,
+        "idempotency": "optional_read_only"}
+    entry[field] = value
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: bool(r) and v == "registry-1",
+        argument_validator=lambda a, x: True, resource_resolver=lambda r: list(r),
+        precondition_verifier=lambda p, r: D4)
+    decision = engine.evaluate(proposal, context, [entry], "registry-1")
+    assert decision.status == "DENY"
+    assert decision.reason_code == "POLICY_REGISTRY_INVALID"
+
+
+def test_registry_rejects_non_mapping_entries_before_lookup():
+    engine = PolicyEngine("policy-1", identity_verifier=lambda c: True,
+        registry_verifier=lambda r, v: bool(r) and v == "registry-1",
+        argument_validator=lambda a, x: True, resource_resolver=lambda r: list(r),
+        precondition_verifier=lambda p, r: D4)
+    proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
+        "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
+        "arguments": {}, "resources": [{"kind": "system", "id": "host", "access": "read"}],
+        "requested_at": NOW.isoformat()}
+    context = {"authenticated": True, "principal_binding": D1, "session_binding": D2,
+        "device_binding": D3, "origin": "local", "principal_class": "user"}
+    decision = engine.evaluate(proposal, context, [None], "registry-1")
+    assert decision.status == "DENY"
+    assert decision.reason_code == "POLICY_REGISTRY_INVALID"
+
+
 def test_resource_resolver_cannot_drop_add_or_widen_resources():
     proposal = {"schema_version": "0.1.0", "action_id": "system.info.read",
         "proposal_id": str(uuid.uuid4()), "task_id": "t1", "step_id": "s1",
