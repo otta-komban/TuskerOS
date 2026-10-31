@@ -228,7 +228,7 @@ class RepositoryValidationTests(unittest.TestCase):
             relative_path, _ = validator.SPECS["PAIR"]
             spec_path = root / relative_path
             spec_path.parent.mkdir(parents=True, exist_ok=True)
-            spec_path.write_bytes(b"\\xff\\xfe")
+            spec_path.write_bytes(b"\xff\xfe")
             stdout = io.StringIO()
             stderr = io.StringIO()
             with redirect_stdout(stdout), redirect_stderr(stderr):
