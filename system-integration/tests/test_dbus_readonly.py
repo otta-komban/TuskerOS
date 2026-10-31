@@ -215,6 +215,19 @@ class ReadOnlySystemBusAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(caught.exception), "bus response exceeded output limit")
         self.assertTrue(process.killed)
 
+    async def test_terminate_reaps_process_when_kill_races_with_exit(self):
+        class ExitedDuringKill(FakeProcess):
+            def kill(self):
+                self._exited.set()
+                raise ProcessLookupError
+
+        process = ExitedDuringKill(returncode=None)
+
+        await ReadOnlySystemBusAdapter._terminate(process)
+
+        self.assertTrue(process._exited.is_set())
+        self.assertFalse(process.killed)
+
     async def test_cancellation_kills_running_subprocess(self):
         process = FakeProcess(returncode=None)
         spawned = asyncio.Event()
