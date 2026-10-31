@@ -70,8 +70,41 @@ class SettingsTests(unittest.TestCase):
         self.path.parent.mkdir(parents=True)
         self.path.symlink_to(self.path.parent / "missing-target.json")
         settings, errors = load_settings(self.path)
-        self.assertTrue(any("must not be a symlink" in error for error in errors))
+        self.assertTrue(any("symlink" in error for error in errors))
         self.assertEqual(settings, DEFAULT_SETTINGS)
+
+    def test_valid_symlink_is_rejected_without_reading_target(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        target = self.path.parent / "outside.json"
+        target.write_text(json.dumps({"panel": {"icon_size": 72}}), encoding="utf-8")
+        self.path.symlink_to(target)
+        settings, errors = load_settings(self.path)
+        self.assertTrue(errors)
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+        self.assertEqual(json.loads(target.read_text(encoding="utf-8"))["panel"]["icon_size"], 72)
+
+    def test_non_regular_settings_file_is_rejected_without_blocking(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        os.mkfifo(self.path)
+        settings, errors = load_settings(self.path)
+        self.assertTrue(any("regular file" in error for error in errors))
+        self.assertEqual(settings, DEFAULT_SETTINGS)
+
+    def test_explicit_recovery_replaces_symlink_without_touching_target(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        target = self.path.parent / "outside.json"
+        original = json.dumps({"panel": {"icon_size": 72}})
+        target.write_text(original, encoding="utf-8")
+        self.path.symlink_to(target)
+
+        save_settings(self.path, DEFAULT_SETTINGS, replace_symlink=True)
+
+        self.assertFalse(self.path.is_symlink())
+        loaded, errors = load_settings(self.path)
+        self.assertEqual(errors, [])
+        self.assertEqual(loaded, DEFAULT_SETTINGS)
+        self.assertEqual(target.read_text(encoding="utf-8"), original)
+        self.assertEqual(os.stat(self.path).st_mode & 0o777, 0o600)
 
     def test_save_refuses_symlink(self) -> None:
         self.path.parent.mkdir(parents=True)

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=TuskerOS (Plasma Wayland)
+Comment=Start the supported TuskerOS desktop using KDE Plasma 6
+Exec=/usr/libexec/tuskeros/session-launcher
+TryExec=/usr/libexec/tuskeros/session-launcher
+Type=Application
+DesktopNames=KDE;TuskerOS;
