@@ -20,6 +20,22 @@ def chain(states, *, idempotent=False):
     return result
 
 
+class HostileJournalDict(dict):
+    def keys(self):
+        raise RuntimeError("keys must not be called")
+
+    def items(self):
+        raise RuntimeError("items must not be called")
+
+    def __getitem__(self, key):
+        raise RuntimeError("getitem must not be called")
+
+
+class HostileKey:
+    def __repr__(self):
+        raise RuntimeError("repr must not be called")
+
+
 class RecoveryJournalTests(unittest.TestCase):
     def test_journal_must_begin_in_planned_state(self):
         report = validate_journal(chain(["interrupted"]))
@@ -133,12 +149,25 @@ class RecoveryJournalTests(unittest.TestCase):
         self.assertFalse(report.valid)
         self.assertTrue(any("unknown state" in e for e in report.errors))
 
-    def test_non_string_object_keys_are_rejected_without_crashing(self):
+    def test_non_string_object_keys_are_rejected_without_formatting_them(self):
         records = chain(["planned"])
-        records[0][7] = "unexpected"
+        records[0][HostileKey()] = "unexpected"
         report = validate_journal(records)
         self.assertFalse(report.valid)
-        self.assertTrue(any("object keys must be strings" in e for e in report.errors))
+        self.assertTrue(any("object keys must be plain strings" in e
+                            for e in report.errors))
+
+    def test_dict_subclasses_are_rejected_without_invoking_overrides(self):
+        hostile = HostileJournalDict(chain(["planned"])[0])
+        report = validate_journal([hostile])
+        self.assertFalse(report.valid)
+        self.assertTrue(any("expected a plain dictionary" in e
+                            for e in report.errors))
+
+    def test_record_checksum_rejects_dict_subclasses(self):
+        hostile = HostileJournalDict(chain(["planned"])[0])
+        with self.assertRaisesRegex(JournalValidationError, "plain dictionary"):
+            record_checksum(hostile)
 
     def test_replay_requires_all_external_gates(self):
         record = chain(["planned", "prepared", "executing", "interrupted"],
