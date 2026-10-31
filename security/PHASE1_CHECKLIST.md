@@ -115,7 +115,7 @@
 
 - [ ] **SEC-SCHEMA-007 — Policy-decision constraints vocabulary:** define a bounded, versioned non-empty vocabulary with policy-engine/broker owners if additional constraints are required; add typed-bound and consumer fail-closed tests. Tracked in issue #31. Runtime consumer enforcement remains unverified.
 
-- [x] **SEC-SCHEMA-007 interim fail-closed schema:** `policy-decision.schema.json` requires `constraints: {}` and now declares `maxProperties: 0` plus `additionalProperties: false`; tests cover empty/missing, non-empty/nested, non-object values and explicit schema closure. CI verification pending this cycle. This does not prove live producer behavior or independent consumer rejection; SEC-SCHEMA-007 remains open pending owner agreement and consumer tests.
+- [x] **SEC-SCHEMA-007 interim fail-closed schema:** `policy-decision.schema.json` requires `constraints: {}` and declares `maxProperties: 0` plus `additionalProperties: false`; tests cover empty/missing, non-empty/nested, non-object values and explicit schema closure. GitHub Actions run 41166079444 passed 163 security tests in 2.72s on Python 3.12. This does not prove live producer behavior or independent consumer rejection; SEC-SCHEMA-007 remains open pending owner agreement and consumer tests.
 
 
 - [x] **SEC-SCHEMA-007 interim guard:** policy-decision v0.1.0 requires an empty `constraints` object; schema tests reject omission and non-empty values. The final typed vocabulary remains pending policy-engine/broker owner agreement in issue #31; runtime enforcement is not claimed.
