@@ -545,7 +545,7 @@ def test_policy_decision_constraints_must_be_present_and_empty():
 
 
 @pytest.mark.parametrize("constraints", [None, [], "system:*", 0, {"unknown": True}, {"timeout_ms": 1000}, {"resource_scope": ["system:*"]}])
-def test_policy_decision_rejects_non_empty_constraints(constraints):
+def test_policy_decision_rejects_non_empty_or_non_object_constraints(constraints):
     decision = dict(VALID_ALLOW_DECISION)
     decision["constraints"] = constraints
     assert list(policy_validator().iter_errors(decision))
