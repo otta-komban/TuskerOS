@@ -115,7 +115,7 @@ class VerificationTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.lock_path = Path(self.temporary.name) / "repository-snapshot.lock.json"
-        self.entry = CaptureTests()._dummy if False else {
+        self.entry = {
             "repository_id": "fedora",
             "repomd_url": REPOMD_URL,
             "repomd_sha256": hashlib.sha256(REPOMD).hexdigest(),
