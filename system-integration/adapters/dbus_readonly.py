@@ -174,7 +174,7 @@ class ReadOnlySystemBusAdapter:
             "--system",
             "--json=short",
             "--timeout",
-            f"{int(self._timeout * 1000)}ms",
+            f"{max(1, math.ceil(self._timeout * 1000))}ms",
             "call",
             _SERVICE,
             _PATH,
