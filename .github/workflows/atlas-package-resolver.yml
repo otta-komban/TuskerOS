@@ -3,14 +3,14 @@ name: ATLAS package resolver tests
 on:
   push:
     branches:
-      - 01-fedora-base
+      - agent/01-fedora-base
     paths:
       - "tools/atlas/**"
       - "os/package-manifest.csv"
       - ".github/workflows/atlas-package-resolver.yml"
   pull_request:
     branches:
-      - 01-fedora-base
+      - main
     paths:
       - "tools/atlas/**"
       - "os/package-manifest.csv"
