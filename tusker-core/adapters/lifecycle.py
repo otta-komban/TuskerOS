@@ -337,7 +337,16 @@ class LifecycleEngine:
         for event in events:
             if event.get("schema_version") != "0.1.0-draft":
                 raise LifecycleError("event stream contains an unsupported schema version")
-            if not isinstance(event.get("occurred_at"), str) or not event["occurred_at"]:
+            occurred_at = event.get("occurred_at")
+            try:
+                parsed_timestamp = datetime.fromisoformat(
+                    occurred_at.replace("Z", "+00:00")
+                ) if isinstance(occurred_at, str) and "T" in occurred_at else None
+            except (ValueError, OverflowError):
+                parsed_timestamp = None
+            if (parsed_timestamp is None or parsed_timestamp.tzinfo is None
+                    or parsed_timestamp.utcoffset() is None
+                    or len(occurred_at) < 20):
                 raise LifecycleError("event stream contains an invalid occurred_at value")
             if not isinstance(event.get("correlation_id"), str) or len(event["correlation_id"]) > 128:
                 raise LifecycleError("event stream contains an invalid correlation_id")
