@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuskeros.dev/schemas/theme-preview-render-response-1.0.0.json",
+  "title": "TuskerOS Theme Preview Render Response",
+  "description": "Bounded adapter acknowledgement for an isolated preview. This response cannot authorize applying or persisting a theme.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_version", "request_id", "session_id", "revision", "status"],
+  "properties": {
+    "protocol_version": {"const": "1.0"},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$"},
+    "session_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$"},
+    "revision": {"type": "integer", "minimum": 0},
+    "status": {"enum": ["rendered", "partial", "rejected"]},
+    "rendered_surfaces": {
+      "type": "array", "uniqueItems": true, "maxItems": 10,
+      "items": {"enum": ["desktop", "panel", "dock", "launcher", "notifications", "lock_screen", "window_decorations", "widgets", "settings", "quick_settings"]}
+    },
+    "omitted_surfaces": {
+      "type": "array", "maxItems": 10,
+      "items": {"$ref": "#/$defs/omission"}
+    },
+    "failure_code": {
+      "enum": ["unsupported_protocol", "unsupported_surface", "unsupported_namespace", "invalid_payload", "expired_session", "resource_limit", "adapter_unavailable"]
+    }
+  },
+  "$defs": {
+    "omission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface", "reason"],
+      "properties": {
+        "surface": {"enum": ["desktop", "panel", "dock", "launcher", "notifications", "lock_screen", "window_decorations", "widgets", "settings", "quick_settings"]},
+        "reason": {"enum": ["unsupported_surface", "unsupported_namespace", "unsupported_effect", "resource_limit", "adapter_unavailable"]}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "rendered"}}, "required": ["status"]},
+      "then": {
+        "required": ["rendered_surfaces"],
+        "properties": {"rendered_surfaces": {"minItems": 1}, "omitted_surfaces": {"maxItems": 0}},
+        "not": {"required": ["failure_code"]}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "partial"}}, "required": ["status"]},
+      "then": {
+        "required": ["rendered_surfaces", "omitted_surfaces"],
+        "properties": {"rendered_surfaces": {"minItems": 1}, "omitted_surfaces": {"minItems": 1}},
+        "not": {"required": ["failure_code"]}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "rejected"}}, "required": ["status"]},
+      "then": {
+        "required": ["failure_code"],
+        "properties": {"rendered_surfaces": {"maxItems": 0}, "omitted_surfaces": {"maxItems": 0}}
+      }
+    }
+  ]
+}

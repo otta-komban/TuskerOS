@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "id": "tusker.monochrome",
+  "version": "0.1.0",
+  "metadata": {
+    "name": "Tusker Monochrome",
+    "description": "Restrained black, white and graphite visual language with crisp typography.",
+    "author": "TuskerOS",
+    "license": "Apache-2.0"
+  },
+  "compatibility": { "theme_engine_api": "1.0", "desktop": ["KDE Plasma"], "required_surfaces": ["desktop", "panel", "launcher"] },
+  "tokens": {
+    "colors": {
+      "background": "#101010", "surface": "#1B1B1B", "surface_alt": "#262626",
+      "foreground": "#F5F5F5", "muted": "#A6A6A6", "accent": "#FFFFFF",
+      "accent_foreground": "#111111", "border": "#454545", "focus": "#FFFFFF",
+      "success": "#75C995", "warning": "#E8C36A", "danger": "#F07878"
+    },
+    "typography": { "family": "Inter", "size_base": 14, "weight_normal": 400, "weight_emphasis": 600, "line_height": 1.4 },
+    "spacing": { "unit": "px", "compact": 4, "normal": 8, "comfortable": 16 },
+    "shape": { "radius_small": 4, "radius_medium": 8, "radius_large": 12 },
+    "shadow": { "enabled": true, "blur": 12, "opacity": 0.22, "y_offset": 3 },
+    "motion": { "enabled": true, "duration_ms": 140, "reduced_motion_compatible": true }
+  },
+  "accessibility": { "minimum_text_scale": 1, "focus_indicator": true, "high_contrast_variant": true, "reduced_motion": true },
+  "assets": []
+}
