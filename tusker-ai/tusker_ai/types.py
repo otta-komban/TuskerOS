@@ -91,7 +91,6 @@ class RuntimeLimits:
     max_output_tokens: int = 2048
     max_context_tokens: int = 8192
     request_timeout_seconds: float = 120.0
-    provider_read_timeout_seconds: float = 2.0
     minimum_available_memory_bytes: int = 0
 
     def __post_init__(self) -> None:
@@ -101,5 +100,5 @@ class RuntimeLimits:
             raise ValueError("token limits must be positive")
         if self.minimum_available_memory_bytes < 0:
             raise ValueError("memory reserve must not be negative")
-        if self.request_timeout_seconds <= 0 or self.provider_read_timeout_seconds <= 0:
+        if self.request_timeout_seconds <= 0:
             raise ValueError("timeouts must be positive")
