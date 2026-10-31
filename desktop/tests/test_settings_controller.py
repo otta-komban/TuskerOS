@@ -31,7 +31,7 @@ class SettingsControllerTests(unittest.TestCase):
         controller=SettingsController(self.path); exposed=controller.read(); exposed["panel"]["icon_size"]=1
         self.assertEqual(controller.read()["panel"]["icon_size"],DEFAULT_SETTINGS["panel"]["icon_size"])
     def test_excessively_nested_json_enters_recovery_without_rewrite(self):
-        original = "[" * 2000 + "0" + "]" * 2000
+        original = '{"a":' * 10000 + "0" + "}" * 10000
         self.path.write_text(original)
         controller = SettingsController(self.path)
         self.assertTrue(controller.load_errors)
